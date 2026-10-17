@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="Supermercado.Datos/Supermercado.Datos.csproj" />
+  <Project Path="Supermercado.Entidades/Supermercado.Entidades.csproj" />
+  <Project Path="Supermercado.GUI/Supermercado.GUI.csproj" />
+  <Project Path="Supermercado.Logica/Supermercado.Logica.csproj" />
+  <Project Path="Supermercado.Pruebas/Supermercado.Pruebas.csproj" />
+</Solution>
