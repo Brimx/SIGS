@@ -1,4 +1,5 @@
 using Supermercado.Entidades.Excepciones;
+using Supermercado.Entidades.Finanzas;
 using Supermercado.Entidades.Productos;
 using Supermercado.Entidades.Ventas;
 using Xunit;
@@ -8,18 +9,54 @@ namespace Supermercado.Pruebas;
 public class VentasTests
 {
     private static Producto Arroz()
-        => new ProductoUnitario { Id = 1, PrecioVenta = 3000 };
+        => new ProductoUnitario
+        {
+            Id = 1,
+            PrecioVenta = 3000,
+            Impuesto = new Iva()
+        };
 
     [Fact]
     public void Total_SumaLosSubtotales()
     {
         var venta = new Venta();
-        var queso = new ProductoPesado { Id = 2, PrecioVenta = 8000 };
+        var queso = new ProductoPesado
+        {
+            Id = 2,
+            PrecioVenta = 8000,
+            Impuesto = new Iva()
+        };
 
         venta.AgregarProducto(Arroz(), 2);
         venta.AgregarProducto(queso, 500);
 
         Assert.Equal(10000L, venta.Total);
+    }
+
+    [Fact]
+    public void Detalle_CongelaElIvaDelMomentoDeLaVenta()
+    {
+        var leche = new ProductoUnitario
+        {
+            Id = 3,
+            PrecioVenta = 11900,
+            Impuesto = new Iva { PuntosBasicos = 1900 }
+        };
+        var venta = new Venta();
+
+        venta.AgregarProducto(leche, 1);
+
+        Assert.Equal(1900L, venta.TotalIva);
+        Assert.Equal(1900, venta.Detalles[0].PuntosBasicosIva);
+    }
+
+    [Fact]
+    public void Detalle_ExigeElImpuestoCargado()
+    {
+        var sinImpuesto = new ProductoUnitario { Id = 4, PrecioVenta = 1000 };
+
+        Assert.Throws<ValidacionException>(
+            () => new Venta().AgregarProducto(sinImpuesto, 1));
     }
 
     [Fact]
@@ -37,6 +74,7 @@ public class VentasTests
         venta.Cerrar();
 
         Assert.Equal(5000L, venta.Cambio);
+        Assert.Equal(10000L, venta.EfectivoNeto);
         Assert.Equal(EstadoVenta.Completada, venta.Estado);
     }
 
@@ -65,7 +103,7 @@ public class VentasTests
     }
 
     [Fact]
-    public void Tarjeta_ExigeLosCuatroDigitos()
+    public void Tarjeta_ExigeLosDigitosRequeridos()
     {
         var venta = new Venta();
         var pago = new PagoTarjeta { Monto = 5000, UltimosDigitos = "12" };
@@ -79,6 +117,17 @@ public class VentasTests
     {
         var venta = new Venta();
 
-        Assert.Throws<VentaInvalidaException>(() => venta.Anular());
+        Assert.Throws<VentaInvalidaException>(() => venta.Anular("error"));
+    }
+
+    [Fact]
+    public void Anular_ExigeUnMotivo()
+    {
+        var venta = new Venta();
+        venta.AgregarProducto(Arroz(), 1);
+        venta.AgregarPago(new PagoEfectivo { Monto = 3000 });
+        venta.Cerrar();
+
+        Assert.Throws<VentaInvalidaException>(() => venta.Anular(" "));
     }
 }
