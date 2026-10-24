@@ -2,7 +2,7 @@ using Supermercado.Entidades.Excepciones;
 
 namespace Supermercado.Entidades.Ventas;
 
-public class PagoTransferencia : Pago
+public sealed class PagoTransferencia : Pago
 {
     public string Referencia { get; set; } = string.Empty;
 

@@ -2,8 +2,10 @@ using Supermercado.Entidades.Excepciones;
 
 namespace Supermercado.Entidades.Ventas;
 
-public class PagoTarjeta : Pago
+public sealed class PagoTarjeta : Pago
 {
+    public const int DigitosRequeridos = 4;
+
     public string UltimosDigitos { get; set; } = string.Empty;
 
     public override string Metodo => "Tarjeta";
@@ -12,7 +14,7 @@ public class PagoTarjeta : Pago
     {
         base.Validar();
 
-        if (UltimosDigitos.Length != 4)
-            throw new VentaInvalidaException("Faltan los 4 últimos dígitos.");
+        if (UltimosDigitos.Length != DigitosRequeridos)
+            throw new VentaInvalidaException("Faltan los últimos dígitos.");
     }
 }

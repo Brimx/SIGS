@@ -8,5 +8,4 @@ public interface IRepositorio<T> where T : EntidadBase
     Task<IReadOnlyList<T>> ObtenerTodosAsync();
     Task AgregarAsync(T entidad);
     void Actualizar(T entidad);
-    void Eliminar(T entidad);
 }

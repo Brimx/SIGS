@@ -1,4 +1,5 @@
 using Supermercado.Entidades.Base;
+using Supermercado.Entidades.Finanzas;
 
 namespace Supermercado.Entidades.Productos;
 
@@ -14,6 +15,8 @@ public abstract class Producto : EntidadBase
     public Categoria? Categoria { get; set; }
     public int ProveedorId { get; set; }
     public Proveedor? Proveedor { get; set; }
+    public int ImpuestoId { get; set; }
+    public Impuesto? Impuesto { get; set; }
 
     public abstract long CalcularSubtotal(int cantidad);
 
