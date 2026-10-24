@@ -1,8 +1,9 @@
-using Supermercado.Entidades.Productos;
+using Supermercado.Entidades.Inventario;
 
 namespace Supermercado.Logica.Inventario;
 
 public interface IEstrategiaSalida
 {
-    IEnumerable<Lote> Ordenar(IEnumerable<Lote> lotes, DateOnly hoy);
+    IEnumerable<T> Ordenar<T>(IEnumerable<T> stocks, DateOnly hoy)
+        where T : StockLote;
 }
