@@ -34,6 +34,11 @@ dotnet run --project Supermercado.GUI
   - Linux: `~/.local/share/SIGS/sigs.db`
 - El arranque crea la carpeta y el archivo.
 - `InicializadorBaseDatos` usa `MigrateAsync` si existen migraciones; si no, `EnsureCreatedAsync`.
+- `Supermercado.Datos` incluye `FabricaSigsDbContext` (`IDesignTimeDbContextFactory<SigsDbContext>`) para ejecutar comandos de EF Core sin que la GUI referencie a Datos:
+  ```bash
+  dotnet ef migrations add <Nombre> --project Supermercado.Datos --startup-project Supermercado.Datos --output-dir Migraciones
+  dotnet ef database update --project Supermercado.Datos --startup-project Supermercado.Datos
+  ```
 - La semilla inserta roles, cargos, impuestos, cajas y parámetros faltantes; nunca sobrescribe valores editados.
 - Para empezar de cero, cierre la aplicación y borre el archivo. **Pierde todos los datos.**
 

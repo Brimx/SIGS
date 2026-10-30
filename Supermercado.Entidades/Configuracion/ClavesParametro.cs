@@ -18,4 +18,5 @@ public static class ClavesParametro
     public const string NegocioNit = "negocio.nit";
     public const string NegocioDireccion = "negocio.direccion";
     public const string NegocioTelefono = "negocio.telefono";
+    public const string CarpetaRespaldos = "sistema.carpeta_respaldos";
 }

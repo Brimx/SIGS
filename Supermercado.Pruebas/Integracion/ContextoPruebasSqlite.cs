@@ -27,7 +27,10 @@ public sealed class ContextoPruebasSqlite : IDisposable
             .Options;
 
         Db = new SigsDbContext(opciones, Reloj);
-        Db.Database.EnsureCreated();
+        if (Db.Database.GetMigrations().Any())
+            Db.Database.Migrate();
+        else
+            Db.Database.EnsureCreated();
     }
 
     public IUnidadDeTrabajo CrearUnidadDeTrabajo()

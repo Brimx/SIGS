@@ -30,5 +30,6 @@ public enum AccionAuditoria
     RolCreado,
     RolModificado,
     UsuarioDesbloqueado,
-    ClaveRestablecida
+    ClaveRestablecida,
+    RespaldoBaseDatos
 }

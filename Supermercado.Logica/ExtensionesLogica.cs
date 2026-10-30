@@ -1,5 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Supermercado.Datos;
+using Supermercado.Logica.Comunes;
 using Supermercado.Logica.Dashboards;
 using Supermercado.Logica.Dashboards.Widgets;
 using Supermercado.Logica.DatosDemo;
@@ -82,6 +84,14 @@ public static class ExtensionesLogica
         // Reportes y tickets con QuestPDF
         servicios.AddScoped<IGeneradorTicket, GeneradorTicketQuestPdf>();
         servicios.AddScoped<IServicioReportes, ServicioReportesQuestPdf>();
+
+        // Respaldo, traducción de errores y registro a archivo
+        servicios.AddScoped<IServicioRespaldo, ServicioRespaldo>();
+        servicios.AddSingleton<ILoggerProvider>(
+            sp => new ProveedorLogArchivo(
+                RutasDatos.ArchivoLogPorDefecto(),
+                sp.GetService<TimeProvider>()));
+        servicios.AddScoped<ITraductorExcepciones, TraductorExcepciones>();
 
         return servicios;
     }

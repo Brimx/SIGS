@@ -88,7 +88,10 @@ public static class ValoresIniciales
         Nuevo(ClavesParametro.NegocioDireccion, "COMPLETAR",
             "Dirección del negocio que aparece en el ticket"),
         Nuevo(ClavesParametro.NegocioTelefono, "COMPLETAR",
-            "Teléfono del negocio que aparece en el ticket")
+            "Teléfono del negocio que aparece en el ticket"),
+        Nuevo(ClavesParametro.CarpetaRespaldos,
+            RutasDatos.CarpetaRespaldosPorDefecto(),
+            "Carpeta donde se guardan las copias de respaldo de la base")
     ];
 
     private static Parametro Nuevo(string clave, string valor, string texto)

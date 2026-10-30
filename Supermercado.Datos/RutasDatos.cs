@@ -12,4 +12,19 @@ public static class RutasDatos
                 Environment.SpecialFolder.LocalApplicationData),
             Carpeta,
             Archivo);
+
+    public static string CarpetaRespaldosPorDefecto()
+        => Path.Combine(
+            Environment.GetFolderPath(
+                Environment.SpecialFolder.LocalApplicationData),
+            Carpeta,
+            "respaldos");
+
+    public static string ArchivoLogPorDefecto()
+        => Path.Combine(
+            Environment.GetFolderPath(
+                Environment.SpecialFolder.LocalApplicationData),
+            Carpeta,
+            "logs",
+            "errores.log");
 }
