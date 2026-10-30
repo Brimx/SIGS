@@ -1,4 +1,5 @@
 using Supermercado.Entidades.Contratos;
+using Supermercado.Entidades.Dashboards;
 using Supermercado.Entidades.Inventario;
 using Supermercado.Entidades.Personal;
 using Supermercado.Entidades.Productos;
@@ -72,5 +73,26 @@ public class LotesEnMemoria
         => Task.FromResult<IReadOnlyList<Lote>>(Datos
             .Where(l => l.FechaVencimiento <= hasta)
             .OrderBy(l => l.FechaVencimiento)
+            .ToList());
+}
+
+public class ReabastecimientosEnMemoria
+    : RepositorioEnMemoria<Reabastecimiento>, IReabastecimientoRepositorio
+{
+    public Task<IReadOnlyList<Reabastecimiento>> ObtenerPendientesAsync()
+        => Task.FromResult<IReadOnlyList<Reabastecimiento>>(Datos
+            .Where(r => r.Estado == EstadoReabastecimiento.Pendiente)
+            .ToList());
+}
+
+public class ConfiguracionesWidgetEnMemoria
+    : RepositorioEnMemoria<ConfiguracionWidget>,
+      IConfiguracionWidgetRepositorio
+{
+    public Task<IReadOnlyList<ConfiguracionWidget>> ObtenerPorEmpleadoAsync(
+        int empleadoId)
+        => Task.FromResult<IReadOnlyList<ConfiguracionWidget>>(Datos
+            .Where(w => w.EmpleadoId == empleadoId)
+            .OrderBy(w => w.Posicion)
             .ToList());
 }

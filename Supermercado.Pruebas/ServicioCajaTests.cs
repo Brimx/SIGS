@@ -23,7 +23,8 @@ public class ServicioCajaTests
 
         public Escenario(bool activa = true, long tolerancia = 1000)
         {
-            Cajas.Datos.Add(new Caja { Id = 1, Nombre = "Caja 1", Activa = activa });
+            Cajas.Datos.Add(
+                new Caja { Id = 1, Nombre = "Caja 1", Activa = activa });
             Parametros.Valores[ClavesParametro.ToleranciaArqueo]
                 = tolerancia.ToString();
 
@@ -79,5 +80,42 @@ public class ServicioCajaTests
         var resultado = await e.Servicio.CerrarTurnoAsync(48000);
 
         Assert.False(resultado.DentroDeTolerancia);
+    }
+
+    [Fact]
+    public async Task AbrirTurno_SinPermiso_LanzaAccesoDenegado()
+    {
+        var e = new Escenario();
+        var sinPermiso = new ServicioCaja(
+            e.Turnos,
+            e.Ventas,
+            e.Cajas,
+            e.Parametros,
+            e.Auditoria,
+            Sesiones.Con(Permiso.Vender),
+            e.Trabajo,
+            new RelojFijo(EscenarioInventario.Ahora));
+
+        await Assert.ThrowsAsync<AccesoDenegadoException>(
+            () => sinPermiso.AbrirTurnoAsync(1, 50000));
+    }
+
+    [Fact]
+    public async Task AbrirTurno_YaAbiertoPorMismoEmpleado_LanzaError()
+    {
+        var e = new Escenario();
+        await e.Servicio.AbrirTurnoAsync(1, 50000);
+
+        await Assert.ThrowsAsync<TurnoInvalidoException>(
+            () => e.Servicio.AbrirTurnoAsync(1, 50000));
+    }
+
+    [Fact]
+    public async Task CerrarTurno_SinTurnoAbierto_LanzaTurnoInvalidoException()
+    {
+        var e = new Escenario();
+
+        await Assert.ThrowsAsync<TurnoInvalidoException>(
+            () => e.Servicio.CerrarTurnoAsync(50000));
     }
 }
