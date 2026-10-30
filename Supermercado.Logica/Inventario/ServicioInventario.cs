@@ -54,7 +54,8 @@ public class ServicioInventario(
 
     public async Task TrasladarAEstanteAsync(int productoId, int cantidad)
     {
-        var filas = await OrdenarAsyncSinFiltrarVencidosAsync(bodega, productoId);
+        var filas = await OrdenarAsyncSinFiltrarVencidosAsync(
+            bodega, productoId);
 
         foreach (var (origen, tomar) in PlanDeSalida.Repartir(filas, cantidad))
         {
@@ -169,7 +170,7 @@ public class ServicioInventario(
             ProductoId = fila.ProductoId,
             LoteId = fila.LoteId,
             Lote = fila.Lote,
-            VentaId = venta?.Id ?? 0,
+            VentaId = venta?.Id,
             Venta = venta,
             Tipo = tipo,
             Cantidad = cantidad,
