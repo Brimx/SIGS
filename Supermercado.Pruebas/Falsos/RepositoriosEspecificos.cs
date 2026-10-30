@@ -64,3 +64,13 @@ public class RolesEnMemoria
     public Task<Rol?> ObtenerPorNombreAsync(string nombre)
         => Task.FromResult(Datos.FirstOrDefault(r => r.Nombre == nombre));
 }
+
+public class LotesEnMemoria
+    : RepositorioEnMemoria<Lote>, ILoteRepositorio
+{
+    public Task<IReadOnlyList<Lote>> ObtenerPorVencerAsync(DateOnly hasta)
+        => Task.FromResult<IReadOnlyList<Lote>>(Datos
+            .Where(l => l.FechaVencimiento <= hasta)
+            .OrderBy(l => l.FechaVencimiento)
+            .ToList());
+}

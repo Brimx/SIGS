@@ -31,15 +31,21 @@ public static class ExtensionesLogica
         servicios.AddScoped<IEstrategiaSalida, SalidaFefo>();
 
         servicios.AddScoped<IServicioAuditoria, ServicioAuditoria>();
+        servicios.AddScoped<IServicioConsultaAuditoria,
+            ServicioConsultaAuditoria>();
         servicios.AddScoped<IServicioParametros, ServicioParametros>();
         servicios.AddScoped<IServicioAutenticacion, ServicioAutenticacion>();
         servicios.AddScoped<IServicioUsuarios, ServicioUsuarios>();
         servicios.AddScoped<IServicioInicializacion, ServicioInicializacion>();
         servicios.AddScoped<IServicioProductos, ServicioProductos>();
+        servicios.AddScoped<IServicioBusquedaProductos,
+            ServicioBusquedaProductos>();
         servicios.AddScoped<IServicioMantenimientoProductos,
             ServicioMantenimientoProductos>();
         servicios.AddScoped<IServicioCatalogos, ServicioCatalogos>();
         servicios.AddScoped<IServicioInventario, ServicioInventario>();
+        servicios.AddScoped<IServicioConsultaInventario,
+            ServicioConsultaInventario>();
         servicios.AddScoped<IServicioMermas, ServicioMermas>();
         servicios.AddScoped<IServicioAlertasInventario,
             ServicioAlertasInventario>();
