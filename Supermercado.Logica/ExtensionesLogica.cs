@@ -2,6 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Supermercado.Datos;
 using Supermercado.Logica.Dashboards;
 using Supermercado.Logica.Dashboards.Widgets;
+using Supermercado.Logica.DatosDemo;
 using Supermercado.Logica.Finanzas;
 using Supermercado.Logica.Inventario;
 using Supermercado.Logica.Personal;
@@ -60,6 +61,7 @@ public static class ExtensionesLogica
         servicios.AddScoped<IServicioNomina, ServicioNomina>();
         servicios.AddScoped<IServicioDashboard, ServicioDashboard>();
         servicios.AddScoped<IServicioTrm, ServicioTrm>();
+        servicios.AddScoped<IGeneradorDatosDemo, GeneradorDatosDemo>();
 
         // Clientes externos: por defecto no hacen nada. Se reemplazan
         // registrando la implementación real después de este método.
