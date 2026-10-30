@@ -85,4 +85,19 @@ public static class ExtensionesLogica
 
         return servicios;
     }
+
+    public static IServiceCollection AgregarClientesExternos(
+        this IServiceCollection servicios,
+        OpcionesApisExternas? opciones = null,
+        HttpClient? http = null)
+    {
+        servicios.AddSingleton(
+            opciones ?? OpcionesApisExternas.DesdeEntorno());
+        servicios.AddSingleton(http ?? new HttpClient());
+        servicios.AddScoped<ITrmClient, ClienteTrmDatosGov>();
+        servicios.AddScoped<IConsultaCodigoBarras, ClienteCodigoBarrasOff>();
+        servicios.AddScoped<
+            IVerificadorCorreo, ClienteVerificadorCorreoHttp>();
+        return servicios;
+    }
 }
