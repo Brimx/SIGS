@@ -79,8 +79,9 @@ public static class ExtensionesLogica
         servicios.AddScoped<IWidget, VentasPorCategoriaWidget>();
         servicios.AddScoped<IWidget, ArqueoTurnoWidget>();
 
-        // PDF: implementación nula hasta integrar QuestPDF.
-        servicios.AddScoped<IGeneradorTicket, GeneradorTicketNulo>();
+        // Reportes y tickets con QuestPDF
+        servicios.AddScoped<IGeneradorTicket, GeneradorTicketQuestPdf>();
+        servicios.AddScoped<IServicioReportes, ServicioReportesQuestPdf>();
 
         return servicios;
     }

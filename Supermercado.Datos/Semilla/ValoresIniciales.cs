@@ -80,7 +80,15 @@ public static class ValoresIniciales
         Nuevo(ClavesParametro.TrmUltimaCentavos, "0",
             "Última TRM obtenida, en centavos"),
         Nuevo(ClavesParametro.TrmUltimaFecha, "1970-01-01",
-            "Fecha de la última TRM obtenida")
+            "Fecha de la última TRM obtenida"),
+        Nuevo(ClavesParametro.NegocioNombre, "COMPLETAR",
+            "Nombre del negocio que aparece en el ticket"),
+        Nuevo(ClavesParametro.NegocioNit, "COMPLETAR",
+            "NIT del negocio que aparece en el ticket"),
+        Nuevo(ClavesParametro.NegocioDireccion, "COMPLETAR",
+            "Dirección del negocio que aparece en el ticket"),
+        Nuevo(ClavesParametro.NegocioTelefono, "COMPLETAR",
+            "Teléfono del negocio que aparece en el ticket")
     ];
 
     private static Parametro Nuevo(string clave, string valor, string texto)

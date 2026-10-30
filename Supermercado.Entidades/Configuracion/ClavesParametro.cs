@@ -14,4 +14,8 @@ public static class ClavesParametro
     public const string Reintentos = "integraciones.reintentos";
     public const string TrmUltimaCentavos = "integraciones.trm_centavos";
     public const string TrmUltimaFecha = "integraciones.trm_fecha";
+    public const string NegocioNombre = "negocio.nombre";
+    public const string NegocioNit = "negocio.nit";
+    public const string NegocioDireccion = "negocio.direccion";
+    public const string NegocioTelefono = "negocio.telefono";
 }

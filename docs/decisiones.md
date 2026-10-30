@@ -179,3 +179,21 @@
   El margen de la categoría es `Suma(Ingreso) - Suma(Costo)`.
 - **Consecuencias:** el margen refleja fielmente las salidas FEFO y los
   costos de cada lote sin campos calculados redundantes en la base.
+
+## ADR-017: Uso de QuestPDF bajo Licencia Comunitaria
+
+- **Contexto:** RF-17 y RF-22 exigen la exportación de tickets de venta,
+  desprendibles de nómina y reportes de gestión en formato PDF.
+- **Decisión:** se adopta QuestPDF con `LicenseType.Community`. Según
+  los términos consultados (questpdf.com, versión 3.0; resumen por
+  búsqueda, no leído el texto legal completo), la licencia es gratuita
+  para instituciones académicas públicas o sin ánimo de lucro (docencia
+  e investigación), para individuos y organizaciones con ingresos
+  anuales menores a USD 1 000 000, para proyectos con licencia OSI y
+  para aprendizaje o evaluación. Excluye entidades del sector público
+  (salvo escuelas públicas) y empresas que cotizan en bolsa.
+- **Pendiente de verificar:** leer el texto oficial en questpdf.com/license
+  antes de un uso comercial. Si el supermercado real supera el umbral o
+  cambia el tipo de entidad, se requiere licencia de pago.
+- **Consecuencias:** generación fluida y tipada de PDFs en Windows y
+  Linux sin dependencias externas ni navegadores headless.
