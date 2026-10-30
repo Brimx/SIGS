@@ -70,6 +70,12 @@ public static class ExtensionesLogica
         servicios.AddScoped<IWidget, VentasDelDiaWidget>();
         servicios.AddScoped<IWidget, ReabastecimientosPendientesWidget>();
         servicios.AddScoped<IWidget, TrmDelDiaWidget>();
+        servicios.AddScoped<IWidget, IvaGeneradoWidget>();
+        servicios.AddScoped<IWidget, MargenPorCategoriaWidget>();
+        servicios.AddScoped<IWidget, LotesPorVencerWidget>();
+        servicios.AddScoped<IWidget, StockBajoMinimoWidget>();
+        servicios.AddScoped<IWidget, VentasPorCategoriaWidget>();
+        servicios.AddScoped<IWidget, ArqueoTurnoWidget>();
 
         // PDF: implementación nula hasta integrar QuestPDF.
         servicios.AddScoped<IGeneradorTicket, GeneradorTicketNulo>();

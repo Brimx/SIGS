@@ -167,3 +167,15 @@
 - **Consecuencias:** el catálogo se revisa en cada PR que cambie una API
   pública; el anexo no se versiona y sirve para detectar cambios de
   superficie.
+
+## ADR-016: Cálculo del margen de ganancia por categoría
+
+- **Contexto:** el widget de margen por categoría requiere contrastar
+  los ingresos generados con los costos reales de los lotes despachados,
+  evitando usar costos promedio que distorsionen la rentabilidad.
+- **Decisión:** el widget toma las ventas completadas del período y sus
+  movimientos de tipo `Venta`. Por cada movimiento se obtiene el costo
+  real (`Cantidad * Lote.CostoUnitario`) y el ingreso correspondiente.
+  El margen de la categoría es `Suma(Ingreso) - Suma(Costo)`.
+- **Consecuencias:** el margen refleja fielmente las salidas FEFO y los
+  costos de cada lote sin campos calculados redundantes en la base.
