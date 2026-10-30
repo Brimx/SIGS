@@ -16,5 +16,17 @@ public enum AccionAuditoria
     EmpleadoDesactivado,
     GastoRegistrado,
     ParametroCambiado,
-    UsuarioCreado
+    UsuarioCreado,
+    ProductoModificado,
+    PrecioCambiado,
+    CategoriaCreada,
+    CategoriaModificada,
+    ProveedorCreado,
+    ProveedorModificado,
+    CajaCreada,
+    CajaModificada,
+    CargoCreado,
+    CargoModificado,
+    RolCreado,
+    RolModificado
 }

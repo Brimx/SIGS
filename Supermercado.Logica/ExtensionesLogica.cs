@@ -35,6 +35,9 @@ public static class ExtensionesLogica
         servicios.AddScoped<IServicioAutenticacion, ServicioAutenticacion>();
         servicios.AddScoped<IServicioInicializacion, ServicioInicializacion>();
         servicios.AddScoped<IServicioProductos, ServicioProductos>();
+        servicios.AddScoped<IServicioMantenimientoProductos,
+            ServicioMantenimientoProductos>();
+        servicios.AddScoped<IServicioCatalogos, ServicioCatalogos>();
         servicios.AddScoped<IServicioInventario, ServicioInventario>();
         servicios.AddScoped<IServicioMermas, ServicioMermas>();
         servicios.AddScoped<IServicioAlertasInventario,
@@ -44,6 +47,7 @@ public static class ExtensionesLogica
         servicios.AddScoped<IServicioCaja, ServicioCaja>();
         servicios.AddScoped<IServicioVentas, ServicioVentas>();
         servicios.AddScoped<IServicioEmpleados, ServicioEmpleados>();
+        servicios.AddScoped<IServicioEstructura, ServicioEstructura>();
         servicios.AddScoped<IServicioImpuestos, ServicioImpuestos>();
         servicios.AddScoped<IServicioFinanzas, ServicioFinanzas>();
         servicios.AddScoped<IServicioNomina, ServicioNomina>();
@@ -60,7 +64,7 @@ public static class ExtensionesLogica
         servicios.AddScoped<IWidget, ReabastecimientosPendientesWidget>();
         servicios.AddScoped<IWidget, TrmDelDiaWidget>();
 
-        // PDF no disponible en esta iteración: implementación nula hasta integrar QuestPDF.
+        // PDF: implementación nula hasta integrar QuestPDF.
         servicios.AddScoped<IGeneradorTicket, GeneradorTicketNulo>();
 
         return servicios;

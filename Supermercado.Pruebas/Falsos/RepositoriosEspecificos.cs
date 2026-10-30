@@ -57,3 +57,10 @@ public class UsuariosEnMemoria
         => Task.FromResult(
             Datos.FirstOrDefault(u => u.NombreUsuario == nombreUsuario));
 }
+
+public class RolesEnMemoria
+    : RepositorioEnMemoria<Rol>, IRolRepositorio
+{
+    public Task<Rol?> ObtenerPorNombreAsync(string nombre)
+        => Task.FromResult(Datos.FirstOrDefault(r => r.Nombre == nombre));
+}
