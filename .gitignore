@@ -12,6 +12,10 @@
 *.user
 *.userosscache
 *.sln.docstates
+*.git
+*.freebuff
+*.github
+*.idea
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
