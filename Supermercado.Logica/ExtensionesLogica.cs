@@ -33,6 +33,7 @@ public static class ExtensionesLogica
         servicios.AddScoped<IServicioAuditoria, ServicioAuditoria>();
         servicios.AddScoped<IServicioParametros, ServicioParametros>();
         servicios.AddScoped<IServicioAutenticacion, ServicioAutenticacion>();
+        servicios.AddScoped<IServicioUsuarios, ServicioUsuarios>();
         servicios.AddScoped<IServicioInicializacion, ServicioInicializacion>();
         servicios.AddScoped<IServicioProductos, ServicioProductos>();
         servicios.AddScoped<IServicioMantenimientoProductos,

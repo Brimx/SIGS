@@ -28,5 +28,7 @@ public enum AccionAuditoria
     CargoCreado,
     CargoModificado,
     RolCreado,
-    RolModificado
+    RolModificado,
+    UsuarioDesbloqueado,
+    ClaveRestablecida
 }
