@@ -188,6 +188,56 @@ public class WidgetsTests
     }
 
     [Fact]
+    public async Task MargenPorCategoriaWidget_PesadosConvierteYNoDuplicaIngresoPorLote()
+    {
+        var ventas = new VentasEnMemoria();
+        var movs = new MovimientosEnMemoria();
+        var lotes = new LotesEnMemoria();
+        var productos = new ProductosEnMemoria();
+        var categorias = new RepositorioEnMemoria<Categoria>();
+        await categorias.AgregarAsync(new Categoria { Id = 1, Nombre = "Fruver" });
+
+        await productos.AgregarAsync(new ProductoPesado
+        {
+            Id = 1,
+            Nombre = "Manzana",
+            CategoriaId = 1
+        });
+        await lotes.AgregarAsync(new Lote { Id = 1, ProductoId = 1, CostoUnitario = 4000 });
+        await lotes.AgregarAsync(new Lote { Id = 2, ProductoId = 1, CostoUnitario = 6000 });
+
+        var hoy = reloj.GetUtcNow().UtcDateTime;
+        var venta = new Venta { Id = 1, Fecha = hoy };
+        venta.Detalles.Add(new DetalleVenta
+        {
+            ProductoId = 1,
+            Cantidad = 1500,
+            Subtotal = 15000,
+            Iva = 0
+        });
+        venta.AgregarPago(new PagoEfectivo { Monto = 15000 });
+        venta.Cerrar();
+        await ventas.AgregarAsync(venta);
+
+        await movs.AgregarAsync(new MovimientoInventario
+        {
+            ProductoId = 1, LoteId = 1, VentaId = 1,
+            Tipo = TipoMovimiento.Venta, Cantidad = 1000, Fecha = hoy
+        });
+        await movs.AgregarAsync(new MovimientoInventario
+        {
+            ProductoId = 1, LoteId = 2, VentaId = 1,
+            Tipo = TipoMovimiento.Venta, Cantidad = 500, Fecha = hoy
+        });
+
+        var widget = new MargenPorCategoriaWidget(
+            ventas, movs, lotes, productos, categorias, reloj);
+        var punto = Assert.Single((await widget.ObtenerDatosAsync()).Puntos);
+
+        Assert.Equal(8_000, punto.Valor);
+    }
+
+    [Fact]
     public async Task ArqueoTurnoWidget_ConTurnoAbierto_CalculaEsperado()
     {
         var turnos = new TurnosEnMemoria();

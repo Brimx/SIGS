@@ -174,13 +174,12 @@ public class ConsultasLecturaTests
 
         var kardex = await servicio.ObtenerKardexAsync(
             1,
-            fechaBase.AddDays(-1),
+            fechaBase.AddHours(1),
             fechaBase.AddDays(1));
 
-        Assert.Equal(3, kardex.Count);
-        Assert.Equal(50, kardex[0].SaldoPosterior);
-        Assert.Equal(40, kardex[1].SaldoPosterior);
-        Assert.Equal(42, kardex[2].SaldoPosterior);
+        Assert.Equal(2, kardex.Count);
+        Assert.Equal(40, kardex[0].SaldoPosterior);
+        Assert.Equal(42, kardex[1].SaldoPosterior);
     }
 
     [Fact]

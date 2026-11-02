@@ -41,27 +41,31 @@ public class MargenPorCategoriaWidget(
         {
             var movs = await movimientos.ObtenerSalidasDeVentaAsync(v.Id);
 
-            foreach (var m in movs)
+            foreach (var grupoProducto in movs.GroupBy(m => m.ProductoId))
             {
-                if (!todosProductos.TryGetValue(m.ProductoId, out var prod))
+                if (!todosProductos.TryGetValue(grupoProducto.Key, out var prod))
                     continue;
 
                 var nombreCat = todasCategorias.GetValueOrDefault(
                     prod.CategoriaId, "Sin categoría");
 
-                var costoUnitario = todosLotes.TryGetValue(m.LoteId, out var l)
-                    ? l.CostoUnitario
-                    : 0;
-                var costoTotal = m.Cantidad * costoUnitario;
+                decimal costoTotal = 0;
+                foreach (var movimiento in grupoProducto)
+                {
+                    var costoUnitario = todosLotes.TryGetValue(movimiento.LoteId, out var lote)
+                        ? lote.CostoUnitario
+                        : 0;
+                    var costo = (decimal)movimiento.Cantidad * costoUnitario;
+                    costoTotal += prod is ProductoPesado
+                        ? decimal.Round(costo / ProductoPesado.GramosPorKilo, 0, MidpointRounding.AwayFromZero)
+                        : costo;
+                }
 
-                // Detalle correspondiente para obtener ingreso neto sin IVA
-                var detalle = v.Detalles
-                    .FirstOrDefault(d => d.ProductoId == m.ProductoId);
-                var ingreso = detalle is not null
-                    ? (detalle.Subtotal - detalle.Iva)
-                    : 0;
+                var ingreso = v.Detalles
+                    .Where(d => d.ProductoId == grupoProducto.Key)
+                    .Sum(d => d.Subtotal - d.Iva);
 
-                var margen = ingreso - costoTotal;
+                var margen = checked(ingreso - checked((long)costoTotal));
 
                 margenPorCategoria[nombreCat] =
                     margenPorCategoria.GetValueOrDefault(nombreCat, 0) + margen;

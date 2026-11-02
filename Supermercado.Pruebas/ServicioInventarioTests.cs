@@ -93,15 +93,16 @@ public class ServicioInventarioTests
     }
 
     [Fact]
-    public async Task Traslado_MueveAunqueElLoteEsteVencido()
+    public async Task Traslado_NoMueveLoteVencido()
     {
         var e = new EscenarioInventario();
         var bodega = e.AgregarBodega(1, 10, -1, 5);
 
-        await e.Servicio.TrasladarAEstanteAsync(1, 3);
+        await Assert.ThrowsAsync<StockInsuficienteException>(
+            () => e.Servicio.TrasladarAEstanteAsync(1, 3));
 
-        Assert.Equal(2, bodega.Cantidad);
-        Assert.Equal(3, e.Estante.Datos.Single().Cantidad);
+        Assert.Equal(5, bodega.Cantidad);
+        Assert.Empty(e.Estante.Datos);
     }
 
     [Fact]
@@ -137,5 +138,19 @@ public class ServicioInventarioTests
 
         await Assert.ThrowsAsync<ValidacionException>(
             () => e.Servicio.RegistrarIngresoAsync(lote, 5));
+    }
+
+    [Fact]
+    public async Task Merma_LoteDeOtroProducto_NoDescuentaStock()
+    {
+        var e = new EscenarioInventario();
+        var fila = e.AgregarEstante(1, 10, 20, 5);
+
+        await Assert.ThrowsAsync<ValidacionException>(
+            () => e.Servicio.RegistrarMermaAsync(
+                2, 10, UbicacionStock.Estante, 1, "producto equivocado"));
+
+        Assert.Equal(5, fila.Cantidad);
+        Assert.Empty(e.Mermas.Datos);
     }
 }

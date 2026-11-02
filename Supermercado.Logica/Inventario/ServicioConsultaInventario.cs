@@ -83,7 +83,16 @@ public class ServicioConsultaInventario(
             .ToList();
 
         var resultado = new List<KardexMovimiento>();
-        var saldo = 0;
+        var saldo = todosMovimientos
+            .Where(m => m.ProductoId == productoId && m.Fecha < desde)
+            .Sum(m => m.Tipo switch
+            {
+                TipoMovimiento.Ingreso or TipoMovimiento.Devolucion
+                    => m.Cantidad,
+                TipoMovimiento.Venta or TipoMovimiento.Merma
+                    => -m.Cantidad,
+                _ => 0
+            });
 
         foreach (var m in filtrados)
         {

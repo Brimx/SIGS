@@ -54,7 +54,7 @@ public class ServicioInventario(
 
     public async Task TrasladarAEstanteAsync(int productoId, int cantidad)
     {
-        var filas = await OrdenarAsyncSinFiltrarVencidosAsync(
+        var filas = await OrdenarAsyncParaTrasladoAsync(
             bodega, productoId);
 
         foreach (var (origen, tomar) in PlanDeSalida.Repartir(filas, cantidad))
@@ -92,6 +92,8 @@ public class ServicioInventario(
         string motivo)
     {
         var fila = await BuscarFilaAsync(loteId, ubicacion);
+        if (fila.ProductoId != productoId)
+            throw new ValidacionException("El lote pertenece a otro producto.");
         fila.Disminuir(cantidad);
 
         await mermas.AgregarAsync(new Merma
@@ -126,12 +128,13 @@ public class ServicioInventario(
         return estrategia.Ordenar(filas, reloj.HoyLocal()).ToList();
     }
 
-    private async Task<List<T>> OrdenarAsyncSinFiltrarVencidosAsync<T>(
+    private async Task<List<T>> OrdenarAsyncParaTrasladoAsync<T>(
         IStockRepositorio<T> repositorio,
         int productoId) where T : StockLote
     {
         var filas = await repositorio.ObtenerPorProductoAsync(productoId);
         return filas
+            .Where(s => !s.Lote.EstaVencido(reloj.HoyLocal()))
             .OrderBy(s => s.Lote.FechaVencimiento)
             .ToList();
     }
