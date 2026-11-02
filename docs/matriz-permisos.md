@@ -4,29 +4,37 @@ Los permisos son banderas (`[Flags]`) dentro de `Rol`. `ISesionActual.Exigir(per
 
 ## Roles × permisos
 
-| Permiso | Admin | Gerente | Cajero | Bodeguero |
-| :-- | :--: | :--: | :--: | :--: |
-| `Vender` | ✅ | | ✅ | |
-| `AnularVenta` | ✅ | ✅ | | |
-| `AbrirCerrarTurno` | ✅ | | ✅ | |
-| `VerInventario` | ✅ | ✅ | | ✅ |
-| `AjustarInventario` | ✅ | | | ✅ |
-| `Reabastecer` | ✅ | | | ✅ |
-| `GestionarProductos` | ✅ | | | ✅ |
-| `VerReportes` | ✅ | ✅ | | |
-| `VerFinanzas` | ✅ | ✅ | | |
-| `GestionarPersonal` | ✅ | ✅ | | |
-| `GestionarRoles` | ✅ | | | |
-| `GestionarTarifas` | ✅ | | | |
-| `VerAuditoria` | ✅ | | | |
-| `GestionarClientes` | ✅ | ✅ | ✅ | |
+| Permiso | Admin | Gerente | Supervisor | Cajero | Bodeguero | Compras | Contador | Soporte |
+| :-- | :--: | :--: | :--: | :--: | :--: | :--: | :--: | :--: |
+| `Vender` | ✅ | | ✅ | ✅ | | | | |
+| `AnularVenta` | ✅ | ✅ | ✅ | | | | | |
+| `AbrirCerrarTurno` | ✅ | | ✅ | ✅ | | | | |
+| `VerInventario` | ✅ | ✅ | ✅ | | ✅ | ✅ | | |
+| `AjustarInventario` | ✅ | | | | ✅ | | | |
+| `Reabastecer` | ✅ | | | | ✅ | ✅ | | |
+| `GestionarProductos` | ✅ | | | | ✅ | ✅ | | |
+| `VerReportes` | ✅ | ✅ | | | | | ✅ | |
+| `VerFinanzas` | ✅ | ✅ | | | | | ✅ | |
+| `GestionarPersonal` | ✅ | ✅ | | | | | | |
+| `GestionarRoles` | ✅ | | | | | | | |
+| `GestionarTarifas` | ✅ | | | | | | | |
+| `VerAuditoria` | ✅ | | | | | | ✅ | ✅ |
+| `GestionarClientes` | ✅ | ✅ | ✅ | ✅ | | | | |
+| `AutorizarOperacionPos` | ✅ | ✅ | ✅ | | | | | |
+| `GestionarCompras` | ✅ | | | | | ✅ | | |
+| `GestionarContabilidad` | ✅ | | | | | | ✅ | |
+| `MantenimientoSistema` | ✅ | | | | | | | ✅ |
 
 Notas:
 
 - **Admin** recibe todos los permisos por composición de `Enum.GetValues<Permiso>()`.
-- **Gerente** puede crear y editar empleados, pero **no** cambiar roles ni tarifas: eso queda en Admin.
-- **Cajero** no ve inventario ni finanzas; solo vende y maneja su turno.
-- **Bodeguero** gestiona productos e inventario, pero no vende ni ve finanzas.
+- **Gerente** supervisa la operación de la tienda, finanzas y personal, sin alterar configuración de roles o impuestos.
+- **Supervisor** apoya la línea de cajas, autoriza cancelaciones/anulaciones y verifica clientes e inventario.
+- **Cajero** vende, redime fidelización y realiza apertura/arqueo ciego de su turno.
+- **Bodeguero** gestiona existencias, lotes, mermas y reabastecimiento estante ↔ bodega.
+- **Compras** gestiona relación con proveedores, órdenes de compra y reabastecimiento.
+- **Contador** audita números, reportes fiscales DIAN, arqueos y comprobantes de nómina.
+- **Soporte** realiza mantenimiento, respaldos y revisión técnica de logs de auditoría.
 
 > **Hallazgo abierto (P0):** un Gerente con `GestionarPersonal` puede crear un empleado con rol Admin, crearle usuario o restablecer la clave del Admin. La autorización debe impedir asignar un rol con más permisos que el del actor y restablecer claves de rango superior. Ver [`pendientes-ui.md`](pendientes-ui.md).
 

@@ -18,4 +18,8 @@ public enum Permiso : long
     GestionarTarifas = 1 << 11,
     VerAuditoria = 1 << 12,
     GestionarClientes = 1 << 13,
+    AutorizarOperacionPos = 1 << 14,
+    GestionarCompras = 1 << 15,
+    GestionarContabilidad = 1 << 16,
+    MantenimientoSistema = 1 << 17,
 }

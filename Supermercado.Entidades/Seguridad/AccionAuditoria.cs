@@ -33,5 +33,8 @@ public enum AccionAuditoria
     ClaveRestablecida,
     RespaldoBaseDatos,
     ClienteCreado,
-    ClienteModificado
+    ClienteModificado,
+    AutorizacionSupervisor,
+    RetiroCajaRegistrado,
+    VentaSuspendida
 }

@@ -21,6 +21,14 @@ public static class ValoresIniciales
             Permisos = Permiso.VerReportes | Permiso.VerFinanzas
                 | Permiso.GestionarPersonal | Permiso.VerInventario
                 | Permiso.AnularVenta | Permiso.GestionarClientes
+                | Permiso.AutorizarOperacionPos
+        },
+        new Rol
+        {
+            Nombre = NombresRol.Supervisor,
+            Permisos = Permiso.Vender | Permiso.AnularVenta
+                | Permiso.AbrirCerrarTurno | Permiso.AutorizarOperacionPos
+                | Permiso.VerInventario | Permiso.GestionarClientes
         },
         new Rol
         {
@@ -33,6 +41,23 @@ public static class ValoresIniciales
             Nombre = NombresRol.Bodeguero,
             Permisos = Permiso.VerInventario | Permiso.AjustarInventario
                 | Permiso.Reabastecer | Permiso.GestionarProductos
+        },
+        new Rol
+        {
+            Nombre = NombresRol.Compras,
+            Permisos = Permiso.VerInventario | Permiso.Reabastecer
+                | Permiso.GestionarProductos | Permiso.GestionarCompras
+        },
+        new Rol
+        {
+            Nombre = NombresRol.Contador,
+            Permisos = Permiso.VerFinanzas | Permiso.VerReportes
+                | Permiso.GestionarContabilidad | Permiso.VerAuditoria
+        },
+        new Rol
+        {
+            Nombre = NombresRol.Soporte,
+            Permisos = Permiso.MantenimientoSistema | Permiso.VerAuditoria
         }
     ];
 
@@ -40,8 +65,12 @@ public static class ValoresIniciales
     [
         new Cargo { Nombre = NombresRol.Admin },
         new Cargo { Nombre = NombresRol.Gerente },
+        new Cargo { Nombre = NombresRol.Supervisor },
         new Cargo { Nombre = NombresRol.Cajero },
-        new Cargo { Nombre = NombresRol.Bodeguero }
+        new Cargo { Nombre = NombresRol.Bodeguero },
+        new Cargo { Nombre = NombresRol.Compras },
+        new Cargo { Nombre = NombresRol.Contador },
+        new Cargo { Nombre = NombresRol.Soporte }
     ];
 
     public static IEnumerable<Impuesto> Impuestos() =>

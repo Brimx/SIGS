@@ -56,6 +56,53 @@ public class ServicioAutenticacion(
 
     public void CerrarSesion() => sesion.Cerrar();
 
+    public async Task<Empleado> ValidarSupervisorAsync(
+        string nombreUsuario,
+        string pinOClave,
+        Permiso permisoExigido)
+    {
+        if (string.IsNullOrWhiteSpace(nombreUsuario))
+            throw new ValidacionException("Debe ingresar el usuario del supervisor.");
+        if (string.IsNullOrWhiteSpace(pinOClave))
+            throw new ValidacionException("Debe ingresar la credencial o PIN del supervisor.");
+
+        var usuario = await usuarios.ObtenerPorNombreAsync(nombreUsuario);
+        if (usuario is null || usuario.Bloqueado)
+            throw new CredencialesInvalidasException();
+
+        if (usuario.Empleado?.Activo != true)
+            throw new CredencialesInvalidasException();
+
+        var esValido = (usuario.HashPin is not null && hasheador.Verificar(pinOClave, usuario.HashPin))
+            || hasheador.Verificar(pinOClave, usuario.HashClave);
+
+        if (!esValido)
+        {
+            await auditoria.RegistrarAsync(
+                AccionAuditoria.InicioSesionFallido,
+                nameof(Usuario),
+                usuario.Id,
+                $"Intento fallido de autorización supervisor: {nombreUsuario}");
+            await trabajo.GuardarAsync();
+            throw new CredencialesInvalidasException();
+        }
+
+        var empleado = usuario.Empleado;
+        if (empleado.Rol is null || !empleado.Rol.Tiene(permisoExigido))
+        {
+            throw new AccesoDenegadoException(permisoExigido);
+        }
+
+        await auditoria.RegistrarAsync(
+            AccionAuditoria.AutorizacionSupervisor,
+            nameof(Empleado),
+            empleado.Id,
+            $"Supervisor {nombreUsuario} autorizó operación que exige {permisoExigido}");
+        await trabajo.GuardarAsync();
+
+        return empleado;
+    }
+
     private async Task AutenticarAsync(
         string nombre,
         string secreto,
