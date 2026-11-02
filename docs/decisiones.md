@@ -270,10 +270,10 @@
   consulta `ventas.ObtenerPorClaveIdempotenciaAsync` antes de iniciar la venta. Si ya
   existe una venta completada con dicha clave, la devuelve de inmediato sin descontar
   stock ni alterar saldos de puntos nuevamente.
-- **Estado (2026-11-02):** implementación incompleta. El índice de
-  `Venta.ClaveIdempotencia` es **no único** (`ConfiguracionModelo.cs:51`), así que dos
-  solicitudes concurrentes todavía pueden crear dos ventas con la misma clave. Pendiente:
-  índice único filtrado, captura de `DbUpdateException` y alcance de la clave por empleado.
+- **Estado (2026-11-02):** el índice es único; SQLite permite múltiples valores `NULL`.
+  El arranque comprueba duplicados históricos antes de crear el índice. La GUI conserva
+  la misma clave al reintentar el mismo cobro. Si una carrera pierde el insert, falla sin
+  duplicar la venta y el siguiente reintento encuentra la venta existente.
 
 ## ADR-022: Documento Equivalente Electrónico POS DIAN (Resolución 000165 de 2023)
 
@@ -372,4 +372,3 @@
     - `ImpresorTicketPdf`: exportación vectorial en 80mm vía QuestPDF (`IGeneradorTicket`).
 - **Consecuencias:** interfaz visualmente pulida, sin dependencias del sistema operativo, con contraste WCAG 2.2 AA/AAA,
   fidelidad del 100% contra la tirilla de Tiendas Ara y la Resolución DIAN 000165 de 2023.
-

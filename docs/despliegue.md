@@ -177,7 +177,7 @@ El pipeline falla si el build tiene errores o alguna prueba falla. Las advertenc
 ## 6. Checklist de entrega
 
 - [ ] `dotnet build` sin errores ni advertencias.
-- [ ] `dotnet test` en verde (302).
+- [ ] `dotnet test` en verde (329).
 - [ ] CI en verde en `main`.
 - [ ] Base creada y semilla aplicada en un equipo limpio.
 - [ ] Login de admin con cambio de clave obligatorio.

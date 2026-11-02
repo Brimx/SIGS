@@ -5,10 +5,10 @@
 | Métrica | Valor |
 | :-- | :-- |
 | framework | xUnit 2.9 |
-| pruebas | **302** |
-| resultado | 302 correctas, 0 fallidas, 0 omitidas |
-| duración | ~4 s |
-| cobertura | reglas de negocio, servicios, PDF e integración SQLite; no GUI |
+| pruebas | **329** |
+| resultado | 329 correctas, 0 fallidas, 0 omitidas |
+| duración | ~1 s (última ejecución local) |
+| cobertura | reglas de negocio, servicios, GUI, PDF e integración SQLite |
 
 Comando:
 

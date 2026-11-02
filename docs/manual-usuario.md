@@ -1,6 +1,6 @@
 # Manual de usuario y operación
 
-> **Estado de la interfaz.** La lógica, la persistencia y las reglas de negocio están implementadas y cubiertas por pruebas, con hallazgos de seguridad y concurrencia abiertos (ver [`pendientes-ui.md`](pendientes-ui.md)). La GUI Avalonia es un shell inicial: todavía no expone las pantallas. Este manual describe el flujo operativo previsto y las reglas que los servicios ya aplican; cuando una pantalla no exista, la operación se ejecuta desde la capa de lógica o desde pruebas.
+> **Estado de la interfaz.** La GUI Avalonia ya incluye login, POS, turnos, clientes, inventario y dashboard. Gestión de personal, configuración de integraciones y respaldos todavía no tienen pantalla. Hay hallazgos de seguridad e integridad abiertos (ver [`pendientes-ui.md`](pendientes-ui.md)); no distribuya ni opere con dinero real hasta cerrarlos. Este manual describe la operación de los módulos disponibles y, donde no hay pantalla, las reglas del servicio.
 
 ## 1. Primer arranque
 

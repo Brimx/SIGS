@@ -44,7 +44,7 @@ Fuente: propuesta del proyecto (§6 y §7). Estado a la fecha de esta entrega.
 | Disponibilidad sin internet | **Parcial** | Una terminal funciona sin red; varias cajas requieren PostgreSQL local (documentado) |
 | Rendimiento < 1 s por venta | **No medido** | Sin prueba de carga; el camino es una sola transacción |
 | Seguridad de credenciales | **Parcial** | BCrypt, bloqueo y permisos en lógica; pendientes escalada de privilegios, `PagoPuntos` fabricado y credenciales demo (ver [`pendientes-ui.md`](pendientes-ui.md)) |
-| Mantenibilidad | **Implementado** | Capas, contratos, 302 pruebas, documentación |
+| Mantenibilidad | **Implementado** | Capas, contratos, 329 pruebas, documentación |
 | Integridad del dinero | **Implementado** | `long` en pesos y puntos básicos enteros |
 | Portabilidad Windows/Linux | **Implementado** | .NET 10, Avalonia, rutas por `LocalApplicationData` |
 | Trazabilidad | **Implementado** | Auditoría de login, anulación, inventario, gastos, tarifas y parámetros |

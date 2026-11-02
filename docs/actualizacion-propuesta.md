@@ -10,7 +10,7 @@ Criterio: reflejar lo que el repositorio realmente hace hoy, marcar con claridad
 
 Aplicación de escritorio en C# (.NET 10) que integra el núcleo operativo de un supermercado mediano: punto de venta con turnos de caja, inventario dividido entre estante y bodega con control de lotes y vencimientos, clientes con programa de puntos, gestión de personal con roles y permisos, cálculo parametrizable de impuestos y nómina, dashboards modulares, reportes PDF y consumo tolerante a fallos de APIs externas. La generación local del Documento Equivalente POS de la DIAN (CUDE, XML UBL 2.1 y QR) está **en progreso**; todavía no hay transmisión, firma ni certificación.
 
-La entrega actual incluye el dominio, la persistencia, la lógica de negocio y **302 pruebas en verde** (~4 s); la interfaz Avalonia es un shell inicial y las pantallas están en construcción. La base de datos es SQLite en esta versión. La arquitectura objetivo para producción —PostgreSQL local como fuente de verdad y Supabase/Neon como réplica de una sola vía— está documentada. El patrón Outbox ya escribe los eventos en la misma transacción local; el despliegue del receptor y el proceso programado siguen pendientes. La concurrencia entre varias cajas se reconoce como deuda técnica con una mitigación planificada (`xmin`, transacciones con bloqueo y reintentos acotados).
+La entrega actual incluye el dominio, la persistencia, la lógica de negocio y **329 pruebas en verde**; la interfaz Avalonia ya tiene módulos POS, turnos, inventario, clientes y dashboard, aunque quedan hallazgos de seguridad e integridad documentados en [`pendientes-ui.md`](pendientes-ui.md). La base de datos es SQLite en esta versión. La arquitectura objetivo para producción —PostgreSQL local como fuente de verdad y Supabase/Neon como réplica de una sola vía— está documentada. El patrón Outbox ya escribe los eventos en la misma transacción local; el despliegue del receptor y el proceso programado siguen pendientes. La concurrencia entre varias cajas se reconoce como deuda técnica.
 
 ---
 
@@ -38,7 +38,7 @@ La entrega actual incluye el dominio, la persistencia, la lógica de negocio y *
 - Consumo asíncrono de APIs externas con timeout, reintentos y respaldo local.
 - Patrón Outbox para replicar ventas y anulaciones hacia Supabase/Neon.
 - Generación local del Documento Equivalente POS DIAN: CUDE, XML UBL 2.1 y cadena QR.
-- Persistencia SQLite, semilla idempotente y 302 pruebas.
+- Persistencia SQLite, semilla idempotente y 329 pruebas.
 
 ### Estado de la interfaz y los reportes
 
@@ -128,7 +128,7 @@ La unidad de trabajo garantiza atomicidad dentro de un proceso, pero no serializ
 | DIAN | Generación propia | — | CUDE (SHA-384), XML UBL 2.1 y QR. **Generación local en progreso; sin transmisión.** |
 | Réplica | Outbox + REST | — | `EventoOutbox` + `ClienteSincronizacionSupabase`. **Implementado el despacho; falta despliegue y programación.** |
 | Datos de prueba | Bogus | — | Generación de datos para demos. **No incorporado.** |
-| Pruebas | xUnit + coverlet | 2.9.3 / 10.1.0 | Pruebas de reglas de negocio e integración SQLite. **302 pruebas en verde.** |
+| Pruebas | xUnit + coverlet | 2.9.3 / 10.1.0 | Pruebas de reglas de negocio, GUI e integración SQLite. **329 pruebas en verde.** |
 | CI | GitHub Actions | — | Build y test en cada push a `main`. **Implementado.** |
 | Versionamiento | Git y GitHub | — | Ramas por módulo y revisión de cambios. **Implementado.** |
 
@@ -148,7 +148,7 @@ La unidad de trabajo garantiza atomicidad dentro de un proceso, pero no serializ
 - **Autorización:** permisos verificados en la capa de lógica; la interfaz solo oculta lo que el usuario no puede usar, pero no es la defensa.
 - **Concurrencia:** una transacción por caso de uso. La concurrencia multi-terminal queda como deuda técnica documentada, no resuelta.
 - **Integraciones:** timeout, reintentos con espera progresiva (200 ms → 2 s) y respaldo local; una falla de API no bloquea la venta.
-- **Pruebas:** cobertura de impuestos, arqueo, nómina, stock, FEFO, seguridad, parámetros, TRM, clientes/puntos, validaciones, PDF e integración SQLite; 302 pruebas en verde.
+- **Pruebas:** cobertura de impuestos, arqueo, nómina, stock, FEFO, seguridad, parámetros, TRM, clientes/puntos, GUI, PDF e integración SQLite; 329 pruebas en verde.
 - **Calidad:** nombres descriptivos, métodos cortos, una responsabilidad por clase, sin lógica de negocio en la GUI y build sin advertencias.
 
 ---
@@ -253,7 +253,7 @@ Base embebida sin servidor para una terminal. TPH, índices únicos y `SaveChang
 | Biblioteca | Uso | Estado |
 | :-- | :-- | :-- |
 | BCrypt.Net-Next 4.2 | Hash de claves y PIN | Implementado |
-| xUnit 2.9 + coverlet | 302 pruebas de reglas e integración | Implementado |
+| xUnit 2.9 + coverlet | 329 pruebas de reglas, GUI e integración | Implementado |
 | CommunityToolkit.Mvvm 8.4 | MVVM en Avalonia | Implementado en el shell |
 | QuestPDF | Tickets, nómina y reportes PDF | Implementado |
 | LiveCharts2 | Gráficas de dashboards | Pendiente |

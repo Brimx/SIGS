@@ -137,7 +137,7 @@ erDiagram
         int ClienteId FK "nulo = consumidor final"
         int PuntosGanados
         int PuntosRedimidos
-        string ClaveIdempotencia "no único"
+        string ClaveIdempotencia "único cuando no nulo"
         string DocumentoAdquirente
         string NombreAdquirente
         string Cude
@@ -342,7 +342,7 @@ erDiagram
 2. **Sin token de concurrencia:** no hay `xmin` ni `RowVersion` en stock, venta ni turno.
 3. **Sin índice parcial de turno abierto:** la regla “una caja, un turno abierto” se valida en `ServicioCaja`, no en la base.
 4. **`Venta.TurnoCajaId` sin navegación:** se guarda el identificador, pero no hay FK configurada.
-5. **`Venta.ClaveIdempotencia` sin índice único:** dos solicitudes concurrentes pueden duplicar la clave (ADR-021).
+5. **`Venta.ClaveIdempotencia`** tiene índice único; el arranque detecta claves duplicadas previas y no las borra automáticamente (ADR-021).
 6. **DIAN sin transmisión:** los campos `Cude`, `XmlUbl` y `CadenaQr` se generan localmente; no hay firma ni envío.
 7. **SQLite no impone longitudes ni tipos.** El esquema objetivo de PostgreSQL está en [`diccionario-datos.md`](diccionario-datos.md).
 

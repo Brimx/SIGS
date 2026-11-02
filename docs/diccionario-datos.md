@@ -161,7 +161,7 @@ Misma estructura; se separan para que el compilador y el esquema impidan mezclar
 | `ClienteId` | INTEGER | `integer` | No | FK `Clientes` (Restrict); nulo = consumidor final |
 | `PuntosGanados` | INTEGER | `integer` | Sí | Puntos acreditados por esta venta |
 | `PuntosRedimidos` | INTEGER | `integer` | Sí | Puntos gastados en esta venta |
-| `ClaveIdempotencia` | TEXT | `text` | No | Evita el doble cobro; índice **no único** (ADR-021) |
+| `ClaveIdempotencia` | TEXT | `text` | No | Evita el doble cobro; índice único (valores `NULL` múltiples, ADR-021) |
 | `DocumentoAdquirente` | TEXT | `text` | Sí | Documento DIAN; por defecto `222222222222` |
 | `NombreAdquirente` | TEXT | `text` | Sí | Por defecto `CONSUMIDOR FINAL`; solo lleva datos del cliente con autorización |
 | `Cude` | TEXT | `text` | No | Código Único de Documento Equivalente (SHA-384) |
@@ -424,7 +424,7 @@ TPH para `Iva` y `Retencion`.
 | `Roles` | `Nombre` | Sí |
 | `Parametros` | `Clave` | Sí |
 | `Widgets` | `(EmpleadoId, WidgetId)` | Sí |
-| `Ventas` | `ClaveIdempotencia` | **No** (pendiente, ADR-021) |
+| `Ventas` | `ClaveIdempotencia` | **Sí** (ADR-021) |
 | `EventosOutbox` | `(Procesado, Id)` | No |
 
 Todas las claves foráneas usan `Restrict` y los índices de FK que EF crea por convención no son únicos.
@@ -464,7 +464,7 @@ Todas las claves foráneas usan `Restrict` y los índices de FK que EF crea por 
 Documentadas, no implementadas en esta entrega:
 
 - Sin migración incremental para `Clientes`, `EventosOutbox`, los campos DIAN ni las columnas de puntos en `Ventas`: `Inicial` se genera desde el modelo, así que bases anteriores deben recrearse (ADR-018, ADR-022).
-- `Venta.ClaveIdempotencia` tiene índice **no único**: dos solicitudes concurrentes pueden duplicar la clave (ADR-021).
+- `Venta.ClaveIdempotencia` tiene índice único; las bases con duplicados históricos requieren revisión antes de iniciar.
 - Sin token de concurrencia (`xmin` en PostgreSQL) en `StockLote`, `Venta` ni `TurnoCaja`.
 - Sin índice único parcial que garantice un solo turno abierto por caja; hoy se valida en la lógica.
 - Los campos `Cude`, `CadenaQr` y `XmlUbl` se generan localmente; no hay transmisión ni firma DIAN.
