@@ -19,6 +19,7 @@ Los permisos son banderas (`[Flags]`) dentro de `Rol`. `ISesionActual.Exigir(per
 | `GestionarRoles` | ✅ | | | |
 | `GestionarTarifas` | ✅ | | | |
 | `VerAuditoria` | ✅ | | | |
+| `GestionarClientes` | ✅ | ✅ | ✅ | |
 
 Notas:
 
@@ -26,6 +27,8 @@ Notas:
 - **Gerente** puede crear y editar empleados, pero **no** cambiar roles ni tarifas: eso queda en Admin.
 - **Cajero** no ve inventario ni finanzas; solo vende y maneja su turno.
 - **Bodeguero** gestiona productos e inventario, pero no vende ni ve finanzas.
+
+> **Hallazgo abierto (P0):** un Gerente con `GestionarPersonal` puede crear un empleado con rol Admin, crearle usuario o restablecer la clave del Admin. La autorización debe impedir asignar un rol con más permisos que el del actor y restablecer claves de rango superior. Ver [`pendientes-ui.md`](pendientes-ui.md).
 
 ## Permiso exigido por operación
 
@@ -43,6 +46,10 @@ Notas:
 | `ServicioProductos` | `RegistrarAsync` | `GestionarProductos` | `AccesoDenegado` |
 | `ServicioProductos` | `RegistrarIngresoLoteAsync` | `GestionarProductos` | `AccesoDenegado` |
 | `ServicioProductos` | `BuscarPorCodigoBarrasAsync` / `ConsultarExternoAsync` | Ninguno | — |
+| `ServicioMantenimientoProductos` | `EditarAsync` / `CambiarPrecioAsync` / `ActivarAsync` / `DesactivarAsync` | `GestionarProductos` | `AccesoDenegado` |
+| `ServicioCatalogos` | `CrearCategoriaAsync` / `EditarCategoriaAsync` / `CrearProveedorAsync` / `EditarProveedorAsync` | `GestionarProductos` | `AccesoDenegado` |
+| `ServicioBusquedaProductos` | `BuscarPorNombreAsync` | Ninguno | — |
+| `ServicioConsultaInventario` | `ObtenerStockAsync` / `ObtenerKardexAsync` | `VerInventario` | `AccesoDenegado` |
 | `ServicioInventario` | `DescontarVentaAsync` / `ReintegrarVentaAsync` | Invocado por ventas; no exige permiso propio | — |
 | `ServicioInventario` | `TrasladarAEstanteAsync` / `RegistrarIngresoAsync` | Invocado por reabastecimiento/productos | — |
 | `ServicioMermas` | `RegistrarAsync` | `AjustarInventario` | `AccesoDenegado` |
@@ -56,6 +63,12 @@ Notas:
 | `ServicioImpuestos` | `ObtenerActivosAsync` | Ninguno | — |
 | `ServicioImpuestos` | `CambiarTarifaAsync` | `GestionarTarifas` | `AccesoDenegado` |
 | `ServicioNomina` | `CalcularAsync` | `GestionarPersonal` | `AccesoDenegado` |
+| `ServicioUsuarios` | `CrearAsync` / `RestablecerClaveAsync` / `DesbloquearAsync` | `GestionarPersonal` | `AccesoDenegado` |
+| `ServicioEstructura` | `CrearCargoAsync` / `EditarCargoAsync` / `CrearRolAsync` / `EditarRolAsync` | `GestionarPersonal`; roles además `GestionarRoles` | `AccesoDenegado` |
+| `ServicioConsultaAuditoria` | `ObtenerAsync` | `VerAuditoria` | `AccesoDenegado` |
+| `ServicioRespaldo` | `CrearRespaldoAsync` | `GestionarRoles` | `AccesoDenegado` |
+| `ServicioReportesQuestPdf` | `GenerarDesprendibleNominaAsync` / `GenerarReporteVentasAsync` / `GenerarReporteInventarioAsync` / `GenerarReporteArqueoAsync` | `GestionarPersonal` / `VerReportes` / `VerInventario` / `AbrirCerrarTurno` | `AccesoDenegado` |
+| `ServicioDian` | `EmitirDocumentoPosAsync` / `ConsultarEstadoResolucionAsync` | Invocado por ventas; no exige permiso propio | — |
 | `ServicioDashboard` | `ObtenerDisponibles` / `ObtenerDisposicionAsync` / `AgregarAsync` / `QuitarAsync` / `ReordenarAsync` | Filtra por `PermisoRequerido` de cada widget | — |
 | `VentasDelDiaWidget` | `ObtenerDatosAsync` | `VerReportes` | No se muestra |
 | `ReabastecimientosPendientesWidget` | `ObtenerDatosAsync` | `VerInventario` | No se muestra |
@@ -77,3 +90,13 @@ Notas:
 2. Asígnelo en `ValoresIniciales` al rol que corresponda.
 3. Llame `sesion.Exigir(Permiso.Nuevo)` al inicio del caso de uso.
 4. Actualice esta matriz y `docs/diccionario-datos.md`.
+
+### Clientes y puntos
+
+| Servicio | Método | Permiso | Excepción si falta |
+| :-- | :-- | :-- | :-- |
+| `ServicioClientes` | `CrearAsync` / `EditarAsync` / `DesactivarAsync` / `ObtenerTodosAsync` | `GestionarClientes` | `AccesoDenegado` |
+| `ServicioClientes` | `BuscarPorDocumentoAsync` | `Vender` o `GestionarClientes` | `AccesoDenegado` |
+| `ServicioVentas` | `RegistrarVentaAsync` con `ClienteId` / `PuntosARedimir` | `Vender` | `AccesoDenegado` |
+
+La semilla solo inserta roles faltantes: una base creada antes de `GestionarClientes` debe añadirlo a Gerente y Cajero desde la gestión de roles.

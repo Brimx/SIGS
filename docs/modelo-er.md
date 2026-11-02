@@ -109,6 +109,7 @@ erDiagram
     TurnoCaja ||--o{ Venta : registra
     Venta ||--|{ DetalleVenta : contiene
     Venta ||--o{ Pago : cobra
+    Cliente |o--o{ Venta : "compra (opcional)"
     Producto ||--o{ DetalleVenta : vendido
 
     Caja {
@@ -133,6 +134,31 @@ erDiagram
         int TurnoCajaId
         smallint Estado
         string MotivoAnulacion
+        int ClienteId FK "nulo = consumidor final"
+        int PuntosGanados
+        int PuntosRedimidos
+        string ClaveIdempotencia "no único"
+        string DocumentoAdquirente
+        string NombreAdquirente
+        string Cude
+        string CadenaQr
+        string PrefijoDian
+        long ConsecutivoDian
+        datetime FechaValidacionDian
+        string XmlUbl
+    }
+    Cliente {
+        int Id PK
+        string Documento "único"
+        string Nombres
+        string Apellidos
+        string Telefono
+        string Correo
+        bool Activo
+        int PuntosAcumulados
+        bool AutorizaTratamientoDatos
+        datetime FechaAutorizacion
+        string TerminalAutorizacion
     }
     DetalleVenta {
         int Id PK
@@ -151,10 +177,11 @@ erDiagram
         string Discriminator
         string UltimosDigitos
         string Referencia
+        int Puntos "solo PagoPuntos"
     }
 ```
 
-`Pago` es TPH: `PagoEfectivo`, `PagoTarjeta` y `PagoTransferencia` comparten la tabla `Pago`. `DetalleVenta` congela precio, subtotal y puntos básicos de IVA al momento de la venta.
+`Pago` es TPH: `PagoEfectivo`, `PagoTarjeta`, `PagoTransferencia` y `PagoPuntos` comparten la tabla `Pago`. `DetalleVenta` congela precio, subtotal y puntos básicos de IVA al momento de la venta.
 
 ## Personal y seguridad
 
@@ -278,13 +305,34 @@ erDiagram
 
 `(EmpleadoId, WidgetId)` es único. `Parametro` es una tabla clave-valor sin FK; su significado vive en `ClavesParametro`.
 
+## Sincronización
+
+```mermaid
+erDiagram
+    EventoOutbox {
+        int Id PK
+        string TipoEvento
+        string EntidadId
+        string PayloadJson
+        bool Procesado
+        datetime FechaProcesado
+        int Reintentos
+        string UltimoError
+        datetime FechaCreacion
+    }
+```
+
+`EventosOutbox` no tiene FK: guarda el evento serializado y el identificador de la entidad local. `(Procesado, Id)` ordena los pendientes; no es un índice único.
+
 ## Correspondencia entidad → tabla
 
 | Entidad | Tabla | TPH |
 | :-- | :-- | :-- |
 | `Producto` / `ProductoUnitario` / `ProductoPesado` | `Productos` | Sí |
 | `Impuesto` / `Iva` / `Retencion` | `Impuestos` | Sí |
-| `Pago` / `PagoEfectivo` / `PagoTarjeta` / `PagoTransferencia` | `Pago` | Sí |
+| `Pago` / `PagoEfectivo` / `PagoTarjeta` / `PagoTransferencia` / `PagoPuntos` | `Pago` | Sí |
+| `Cliente` | `Clientes` | No |
+| `EventoOutbox` | `EventosOutbox` | No |
 | `StockEstante` / `StockBodega` | Tablas propias | No |
 | Resto de entidades | Nombre del DbSet | No |
 
@@ -294,6 +342,8 @@ erDiagram
 2. **Sin token de concurrencia:** no hay `xmin` ni `RowVersion` en stock, venta ni turno.
 3. **Sin índice parcial de turno abierto:** la regla “una caja, un turno abierto” se valida en `ServicioCaja`, no en la base.
 4. **`Venta.TurnoCajaId` sin navegación:** se guarda el identificador, pero no hay FK configurada.
-5. **SQLite no impone longitudes ni tipos.** El esquema objetivo de PostgreSQL está en [`diccionario-datos.md`](diccionario-datos.md).
+5. **`Venta.ClaveIdempotencia` sin índice único:** dos solicitudes concurrentes pueden duplicar la clave (ADR-021).
+6. **DIAN sin transmisión:** los campos `Cude`, `XmlUbl` y `CadenaQr` se generan localmente; no hay firma ni envío.
+7. **SQLite no impone longitudes ni tipos.** El esquema objetivo de PostgreSQL está en [`diccionario-datos.md`](diccionario-datos.md).
 
 Estas brechas son deuda técnica documentada; las tres primeras se abordan en la migración a PostgreSQL descrita en [`arquitectura.md`](arquitectura.md#concurrencia-multi-terminal-deuda-técnica).

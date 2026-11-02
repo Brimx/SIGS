@@ -16,16 +16,19 @@ Inventario curado de módulos, tipos, contratos, constructores, métodos públic
 
 | Módulo | Carpetas | Servicios |
 | :-- | :-- | :-- |
-| Productos | `Entidades/Productos`, `Logica/Productos` | `ServicioProductos` |
-| Inventario | `Entidades/Inventario`, `Logica/Inventario` | `ServicioInventario`, `ServicioMermas`, `ServicioAlertasInventario`, `ServicioReabastecimiento` |
+| Productos | `Entidades/Productos`, `Logica/Productos` | `ServicioProductos`, `ServicioBusquedaProductos`, `ServicioMantenimientoProductos`, `ServicioCatalogos` |
+| Inventario | `Entidades/Inventario`, `Logica/Inventario` | `ServicioInventario`, `ServicioConsultaInventario`, `ServicioMermas`, `ServicioAlertasInventario`, `ServicioReabastecimiento` |
 | Ventas y caja | `Entidades/Ventas`, `Logica/Ventas` | `ServicioVentas`, `ServicioCaja` |
-| Personal | `Entidades/Personal`, `Logica/Personal` | `ServicioEmpleados` |
+| Clientes | `Entidades/Clientes`, `Logica/Clientes` | `ServicioClientes` |
+| Personal | `Entidades/Personal`, `Logica/Personal` | `ServicioEmpleados`, `ServicioUsuarios`, `ServicioEstructura` |
 | Finanzas | `Entidades/Finanzas`, `Logica/Finanzas` | `ServicioFinanzas`, `ServicioImpuestos`, `ServicioNomina` |
-| Seguridad | `Entidades/Seguridad`, `Logica/Seguridad` | `ServicioAutenticacion`, `ServicioParametros`, `ServicioAuditoria`, `ServicioInicializacion`, `SesionActual` |
-| Dashboards | `Entidades/Dashboards`, `Logica/Dashboards` | `ServicioDashboard` + 3 widgets |
-| Integraciones | `Logica/Servicios` | `ServicioTrm` y clientes nulos |
-| Reportes | `Logica/Reportes` | `GeneradorTicketNulo` |
-| Comunes | `Entidades/Base`, `Logica/Comunes` | `Dinero`, `ExtensionesReloj` |
+| Seguridad | `Entidades/Seguridad`, `Logica/Seguridad` | `ServicioAutenticacion`, `ServicioParametros`, `ServicioAuditoria`, `ServicioConsultaAuditoria`, `ServicioInicializacion`, `SesionActual` |
+| Dashboards | `Entidades/Dashboards`, `Logica/Dashboards` | `ServicioDashboard` + 9 widgets |
+| DIAN | `Logica/Dian` | `ServicioDian`, `GeneradorCudeDian`, `GeneradorUblDian` |
+| Sincronización | `Entidades/Sincronizacion`, `Logica/Servicios` | `ClienteSincronizacionSupabase`, `EventoOutbox` |
+| Integraciones | `Logica/Servicios` | `ServicioTrm`, `ClienteTrmDatosGov`, `ClienteCodigoBarrasOff` |
+| Reportes | `Logica/Reportes` | `GeneradorTicketQuestPdf`, `ServicioReportesQuestPdf` |
+| Comunes | `Entidades/Base`, `Logica/Comunes` | `Dinero`, `ExtensionesReloj`, `Validador`, `TraductorExcepciones` |
 
 ## 3. Entidades
 
@@ -65,7 +68,9 @@ Inventario curado de módulos, tipos, contratos, constructores, métodos públic
 
 | Tipo | Responsabilidad | Miembros clave |
 | :-- | :-- | :-- |
-| `Venta` | Venta con detalles, pagos y estado | `AgregarProducto`, `AgregarPago`, `Cerrar`, `Anular`; `Total`, `TotalIva`, `Cambio`, `EfectivoNeto` |
+| `Venta` | Venta con detalles, pagos, estado y datos legales/DIAN | `AgregarProducto`, `AgregarPago`, `Cerrar`, `Anular`; `Total`, `TotalIva`, `Cambio`, `EfectivoNeto`; `ClienteId`, `PuntosGanados`, `PuntosRedimidos`, `ClaveIdempotencia`; `DocumentoAdquirente`, `NombreAdquirente`, `Cude`, `CadenaQr`, `PrefijoDian`, `ConsecutivoDian`, `XmlUbl` |
+| `Cliente` | Cliente del programa de puntos y Habeas Data | `Documento`, `PuntosAcumulados`, `AcumularPuntos`, `RedimirPuntos`, `RevertirVenta`, `AutorizarHabeasData`, `RevocarHabeasData`; `AutorizaTratamientoDatos` |
+| `PagoPuntos` | Pago con puntos | `Puntos`; `Monto` = puntos × valor del punto |
 | `DetalleVenta` | Línea con precio e IVA congelados | `Crear(Producto, int)` |
 | `Pago` (abstracta) | Pago y validación base | `Monto`, `Metodo`, `Validar` |
 | `PagoEfectivo` (sealed) | Pago en efectivo | `Metodo = "Efectivo"` |
@@ -101,13 +106,13 @@ Inventario curado de módulos, tipos, contratos, constructores, métodos públic
 
 | Tipo | Responsabilidad | Miembros clave |
 | :-- | :-- | :-- |
-| `Permiso` (`[Flags] long`) | Permisos del sistema | `Vender`, `AnularVenta`, `AbrirCerrarTurno`, `VerInventario`, `AjustarInventario`, `Reabastecer`, `GestionarProductos`, `VerReportes`, `VerFinanzas`, `GestionarPersonal`, `GestionarRoles`, `GestionarTarifas`, `VerAuditoria` |
-| `AccionAuditoria` | Acciones auditables | 15 valores (login, venta anulada, gasto, parámetro, etc.) |
+| `Permiso` (`[Flags] long`) | Permisos del sistema | `Vender`, `AnularVenta`, `AbrirCerrarTurno`, `VerInventario`, `AjustarInventario`, `Reabastecer`, `GestionarProductos`, `VerReportes`, `VerFinanzas`, `GestionarPersonal`, `GestionarRoles`, `GestionarTarifas`, `VerAuditoria`, `GestionarClientes` |
+| `AccionAuditoria` | Acciones auditables | 32 valores (login, venta anulada, gasto, parámetro, cliente, catálogos, respaldo, etc.) |
 | `RegistroAuditoria` | Entrada de auditoría | `Fecha`, `EmpleadoId`, `Accion`, `Entidad`, `EntidadId`, `Detalle` |
 | `IntentoAcceso` | Intento de login/PIN | `NombreUsuario`, `Exitoso`, `UsoPin` |
 | `Parametro` | Valor operativo editable | `Clave`, `Valor`, `Descripcion` |
 | `ConfiguracionWidget` | Disposición de dashboard | `EmpleadoId`, `WidgetId`, `Posicion`, `Visible` |
-| `ClavesParametro` (estática) | Claves de parámetros | 12 constantes documentadas en el diccionario |
+| `ClavesParametro` (estática) | Claves de parámetros | 38 constantes documentadas en el diccionario (seguridad, nómina, integraciones, puntos, DIAN y negocio) |
 
 ### Excepciones
 
@@ -134,7 +139,9 @@ Inventario curado de módulos, tipos, contratos, constructores, métodos públic
 | `ILoteRepositorio` | `LoteRepositorio` | `ObtenerPorVencerAsync` |
 | `IStockRepositorio<T>` | `StockRepositorio<T>` | `ObtenerPorProductoAsync`, `ObtenerPorLoteAsync`, `ObtenerTotalesPorProductoAsync` |
 | `IMovimientoRepositorio` | `MovimientoRepositorio` | `ObtenerSalidasDeVentaAsync` |
-| `IVentaRepositorio` | `VentaRepositorio` | `ObtenerPorTurnoAsync`, `ObtenerPorRangoAsync` |
+| `IVentaRepositorio` | `VentaRepositorio` | `ObtenerPorTurnoAsync`, `ObtenerPorRangoAsync`, `ObtenerPorClaveIdempotenciaAsync` |
+| `IClienteRepositorio` | `ClienteRepositorio` | `ObtenerPorDocumentoAsync` |
+| `IEventoOutboxRepositorio` | `EventoOutboxRepositorio` | `ObtenerPendientesAsync(limite)` |
 | `ITurnoCajaRepositorio` | `TurnoCajaRepositorio` | `ObtenerAbiertoPorEmpleadoAsync`, `ObtenerAbiertoPorCajaAsync` |
 | `IUsuarioRepositorio` | `UsuarioRepositorio` | `ObtenerPorNombreAsync` (incluye `Empleado.Rol`) |
 | `IRolRepositorio` | `RolRepositorio` | `ObtenerPorNombreAsync` |
@@ -158,7 +165,9 @@ Inventario curado de módulos, tipos, contratos, constructores, métodos públic
 | `Repositorio<T>` | CRUD EF; `Actualizar` marca la entidad |
 | `UnidadDeTrabajo` | `SaveChangesAsync` como única transacción del caso de uso |
 
-Repositorios específicos: `ProductoRepositorio`, `LoteRepositorio`, `StockRepositorio<T>`, `MovimientoRepositorio`, `VentaRepositorio`, `TurnoCajaRepositorio`, `UsuarioRepositorio`, `RolRepositorio`, `ParametroRepositorio`, `GastoRepositorio`, `ReabastecimientoRepositorio`, `ConfiguracionWidgetRepositorio`.
+Repositorios específicos: `ProductoRepositorio`, `LoteRepositorio`, `StockRepositorio<T>`, `MovimientoRepositorio`, `VentaRepositorio`, `TurnoCajaRepositorio`, `ClienteRepositorio`, `EventoOutboxRepositorio`, `UsuarioRepositorio`, `RolRepositorio`, `ParametroRepositorio`, `GastoRepositorio`, `ReabastecimientoRepositorio`, `ConfiguracionWidgetRepositorio`.
+
+`SigsDbContext` incluye `Clientes` y `EventosOutbox`; `ConfiguracionModelo` mantiene el índice **no único** de `Venta.ClaveIdempotencia` y el índice `(Procesado, Id)` del Outbox.
 
 ## 6. Capa Lógica
 
@@ -200,7 +209,8 @@ Repositorios específicos: `ProductoRepositorio`, `LoteRepositorio`, `StockRepos
 
 | Clase | Constructor | Métodos públicos | Permiso / excepciones |
 | :-- | :-- | :-- | :-- |
-| `ServicioVentas` | `IProductoRepositorio`, `IVentaRepositorio`, `ITurnoCajaRepositorio`, `IServicioInventario`, `IServicioAuditoria`, `ISesionActual`, `IUnidadDeTrabajo`, `TimeProvider` | `RegistrarVentaAsync(SolicitudVenta)`, `AnularVentaAsync(ventaId, motivo)` | `Vender` / `AnularVenta`; `TurnoInvalido`, `VentaInvalida` |
+| `ServicioClientes` | `IClienteRepositorio`, `IServicioAuditoria`, `ISesionActual`, `IUnidadDeTrabajo` | `CrearAsync`, `EditarAsync`, `DesactivarAsync`, `BuscarPorDocumentoAsync`, `ObtenerTodosAsync` | `GestionarClientes` (buscar: o `Vender`); valida con `Validador` |
+| `ServicioVentas` | `IProductoRepositorio`, `IVentaRepositorio`, `ITurnoCajaRepositorio`, `IServicioInventario`, `IClienteRepositorio`, `IServicioParametros`, `IServicioAuditoria`, `ISesionActual`, `IUnidadDeTrabajo`, `TimeProvider`, `IEventoOutboxRepositorio?`, `IServicioDian?` | `RegistrarVentaAsync(SolicitudVenta)`, `AnularVentaAsync(ventaId, motivo)` | `Vender` / `AnularVenta`; `TurnoInvalido`, `VentaInvalida`; idempotencia, puntos, Habeas Data y emisión DIAN local |
 | `ServicioCaja` | `ITurnoCajaRepositorio`, `IVentaRepositorio`, `IRepositorio<Caja>`, `IServicioParametros`, `IServicioAuditoria`, `ISesionActual`, `IUnidadDeTrabajo`, `TimeProvider` | `AbrirTurnoAsync`, `CerrarTurnoAsync`, `ObtenerTurnoActualAsync` | `AbrirCerrarTurno`; valida caja existente y activa; devuelve `ResultadoArqueo` |
 
 ### Finanzas
@@ -224,11 +234,24 @@ Repositorios específicos: `ProductoRepositorio`, `LoteRepositorio`, `StockRepos
 
 | Clase | Constructor | Métodos públicos | Notas |
 | :-- | :-- | :-- | :-- |
-| `ServicioTrm` | `ITrmClient`, `IServicioParametros`, `TimeProvider` | `ObtenerAsync(ct)` | Timeout, reintentos con espera 200 ms → 2 s y respaldo atómico |
-| `ClienteTrmNoConfigurado` | — | `ObtenerAsync` | Lanza `ServicioNoConfiguradoException("TRM")` |
-| `ConsultaCodigoBarrasNula` | — | `ConsultarAsync` | Devuelve `null` |
-| `VerificadorCorreoNulo` | — | `VerificarAsync` | Devuelve `false` |
-| `GeneradorTicketNulo` | — | `GenerarPdfAsync` | Devuelve `byte[]` vacío |
+| `ServicioTrm` | `ITrmClient`, `IServicioParametros`, `TimeProvider` | `ObtenerAsync(ct)` | Timeout, reintentos con espera 200 ms → 2 s, respaldo atómico e interruptor `trm_habilitada` |
+| `ClienteTrmDatosGov` | `HttpClient`, `IServicioParametros`, `OpcionesApisExternas` | `ObtenerAsync` | Activo por defecto contra datos.gov.co; `ClienteTrmNoConfigurado` si se apaga |
+| `ClienteCodigoBarrasOff` | `HttpClient`, `IServicioParametros`, `OpcionesApisExternas` | `ConsultarAsync` | Activo por defecto contra Open Food Facts; `ConsultaCodigoBarrasNula` si se apaga |
+| `ClienteVerificadorCorreoHttp` | `HttpClient`, `OpcionesApisExternas` | `VerificarAsync` | Solo se registra con `SIGS_EMAIL_VERIFIER_URL` |
+| `ClienteSincronizacionSupabase` | `HttpClient`, `IEventoOutboxRepositorio`, `IServicioParametros`, `OpcionesApisExternas`, `IUnidadDeTrabajo`, `TimeProvider` | `SincronizarPendientesAsync(ct)` | Despacha Outbox por REST; no hay proceso programado |
+| `GeneradorTicketQuestPdf` | `IServicioParametros` | `GenerarPdfAsync(venta)` | Ticket POS de 80 mm con datos DIAN si existen |
+| `ServicioReportesQuestPdf` | `ISesionActual` | `GenerarDesprendibleNominaAsync`, `GenerarReporteVentasAsync` | Exige `GestionarPersonal` o `VerReportes` |
+| `GeneradorTicketNulo` | — | `GenerarPdfAsync` | Devuelve `byte[]` vacío; queda para pruebas |
+
+### Clientes, DIAN y sincronización
+
+| Clase | Constructor | Métodos públicos | Notas |
+| :-- | :-- | :-- | :-- |
+| `ServicioClientes` | `IClienteRepositorio`, `IServicioAuditoria`, `ISesionActual`, `IUnidadDeTrabajo` | `CrearAsync`, `EditarAsync`, `DesactivarAsync`, `BuscarPorDocumentoAsync`, `ObtenerTodosAsync` | `GestionarClientes`; buscar también con `Vender` |
+| `ServicioDian` | `IServicioParametros`, `TimeProvider` | `EmitirDocumentoPosAsync`, `ConsultarEstadoResolucionAsync` | Genera CUDE/UBL/QR local; no transmite ni firma |
+| `GeneradorCudeDian` (estática) | — | `CalcularCude`, `GenerarCadenaQr` | SHA-384; catálogo VPFE |
+| `GeneradorUblDian` (estática) | — | `GenerarXml` | UBL 2.1, perfil Documento Equivalente POS |
+| `EventoOutbox` | — | `Crear`, `MarcarProcesado`, `RegistrarFallo` | Se escribe en la misma transacción de la venta |
 
 ### Comunes
 
@@ -241,7 +264,13 @@ Repositorios específicos: `ProductoRepositorio`, `LoteRepositorio`, `StockRepos
 
 | Record | Campos | Uso |
 | :-- | :-- | :-- |
-| `SolicitudVenta` | `IReadOnlyList<LineaVenta> Lineas`, `IReadOnlyList<Pago> Pagos` | Entrada de `RegistrarVentaAsync` |
+| `SolicitudVenta` | `Lineas`, `Pagos`, `int? ClienteId`, `int PuntosARedimir`, `string? ClaveIdempotencia` | Entrada de `RegistrarVentaAsync` |
+| `ResultadoEmisionDian` | `Cude`, `CadenaQr`, `Prefijo`, `Consecutivo`, `FechaValidacion`, `XmlUbl` | Salida de `EmitirDocumentoPosAsync` |
+| `EstadoResolucionDian` | `Numero`, `Prefijo`, `VigenciaHasta`, `RangoDesde/Hasta`, `SiguienteConsecutivo`, alertas y folios | Estado de la resolución |
+| `ResultadoCodigoBalanza` | `EsCodigoBalanza`, `Prefijo`, `Plu`, `Gramos`, `CodigoOriginal` | Parseo EAN-13 de balanza |
+| `FactorConversionUnidad` | `UnidadOrigen`, `UnidadDestino`, `Factor` | Conversión de unidades de compra |
+| `Validador` (estática, `Logica/Comunes`) | `EsNombreValido`, `EsDocumentoValido`, `EsNitValido`, `EsTelefonoValido`, `EsCorreoValido`, `Exigir*` | Reglas de formato compartidas con la UI |
+| `ExtensionesParametros.ObtenerBoolAsync` | Interruptores de parámetros | Falta el parámetro → valor por defecto |
 | `LineaVenta` | `CodigoBarras`, `Cantidad` | Línea solicitada |
 | `ResultadoArqueo` | `Esperado`, `Contado`, `Diferencia`, `DentroDeTolerancia` | Salida del cierre de turno |
 | `ResumenFinanciero` | `Ingresos`, `Egresos`, `IvaGenerado`, `Margen` | Resumen de finanzas |
@@ -264,7 +293,9 @@ Repositorios específicos: `ProductoRepositorio`, `LoteRepositorio`, `StockRepos
 | `ServicioAutenticacion.LongitudMinimaPin` | `4` | `Logica/Seguridad` |
 | `ServicioInicializacion.UsuarioAdministrador` | `"admin"` | `Logica/Seguridad` |
 | `NombresRol.*` | `Admin`, `Gerente`, `Cajero`, `Bodeguero` | `Entidades/Personal` |
-| `ClavesParametro.*` | 12 claves | `Entidades/Configuracion` |
+| `ClavesParametro.*` | 38 claves | `Entidades/Configuracion` |
+| `GeneradorCudeDian.UrlCatalogoVpfe` | `https://catalogo-vpfe.dian.gov.co/...` | `Logica/Dian` |
+| `ConversorUnidades.Bulto50Kg` / `Arroba` / `Libra` / `Kilo` / `Gramo` | Factores de compra | `Logica/Productos` |
 
 ## 9. Inyección de dependencias
 
@@ -274,11 +305,11 @@ Repositorios específicos: `ProductoRepositorio`, `LoteRepositorio`, `StockRepos
 | :-- | :-- |
 | **Singleton** | `TimeProvider.System`, `ISesionActual → SesionActual`, `IHasheadorClave → HasheadorBCrypt` |
 | **Scoped** | `SigsDbContext`, `IRepositorio<> → Repositorio<>`, `IStockRepositorio<> → StockRepositorio<>`, `IUnidadDeTrabajo → UnidadDeTrabajo`, `IInicializadorBaseDatos → InicializadorBaseDatos`, todos los repositorios específicos |
-| **Scoped (lógica)** | `IServicioAuditoria`, `IServicioParametros`, `IServicioAutenticacion`, `IServicioInicializacion`, `IServicioProductos`, `IServicioInventario`, `IServicioMermas`, `IServicioAlertasInventario`, `IServicioReabastecimiento`, `IServicioCaja`, `IServicioVentas`, `IServicioEmpleados`, `IServicioImpuestos`, `IServicioFinanzas`, `IServicioNomina`, `IServicioDashboard`, `IServicioTrm`, `IEstrategiaSalida` |
-| **Scoped (externos)** | `ITrmClient → ClienteTrmNoConfigurado`, `IConsultaCodigoBarras → ConsultaCodigoBarrasNula`, `IVerificadorCorreo → VerificadorCorreoNulo`, `IGeneradorTicket → GeneradorTicketNulo` |
-| **Widgets** | `IWidget → VentasDelDiaWidget`, `ReabastecimientosPendientesWidget`, `TrmDelDiaWidget` |
+| **Scoped (lógica)** | `IServicioAuditoria`, `IServicioConsultaAuditoria`, `IServicioParametros`, `IServicioAutenticacion`, `IServicioUsuarios`, `IServicioInicializacion`, `IServicioProductos`, `IServicioBusquedaProductos`, `IServicioMantenimientoProductos`, `IServicioCatalogos`, `IServicioInventario`, `IServicioConsultaInventario`, `IServicioMermas`, `IServicioAlertasInventario`, `IServicioReabastecimiento`, `IServicioCaja`, `IServicioVentas`, `IServicioClientes`, `IServicioEmpleados`, `IServicioEstructura`, `IServicioImpuestos`, `IServicioFinanzas`, `IServicioNomina`, `IServicioDashboard`, `IServicioTrm`, `IServicioDian`, `IServicioSincronizacionRemota`, `IEstrategiaSalida` |
+| **Scoped (externos)** | `ITrmClient → ClienteTrmDatosGov` (o `ClienteTrmNoConfigurado` si se apaga), `IConsultaCodigoBarras → ClienteCodigoBarrasOff` (o `ConsultaCodigoBarrasNula`), `IVerificadorCorreo → VerificadorCorreoNulo` (o `ClienteVerificadorCorreoHttp`), `IGeneradorTicket → GeneradorTicketQuestPdf`, `IServicioReportes → ServicioReportesQuestPdf` |
+| **Widgets** | `IWidget → VentasDelDiaWidget`, `ReabastecimientosPendientesWidget`, `TrmDelDiaWidget`, `IvaGeneradoWidget`, `MargenPorCategoriaWidget`, `LotesPorVencerWidget`, `StockBajoMinimoWidget`, `VentasPorCategoriaWidget`, `ArqueoTurnoWidget` |
 
-Para reemplazar un cliente externo, registre la implementación real **después** de `AgregarLogica()`. La GUI no debe registrar `SigsDbContext` ni repositorios.
+`AgregarLogica()` registra primero los clientes nulos y luego `AgregarClientesExternos()`, que añade TRM y código de barras reales si las URLs están activas. Para reemplazar un cliente, registre otra implementación **después** de `AgregarLogica()`; el contenedor toma la última inscripción. La GUI no debe registrar `SigsDbContext` ni repositorios.
 
 ## 10. GUI
 
@@ -310,6 +341,14 @@ La GUI todavía no consume la lógica. El punto de conexión previsto es `servic
 | `ServicioParametrosTests` | Permiso, auditoría, respaldo, parámetro faltante |
 | `ServicioFinanzasTests` | Permiso y auditoría de gastos |
 | `ServicioTrmTests` | Respaldo, reintentos y ausencia total |
+| `ValidadorTests` | Formato de nombres, documento, NIT, teléfono y correo |
+| `ClientesPuntosTests` | Acumulación, redención, anulación, permisos y alta |
+| `ApisPorDefectoTests` | APIs activas y apagables por entorno o parámetro |
+| `ClientesSqliteTests` | Persistencia de `Cliente`, índice único y TPH de `PagoPuntos` |
+| `EventoOutboxSqliteTests` | Outbox e idempotencia contra SQLite |
+| `OutboxYSincronizacionTests` | Payload, despacho y reintentos del Outbox |
+| `ReportesPdfTests` | Ticket, desprendible y reporte PDF |
+| `FlujoPuntaAPuntaSqliteTests` | Flujo completo contra archivo SQLite temporal |
 
 Falsos en `Supermercado.Pruebas/Falsos`: `RepositorioEnMemoria<T>`, `StockEnMemoria<T>`, repositorios específicos, `ParametrosFalsos`, `UnidadDeTrabajoFalsa`, `AuditoriaFalsa`, `HasheadorFalso`, `RelojFijo`, `ClienteTrmFalso`, `EscenarioInventario`.
 

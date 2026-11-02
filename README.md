@@ -13,7 +13,7 @@ Punto de venta, inventario dual estante/bodega, caja con arqueo, personal, finan
 
 [![Estado](https://img.shields.io/badge/estado-en%20desarrollo-orange?style=flat-square)](#estado-del-proyecto)
 [![Build](https://img.shields.io/github/actions/workflow/status/Brimx/SIGS/ci.yml?style=flat-square&label=build)](https://github.com/Brimx/SIGS/actions)
-[![Pruebas](https://img.shields.io/badge/pruebas-86%20passing-brightgreen?style=flat-square)](#pruebas)
+[![Pruebas](https://img.shields.io/badge/pruebas-261%20passing-brightgreen?style=flat-square)](#pruebas)
 [![Licencia](https://img.shields.io/github/license/Brimx/SIGS?style=flat-square&label=licencia)](LICENSE)
 [![Último commit](https://img.shields.io/github/last-commit/Brimx/SIGS?style=flat-square&label=%C3%BAltimo%20commit)](https://github.com/Brimx/SIGS/commits)
 
@@ -45,13 +45,16 @@ El proyecto prioriza tres cosas:
 | :-- | :-- |
 | **Seguridad** | Login con clave o PIN, hash BCrypt, bloqueo por intentos fallidos, permisos por rol y auditoría. |
 | **Personal** | Empleados con cargo, rol, salario y estado; creación de usuario y desactivación con cierre de sesión. |
-| **Productos** | Productos unitarios y pesados, categorías, proveedores, lotes y consulta externa por código de barras. |
+| **Productos** | Productos unitarios y pesados, categorías, proveedores, lotes, consulta externa por código de barras y códigos de balanza GS1. |
 | **Inventario** | Stock separado en estante y bodega, salida FEFO, traslados, ingresos, mermas, alertas y reabastecimiento. |
-| **POS** | Turnos por caja, ventas con pagos mixtos (efectivo, tarjeta, transferencia), cambio y anulación con reembolso. |
+| **POS** | Turnos por caja, ventas con pagos mixtos (efectivo, tarjeta, transferencia y puntos), cambio y anulación con reembolso. |
+| **Clientes** | Registro con documento único, programa de puntos (acumular/redimir) y autorización de tratamiento de datos. |
 | **Caja** | Arqueo con efectivo esperado, diferencia y tolerancia configurable; el cierre descuenta las ventas anuladas. |
 | **Finanzas** | IVA y retenciones parametrizables, gastos, resumen de ingresos/egresos/margen y nómina básica idempotente. |
-| **Dashboards** | Widgets por permiso, disposición por empleado, agregar, quitar y reordenar sin duplicar posiciones. |
-| **Integraciones** | TRM con timeout, reintentos con espera progresiva y respaldo atómico; clientes nulos por defecto. |
+| **Dashboards** | Nueve widgets filtrados por permiso, disposición por empleado, agregar, quitar y reordenar sin duplicar posiciones. |
+| **Reportes** | Ticket POS en PDF con QuestPDF, desprendible de nómina y reporte de ventas. |
+| **DIAN** | Generación local de Documento Equivalente POS: CUDE, XML UBL 2.1 y cadena QR. **En progreso; no transmite a la DIAN.** |
+| **Integraciones** | TRM y código de barras activos por defecto y apagables; patrón Outbox para replicar ventas a Supabase/Neon. |
 
 ## Stack
 
@@ -83,8 +86,8 @@ Detalle completo en [`docs/arquitectura.md`](docs/arquitectura.md) y decisiones 
 
 ### Base de datos: hoy y objetivo
 
-- **Hoy:** SQLite, un archivo por equipo. Sirve para desarrollo y para una sola terminal.
-- **Objetivo de producción:** PostgreSQL local en la red del supermercado como fuente de verdad, con Supabase como réplica de una sola vía para respaldo y consulta remota. **No implementado en esta entrega.**
+- **Hoy:** SQLite, un archivo por equipo. Sirve para desarrollo y para una sola terminal. El patrón Outbox (`EventosOutbox`) ya registra ventas y anulaciones en la misma transacción local, pero **no hay proceso programado** que las despache.
+- **Objetivo de producción:** PostgreSQL local en la red del supermercado como fuente de verdad, con Supabase/Neon como réplica de una sola vía para respaldo y consulta remota. El esquema receptor está en [`docs/supabase-schema.sql`](docs/supabase-schema.sql); **no está desplegado**.
 - **Concurrencia multi-terminal:** deuda técnica conocida. La mitigación planificada (tokens `xmin`, transacciones con bloqueo y reintentos acotados) está documentada en [`docs/decisiones.md`](docs/decisiones.md) y [`docs/despliegue.md`](docs/despliegue.md).
 
 ## Requisitos
@@ -117,7 +120,7 @@ En el primer arranque se siembran roles, cargos, impuestos, una caja y los pará
 dotnet test Supermercado.Pruebas/Supermercado.Pruebas.csproj
 ```
 
-Estado actual: **86 pruebas en verde**. Cubren impuestos, dinero, ventas, FEFO, arqueo, nómina, autenticación, permisos, sesión, parámetros, TRM y validaciones de dominio. Ver [`docs/plan-pruebas.md`](docs/plan-pruebas.md).
+Estado actual: **261 pruebas en verde** (~4 s). Cubren impuestos, dinero, ventas, FEFO, arqueo, nómina, autenticación, permisos, sesión, parámetros, TRM, clientes/puntos, validaciones de formulario, PDF e integración con SQLite. Ver [`docs/plan-pruebas.md`](docs/plan-pruebas.md).
 
 ## Estructura del repositorio
 
@@ -148,7 +151,7 @@ La matriz completa, incluida la verificación por método, está en [`docs/matri
 
 Los valores operativos viven en la tabla `Parametro` y se editan desde la aplicación:
 
-`seguridad.max_intentos`, `inventario.dias_alerta`, `caja.tolerancia_arqueo`, `nomina.*` e `integraciones.*`.
+`seguridad.max_intentos`, `inventario.dias_alerta`, `caja.tolerancia_arqueo`, `nomina.*`, `integraciones.*`, `puntos.*`, `tributario.responsable_iva` y `dian.*`.
 
 Detalle y valores iniciales en [`docs/diccionario-datos.md`](docs/diccionario-datos.md#tabla-parametro).
 
@@ -158,24 +161,26 @@ Detalle y valores iniciales en [`docs/diccionario-datos.md`](docs/diccionario-da
 | :-- | :-- |
 | Dominio y reglas de negocio | Completo |
 | Persistencia SQLite + semilla | Completo |
-| Seguridad, permisos y auditoría | Completo |
-| Pruebas unitarias | Completo (86) |
+| Seguridad, permisos y auditoría | Implementado con hallazgos abiertos (ver [`docs/pendientes-ui.md`](docs/pendientes-ui.md)) |
+| Pruebas | Completo (261) |
 | Documentación | Completo |
 | GUI Avalonia | Shell inicial; pantallas pendientes |
-| PDF con QuestPDF | Pendiente (`GeneradorTicketNulo`) |
-| PostgreSQL local + Supabase | Documentado, no implementado |
+| PDF con QuestPDF | Implementado (ticket, nómina y reporte de ventas) |
+| Clientes y puntos | Implementado en lógica; GUI pendiente |
+| DIAN (Documento Equivalente POS) | **En progreso**: CUDE, UBL y QR locales; sin transmisión ni certificación |
+| PostgreSQL local + Supabase | Objetivo documentado; Outbox implementado, despliegue pendiente |
 | Concurrencia multi-terminal | Deuda técnica documentada |
 
-Requisito por requisito en [`docs/requisitos-trazabilidad.md`](docs/requisitos-trazabilidad.md).
+Requisito por requisito en [`docs/requisitos-trazabilidad.md`](docs/requisitos-trazabilidad.md). Los pendientes que la GUI debe cubrir están en [`docs/pendientes-ui.md`](docs/pendientes-ui.md).
 
 ## Hoja de ruta
 
-1. Pantallas Avalonia de login, POS, inventario y caja.
-2. Ticket PDF real con QuestPDF.
-3. Clientes reales de TRM, código de barras y verificación de correo.
-4. Migraciones EF y proveedor PostgreSQL.
-5. Concurrencia optimista y transacciones con bloqueo para varias cajas.
-6. Réplica de una vía hacia Supabase.
+1. Pantallas Avalonia de login, POS, clientes, inventario y caja.
+2. Cierre del circuito DIAN: transmisión, firma, habilitación y contingencia.
+3. Migraciones EF incrementales y proveedor PostgreSQL.
+4. Concurrencia optimista y transacciones con bloqueo para varias cajas.
+5. Proceso programado de Outbox y despliegue del esquema Supabase/Neon.
+6. Verificación de correo con un proveedor real (Reacher u homólogo).
 
 ## Documentación
 
@@ -193,6 +198,8 @@ Requisito por requisito en [`docs/requisitos-trazabilidad.md`](docs/requisitos-t
 | [Plan de pruebas](docs/plan-pruebas.md) | Cobertura actual y pendientes |
 | [Despliegue](docs/despliegue.md) | Desarrollo con SQLite y producción con PostgreSQL |
 | [Decisiones](docs/decisiones.md) | ADR del proyecto |
+| [Pendientes UI](docs/pendientes-ui.md) | Handoff backend → interfaz y contrato de integración |
+| [Esquema Supabase](docs/supabase-schema.sql) | Tabla Outbox, RLS y vistas para la réplica |
 | [Actualización de la propuesta](docs/actualizacion-propuesta.md) | Texto listo para el documento y las slides |
 
 ## Contribuir

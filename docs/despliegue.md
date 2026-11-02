@@ -1,5 +1,7 @@
 # Despliegue
 
+> **Antes de producción:** el backend tiene hallazgos abiertos de seguridad y concurrencia (ver [`pendientes-ui.md`](pendientes-ui.md) y la auditoría en la memoria del proyecto). Este documento describe el despliegue técnico, no certifica que el sistema esté listo para operar con dinero real.
+
 ## 1. Escenarios
 
 | Escenario | Base de datos | Estado | Uso |
@@ -66,27 +68,41 @@ El ejecutable no requiere el runtime instalado. La base sigue en la carpeta de d
 2. Copie la carpeta publicada al equipo.
 3. Ejecute una vez para crear la base.
 4. Inicialice el administrador con una clave temporal; el sistema obliga a cambiarla.
-5. Configure los parámetros del negocio: intentos, días de alerta, tolerancia, nómina e integraciones.
-6. Programe respaldos del archivo `sigs.db`.
+5. Configure los parámetros del negocio: intentos, días de alerta, tolerancia, nómina, integraciones, puntos, `tributario.responsable_iva` y `dian.*`.
+6. Revise la resolución DIAN: prefijo, rango, vigencia y clave técnica. Si no va a emitir, ponga `dian.habilitado = 0`.
+7. Programe respaldos con `VACUUM INTO` y pruebe la restauración.
+8. Si usa réplica, configure `integraciones.supabase_*` y verifique que el Outbox drena; no comparta `service_role`.
 
 ### Respaldo
 
+No copie el archivo con `cp`/`Copy-Item` mientras la aplicación escribe: una copia a mitad de transacción puede quedar inconsistente. Use la API de respaldo de SQLite (`VACUUM INTO`) o cierre la aplicación.
+
 ```bash
-# Linux
-cp ~/.local/share/SIGS/sigs.db ~/respaldos/sigs-$(date +%F).db
+# Linux, con la aplicación cerrada o desde una conexión de solo lectura
+sqlite3 ~/.local/share/SIGS/sigs.db \
+  "VACUUM INTO '$HOME/respaldos/sigs-$(date +%F).db';"
 ```
 
 ```powershell
-# Windows PowerShell
-Copy-Item "$env:LOCALAPPDATA\SIGS\sigs.db" "$env:USERPROFILE\respaldos\sigs-$(Get-Date -Format yyyy-MM-dd).db"
+# Windows PowerShell, con la aplicación cerrada
+$origen = "$env:LOCALAPPDATA\SIGS\sigs.db"
+$destino = "$env:USERPROFILE\respaldos\sigs-$(Get-Date -Format yyyy-MM-dd).db"
+sqlite3 $origen "VACUUM INTO '$destino';"
 ```
 
 Recomendaciones:
 
-- Copie con la aplicación cerrada o use la copia en caliente de SQLite (`.backup`).
-- Conserve al menos 7 días.
+- Programe el respaldo fuera del horario de caja y verifique que el archivo resultante abre.
+- Conserve al menos 7 días y una copia fuera del equipo.
 - Pruebe la restauración antes de confiar en el respaldo.
 - No sincronice el archivo por Dropbox/OneDrive con la aplicación abierta: puede corromperse.
+- El archivo contiene datos personales y secretos de integración: cífrelo en reposo y restrinja el acceso.
+
+### Secretos y datos personales
+
+- `integraciones.supabase_key`, `integraciones.trm_token`, `integraciones.resend_token` y `dian.clave_tecnica` no van en el repositorio ni en capturas.
+- La base SQLite no está cifrada: si el equipo se comparte, use cifrado de disco y cuentas separadas.
+- En Supabase use solo la clave `anon` en el cliente; **nunca** `service_role`. El esquema de [`supabase-schema.sql`](supabase-schema.sql) debe aplicar RLS de inserción y vistas con `security_invoker=true`.
 
 ## 4. Producción multi-terminal (objetivo)
 
@@ -121,8 +137,9 @@ Una réplica de una vía evita el problema: solo un nodo escribe.
 3. Mapear `DateTime` a `timestamptz`, `DateOnly` a `date` y dinero a `bigint`.
 4. Generar migraciones EF y probar `MigrateAsync` en una base vacía.
 5. Migrar los datos existentes de SQLite si hay historial que conservar.
-6. Configurar la réplica de una vía hacia Supabase (publicación lógica o proceso programado).
-7. Añadir concurrencia (ver siguiente sección) **antes** de habilitar varias cajas.
+6. Desplegar el esquema receptor de [`supabase-schema.sql`](supabase-schema.sql) con RLS de inserción y vistas `security_invoker=true`; programar el drenaje del Outbox.
+7. Configurar la réplica de una vía hacia Supabase (publicación lógica o proceso programado) y usar solo la clave `anon` en el cliente.
+8. Añadir concurrencia (ver siguiente sección) **antes** de habilitar varias cajas.
 
 ### Concurrencia (deuda técnica)
 
@@ -160,12 +177,14 @@ El pipeline falla si el build tiene errores o alguna prueba falla. Las advertenc
 ## 6. Checklist de entrega
 
 - [ ] `dotnet build` sin errores ni advertencias.
-- [ ] `dotnet test` en verde (86+).
+- [ ] `dotnet test` en verde (261).
 - [ ] CI en verde en `main`.
 - [ ] Base creada y semilla aplicada en un equipo limpio.
 - [ ] Login de admin con cambio de clave obligatorio.
-- [ ] Parámetros del negocio cargados.
-- [ ] Respaldo probado y restauración verificada.
+- [ ] Parámetros del negocio cargados (incluidos puntos y `tributario.responsable_iva`).
+- [ ] Resolución DIAN revisada o `dian.habilitado = 0` si no se emitirá.
+- [ ] Respaldo con `VACUUM INTO` probado y restauración verificada.
+- [ ] Outbox configurado y probado si hay réplica; clave `anon`, nunca `service_role`.
 - [ ] Rutas de datos confirmadas en Windows y Linux.
 - [ ] Documentación actualizada (`README`, diccionario, matriz de permisos).
 
@@ -175,7 +194,7 @@ El pipeline falla si el build tiene errores o alguna prueba falla. Las advertenc
 | :-- | :-- | :-- |
 | «database is locked» | Dos procesos sobre el mismo archivo | Cerrar la otra instancia; SQLite no es multi-terminal |
 | La base se recrea vacía | Ruta distinta o carpeta sin permisos | Revisar `RutasDatos` y permisos |
-| `ServicioNoConfiguradoException` | Cliente externo nulo | Registrar la implementación real después de `AgregarLogica()` |
+| `ServicioNoConfiguradoException` | Se pidió una integración con su cliente nulo | Activar la API o registrar la implementación real después de `AgregarLogica()` |
 | `ParametroFaltanteException` | Falta una clave | Insertar el parámetro con `GuardarAsync` |
 | Build falla por SDK | Versión distinta de .NET | Instalar .NET 10 y revisar `global.json` si existe |
 | CI no encuentra el proyecto | Ruta o nombre cambiado | Actualizar `.github/workflows/ci.yml` |

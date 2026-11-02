@@ -5,10 +5,10 @@
 | Métrica | Valor |
 | :-- | :-- |
 | framework | xUnit 2.9 |
-| pruebas | **86** |
-| resultado | 86 correctas, 0 fallidas, 0 omitidas |
-| duración | < 1 s |
-| cobertura | reglas de negocio y servicios; no GUI ni EF real |
+| pruebas | **302** |
+| resultado | 302 correctas, 0 fallidas, 0 omitidas |
+| duración | ~4 s |
+| cobertura | reglas de negocio, servicios, PDF e integración SQLite; no GUI |
 
 Comando:
 
@@ -22,7 +22,8 @@ En CI se ejecuta en `Release` y se publica el `.trx` como artefacto.
 
 - **Unitaria pura:** entidades y cálculos sin dependencias (`Dinero`, `Impuesto`, `Nomina`, `Venta`).
 - **Unitaria con falsos:** servicios con repositorios en memoria, `RelojFijo`, auditoría falsa y unidad de trabajo falsa.
-- **Sin base real:** las pruebas no crean SQLite ni tocan la base del usuario.
+- **Integración SQLite:** archivos temporales para verificar el modelo EF, índices, TPH y el flujo punta a punta; nunca tocan la base del usuario.
+- **PDF:** se genera el documento en memoria y se verifica que sea un PDF válido.
 - **Determinista:** no depende de la hora, del orden ni de internet.
 - **Regresión:** cada bug relevante agrega una prueba que lo reproduce.
 
@@ -37,6 +38,15 @@ En CI se ejecuta en `Release` y se publica el `.trx` como artefacto.
 | `CajaTests` | Apertura, efectivo esperado, anulación y cierre único |
 | `InventarioTests` | FEFO, desempate por lote, vencidos, reparto y stock no negativo |
 | `ServicioInventarioTests` | Descuento, reintegro, traslado, merma, lote de otro producto, ingreso inválido |
+| `ValidadorTests` | Nombres sin números, documento, NIT, teléfono y correo |
+| `ClientesPuntosTests` | Acumulación, redención, rechazos sin efectos, anulación, permisos y alta de clientes |
+| `ApisPorDefectoTests` | APIs activas por defecto, interruptores de entorno y de parámetro |
+| `ClientesSqliteTests` | Persistencia de `Cliente`, índice único y TPH de `PagoPuntos` |
+| `EventoOutboxSqliteTests` | Outbox e idempotencia contra SQLite |
+| `OutboxYSincronizacionTests` | Payload de venta/anulación, despacho y reintentos |
+| `ReportesPdfTests` | Ticket, desprendible de nómina y reporte de ventas |
+| `FlujoPuntaAPuntaSqliteTests` | Venta, stock, outbox y persistencia en un archivo temporal |
+| `DianYBalanzasTests` | Módulo 11 NIT DIAN, parser de balanzas GS1 (prefijo 20-29), conversión de unidades, CUDE SHA-384, XML UBL 2.1, control de resolución DIAN, Habeas Data (consumidor final) y switch régimen tributario |
 | `ServicioVentasTests` | Venta completa, stock insuficiente, permisos, tarjeta, transferencia, doble anulación |
 | `ServicioCajaTests` | Caja inexistente, caja inactiva, tolerancia dentro y fuera |
 | `NominaTests` | Cálculo, tope de auxilio, año/mes inválido, parámetros negativos |
@@ -87,10 +97,10 @@ En CI se ejecuta en `Release` y se publica el `.trx` como artefacto.
 
 | Área | Qué falta | Prioridad |
 | :-- | :-- | :-- |
-| EF Core | Pruebas de integración con SQLite en memoria o archivo temporal | Alta |
-| Modelo | Verificar índices únicos, TPH y `Restrict` contra el modelo real | Alta |
+| Idempotencia | Índice único y prueba de dos solicitudes concurrentes | Alta |
+| DIAN | CUDE/UBL contra el anexo técnico, rango agotado y resolución vencida | Alta |
+| Seguridad | Escalada de privilegios y `PagoPuntos` fabricado (ver `pendientes-ui.md`) | Alta |
 | GUI | Pruebas de ViewModels y flujos de pantalla | Media |
-| PDF | Prueba del ticket cuando se implemente QuestPDF | Media |
 | Concurrencia | Pruebas contra PostgreSQL con dos sesiones y bloqueo | Media (requiere PostgreSQL) |
 | Carga | Venta y descuento de stock < 1 s | Baja |
 | APIs reales | Clientes de TRM, código de barras y correo con servidor simulado | Baja |

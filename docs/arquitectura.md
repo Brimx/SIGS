@@ -67,15 +67,20 @@ servicios.AddScoped<IUnidadDeTrabajo, UnidadDeTrabajo>();
 GUI
  └─ ServicioVentas.RegistrarVentaAsync(SolicitudVenta)
      ├─ sesion.Exigir(Vender)
+     ├─ idempotencia: ventas.ObtenerPorClaveIdempotenciaAsync
      ├─ turnos.ObtenerAbiertoPorEmpleadoAsync
-     ├─ por línea: productos.ObtenerPorCodigoBarrasAsync
+     ├─ por línea: productos.ObtenerPorCodigoBarrasAsync o ParserCodigoBalanza
+     ├─ cliente / puntos / autorización Habeas Data
      ├─ Venta.AgregarProducto / AgregarPago / Cerrar
+     ├─ ServicioDian.EmitirDocumentoPosAsync (CUDE, UBL, QR local)
+     ├─ AplicarPuntos (solo si la venta ya es válida)
      ├─ ventas.AgregarAsync
      ├─ por detalle: ServicioInventario.DescontarVentaAsync
      │   ├─ SalidaFefo (excluye vencidos, ordena por vencimiento y LoteId)
      │   ├─ PlanDeSalida.Repartir
      │   ├─ StockLote.Disminuir
      │   └─ MovimientoInventario(Tipo = Venta, VentaId)
+     ├─ EventoOutbox.Crear("VentaCompletada", …)
      └─ trabajo.GuardarAsync   ← una sola transacción
 ```
 
@@ -144,9 +149,10 @@ ServicioNomina.CalcularAsync(empleadoId, anio, mes)
 
 ### Modelo EF
 
-- **TPH:** `Productos` (unitario/pesado), `Impuestos` (IVA/retención) y `Pago` (efectivo/tarjeta/transferencia) usan una tabla y `Discriminator`.
+- **TPH:** `Productos` (unitario/pesado), `Impuestos` (IVA/retención) y `Pago` (efectivo/tarjeta/transferencia/puntos) usan una tabla y `Discriminator`.
 - **Tablas separadas:** `StockEstante` y `StockBodega` heredan de `StockLote`, que es abstracta y no se mapea.
-- **Índices únicos:** código de barras, lote por producto, lote en cada stock, documento, usuario, rol, clave de parámetro y widget por empleado.
+- **Índices únicos:** código de barras, lote por producto, lote en cada stock, documento de empleado, documento de cliente, usuario, rol, clave de parámetro y widget por empleado.
+- **Índices no únicos:** `Venta.ClaveIdempotencia` (la unicidad está pendiente) y `EventosOutbox (Procesado, Id)`.
 - **Borrado:** todas las FK son `Restrict`. Las ventas se anulan, no se eliminan.
 - **Fechas:** `TimeProvider` inyectado; `SigsDbContext` asigna `FechaCreacion` en `SaveChanges` y `SaveChangesAsync`.
 
@@ -163,6 +169,7 @@ Esto garantiza atomicidad dentro de un proceso, pero **no** serializa lecturas c
 - El hash y el PIN usan BCrypt con salt.
 - El bloqueo cuenta intentos fallidos, incluido el caso de empleado inactivo con usuario existente.
 - La auditoría se escribe en la misma unidad de trabajo que la acción.
+- **Hallazgos abiertos:** la validación de `PagoPuntos`, la escalada de privilegios vía `GestionarPersonal` y la revocación de sesión están documentadas en [`pendientes-ui.md`](pendientes-ui.md). No se consideran cerradas para producción.
 
 ## Dashboards
 
@@ -172,12 +179,17 @@ Esto garantiza atomicidad dentro de un proceso, pero **no** serializa lecturas c
 
 | Interfaz | Implementación por defecto | Reemplazo previsto |
 | :-- | :-- | :-- |
-| `ITrmClient` | `ClienteTrmNoConfigurado` | Cliente HTTP de la TRM |
-| `IConsultaCodigoBarras` | `ConsultaCodigoBarrasNula` | Servicio abierto de productos |
-| `IVerificadorCorreo` | `VerificadorCorreoNulo` | Reacher u homólogo |
-| `IGeneradorTicket` | `GeneradorTicketNulo` | QuestPDF |
+| `ITrmClient` | `ClienteTrmDatosGov` (activo por defecto; `ClienteTrmNoConfigurado` si se apaga) | Otra fuente de TRM |
+| `IConsultaCodigoBarras` | `ClienteCodigoBarrasOff` (activo por defecto; `ConsultaCodigoBarrasNula` si se apaga) | Otro catálogo de productos |
+| `IVerificadorCorreo` | `VerificadorCorreoNulo`; `ClienteVerificadorCorreoHttp` solo con `SIGS_EMAIL_VERIFIER_URL` | Motor abierto pendiente de elegir |
+| `IGeneradorTicket` | `GeneradorTicketQuestPdf` (registrado en DI; `GeneradorTicketNulo` queda para pruebas o despliegues sin PDF) | QuestPDF |
 
-`ServicioTrm` aplica timeout, reintentos con espera progresiva (200 ms, 400 ms, … hasta 2 s) y guarda el respaldo en una sola operación atómica.
+Apagado y URLs: ver ADR-019. `ServicioTrm` aplica timeout, reintentos con espera progresiva (200 ms, 400 ms, … hasta 2 s) y guarda el respaldo en una sola operación atómica.
+
+### DIAN y réplica
+
+- `ServicioDian` genera localmente el Documento Equivalente POS: CUDE con SHA-384, XML UBL 2.1 y cadena QR. **No transmite, no firma y no maneja contingencia**; el consecutivo se avanza en `Parametros`.
+- `EventoOutbox` registra `VentaCompletada` y `VentaAnulada` en la misma transacción local. `ClienteSincronizacionSupabase` los despacha por REST cuando `integraciones.supabase_habilitado` está activo y hay URL/clave. No hay proceso programado ni receptor desplegado.
 
 ## Base de datos y evolución
 
@@ -192,7 +204,7 @@ Bodega ─┘        fuente de verdad                         respaldo / consult
 ```
 
 - **PostgreSQL local** en un equipo del supermercado o un mini-PC/NAS. Todas las terminales se conectan por LAN; no dependen de internet.
-- **Supabase** recibe una copia de una sola vía para respaldo y consulta remota. **Nunca** se sincroniza de vuelta.
+- **Supabase / Neon** recibe una copia de una sola vía vía patrón Outbox (`EventoOutbox` + `ClienteSincronizacionSupabase`). **Nunca** se sincroniza de vuelta.
 - Si se cae el servidor local, se cae la operación: se mitiga con UPS, respaldo y un equipo de respaldo. No se resuelve con sincronización bidireccional.
 
 Esta arquitectura está **documentada como objetivo de producción, no implementada**. El código sigue con SQLite.
@@ -227,6 +239,6 @@ Nada de esto está implementado en esta entrega. Ver ADR-010 en [`decisiones.md`
 
 ## Decisiones relacionadas
 
-- [`decisiones.md`](decisiones.md): ADR-001 a ADR-015.
+- [`decisiones.md`](decisiones.md): ADR-001 a ADR-022.
 - [`despliegue.md`](despliegue.md): escenarios de desarrollo y producción.
 - [`diccionario-datos.md`](diccionario-datos.md): esquema real y mapeo previsto.

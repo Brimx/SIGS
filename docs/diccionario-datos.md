@@ -24,7 +24,9 @@ Convenciones generales:
 | `Reabastecimiento` | `Reabastecimientos` | |
 | `Venta` | `Ventas` | |
 | `DetalleVenta` | `DetalleVenta` | |
-| `Pago` / `PagoEfectivo` / `PagoTarjeta` / `PagoTransferencia` | `Pago` | TPH con `Discriminator` |
+| `Pago` / `PagoEfectivo` / `PagoTarjeta` / `PagoTransferencia` / `PagoPuntos` | `Pago` | TPH con `Discriminator` |
+| `Cliente` | `Clientes` | Único por `Documento` |
+| `EventoOutbox` | `EventosOutbox` | Índice compuesto `(Procesado, Id)` |
 | `Caja` | `Cajas` | |
 | `TurnoCaja` | `Turnos` | FK a `Cajas` y `Empleados` |
 | `Cargo` | `Cargos` | |
@@ -39,7 +41,7 @@ Convenciones generales:
 | `ConfiguracionWidget` | `Widgets` | Único por `(EmpleadoId, WidgetId)` |
 | `Parametro` | `Parametros` | Único por `Clave` |
 
-Total: **25 tablas**.
+Total: **27 tablas**.
 
 ## Productos
 
@@ -156,6 +158,18 @@ Misma estructura; se separan para que el compilador y el esquema impidan mezclar
 | `TurnoCajaId` | INTEGER | `integer` | Sí | Turno que registró la venta |
 | `Estado` | INTEGER | `smallint` | Sí | `Abierta`, `Completada`, `Anulada` |
 | `MotivoAnulacion` | TEXT | `text` | Sí | Vacío si no fue anulada |
+| `ClienteId` | INTEGER | `integer` | No | FK `Clientes` (Restrict); nulo = consumidor final |
+| `PuntosGanados` | INTEGER | `integer` | Sí | Puntos acreditados por esta venta |
+| `PuntosRedimidos` | INTEGER | `integer` | Sí | Puntos gastados en esta venta |
+| `ClaveIdempotencia` | TEXT | `text` | No | Evita el doble cobro; índice **no único** (ADR-021) |
+| `DocumentoAdquirente` | TEXT | `text` | Sí | Documento DIAN; por defecto `222222222222` |
+| `NombreAdquirente` | TEXT | `text` | Sí | Por defecto `CONSUMIDOR FINAL`; solo lleva datos del cliente con autorización |
+| `Cude` | TEXT | `text` | No | Código Único de Documento Equivalente (SHA-384) |
+| `CadenaQr` | TEXT | `text` | No | URL del catálogo VPFE con el CUDE |
+| `PrefijoDian` | TEXT | `text` | No | Prefijo autorizado |
+| `ConsecutivoDian` | INTEGER | `bigint` | Sí | Consecutivo dentro del rango autorizado |
+| `FechaValidacionDian` | TEXT | `timestamptz` | No | Momento de generación local |
+| `XmlUbl` | TEXT | `text` | No | XML UBL 2.1 del documento |
 | `FechaCreacion` | TEXT | `timestamptz` | Sí | |
 
 ### `DetalleVenta`
@@ -174,16 +188,17 @@ Misma estructura; se separan para que el compilador y el esquema impidan mezclar
 
 ### `Pago`
 
-TPH: una sola tabla para los tres métodos.
+TPH: una sola tabla para los cuatro métodos.
 
 | Campo | SQLite | PostgreSQL previsto | Obligatorio | Regla |
 | :-- | :-- | :-- | :--: | :-- |
 | `Id` | INTEGER | `integer identity` | Sí | PK |
 | `VentaId` | INTEGER | `integer` | Sí | FK `Ventas` (Restrict) |
 | `Monto` | INTEGER | `bigint` | Sí | > 0 |
-| `Discriminator` | TEXT | `text` | Sí | `PagoEfectivo`, `PagoTarjeta`, `PagoTransferencia` |
+| `Discriminator` | TEXT | `text` | Sí | `PagoEfectivo`, `PagoTarjeta`, `PagoTransferencia`, `PagoPuntos` |
 | `UltimosDigitos` | TEXT | `text` | Solo tarjeta | Exactamente 4 |
 | `Referencia` | TEXT | `text` | Solo transferencia | No vacía |
+| `Puntos` | INTEGER | `integer` | Solo puntos | > 0 |
 | `FechaCreacion` | TEXT | `timestamptz` | Sí | |
 
 ### `Cajas`
@@ -264,7 +279,7 @@ Regla de arqueo: `EfectivoEsperado = EfectivoInicial + Σ efectivo neto de venta
 | `Detalle` | TEXT | `text` | Sí |
 | `FechaCreacion` | TEXT | `timestamptz` | Sí |
 
-Acciones: `InicioSesion`, `InicioSesionFallido`, `CambioClave`, `VentaAnulada`, `AjusteInventario`, `Merma`, `CambioRol`, `CambioTarifa`, `AperturaTurno`, `CierreTurno`, `EmpleadoCreado`, `EmpleadoDesactivado`, `GastoRegistrado`, `ParametroCambiado`, `UsuarioCreado`.
+Acciones (32): `InicioSesion`, `InicioSesionFallido`, `CambioClave`, `VentaAnulada`, `AjusteInventario`, `Merma`, `CambioRol`, `CambioTarifa`, `AperturaTurno`, `CierreTurno`, `EmpleadoCreado`, `EmpleadoDesactivado`, `GastoRegistrado`, `ParametroCambiado`, `UsuarioCreado`, `ProductoModificado`, `PrecioCambiado`, `CategoriaCreada`, `CategoriaModificada`, `ProveedorCreado`, `ProveedorModificado`, `CajaCreada`, `CajaModificada`, `CargoCreado`, `CargoModificado`, `RolCreado`, `RolModificado`, `UsuarioDesbloqueado`, `ClaveRestablecida`, `RespaldoBaseDatos`, `ClienteCreado`, `ClienteModificado`.
 
 ### `Intentos`
 
@@ -276,6 +291,25 @@ Acciones: `InicioSesion`, `InicioSesionFallido`, `CambioClave`, `VentaAnulada`, 
 | `Exitoso` | INTEGER | `boolean` | Sí |
 | `UsoPin` | INTEGER | `boolean` | Sí |
 | `FechaCreacion` | TEXT | `timestamptz` | Sí |
+
+## Clientes
+
+### `Clientes`
+
+| Campo | SQLite | PostgreSQL previsto | Obligatorio | Regla |
+| :-- | :-- | :-- | :--: | :-- |
+| `Id` | INTEGER | `integer identity` | Sí | PK |
+| `Documento` | TEXT | `text` | Sí | Único; 5–15 dígitos |
+| `Nombres` | TEXT | `text` | Sí | Solo letras (sin números) |
+| `Apellidos` | TEXT | `text` | No | Solo letras (sin números) |
+| `Telefono` | TEXT | `text` | No | 7–10 dígitos |
+| `Correo` | TEXT | `text` | No | Formato de correo |
+| `Activo` | INTEGER | `boolean` | Sí | Un cliente inactivo no puede asociarse a ventas |
+| `PuntosAcumulados` | INTEGER | `integer` | Sí | ≥ 0 |
+| `AutorizaTratamientoDatos` | INTEGER | `boolean` | Sí | Ley 1581; si es falso, la venta usa «Consumidor Final» |
+| `FechaAutorizacion` | TEXT | `timestamptz` | No | Momento de la autorización |
+| `TerminalAutorizacion` | TEXT | `text` | No | Equipo donde se autorizó |
+| `FechaCreacion` | TEXT | `timestamptz` | Sí | UTC |
 
 ## Finanzas
 
@@ -351,6 +385,29 @@ TPH para `Iva` y `Retencion`.
 | `integraciones.reintentos` | `2` | entero | `ServicioTrm` |
 | `integraciones.trm_centavos` | `0` | entero (centavos) | `ServicioTrm` (respaldo) |
 | `integraciones.trm_fecha` | `1970-01-01` | fecha ISO | `ServicioTrm` (respaldo) |
+| `integraciones.trm_habilitada` | `1` | booleano (`1`/`0`) | `ServicioTrm` |
+| `integraciones.codigo_barras_habilitado` | `1` | booleano (`1`/`0`) | `ClienteCodigoBarrasOff` |
+| `integraciones.supabase_habilitado` | `1` | booleano (`1`/`0`) | `ClienteSincronizacionSupabase` |
+| `integraciones.supabase_url` | `(vacío)` | URL HTTPS | `ClienteSincronizacionSupabase` |
+| `integraciones.supabase_key` | `(vacío)` | secreto | `ClienteSincronizacionSupabase`; usar `anon`, nunca `service_role` en el cliente |
+| `integraciones.trm_token` | `(vacío)` | secreto | `ClienteTrmDatosGov` (opcional) |
+| `integraciones.resend_token` | `(vacío)` | secreto | Envío de recibos (pendiente de integración) |
+| `integraciones.resend_remitente` | `recibos@supermercado.local` | correo | Envío de recibos (pendiente) |
+| `puntos.pesos_por_punto` | `1000` | entero (pesos) | `ServicioVentas`; `0` desactiva la acumulación |
+| `puntos.valor_punto_pesos` | `10` | entero (pesos) | `ServicioVentas`; `0` desactiva la redención |
+| `tributario.responsable_iva` | `1` | booleano (`1`/`0`) | `ServicioVentas`; si es `0`, no extrae IVA |
+| `dian.habilitado` | `1` | booleano (`1`/`0`) | `ServicioDian` |
+| `dian.resolucion_numero` | `18764102352817` | texto | `ServicioDian` |
+| `dian.resolucion_fecha` | `2024-01-15` | fecha ISO | `ServicioDian` |
+| `dian.resolucion_vigencia_hasta` | `2026-12-31` | fecha ISO | `ServicioDian` |
+| `dian.prefijo` | `POS` | texto | `ServicioDian` |
+| `dian.rango_desde` | `1` | entero | `ServicioDian` |
+| `dian.rango_hasta` | `500000` | entero | `ServicioDian` |
+| `dian.clave_tecnica` | `(semilla de ejemplo)` | secreto | `GeneradorCudeDian`; reemplazar por la asignada por la DIAN |
+| `dian.siguiente_consecutivo` | `1` | entero | `ServicioDian` |
+| `dian.tipo_ambiente` | `2` | `1` producción / `2` pruebas | `GeneradorCudeDian` |
+| `negocio.nombre` / `negocio.nit` / `negocio.direccion` / `negocio.telefono` | `COMPLETAR` | texto | Ticket y XML DIAN |
+| `sistema.carpeta_respaldos` | ruta de datos | ruta | `ServicioRespaldo` |
 
 `Parametro` tiene `Clave` única, `Valor` y `Descripcion`. La semilla agrega solo las claves faltantes y nunca sobrescribe valores editados. `ServicioParametros.GuardarAsync` exige `GestionarPersonal` y audita; `GuardarRespaldoAsync` es interno y atómico.
 
@@ -362,10 +419,13 @@ TPH para `Iva` y `Retencion`.
 | `Lotes` | `(ProductoId, NumeroLote)` | Sí |
 | `StockEstante` / `StockBodega` | `LoteId` | Sí |
 | `Empleados` | `Documento` | Sí |
+| `Clientes` | `Documento` | Sí |
 | `Usuarios` | `NombreUsuario` | Sí |
 | `Roles` | `Nombre` | Sí |
 | `Parametros` | `Clave` | Sí |
 | `Widgets` | `(EmpleadoId, WidgetId)` | Sí |
+| `Ventas` | `ClaveIdempotencia` | **No** (pendiente, ADR-021) |
+| `EventosOutbox` | `(Procesado, Id)` | No |
 
 Todas las claves foráneas usan `Restrict` y los índices de FK que EF crea por convención no son únicos.
 
@@ -379,13 +439,34 @@ Todas las claves foráneas usan `Restrict` y los índices de FK que EF crea por 
 | `UbicacionStock` | `Estante`, `Bodega` |
 | `EstadoReabastecimiento` | `Pendiente`, `Atendido`, `Cancelado` |
 | `AccionAuditoria` | Ver lista en `Auditoria` |
-| `Permiso` | `Vender`, `AnularVenta`, `AbrirCerrarTurno`, `VerInventario`, `AjustarInventario`, `Reabastecer`, `GestionarProductos`, `VerReportes`, `VerFinanzas`, `GestionarPersonal`, `GestionarRoles`, `GestionarTarifas`, `VerAuditoria` |
+| `Permiso` | `Vender`, `AnularVenta`, `AbrirCerrarTurno`, `VerInventario`, `AjustarInventario`, `Reabastecer`, `GestionarProductos`, `VerReportes`, `VerFinanzas`, `GestionarPersonal`, `GestionarRoles`, `GestionarTarifas`, `VerAuditoria`, `GestionarClientes` |
+
+
+
+## Sincronización
+
+### `EventosOutbox`
+
+| Campo | SQLite | PostgreSQL previsto | Obligatorio | Regla |
+| :-- | :-- | :-- | :--: | :-- |
+| `Id` | INTEGER | `integer identity` | Sí | PK |
+| `TipoEvento` | TEXT | `text` | Sí | `VentaCompletada`, `VentaAnulada` |
+| `EntidadId` | TEXT | `text` | Sí | ID de la entidad afectada |
+| `PayloadJson` | TEXT | `jsonb` | Sí | Carga JSON serializada de la transacción |
+| `Procesado` | INTEGER | `boolean` | Sí | `0` pendiente, `1` replicado a la nube |
+| `FechaProcesado` | TEXT | `timestamptz` | No | Fecha UTC de confirmación en Supabase |
+| `Reintentos` | INTEGER | `integer` | Sí | Cantidad de intentos fallidos |
+| `UltimoError` | TEXT | `text` | No | Mensaje de excepción o código HTTP |
+| `FechaCreacion` | TEXT | `timestamptz` | Sí | UTC |
 
 ## Brechas conocidas del modelo
 
 Documentadas, no implementadas en esta entrega:
 
+- Sin migración incremental para `Clientes`, `EventosOutbox`, los campos DIAN ni las columnas de puntos en `Ventas`: `Inicial` se genera desde el modelo, así que bases anteriores deben recrearse (ADR-018, ADR-022).
+- `Venta.ClaveIdempotencia` tiene índice **no único**: dos solicitudes concurrentes pueden duplicar la clave (ADR-021).
 - Sin token de concurrencia (`xmin` en PostgreSQL) en `StockLote`, `Venta` ni `TurnoCaja`.
 - Sin índice único parcial que garantice un solo turno abierto por caja; hoy se valida en la lógica.
+- Los campos `Cude`, `CadenaQr` y `XmlUbl` se generan localmente; no hay transmisión ni firma DIAN.
 - `ProductoId` en stock, movimientos, mermas, reabastecimientos y nóminas no tiene FK explícita; se valida en los servicios.
 - SQLite no aplica tipos ni longitudes; PostgreSQL sí. El mapeo previsto está en la columna correspondiente.

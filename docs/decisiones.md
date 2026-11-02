@@ -197,3 +197,151 @@
   cambia el tipo de entidad, se requiere licencia de pago.
 - **Consecuencias:** generación fluida y tipada de PDFs en Windows y
   Linux sin dependencias externas ni navegadores headless.
+
+## ADR-018: Programa de puntos de clientes
+
+- **Contexto:** muchos supermercados fidelizan clientes con puntos. Debe ser
+  opcional: la venta a «consumidor final» no cambia.
+- **Decisión:** entidad `Cliente` (documento único, saldo `PuntosAcumulados`),
+  `Venta.ClienteId` opcional y `PagoPuntos` como método de pago (TPH).
+  Se gana `floor(base / puntos.pesos_por_punto)` con
+  `base = total − pesos pagados con puntos` (no se ganan puntos sobre lo
+  redimido). Se redime a `puntos.valor_punto_pesos` pesos por punto, sin
+  superar el total ni el saldo. Un valor `0` en cualquiera de los dos
+  parámetros desactiva esa mitad del programa. `Venta` guarda
+  `PuntosGanados` y `PuntosRedimidos` para poder revertir.
+- **Reglas de integridad:** los puntos se mueven solo después de
+  `Venta.Cerrar()`, para que un rechazo no deje el saldo modificado en el
+  contexto; la anulación quita lo ganado (saldo mínimo 0) y devuelve lo
+  redimido. Permiso nuevo `GestionarClientes`; el cajero puede buscar por
+  documento con `Vender`.
+- **Consecuencias:** sin concurrencia multi-terminal el saldo tiene la
+  misma carrera que el stock (ADR-010). Sin vencimiento de puntos ni
+  niveles; no se imprimen en el ticket todavía.
+- **Migración:** `Inicial` genera el script desde el modelo, así que una
+  base ya creada no tiene la tabla `Clientes` ni las columnas nuevas de
+  `Ventas`: en desarrollo se recrea el archivo; en producción hace falta
+  una migración incremental (ver «Brechas» en `diccionario-datos.md`).
+
+## ADR-019: APIs abiertas activas por defecto, apagables
+
+- **Contexto:** TRM y consulta de código de barras no necesitan credenciales
+  y mejoran el alta de productos y la caja, pero no deben ser obligatorias.
+- **Decisión:** `AgregarLogica` registra los clientes reales
+  (`ClienteTrmDatosGov`, `ClienteCodigoBarrasOff`) con URLs oficiales por
+  defecto (`OpcionesApisExternas`). Apagado: `SIGS_APIS_HABILITADAS=0`
+  (todas), `SIGS_TRM_HABILITADA=0` / `SIGS_OFF_HABILITADA=0` (una) al
+  arrancar, o en caliente con los parámetros
+  `integraciones.trm_habilitada` e `integraciones.codigo_barras_habilitado`
+  (`ObtenerBoolAsync`; si falta el parámetro, vale «activo»). Apagada, la
+  TRM devuelve el último valor guardado y el catálogo devuelve `null`.
+- **Verificación de correo:** no tiene servicio público gratuito fiable;
+  solo se activa con `SIGS_EMAIL_VERIFIER_URL` (sigue `VerificadorCorreoNulo`).
+  La validación de formato vive aparte, en `Validador`.
+- **Verificado:** el 2026-11-02 ambos endpoints respondieron (datos.gov.co
+  TRM `32sa-8pi3` y Open Food Facts v2). Los límites y condiciones de uso
+  de terceros pueden cambiar; Open Food Facts pide `User-Agent` propio
+  (ya se envía) y atribución ODbL.
+- **Consecuencias:** la primera consulta puede esperar hasta
+  `integraciones.timeout_seg` si no hay internet; la venta nunca depende
+  de ello. En un entorno sin salida a internet conviene apagarlas.
+
+## ADR-020: Patrón Outbox para réplica asíncrona hacia Supabase o Neon
+
+- **Contexto:** las ventas locales en LAN deben funcionar sin depender de internet.
+  Sin embargo, el supermercado requiere consultar reportes de ventas y auditoría
+  desde la nube (Supabase o Neon) de forma asíncrona y segura.
+- **Decisión:** se implementa el patrón Outbox. La tabla `EventosOutbox` se escribe
+  en la misma transacción local (`trabajo.GuardarAsync()`) en la que se registra o
+  anula una venta. El servicio `ClienteSincronizacionSupabase` despacha eventos
+  pendientes vía HTTPS a la API REST de Supabase (`/rest/v1/eventos_outbox`) con
+  autenticación Bearer/apikey y cabecera `Prefer: resolution=merge-duplicates`.
+- **Resiliencia:** si se cae internet, la venta local no se detiene ni arroja error;
+  el evento queda marcado como no procesado y reintenta con registro de fallas.
+  El esquema SQL receptor para Supabase o Neon se suministra listo en
+  `docs/supabase-schema.sql`.
+
+## ADR-021: Idempotencia en la venta mediante clave única
+
+- **Contexto:** en una interfaz de caja ágil operada por teclado (F5 para cobrar),
+  el cajero puede pulsar dos veces o producirse un reintento que duplique el cobro
+  y descuente stock dos veces.
+- **Decisión:** `SolicitudVenta` incluye `ClaveIdempotencia` opcional. `ServicioVentas`
+  consulta `ventas.ObtenerPorClaveIdempotenciaAsync` antes de iniciar la venta. Si ya
+  existe una venta completada con dicha clave, la devuelve de inmediato sin descontar
+  stock ni alterar saldos de puntos nuevamente.
+- **Estado (2026-11-02):** implementación incompleta. El índice de
+  `Venta.ClaveIdempotencia` es **no único** (`ConfiguracionModelo.cs:51`), así que dos
+  solicitudes concurrentes todavía pueden crear dos ventas con la misma clave. Pendiente:
+  índice único filtrado, captura de `DbUpdateException` y alcance de la clave por empleado.
+
+## ADR-022: Documento Equivalente Electrónico POS DIAN (Resolución 000165 de 2023)
+
+- **Contexto:** la DIAN exige para los sujetos obligados a facturar la emisión del
+  Documento Equivalente Electrónico tiquete de máquina registradora con sistema POS
+  (Anexo Técnico 1.9), que requiere estructuración en XML UBL 2.1, código CUDE
+  generado por hash criptográfico SHA-384 de 96 caracteres hexadecimales, código QR
+  con enlace al catálogo VPFE, y estricto control de rangos y vigencia de numeración.
+- **Decisión:**
+  - `IServicioDian` y `ServicioDian` gestionan el ciclo de vida del documento POS:
+    validan en cada venta la vigencia y disponibilidad del rango autorizado (`dian.resolucion_*`),
+    emitiendo excepciones `ValidacionException` bloqueantes si la resolución expiró o
+    se agotaron los folios, y alertas preventivas si restan menos de 30 días o menos de 1000 folios.
+  - `GeneradorCudeDian` implementa el algoritmo oficial SHA-384 combinando
+    `NumDoc + FecDoc + HorDoc + ValFac + CodImp1 + ValImp1 + CodImp2 + ValImp2 + CodImp3 + ValImp3 + ValTot + NitEmisor + NumAdq + ClaveTecnica + TipoAmbiente`.
+  - `GeneradorUblDian` construye el XML UBL 2.1 estándar con namespaces oficiales
+    (`Invoice`, `cac:InvoiceLine`, `cac:TaxTotal`, `cac:LegalMonetaryTotal`, etc.).
+  - Persistencia de campos en `Venta`: `Cude`, `CadenaQr`, `PrefijoDian`, `ConsecutivoDian`,
+    `FechaValidacionDian` y `XmlUbl`.
+  - El parámetro `dian.habilitado` (1/0) permite alternar entre emisión con POS electrónico
+    o ticket simplificado sin DIAN.
+- **Consecuencias:** trazabilidad fiscal total para auditorías y software contable,
+  impresión del QR y CUDE en ticket QuestPDF, y desacoplamiento limpio de la infraestructura
+  de firma y transmisión web (SOAP/REST) para etapas posteriores.
+
+## ADR-023: Descomposición de Códigos de Balanza Retail GS1 y Conversor de Unidades
+
+- **Contexto:** las secciones de fruver, carnicería y charcutería operan con balanzas
+  electrónicas de mostrador (Torrey, Dibal, Systel) que generan etiquetas adhesivas EAN-13
+  de medida variable con prefijos retail GS1 del 20 al 29. Por otro lado, las compras al por mayor
+  ingresan en bultos (50 kg), arrobas (12.5 kg) o cajas, pero se venden en gramos o unidades.
+- **Decisión:**
+  - `ParserCodigoBalanza` descompone códigos de 13 dígitos: prefijo (2 dígitos: 20-29),
+    código PLU del producto (5 dígitos), cantidad en gramos (5 dígitos) y dígito de control.
+  - En `ServicioVentas`, al escanear una línea, si el código es de balanza se busca el producto
+    pesado por PLU/código base y se asignan automáticamente los gramos extraídos, calculando
+    el subtotal exacto de manera transparente para el cajero.
+  - `ConversorUnidades` centraliza las equivalencias de unidades de compra a inventario/kardex:
+    Bulto de 50 kg (50.000 g), Arroba (12.500 g), Kilo (1.000 g), Libra (500 g) y Cajas por unidades,
+    incluyendo utilitarios para determinar costo por gramo y costo unitario.
+- **Consecuencias:** agilidad en caja sin requerir doble digitación de peso y consistencia
+  en la entrada al inventario granel.
+
+## ADR-024: Habeas Data (Ley 1581 de 2012) y Consumidor Final DIAN
+
+- **Contexto:** la Ley Estatutaria 1581 de 2012 de Colombia exige autorización previa, expresa
+  e informada del titular para recolectar y almacenar sus datos personales. Si un cliente
+  no autoriza o revoca el consentimiento, no se pueden registrar sus datos en la base ni en la factura.
+- **Decisión:**
+  - En `Cliente` se integran los campos `AutorizaTratamientoDatos` (booleano), `FechaAutorizacion`
+    y `TerminalAutorizacion`, junto con los métodos de dominio `AutorizarHabeasData` y `RevocarHabeasData`.
+  - En `ServicioVentas`, al registrar una venta, si el cliente no autoriza el tratamiento o no
+    se asocia cliente alguno, se fuerza de manera automática el adquirente legal como
+    `DocumentoAdquirente = "222222222222"` y `NombreAdquirente = "CONSUMIDOR FINAL"`.
+  - Si el cliente cuenta con autorización válida, se registran su documento y nombre completo.
+- **Consecuencias:** cumplimiento normativo ante la Superintendencia de Industria y Comercio (SIC)
+  y compatibilidad con los estándares de adquirente de la DIAN.
+
+## ADR-025: Switch de Régimen Tributario (Responsable vs No Responsable de IVA)
+
+- **Contexto:** en Colombia coexisten personas jurídicas y naturales que operan supermercados
+  bajo régimen común/ordinario (responsables de IVA) o bajo régimen de no responsables
+  (antiguo régimen simplificado / monotributo o ventas exclusivas de bienes excluidos/exentos).
+- **Decisión:**
+  - Se añade la clave de parámetro `tributario.responsable_iva` (1/0).
+  - En `ServicioVentas`, cuando `tributario.responsable_iva` es `0`, el servicio anula
+    los puntos básicos de IVA y el monto de IVA en cada detalle de la venta (`detalle.Iva = 0`,
+    `detalle.PuntosBasicosIva = 0`), asegurando que no se facture ni recaude IVA a los adquirentes
+    y que `TotalIva` sea 0.
+- **Consecuencias:** flexibilidad para que cualquier micro, pequeño o mediano supermercado
+  adopte el sistema según su estatus tributario en el RUT sin necesidad de alterar el catálogo de productos.

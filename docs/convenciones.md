@@ -27,7 +27,7 @@ El dominio se escribe en **español** (`Venta`, `Empleado`, `Reabastecimiento`).
 3. **La GUI no referencia Datos.** Solo `AgregarLogica()`.
 4. **Los servicios de dominio no guardan.** El caso de uso llama `IUnidadDeTrabajo.GuardarAsync` una sola vez.
 5. **Los permisos se verifican en Lógica**, no ocultando botones.
-6. **Las APIs externas viven tras una interfaz** y tienen implementación nula por defecto.
+6. **Las APIs externas viven tras una interfaz.** Las fuentes abiertas sin credenciales (TRM, código de barras) se activan por defecto y se pueden apagar; las que requieren secreto o proveedor (correo, Supabase) solo se registran si están configuradas.
 
 ## Dinero y porcentajes
 
@@ -61,6 +61,14 @@ Use el catálogo de `Supermercado.Entidades/Excepciones`:
 | Integración | `ServicioNoConfiguradoException` |
 
 No capture `Exception` genérica salvo en la frontera de una integración, y solo para errores de red/timeout. Un `catch (Exception)` que silencia un bug propio está prohibido.
+
+## Datos personales y DIAN
+
+- No imprima datos del cliente si `AutorizaTratamientoDatos` es falso; use `Venta.DocumentoConsumidorFinal` y `NombreConsumidorFinal`.
+- La autorización se registra con fecha y terminal (`AutorizarHabeasData`); la revocación no borra el historial.
+- Los secretos de integración (`supabase_key`, `trm_token`, `resend_token`, `dian.clave_tecnica`) no se versionan; van en configuración o parámetros locales.
+- Los campos DIAN (`Cude`, `XmlUbl`, `CadenaQr`) se generan localmente; no los trate como comprobante válido hasta completar transmisión y firma.
+- El avance del consecutivo DIAN debe quedar en la misma transacción que la venta; hoy es una deuda conocida (ADR-022).
 
 ## Pruebas
 
