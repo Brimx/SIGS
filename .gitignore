@@ -487,3 +487,6 @@ $RECYCLE.BIN/
 
 # Instrucciones locales del agente (no se comparten)
 /AGENTS.md
+
+# Archivos de sincronización de dgit (Google Drive)
+.drive_*
