@@ -17,4 +17,5 @@ public enum Permiso : long
     GestionarRoles = 1 << 10,
     GestionarTarifas = 1 << 11,
     VerAuditoria = 1 << 12,
+    GestionarClientes = 1 << 13,
 }
