@@ -26,6 +26,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Supermercado.GUI\Supermercado.GUI.csproj" />
     <ProjectReference Include="..\Supermercado.Logica\Supermercado.Logica.csproj" />
     <ProjectReference Include="..\Supermercado.Datos\Supermercado.Datos.csproj" />
     <ProjectReference Include="..\Supermercado.Entidades\Supermercado.Entidades.csproj" />
