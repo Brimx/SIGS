@@ -349,6 +349,41 @@ La GUI todavía no consume la lógica. El punto de conexión previsto es `servic
 | `OutboxYSincronizacionTests` | Payload, despacho y reintentos del Outbox |
 | `ReportesPdfTests` | Ticket, desprendible y reporte PDF |
 | `FlujoPuntaAPuntaSqliteTests` | Flujo completo contra archivo SQLite temporal |
+| `PosViewModelTests` | Escaneo POS, códigos de balanza GS1, cálculo de cambio, control de turno |
+| `InventarioViewModelTests` | Filtros reactivos de texto, stock bajo y lotes por vencer |
+| `PlantillaYRegulacionGuiTests` | Tirilla 80mm ESC/POS, Dígito Verificación Módulo 11 DIAN, Habeas Data Ley 1581 |
+
+## 11B. Capa de Presentación (`Supermercado.GUI`)
+
+Interfaz de escritorio desarrollada en **Avalonia 12.1.4** y **.NET 10** bajo el patrón **MVVM**:
+
+### ViewModels (`Supermercado.GUI/ViewModels/`)
+- `ViewModelBase`: Base observable que hereda de `CommunityToolkit.Mvvm.ComponentModel.ObservableObject`.
+- `MainViewModel`: Orquestador de vistas raíz que alterna entre `LoginViewModel` y `ShellViewModel`.
+- `LoginViewModel`: Autenticación con contraseña o PIN de caja, detección de primer arranque (onboarding) y botones demo de 1 clic.
+- `ShellViewModel`: Navegación modular con barra lateral, control de roles de usuario, selector de tema claro cálido / oscuro slate y transiciones `CrossFade 150ms`.
+- `PosViewModel`: Transaccional de caja de alta velocidad, auto-enfoque continuo en lector de código de barras, integración con balanzas GS1 (`20`–`29`), atajos `F1`–`F5` y visor de total a 32px.
+- `InventarioViewModel`: Catálogo consolidado FEFO en `DataGrid`, filtros reactivos por texto, alerta de stock mínimo y lotes por vencer, más modal de baja por merma auditada.
+- `CajaTurnoViewModel`: Gestión de turno (apertura con base inicial, arqueo ciego y Cierre Z) y visualización del estado de folios de la resolución DIAN.
+- `DashboardViewModel`: Tarjetas de indicadores en tiempo real (ventas, IVA generado, TRM, reabastecimientos y alertas).
+- `RegistroUsuarioViewModel`: Formulario modular para onboarding, personal o clientes POS con validación de DV Módulo 11 y consentimiento Ley 1581 (Habeas Data).
+
+### Vistas (`Supermercado.GUI/Views/`)
+- `MainWindow`: Ventana principal configurable con tamaño mínimo de 1024x700 e icono de aplicación.
+- `ShellView`: Layout maestro con Sidebar, Header superior con indicador de estado ACID/DIAN y contenedor de vistas con transición.
+- `LoginView`: Pantalla centrada de autenticación con accesos rápidos para desarrollo/demostración.
+- `PosView`: Pantalla 70/30 con grid transaccional virtualizado, visor Display 32px, discriminación de tarifas C/M/J y modales in-window (`Cobro`, `Cantidad`, `Búsqueda`, `Habeas Data`, `Apertura Turno` y `Vista Previa Tirilla`).
+- `InventarioView`: Grilla densa con insignias coloreadas de estado y modal de merma.
+- `CajaTurnoView`: Panel con tarjetas de estado de turno y resolución DIAN, más acciones de apertura y cierre Z.
+- `DashboardView`: Tablero fluido de métricas operativas.
+- `RegistroUsuarioView`: Formulario modular de registro con checkbox legal de la Ley 1581 de 2012.
+
+### Servicios de Presentación (`Supermercado.GUI/Servicios/`)
+- `IImpresorTicket`: Abstracción para formatear y emitir comprobantes de venta.
+- `PlantillaTicketPos`: Generador de tirilla continua de 80mm (48 columnas) calibrada con la factura de Tiendas Ara y la Resolución DIAN 000165 de 2023.
+- `ImpresorTicketEscPos`: Generador de comandos directos ESC/POS (corte de papel `\x1D\x56\x00`, pulso de gaveta `\x1B\x70\x00\x19\xFA` y QR bidimensional `GS ( k`).
+- `ImpresorTicketPdf`: Adaptador para exportar la tirilla en formato PDF de 80mm vía QuestPDF.
+- `ValidadorDian`: Implementación oficial del algoritmo Módulo 11 para NITs y texto legal de Habeas Data.
 
 Falsos en `Supermercado.Pruebas/Falsos`: `RepositorioEnMemoria<T>`, `StockEnMemoria<T>`, repositorios específicos, `ParametrosFalsos`, `UnidadDeTrabajoFalsa`, `AuditoriaFalsa`, `HasheadorFalso`, `RelojFijo`, `ClienteTrmFalso`, `EscenarioInventario`.
 

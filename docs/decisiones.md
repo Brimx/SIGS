@@ -345,3 +345,31 @@
     y que `TotalIva` sea 0.
 - **Consecuencias:** flexibilidad para que cualquier micro, pequeño o mediano supermercado
   adopte el sistema según su estatus tributario en el RUT sin necesidad de alterar el catálogo de productos.
+
+## ADR-026: Adopción de Semi.Avalonia, Lucide Icons, Tipografía Local e Impresión Dual en Supermercado.GUI
+
+- **Contexto:** la interfaz requería superar el estado de plantilla básica (*boilerplate*) para ofrecer
+  una experiencia de escritorio de grado comercial, alta densidad para retail/B2B, soporte anti-fatiga visual
+  para cajeros, atajos de teclado sin latencia, y compatibilidad idéntica en Linux y Windows sin dependencias
+  externas en tiempo de ejecución.
+- **Decisión:**
+  - **Framework y Tema Base:** Avalonia 12.1.4 sobre .NET 10 con `Semi.Avalonia` (12.1.0.1) y `Semi.Avalonia.DataGrid` (12.1.0.1)
+    en lugar de Material Design, eliminando paddings desproporcionados e introduciendo alta densidad de datos.
+  - **Iconografía:** `Lucide.Avalonia` (0.2.29), precompilado y mapeado nativamente al espacio de nombres de Avalonia (`<LucideIcon Kind="..." />`),
+    eliminando la carga de archivos SVG sueltos.
+  - **Tipografía Institucional Propia:** Descarte de Inter para evitar saturación de plantilla genérica; adopción de:
+    - *Titulares y Marco:* `Stack Sans Headline` (SemiBold 600 y Bold 700).
+    - *Lectura y Formularios:* `IBM Plex Sans` (Regular 400, Medium 500 y SemiBold 600).
+    - *Cifras y Grilla:* `IBM Plex Sans Condensed` con figuras tabulares (`+tnum`).
+    Binarios `.ttf` empaquetados localmente en `Supermercado.GUI/Assets/Fonts/`.
+  - **Tokens de Diseño en 3 Capas:** Recursos desacoplados en `Primitives.axaml`, `Geometry.axaml`, `Typography.axaml`
+    y `Semantic.axaml`, con soporte de Modo Claro Cálido (*Warm Light* `#FAF8F5`) y Modo Oscuro Slate (`#0F172A`).
+  - **Ergonomía POS:** Auto-enfoque ininterrumpido en el lector de códigos de barras (*keyboard wedge*),
+    atajos físicos `F1`–`F5` y `Escape`, y visor numérico de `Total a Pagar` a 32px.
+  - **Impresión Dual de Recibos:**
+    - `ImpresorTicketEscPos`: secuencias de escape nativas ESC/POS para rollo continuo de 80mm (48 columnas),
+      código QR bidimensional (`GS ( k`), corte automático de papel (`\x1D\x56\x00`) y apertura de gaveta monedero (`\x1B\x70\x00\x19\xFA`).
+    - `ImpresorTicketPdf`: exportación vectorial en 80mm vía QuestPDF (`IGeneradorTicket`).
+- **Consecuencias:** interfaz visualmente pulida, sin dependencias del sistema operativo, con contraste WCAG 2.2 AA/AAA,
+  fidelidad del 100% contra la tirilla de Tiendas Ara y la Resolución DIAN 000165 de 2023.
+
