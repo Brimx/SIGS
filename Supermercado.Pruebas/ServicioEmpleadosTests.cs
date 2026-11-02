@@ -29,7 +29,18 @@ public class ServicioEmpleadosTests
     private ServicioEmpleados CrearServicio(
         Permiso permisos = Permiso.GestionarPersonal | Permiso.GestionarRoles,
         bool correoValido = true)
-        => new(
+    {
+        if (roles.Datos.All(r => r.Id != 1))
+            roles.Datos.Add(new Rol
+            {
+                Id = 1,
+                Nombre = "Admin",
+                Permisos = Permiso.GestionarPersonal
+                    | Permiso.GestionarRoles
+                    | Permiso.Vender
+            });
+
+        return new(
             empleados,
             roles,
             usuarios,
@@ -39,6 +50,7 @@ public class ServicioEmpleadosTests
             Sesiones.Con(permisos),
             trabajo,
             reloj);
+    }
 
     [Fact]
     public async Task CrearAsync_ConPermiso_GuardaYAudita()
@@ -82,6 +94,45 @@ public class ServicioEmpleadosTests
 
         await Assert.ThrowsAsync<ValidacionException>(
             () => servicio.CrearAsync(nuevo));
+    }
+
+    [Fact]
+    public async Task CrearAsync_GerenteNoPuedeAsignarRolConMasPermisos()
+    {
+        var servicio = CrearServicio(Permiso.GestionarPersonal);
+        var empleado = new Empleado
+        {
+            Documento = "1010102",
+            Nombres = "Laura",
+            Apellidos = "Pérez",
+            RolId = 1,
+            CargoId = 1
+        };
+
+        await Assert.ThrowsAsync<AccesoDenegadoException>(
+            () => servicio.CrearAsync(empleado));
+        Assert.Empty(empleados.Datos);
+        Assert.Empty(usuarios.Datos);
+    }
+
+    [Fact]
+    public async Task CrearUsuarioAsync_GerenteNoPuedeCrearUsuarioParaAdmin()
+    {
+        var empleado = new Empleado
+        {
+            Id = 5,
+            Documento = "5550555",
+            Nombres = "Administrador",
+            RolId = 1
+        };
+        await empleados.AgregarAsync(empleado);
+        var servicio = CrearServicio(Permiso.GestionarPersonal);
+
+        await Assert.ThrowsAsync<AccesoDenegadoException>(
+            () => servicio.CrearUsuarioAsync(5, "admin-nuevo", "temporal123"));
+
+        Assert.Empty(usuarios.Datos);
+        Assert.Equal(0, trabajo.Guardados);
     }
 
     [Fact]
@@ -161,7 +212,8 @@ public class ServicioEmpleadosTests
         {
             Id = 5,
             Documento = "5550555",
-            Nombres = "Usuario"
+            Nombres = "Usuario",
+            RolId = 1
         };
         await empleados.AgregarAsync(emp);
 
@@ -183,7 +235,8 @@ public class ServicioEmpleadosTests
         {
             Id = 5,
             Documento = "5550555",
-            Nombres = "Usuario"
+            Nombres = "Usuario",
+            RolId = 1
         };
         await empleados.AgregarAsync(emp);
 

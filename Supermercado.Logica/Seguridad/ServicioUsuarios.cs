@@ -42,7 +42,7 @@ public class ServicioUsuarios(
 
     public async Task<string> RestablecerClaveTemporalAsync(int usuarioId)
     {
-        sesion.Exigir(Permiso.GestionarPersonal);
+        sesion.Exigir(Permiso.GestionarRoles);
 
         var usuario = await usuarios.ObtenerPorIdAsync(usuarioId)
             ?? throw new ValidacionException("El usuario no existe.");

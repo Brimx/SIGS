@@ -23,6 +23,7 @@ public class ServicioEmpleados(
     {
         sesion.Exigir(Permiso.GestionarPersonal);
         Validar(empleado);
+        await ExigirAlcanceDelRolAsync(empleado.RolId);
 
         var todos = await empleados.ObtenerTodosAsync();
         if (todos.Any(e => e.Documento == empleado.Documento))
@@ -119,7 +120,8 @@ public class ServicioEmpleados(
         if (todos.Any(u => u.EmpleadoId == empleadoId))
             throw new ValidacionException("El empleado ya tiene un usuario.");
 
-        await BuscarAsync(empleadoId);
+        var empleado = await BuscarAsync(empleadoId);
+        await ExigirAlcanceDelRolAsync(empleado.RolId);
         await usuarios.AgregarAsync(new Usuario
         {
             NombreUsuario = nombreUsuario,
@@ -153,6 +155,19 @@ public class ServicioEmpleados(
     private async Task<Empleado> BuscarAsync(int empleadoId)
         => await empleados.ObtenerPorIdAsync(empleadoId)
             ?? throw new ValidacionException("El empleado no existe.");
+
+    private async Task ExigirAlcanceDelRolAsync(int rolId)
+    {
+        var rol = await roles.ObtenerPorIdAsync(rolId)
+            ?? throw new ValidacionException("El rol no existe.");
+        if (sesion.Tiene(Permiso.GestionarRoles))
+            return;
+
+        var permisosActor = sesion.Usuario?.Empleado?.Rol?.Permisos
+            ?? Permiso.Ninguno;
+        if ((rol.Permisos & ~permisosActor) != Permiso.Ninguno)
+            throw new AccesoDenegadoException(Permiso.GestionarRoles);
+    }
 
     private static void Validar(Empleado empleado)
     {

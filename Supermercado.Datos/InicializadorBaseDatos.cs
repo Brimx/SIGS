@@ -14,11 +14,30 @@ public class InicializadorBaseDatos(SigsDbContext db) : IInicializadorBaseDatos
         else
             await db.Database.EnsureCreatedAsync();
 
+        await AsegurarIndiceIdempotenciaUnicoAsync();
+
         await SembrarSiVacioAsync(db.Roles, ValoresIniciales.Roles());
         await SembrarSiVacioAsync(db.Cargos, ValoresIniciales.Cargos());
         await SembrarSiVacioAsync(db.Impuestos, ValoresIniciales.Impuestos());
         await SembrarSiVacioAsync(db.Cajas, ValoresIniciales.Cajas());
         await SembrarParametrosFaltantesAsync();
+    }
+
+    private async Task AsegurarIndiceIdempotenciaUnicoAsync()
+    {
+        var claveDuplicada = await db.Ventas
+            .Where(v => v.ClaveIdempotencia != null)
+            .GroupBy(v => v.ClaveIdempotencia)
+            .Where(g => g.Count() > 1)
+            .Select(g => g.Key)
+            .FirstOrDefaultAsync();
+
+        if (claveDuplicada is not null)
+            throw new InvalidOperationException(
+                "Hay ventas con claves de idempotencia duplicadas; resuélvelas antes de iniciar SIGS.");
+
+        await db.Database.ExecuteSqlRawAsync(
+            "CREATE UNIQUE INDEX IF NOT EXISTS \"IX_Ventas_ClaveIdempotencia\" ON \"Ventas\" (\"ClaveIdempotencia\");");
     }
 
     private async Task SembrarSiVacioAsync<T>(

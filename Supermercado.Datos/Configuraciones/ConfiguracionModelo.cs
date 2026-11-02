@@ -48,7 +48,8 @@ public static class ConfiguracionModelo
         modelo.Entity<StockBodega>().HasIndex(s => s.LoteId).IsUnique();
         modelo.Entity<Empleado>().HasIndex(e => e.Documento).IsUnique();
         modelo.Entity<Cliente>().HasIndex(c => c.Documento).IsUnique();
-        modelo.Entity<Venta>().HasIndex(v => v.ClaveIdempotencia);
+        modelo.Entity<Venta>()
+            .HasIndex(v => v.ClaveIdempotencia).IsUnique();
         modelo.Entity<EventoOutbox>().HasIndex(e => new { e.Procesado, e.Id });
         modelo.Entity<Usuario>().HasIndex(u => u.NombreUsuario).IsUnique();
         modelo.Entity<Rol>().HasIndex(r => r.Nombre).IsUnique();

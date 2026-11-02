@@ -14,7 +14,7 @@ public class ServicioUsuariosTests
     private readonly UnidadDeTrabajoFalsa trabajo = new();
 
     private ServicioUsuarios CrearServicio(
-        Permiso permisos = Permiso.GestionarPersonal)
+        Permiso permisos = Permiso.GestionarPersonal | Permiso.GestionarRoles)
         => new(
             usuarios,
             hasheador,
@@ -125,6 +125,20 @@ public class ServicioUsuariosTests
 
         await Assert.ThrowsAsync<AccesoDenegadoException>(
             () => servicio.RestablecerClaveTemporalAsync(1));
+    }
+
+    [Fact]
+    public async Task RestablecerClaveTemporal_GerenteSinGestionarRoles_LanzaAccesoDenegado()
+    {
+        var usuario = new Usuario { Id = 1, NombreUsuario = "admin" };
+        await usuarios.AgregarAsync(usuario);
+        var servicio = CrearServicio(Permiso.GestionarPersonal);
+
+        await Assert.ThrowsAsync<AccesoDenegadoException>(
+            () => servicio.RestablecerClaveTemporalAsync(1));
+
+        Assert.Equal(string.Empty, usuario.HashClave);
+        Assert.Equal(0, trabajo.Guardados);
     }
 
     [Fact]

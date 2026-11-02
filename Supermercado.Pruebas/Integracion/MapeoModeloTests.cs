@@ -93,6 +93,11 @@ public class MapeoModeloTests
         Assert.Contains(
             modelo.FindEntityType(typeof(Parametro))!.GetIndexes(),
             i => i.IsUnique && i.Properties.Any(p => p.Name == "Clave"));
+
+        Assert.Contains(
+            modelo.FindEntityType(typeof(Venta))!.GetIndexes(),
+            i => i.IsUnique && i.Properties.Any(
+                p => p.Name == "ClaveIdempotencia"));
     }
 
     [Fact]

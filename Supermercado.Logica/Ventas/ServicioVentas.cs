@@ -74,6 +74,10 @@ public class ServicioVentas(
         var cliente = await BuscarClienteAsync(solicitud);
         var puntos = await PrepararPuntosAsync(venta, cliente, solicitud);
 
+        if (solicitud.Pagos.Any(p => p is PagoPuntos))
+            throw new VentaInvalidaException(
+                "Los pagos con puntos se calculan desde la solicitud de redención.");
+
         // Protección de datos personales (Ley 1581 / Habeas Data):
         // Si el cliente no autorizó tratamiento de datos, se fuerza Consumidor Final DIAN
         if (cliente is not null && cliente.AutorizaTratamientoDatos)
