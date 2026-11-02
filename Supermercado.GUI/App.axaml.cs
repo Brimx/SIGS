@@ -49,12 +49,19 @@ public partial class App : Application
         servicios.AddScoped<ImpresorTicketPdf>();
 
         // ViewModels
-        servicios.AddTransient<RegistroUsuarioViewModel>();
-        servicios.AddTransient<LoginViewModel>();
-        servicios.AddTransient<PosViewModel>();
-        servicios.AddTransient<InventarioViewModel>();
-        servicios.AddTransient<CajaTurnoViewModel>();
-        servicios.AddTransient<DashboardViewModel>();
+        servicios.AddTransient(sp => new RegistroUsuarioViewModel(
+            sp.GetRequiredService<IServiceScopeFactory>()));
+        servicios.AddTransient(sp => new LoginViewModel(
+            sp.GetRequiredService<IServiceScopeFactory>(),
+            sp.GetRequiredService<Supermercado.Logica.Seguridad.ISesionActual>()));
+        servicios.AddTransient(sp => new PosViewModel(
+            sp.GetRequiredService<IServiceScopeFactory>()));
+        servicios.AddTransient(sp => new InventarioViewModel(
+            sp.GetRequiredService<IServiceScopeFactory>()));
+        servicios.AddTransient(sp => new CajaTurnoViewModel(
+            sp.GetRequiredService<IServiceScopeFactory>()));
+        servicios.AddTransient(sp => new DashboardViewModel(
+            sp.GetRequiredService<IServiceScopeFactory>()));
         servicios.AddTransient<ShellViewModel>();
         servicios.AddTransient<MainViewModel>();
     }

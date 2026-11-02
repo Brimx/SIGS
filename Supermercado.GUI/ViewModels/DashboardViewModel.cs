@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Extensions.DependencyInjection;
 using Supermercado.Logica.Comunes;
 using Supermercado.Logica.Dashboards;
 
@@ -47,6 +48,7 @@ public partial class DashboardViewModel : ViewModelBase
 {
     private readonly IServicioDashboard? _servicioDashboard;
     private readonly ITraductorExcepciones? _traductor;
+    private readonly IServiceScopeFactory? _scopeFactory;
 
     public ObservableCollection<WidgetCardViewModel> Tarjetas { get; } = [];
 
@@ -60,6 +62,9 @@ public partial class DashboardViewModel : ViewModelBase
     {
     }
 
+    public DashboardViewModel(IServiceScopeFactory scopeFactory)
+        => _scopeFactory = scopeFactory;
+
     public DashboardViewModel(
         IServicioDashboard servicioDashboard,
         ITraductorExcepciones? traductor = null)
@@ -71,16 +76,23 @@ public partial class DashboardViewModel : ViewModelBase
     [RelayCommand]
     public async Task ActualizarDashboardAsync()
     {
-        if (_servicioDashboard is null || Cargando)
+        if (Cargando)
+            return;
+
+        using var scope = _scopeFactory?.CreateScope();
+        var servicios = scope?.ServiceProvider;
+        var servicioDashboard = _servicioDashboard
+            ?? servicios?.GetService<IServicioDashboard>();
+        if (servicioDashboard is null)
             return;
 
         Cargando = true;
         try
         {
-            var widgets = await _servicioDashboard.ObtenerDisposicionAsync();
+            var widgets = await servicioDashboard.ObtenerDisposicionAsync();
             if (widgets.Count == 0)
             {
-                widgets = _servicioDashboard.ObtenerDisponibles();
+                widgets = servicioDashboard.ObtenerDisponibles();
             }
 
             var nuevas = new List<WidgetCardViewModel>();
@@ -107,7 +119,9 @@ public partial class DashboardViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            MensajeEstado = _traductor?.Traducir(ex) ?? ex.Message;
+            MensajeEstado = _traductor?.Traducir(ex)
+                ?? servicios?.GetService<ITraductorExcepciones>()?.Traducir(ex)
+                ?? ex.Message;
         }
         finally
         {
