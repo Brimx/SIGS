@@ -51,7 +51,7 @@
                                    FontSize="{StaticResource FontSizeBody}"
                                    Foreground="{DynamicResource BrushTextSecondary}" />
                         <TextBox Text="{Binding NombreUsuario}"
-                                 PlaceholderText="Ej. cajero_demo o admin_demo"
+                                 PlaceholderText="Nombre de usuario"
                                  MinHeight="40" />
                     </StackPanel>
 
@@ -121,40 +121,6 @@
                     </Button>
                 </StackPanel>
 
-                <Separator Background="{DynamicResource BrushBorderSubtle}" Height="1" />
-
-                <!-- Acceso Rápido Semilla Demo (1 Clic) -->
-                <StackPanel Spacing="8">
-                    <TextBlock Text="Entorno de Pruebas y Semilla Demo Automática"
-                               HorizontalAlignment="Center"
-                               FontSize="{StaticResource FontSizeCaption}"
-                               FontWeight="{StaticResource FontWeightSemiBold}"
-                               Foreground="{DynamicResource BrushTextSecondary}" />
-                    <Grid ColumnDefinitions="*,8,*">
-                        <Button Grid.Column="0"
-                                Command="{Binding IngresarDemoRapidoCommand}"
-                                CommandParameter="cajero"
-                                HorizontalAlignment="Stretch"
-                                HorizontalContentAlignment="Center"
-                                MinHeight="38">
-                            <StackPanel Orientation="Horizontal" Spacing="6">
-                                <LucideIcon Kind="ShoppingCart" Size="16" />
-                                <TextBlock Text="Cajero Demo" FontWeight="{StaticResource FontWeightMedium}" />
-                            </StackPanel>
-                        </Button>
-                        <Button Grid.Column="2"
-                                Command="{Binding IngresarDemoRapidoCommand}"
-                                CommandParameter="admin"
-                                HorizontalAlignment="Stretch"
-                                HorizontalContentAlignment="Center"
-                                MinHeight="38">
-                            <StackPanel Orientation="Horizontal" Spacing="6">
-                                <LucideIcon Kind="ShieldCheck" Size="16" />
-                                <TextBlock Text="Admin Demo" FontWeight="{StaticResource FontWeightMedium}" />
-                            </StackPanel>
-                        </Button>
-                    </Grid>
-                </StackPanel>
             </StackPanel>
         </Border>
     </Grid>

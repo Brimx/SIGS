@@ -1,9 +1,9 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Extensions.DependencyInjection;
 using Supermercado.Entidades.Clientes;
 using Supermercado.Logica.Clientes;
 using Supermercado.Logica.Comunes;
-using Supermercado.Logica.DatosDemo;
 using Supermercado.Logica.Seguridad;
 using Supermercado.GUI.Servicios.Validacion;
 
@@ -18,10 +18,7 @@ public enum ModoRegistroUsuario
 
 public partial class RegistroUsuarioViewModel : ViewModelBase
 {
-    private readonly IServicioInicializacion? _inicializacion;
-    private readonly IServicioClientes? _clientes;
-    private readonly IGeneradorDatosDemo? _datosDemo;
-    private readonly ITraductorExcepciones? _traductor;
+    private readonly IServiceScopeFactory? _scopeFactory;
 
     [ObservableProperty]
     public partial ModoRegistroUsuario Modo { get; set; } = ModoRegistroUsuario.ClientePos;
@@ -66,9 +63,6 @@ public partial class RegistroUsuarioViewModel : ViewModelBase
     public partial string ConfirmarClave { get; set; } = string.Empty;
 
     [ObservableProperty]
-    public partial bool CargarDatosDemo { get; set; } = true;
-
-    [ObservableProperty]
     public partial bool AutorizaHabeasData { get; set; } = true;
 
     [ObservableProperty]
@@ -99,17 +93,8 @@ public partial class RegistroUsuarioViewModel : ViewModelBase
     {
     }
 
-    public RegistroUsuarioViewModel(
-        IServicioInicializacion? inicializacion,
-        IServicioClientes? clientes,
-        IGeneradorDatosDemo? datosDemo = null,
-        ITraductorExcepciones? traductor = null)
-    {
-        _inicializacion = inicializacion;
-        _clientes = clientes;
-        _datosDemo = datosDemo;
-        _traductor = traductor;
-    }
+    public RegistroUsuarioViewModel(IServiceScopeFactory scopeFactory)
+        => _scopeFactory = scopeFactory;
 
     public void ConfigurarModo(ModoRegistroUsuario modo)
     {
@@ -122,7 +107,7 @@ public partial class RegistroUsuarioViewModel : ViewModelBase
         {
             case ModoRegistroUsuario.OnboardingAdmin:
                 TituloFormulario = "Configuración Inicial de SIGS";
-                SubtituloFormulario = "Crea la cuenta del Administrador principal o carga la semilla de demostración";
+                SubtituloFormulario = "Crea la cuenta del Administrador principal";
                 break;
             case ModoRegistroUsuario.ClientePos:
                 TituloFormulario = "Registro de Cliente y Habeas Data";
@@ -173,22 +158,24 @@ public partial class RegistroUsuarioViewModel : ViewModelBase
         GuardadoExitoso = false;
         MensajeEstado = string.Empty;
         Ocupado = true;
+        using var scope = _scopeFactory?.CreateScope();
 
         try
         {
             if (Modo == ModoRegistroUsuario.OnboardingAdmin)
             {
-                await EjecutarOnboardingAsync();
+                await EjecutarOnboardingAsync(scope?.ServiceProvider);
             }
             else if (Modo == ModoRegistroUsuario.ClientePos)
             {
-                await EjecutarRegistroClienteAsync();
+                await EjecutarRegistroClienteAsync(scope?.ServiceProvider);
             }
         }
         catch (Exception ex)
         {
             TieneError = true;
-            MensajeEstado = _traductor?.Traducir(ex) ?? ex.Message;
+            MensajeEstado = scope?.ServiceProvider
+                .GetService<ITraductorExcepciones>()?.Traducir(ex) ?? ex.Message;
         }
         finally
         {
@@ -196,7 +183,7 @@ public partial class RegistroUsuarioViewModel : ViewModelBase
         }
     }
 
-    private async Task EjecutarOnboardingAsync()
+    private async Task EjecutarOnboardingAsync(IServiceProvider? servicios)
     {
         if (string.IsNullOrWhiteSpace(ClaveInicial) || ClaveInicial.Length < 6)
         {
@@ -212,14 +199,10 @@ public partial class RegistroUsuarioViewModel : ViewModelBase
             return;
         }
 
-        if (_inicializacion is not null)
+        var inicializacion = servicios?.GetService<IServicioInicializacion>();
+        if (inicializacion is not null)
         {
-            await _inicializacion.InicializarAsync(ClaveInicial);
-        }
-
-        if (CargarDatosDemo && _datosDemo is not null)
-        {
-            await _datosDemo.GenerarAsync();
+            await inicializacion.InicializarAsync(ClaveInicial);
         }
 
         GuardadoExitoso = true;
@@ -227,7 +210,7 @@ public partial class RegistroUsuarioViewModel : ViewModelBase
         OnboardingCompletado?.Invoke();
     }
 
-    private async Task EjecutarRegistroClienteAsync()
+    private async Task EjecutarRegistroClienteAsync(IServiceProvider? servicios)
     {
         if (string.IsNullOrWhiteSpace(Documento))
         {
@@ -247,9 +230,10 @@ public partial class RegistroUsuarioViewModel : ViewModelBase
             ? $"{Documento.Trim()}-{DigitoVerificacion}"
             : Documento.Trim();
 
-        if (_clientes is not null)
+        var clientes = servicios?.GetService<IServicioClientes>();
+        if (clientes is not null)
         {
-            var cliente = await _clientes.CrearAsync(
+            var cliente = await clientes.CrearAsync(
                 docFinal,
                 Nombres.Trim(),
                 Apellidos.Trim(),

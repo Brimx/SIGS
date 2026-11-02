@@ -10,7 +10,6 @@ namespace Supermercado.GUI.ViewModels;
 public partial class ShellViewModel : ViewModelBase
 {
     private readonly ISesionActual? _sesion;
-    private readonly IServicioAutenticacion? _autenticacion;
 
     public PosViewModel PosVm { get; }
     public InventarioViewModel InventarioVm { get; }
@@ -36,10 +35,10 @@ public partial class ShellViewModel : ViewModelBase
     public partial string SubtituloModulo { get; set; } = "Facturación de alta velocidad · Resolución DIAN 000165 de 2023";
 
     [ObservableProperty]
-    public partial string NombreUsuarioActivo { get; set; } = "cajero_demo";
+    public partial string NombreUsuarioActivo { get; set; } = "Sin sesión";
 
     [ObservableProperty]
-    public partial string RolUsuarioActivo { get; set; } = "Cajero";
+    public partial string RolUsuarioActivo { get; set; } = "";
 
     [ObservableProperty]
     public partial bool TemaOscuroActivo { get; set; }
@@ -65,7 +64,6 @@ public partial class ShellViewModel : ViewModelBase
 
     public ShellViewModel(
         ISesionActual sesion,
-        IServicioAutenticacion autenticacion,
         PosViewModel posVm,
         InventarioViewModel inventarioVm,
         CajaTurnoViewModel cajaTurnoVm,
@@ -73,7 +71,6 @@ public partial class ShellViewModel : ViewModelBase
         RegistroUsuarioViewModel registroClienteVm)
     {
         _sesion = sesion;
-        _autenticacion = autenticacion;
         PosVm = posVm;
         InventarioVm = inventarioVm;
         CajaTurnoVm = cajaTurnoVm;
@@ -153,7 +150,7 @@ public partial class ShellViewModel : ViewModelBase
     [RelayCommand]
     private void CerrarSesion()
     {
-        _autenticacion?.CerrarSesion();
+        _sesion?.Cerrar();
         SesionCerrada?.Invoke();
     }
 }
