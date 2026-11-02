@@ -86,8 +86,8 @@ Mientras `DebeCambiarClave` esté activo, cualquier operación protegida lanza `
 ### Traslado a estante
 
 - Se indica producto y cantidad.
-- Se toma primero el lote que vence antes, incluso si está vencido: el traslado no es venta y sirve para retirar o reorganizar.
-- **Hallazgo abierto:** el traslado debería rechazar lotes vencidos; hoy no lo hace (ver [`pendientes-ui.md`](pendientes-ui.md)).
+- Se toma primero el lote vigente que vence antes.
+- Los lotes vencidos no se trasladan al estante; regístrelos como merma o gestione su disposición.
 - Cada traslado deja movimiento.
 
 ### Merma

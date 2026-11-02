@@ -167,7 +167,7 @@ Inventario curado de módulos, tipos, contratos, constructores, métodos públic
 
 Repositorios específicos: `ProductoRepositorio`, `LoteRepositorio`, `StockRepositorio<T>`, `MovimientoRepositorio`, `VentaRepositorio`, `TurnoCajaRepositorio`, `ClienteRepositorio`, `EventoOutboxRepositorio`, `UsuarioRepositorio`, `RolRepositorio`, `ParametroRepositorio`, `GastoRepositorio`, `ReabastecimientoRepositorio`, `ConfiguracionWidgetRepositorio`.
 
-`SigsDbContext` incluye `Clientes` y `EventosOutbox`; `ConfiguracionModelo` mantiene el índice **no único** de `Venta.ClaveIdempotencia` y el índice `(Procesado, Id)` del Outbox.
+`SigsDbContext` incluye `Clientes` y `EventosOutbox`; `ConfiguracionModelo` tiene índice único para `Venta.ClaveIdempotencia` y `(Procesado, Id)` para el Outbox.
 
 ## 6. Capa Lógica
 

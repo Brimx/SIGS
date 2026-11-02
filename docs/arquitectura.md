@@ -152,7 +152,7 @@ ServicioNomina.CalcularAsync(empleadoId, anio, mes)
 - **TPH:** `Productos` (unitario/pesado), `Impuestos` (IVA/retención) y `Pago` (efectivo/tarjeta/transferencia/puntos) usan una tabla y `Discriminator`.
 - **Tablas separadas:** `StockEstante` y `StockBodega` heredan de `StockLote`, que es abstracta y no se mapea.
 - **Índices únicos:** código de barras, lote por producto, lote en cada stock, documento de empleado, documento de cliente, usuario, rol, clave de parámetro y widget por empleado.
-- **Índices no únicos:** `Venta.ClaveIdempotencia` (la unicidad está pendiente) y `EventosOutbox (Procesado, Id)`.
+- **Índices no únicos:** `EventosOutbox (Procesado, Id)`. `Venta.ClaveIdempotencia` tiene índice único; valores `NULL` se permiten.
 - **Borrado:** todas las FK son `Restrict`. Las ventas se anulan, no se eliminan.
 - **Fechas:** `TimeProvider` inyectado; `SigsDbContext` asigna `FechaCreacion` en `SaveChanges` y `SaveChangesAsync`.
 

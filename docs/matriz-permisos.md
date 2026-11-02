@@ -63,7 +63,8 @@ Notas:
 | `ServicioImpuestos` | `ObtenerActivosAsync` | Ninguno | — |
 | `ServicioImpuestos` | `CambiarTarifaAsync` | `GestionarTarifas` | `AccesoDenegado` |
 | `ServicioNomina` | `CalcularAsync` | `GestionarPersonal` | `AccesoDenegado` |
-| `ServicioUsuarios` | `CrearAsync` / `RestablecerClaveAsync` / `DesbloquearAsync` | `GestionarPersonal` | `AccesoDenegado` |
+| `ServicioUsuarios` | `ObtenerTodosAsync` / `DesbloquearAsync` | `GestionarPersonal` | `AccesoDenegado` |
+| `ServicioUsuarios` | `RestablecerClaveTemporalAsync` | `GestionarRoles` | `AccesoDenegado` |
 | `ServicioEstructura` | `CrearCargoAsync` / `EditarCargoAsync` / `CrearRolAsync` / `EditarRolAsync` | `GestionarPersonal`; roles además `GestionarRoles` | `AccesoDenegado` |
 | `ServicioConsultaAuditoria` | `ObtenerAsync` | `VerAuditoria` | `AccesoDenegado` |
 | `ServicioRespaldo` | `CrearRespaldoAsync` | `GestionarRoles` | `AccesoDenegado` |
