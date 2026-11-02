@@ -1,0 +1,51 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!-- Colores base neutros (Slate) -->
+    <Color x:Key="ColorSlate50">#F8FAFC</Color>
+    <Color x:Key="ColorSlate100">#F1F5F9</Color>
+    <Color x:Key="ColorSlate200">#E2E8F0</Color>
+    <Color x:Key="ColorSlate300">#CBD5E1</Color>
+    <Color x:Key="ColorSlate400">#94A3B8</Color>
+    <Color x:Key="ColorSlate500">#64748B</Color>
+    <Color x:Key="ColorSlate600">#475569</Color>
+    <Color x:Key="ColorSlate700">#334155</Color>
+    <Color x:Key="ColorSlate800">#1E293B</Color>
+    <Color x:Key="ColorSlate900">#0F172A</Color>
+    <Color x:Key="ColorSlate950">#020617</Color>
+
+    <!-- Colores base cálidos (Warm / Marfil para anti-fatiga visual) -->
+    <Color x:Key="ColorWarm50">#FAF8F5</Color>
+    <Color x:Key="ColorWarm100">#F2EFE9</Color>
+    <Color x:Key="ColorWarm200">#E8E4DC</Color>
+    <Color x:Key="ColorWarm300">#D9D3C7</Color>
+    <Color x:Key="ColorWarm400">#BDB6AA</Color>
+    <Color x:Key="ColorWarm500">#8C8477</Color>
+    <Color x:Key="ColorWarm700">#57534E</Color>
+    <Color x:Key="ColorWarm900">#292524</Color>
+    <Color x:Key="ColorWarm950">#1C1917</Color>
+
+    <!-- Colores de marca y primarios (Azul Retail / Petróleo) -->
+    <Color x:Key="ColorBrand50">#F0F9FF</Color>
+    <Color x:Key="ColorBrand100">#E0F2FE</Color>
+    <Color x:Key="ColorBrand500">#0EA5E9</Color>
+    <Color x:Key="ColorBrand600">#0284C7</Color>
+    <Color x:Key="ColorBrand700">#0369A1</Color>
+    <Color x:Key="ColorBrand800">#075985</Color>
+    <Color x:Key="ColorBrand900">#0C4A6E</Color>
+
+    <!-- Colores de estado (Éxito, Advertencia, Error) -->
+    <Color x:Key="ColorSuccess50">#F0FDF4</Color>
+    <Color x:Key="ColorSuccess500">#22C55E</Color>
+    <Color x:Key="ColorSuccess600">#16A34A</Color>
+    <Color x:Key="ColorSuccess700">#15803D</Color>
+
+    <Color x:Key="ColorWarning50">#FFFBEB</Color>
+    <Color x:Key="ColorWarning500">#F59E0B</Color>
+    <Color x:Key="ColorWarning600">#D97706</Color>
+    <Color x:Key="ColorWarning700">#B45309</Color>
+
+    <Color x:Key="ColorError50">#FEF2F2</Color>
+    <Color x:Key="ColorError500">#EF4444</Color>
+    <Color x:Key="ColorError600">#DC2626</Color>
+    <Color x:Key="ColorError700">#B91C1C</Color>
+</ResourceDictionary>

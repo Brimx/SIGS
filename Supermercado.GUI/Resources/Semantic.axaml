@@ -1,0 +1,64 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <ResourceDictionary.ThemeDictionaries>
+        <!-- TEMA CLARO ESTÁNDAR / SUAVE (Warm Light) -->
+        <ResourceDictionary x:Key="Light">
+            <SolidColorBrush x:Key="BrushBackground" Color="{StaticResource ColorWarm50}" />
+            <SolidColorBrush x:Key="BrushSurface" Color="#FFFFFF" />
+            <SolidColorBrush x:Key="BrushSurfaceRaised" Color="#FFFFFF" />
+            <SolidColorBrush x:Key="BrushSurfaceSubtle" Color="{StaticResource ColorWarm100}" />
+            <SolidColorBrush x:Key="BrushSurfaceHover" Color="{StaticResource ColorWarm200}" />
+
+            <SolidColorBrush x:Key="BrushBorderSubtle" Color="{StaticResource ColorWarm300}" />
+            <SolidColorBrush x:Key="BrushBorderStrong" Color="{StaticResource ColorWarm500}" />
+
+            <SolidColorBrush x:Key="BrushTextPrimary" Color="{StaticResource ColorWarm900}" />
+            <SolidColorBrush x:Key="BrushTextSecondary" Color="{StaticResource ColorWarm700}" />
+            <SolidColorBrush x:Key="BrushTextMuted" Color="{StaticResource ColorWarm500}" />
+            <SolidColorBrush x:Key="BrushTextOnPrimary" Color="#FFFFFF" />
+
+            <SolidColorBrush x:Key="BrushPrimary" Color="{StaticResource ColorBrand700}" />
+            <SolidColorBrush x:Key="BrushPrimaryHover" Color="{StaticResource ColorBrand800}" />
+            <SolidColorBrush x:Key="BrushPrimarySubtle" Color="{StaticResource ColorBrand100}" />
+
+            <SolidColorBrush x:Key="BrushSuccess" Color="{StaticResource ColorSuccess700}" />
+            <SolidColorBrush x:Key="BrushSuccessSubtle" Color="{StaticResource ColorSuccess50}" />
+
+            <SolidColorBrush x:Key="BrushWarning" Color="{StaticResource ColorWarning700}" />
+            <SolidColorBrush x:Key="BrushWarningSubtle" Color="{StaticResource ColorWarning50}" />
+
+            <SolidColorBrush x:Key="BrushError" Color="{StaticResource ColorError700}" />
+            <SolidColorBrush x:Key="BrushErrorSubtle" Color="{StaticResource ColorError50}" />
+        </ResourceDictionary>
+
+        <!-- TEMA OSCURO EQUILIBRADO (Default / Slate) -->
+        <ResourceDictionary x:Key="Default">
+            <SolidColorBrush x:Key="BrushBackground" Color="{StaticResource ColorSlate900}" />
+            <SolidColorBrush x:Key="BrushSurface" Color="{StaticResource ColorSlate800}" />
+            <SolidColorBrush x:Key="BrushSurfaceRaised" Color="{StaticResource ColorSlate700}" />
+            <SolidColorBrush x:Key="BrushSurfaceSubtle" Color="{StaticResource ColorSlate800}" />
+            <SolidColorBrush x:Key="BrushSurfaceHover" Color="{StaticResource ColorSlate700}" />
+
+            <SolidColorBrush x:Key="BrushBorderSubtle" Color="{StaticResource ColorSlate700}" />
+            <SolidColorBrush x:Key="BrushBorderStrong" Color="{StaticResource ColorSlate500}" />
+
+            <SolidColorBrush x:Key="BrushTextPrimary" Color="{StaticResource ColorSlate50}" />
+            <SolidColorBrush x:Key="BrushTextSecondary" Color="{StaticResource ColorSlate400}" />
+            <SolidColorBrush x:Key="BrushTextMuted" Color="{StaticResource ColorSlate500}" />
+            <SolidColorBrush x:Key="BrushTextOnPrimary" Color="#FFFFFF" />
+
+            <SolidColorBrush x:Key="BrushPrimary" Color="{StaticResource ColorBrand500}" />
+            <SolidColorBrush x:Key="BrushPrimaryHover" Color="{StaticResource ColorBrand600}" />
+            <SolidColorBrush x:Key="BrushPrimarySubtle" Color="{StaticResource ColorBrand900}" />
+
+            <SolidColorBrush x:Key="BrushSuccess" Color="{StaticResource ColorSuccess500}" />
+            <SolidColorBrush x:Key="BrushSuccessSubtle" Color="#052E16" />
+
+            <SolidColorBrush x:Key="BrushWarning" Color="{StaticResource ColorWarning500}" />
+            <SolidColorBrush x:Key="BrushWarningSubtle" Color="#451A03" />
+
+            <SolidColorBrush x:Key="BrushError" Color="{StaticResource ColorError500}" />
+            <SolidColorBrush x:Key="BrushErrorSubtle" Color="#450A0A" />
+        </ResourceDictionary>
+    </ResourceDictionary.ThemeDictionaries>
+</ResourceDictionary>

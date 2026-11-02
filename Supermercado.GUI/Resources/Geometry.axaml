@@ -1,0 +1,30 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!-- Radios de Borde (CornerRadius) -->
+    <CornerRadius x:Key="RadiusNone">0</CornerRadius>
+    <CornerRadius x:Key="RadiusSmall">4</CornerRadius>
+    <CornerRadius x:Key="RadiusMedium">8</CornerRadius>
+    <CornerRadius x:Key="RadiusLarge">12</CornerRadius>
+    <CornerRadius x:Key="RadiusPill">9999</CornerRadius>
+
+    <!-- Espaciados Modulares (Thickness) -->
+    <Thickness x:Key="Space2">2</Thickness>
+    <Thickness x:Key="Space4">4</Thickness>
+    <Thickness x:Key="Space8">8</Thickness>
+    <Thickness x:Key="Space12">12</Thickness>
+    <Thickness x:Key="Space16">16</Thickness>
+    <Thickness x:Key="Space24">24</Thickness>
+    <Thickness x:Key="Space32">32</Thickness>
+
+    <!-- Paddings específicos de componentes -->
+    <Thickness x:Key="PaddingButton">16,10</Thickness>
+    <Thickness x:Key="PaddingButtonCompact">12,6</Thickness>
+    <Thickness x:Key="PaddingInput">12,8</Thickness>
+    <Thickness x:Key="PaddingCard">16</Thickness>
+    <Thickness x:Key="PaddingDialog">24</Thickness>
+
+    <!-- Elevaciones y Sombras (BoxShadows) -->
+    <BoxShadows x:Key="ShadowElevation1">0 1 3 0 #1A000000</BoxShadows>
+    <BoxShadows x:Key="ShadowElevation2">0 4 6 -1 #26000000</BoxShadows>
+    <BoxShadows x:Key="ShadowElevation3">0 20 25 -5 #40000000</BoxShadows>
+</ResourceDictionary>
