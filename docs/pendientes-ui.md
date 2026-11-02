@@ -128,7 +128,7 @@ Prioridad: **P0** bloquea producción, **P1** corrige antes de operar con varias
 
 ## 8. Revisión tras completar la GUI (2026-11-02)
 
-No se modificó código de producción. Estados referidos al código actual (HEAD `2daff61`); «no expuesto por la GUI» no equivale a corregido en backend.
+Esta revisión se actualizó después de aplicar correcciones de producción. «No expuesto por la GUI» no equivale a corregido en backend; los estados por hallazgo distinguen ambos casos.
 
 | Pri. | Hallazgo | Estado tras revisar la GUI | Evidencia / riesgo actual |
 | :-- | :-- | :-- | :-- |
