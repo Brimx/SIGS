@@ -10,4 +10,6 @@ public interface IVentaRepositorio : IRepositorio<Venta>
     Task<IReadOnlyList<Venta>> ObtenerPorRangoAsync(
         DateTime desde,
         DateTime hasta);
+
+    Task<Venta?> ObtenerPorClaveIdempotenciaAsync(string claveIdempotencia);
 }

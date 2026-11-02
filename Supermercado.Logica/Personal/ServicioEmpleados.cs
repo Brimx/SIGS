@@ -156,9 +156,12 @@ public class ServicioEmpleados(
 
     private static void Validar(Empleado empleado)
     {
-        if (string.IsNullOrWhiteSpace(empleado.Documento)
-            || string.IsNullOrWhiteSpace(empleado.Nombres))
-            throw new ValidacionException("Faltan documento o nombres.");
+        empleado.Documento = Validador.ExigirDocumento(empleado.Documento);
+        empleado.Nombres = Validador.ExigirNombre(
+            empleado.Nombres, "el nombre");
+        empleado.Apellidos = Validador.ExigirNombreOpcional(
+            empleado.Apellidos, "el apellido");
+        empleado.Correo = Validador.ExigirCorreoOpcional(empleado.Correo);
         if (empleado.SalarioBase < 0)
             throw new ValidacionException("El salario no puede ser negativo.");
     }

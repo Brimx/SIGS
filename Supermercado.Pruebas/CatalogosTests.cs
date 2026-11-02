@@ -95,17 +95,17 @@ public class CatalogosTests
         {
             Id = 1,
             Nombre = "Antiguo",
-            Nit = "111",
-            Telefono = "123",
+            Nit = "111222333",
+            Telefono = "3001234567",
             Correo = "a@a.com"
         };
         await proveedores.AgregarAsync(prov);
 
         await servicio.EditarProveedorAsync(
-            1, "Actualizado", "222", "456", "b@b.com");
+            1, "Actualizado", "222333444", "3109876543", "b@b.com");
 
         Assert.Equal("Actualizado", prov.Nombre);
-        Assert.Equal("222", prov.Nit);
+        Assert.Equal("222333444", prov.Nit);
         Assert.Contains(
             AccionAuditoria.ProveedorModificado,
             auditoria.Acciones);

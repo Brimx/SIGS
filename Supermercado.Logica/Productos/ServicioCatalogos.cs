@@ -2,6 +2,7 @@ using Supermercado.Entidades.Contratos;
 using Supermercado.Entidades.Excepciones;
 using Supermercado.Entidades.Productos;
 using Supermercado.Entidades.Seguridad;
+using Supermercado.Logica.Comunes;
 using Supermercado.Logica.Seguridad;
 
 namespace Supermercado.Logica.Productos;
@@ -66,15 +67,13 @@ public class ServicioCatalogos(
 
         if (string.IsNullOrWhiteSpace(nombre))
             throw new ValidacionException("Falta el nombre del proveedor.");
-        if (string.IsNullOrWhiteSpace(nit))
-            throw new ValidacionException("Falta el NIT del proveedor.");
 
         var proveedor = new Proveedor
         {
             Nombre = nombre.Trim(),
-            Nit = nit.Trim(),
-            Telefono = telefono?.Trim() ?? string.Empty,
-            Correo = correo?.Trim() ?? string.Empty
+            Nit = Validador.ExigirNit(nit, "el NIT del proveedor"),
+            Telefono = Validador.ExigirTelefonoOpcional(telefono),
+            Correo = Validador.ExigirCorreoOpcional(correo)
         };
 
         await proveedores.AgregarAsync(proveedor);
@@ -97,16 +96,17 @@ public class ServicioCatalogos(
 
         if (string.IsNullOrWhiteSpace(nuevoNombre))
             throw new ValidacionException("Falta el nombre del proveedor.");
-        if (string.IsNullOrWhiteSpace(nit))
-            throw new ValidacionException("Falta el NIT del proveedor.");
+        var nitValido = Validador.ExigirNit(nit, "el NIT del proveedor");
+        var telefonoValido = Validador.ExigirTelefonoOpcional(telefono);
+        var correoValido = Validador.ExigirCorreoOpcional(correo);
 
         var proveedor = await proveedores.ObtenerPorIdAsync(id)
             ?? throw new ValidacionException("El proveedor no existe.");
 
         proveedor.Nombre = nuevoNombre.Trim();
-        proveedor.Nit = nit.Trim();
-        proveedor.Telefono = telefono?.Trim() ?? string.Empty;
-        proveedor.Correo = correo?.Trim() ?? string.Empty;
+        proveedor.Nit = nitValido;
+        proveedor.Telefono = telefonoValido;
+        proveedor.Correo = correoValido;
 
         proveedores.Actualizar(proveedor);
         await auditoria.RegistrarAsync(

@@ -1,6 +1,8 @@
+using Supermercado.Logica.Dian;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Supermercado.Datos;
+using Supermercado.Logica.Clientes;
 using Supermercado.Logica.Comunes;
 using Supermercado.Logica.Dashboards;
 using Supermercado.Logica.Dashboards.Widgets;
@@ -56,6 +58,7 @@ public static class ExtensionesLogica
             ServicioReabastecimiento>();
         servicios.AddScoped<IServicioCaja, ServicioCaja>();
         servicios.AddScoped<IServicioVentas, ServicioVentas>();
+        servicios.AddScoped<IServicioClientes, ServicioClientes>();
         servicios.AddScoped<IServicioEmpleados, ServicioEmpleados>();
         servicios.AddScoped<IServicioEstructura, ServicioEstructura>();
         servicios.AddScoped<IServicioImpuestos, ServicioImpuestos>();
@@ -87,11 +90,16 @@ public static class ExtensionesLogica
 
         // Respaldo, traducción de errores y registro a archivo
         servicios.AddScoped<IServicioRespaldo, ServicioRespaldo>();
+        servicios.AddScoped<IServicioDian, ServicioDian>();
+        servicios.AddScoped<IServicioSincronizacionRemota, ClienteSincronizacionSupabase>();
         servicios.AddSingleton<ILoggerProvider>(
             sp => new ProveedorLogArchivo(
                 RutasDatos.ArchivoLogPorDefecto(),
                 sp.GetService<TimeProvider>()));
         servicios.AddScoped<ITraductorExcepciones, TraductorExcepciones>();
+
+        // APIs abiertas activas por defecto; sin internet degradan solas.
+        servicios.AgregarClientesExternos();
 
         return servicios;
     }
@@ -101,13 +109,19 @@ public static class ExtensionesLogica
         OpcionesApisExternas? opciones = null,
         HttpClient? http = null)
     {
-        servicios.AddSingleton(
-            opciones ?? OpcionesApisExternas.DesdeEntorno());
         servicios.AddSingleton(http ?? new HttpClient());
-        servicios.AddScoped<ITrmClient, ClienteTrmDatosGov>();
-        servicios.AddScoped<IConsultaCodigoBarras, ClienteCodigoBarrasOff>();
-        servicios.AddScoped<
-            IVerificadorCorreo, ClienteVerificadorCorreoHttp>();
+        var config = opciones ?? OpcionesApisExternas.DesdeEntorno();
+        servicios.AddSingleton(config);
+
+        if (!string.IsNullOrWhiteSpace(config.TrmUrl))
+            servicios.AddScoped<ITrmClient, ClienteTrmDatosGov>();
+        if (!string.IsNullOrWhiteSpace(config.CodigoBarrasBaseUrl))
+            servicios.AddScoped<
+                IConsultaCodigoBarras, ClienteCodigoBarrasOff>();
+        if (!string.IsNullOrWhiteSpace(config.VerificadorCorreoUrl))
+            servicios.AddScoped<
+                IVerificadorCorreo, ClienteVerificadorCorreoHttp>();
+
         return servicios;
     }
 }

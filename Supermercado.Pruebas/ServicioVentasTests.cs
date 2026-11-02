@@ -18,6 +18,8 @@ public class ServicioVentasTests
         public ProductosEnMemoria Productos { get; } = new();
         public VentasEnMemoria Ventas { get; } = new();
         public TurnosEnMemoria Turnos { get; } = new();
+        public ClientesEnMemoria Clientes { get; } = new();
+        public ParametrosFalsos Parametros { get; } = new();
         public AuditoriaFalsa Auditoria { get; } = new();
         public UnidadDeTrabajoFalsa Trabajo { get; } = new();
         public StockEstante Fila { get; }
@@ -43,6 +45,8 @@ public class ServicioVentasTests
                 Ventas,
                 Turnos,
                 Inventario.Servicio,
+                Clientes,
+                Parametros,
                 Auditoria,
                 Sesiones.Con(permisos),
                 Trabajo,

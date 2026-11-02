@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Supermercado.Datos.Configuraciones;
 using Supermercado.Entidades.Base;
+using Supermercado.Entidades.Clientes;
+using Supermercado.Entidades.Sincronizacion;
 using Supermercado.Entidades.Configuracion;
 using Supermercado.Entidades.Dashboards;
 using Supermercado.Entidades.Finanzas;
@@ -41,6 +43,8 @@ public class SigsDbContext(
     public DbSet<IntentoAcceso> Intentos => Set<IntentoAcceso>();
     public DbSet<ConfiguracionWidget> Widgets => Set<ConfiguracionWidget>();
     public DbSet<Parametro> Parametros => Set<Parametro>();
+    public DbSet<Cliente> Clientes => Set<Cliente>();
+    public DbSet<EventoOutbox> EventosOutbox => Set<EventoOutbox>();
 
     protected override void OnModelCreating(ModelBuilder modelo)
         => ConfiguracionModelo.Aplicar(modelo);

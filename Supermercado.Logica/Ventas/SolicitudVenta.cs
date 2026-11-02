@@ -6,4 +6,7 @@ public record LineaVenta(string CodigoBarras, int Cantidad);
 
 public record SolicitudVenta(
     IReadOnlyList<LineaVenta> Lineas,
-    IReadOnlyList<Pago> Pagos);
+    IReadOnlyList<Pago> Pagos,
+    int? ClienteId = null,
+    int PuntosARedimir = 0,
+    string? ClaveIdempotencia = null);

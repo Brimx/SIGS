@@ -46,6 +46,22 @@ public class GeneradorTicketQuestPdf(
                     col.Item().Text(
                         $"Fecha: {venta.Fecha:yyyy-MM-dd HH:mm:ss} UTC");
                     col.Item().Text($"Turno #: {venta.TurnoCajaId}");
+                    if (venta.Cliente is not null || venta.ClienteId is not null)
+                    {
+                        var nombre = venta.Cliente?.NombreCompleto;
+                        var doc = venta.Cliente?.Documento;
+                        var textoCliente = !string.IsNullOrWhiteSpace(nombre)
+                            ? $"Cliente: {nombre} ({doc})"
+                            : $"Cliente ID: {venta.ClienteId}";
+                        col.Item().Text(textoCliente);
+
+                        if (venta.PuntosGanados > 0)
+                            col.Item().Text($"Puntos ganados: +{venta.PuntosGanados}");
+                        if (venta.PuntosRedimidos > 0)
+                            col.Item().Text($"Puntos redimidos: -{venta.PuntosRedimidos}");
+                        if (venta.Cliente is not null)
+                            col.Item().Text($"Saldo puntos: {venta.Cliente.PuntosAcumulados}");
+                    }
                     col.Item().LineHorizontal(1);
                 });
 
@@ -90,6 +106,19 @@ public class GeneradorTicketQuestPdf(
 
                     if (venta.Cambio > 0)
                         col.Item().Text($"Cambio: ${venta.Cambio:N0}");
+
+                    if (!string.IsNullOrWhiteSpace(venta.Cude))
+                    {
+                        col.Item().LineHorizontal(1);
+                        col.Item().Text($"DOC. EQUIVALENTE POS: {venta.PrefijoDian}{venta.ConsecutivoDian}").Bold();
+                        col.Item().Text($"Adquirente: {venta.NombreAdquirente} ({venta.DocumentoAdquirente})");
+                        var cudeCorto = venta.Cude.Length >= 32
+                            ? $"{venta.Cude[..16]}...{venta.Cude[^16..]}"
+                            : venta.Cude;
+                        col.Item().Text($"CUDE: {cudeCorto}").FontSize(7);
+                        if (!string.IsNullOrWhiteSpace(venta.CadenaQr))
+                            col.Item().Text($"QR: {venta.CadenaQr}").FontSize(7);
+                    }
                 });
 
                 pagina.Footer().Column(col =>

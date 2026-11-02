@@ -1,3 +1,5 @@
+using Supermercado.Entidades.Clientes;
+using Supermercado.Entidades.Sincronizacion;
 using Supermercado.Entidades.Contratos;
 using Supermercado.Entidades.Dashboards;
 using Supermercado.Entidades.Inventario;
@@ -37,6 +39,11 @@ public class VentasEnMemoria : RepositorioEnMemoria<Venta>, IVentaRepositorio
         => Task.FromResult<IReadOnlyList<Venta>>(Datos
             .Where(v => v.Fecha >= desde && v.Fecha < hasta)
             .ToList());
+
+    public Task<Venta?> ObtenerPorClaveIdempotenciaAsync(
+        string claveIdempotencia)
+        => Task.FromResult(Datos.FirstOrDefault(
+            v => v.ClaveIdempotencia == claveIdempotencia));
 }
 
 public class TurnosEnMemoria
@@ -95,4 +102,19 @@ public class ConfiguracionesWidgetEnMemoria
             .Where(w => w.EmpleadoId == empleadoId)
             .OrderBy(w => w.Posicion)
             .ToList());
+}
+
+public class ClientesEnMemoria
+    : RepositorioEnMemoria<Cliente>, IClienteRepositorio
+{
+    public Task<Cliente?> ObtenerPorDocumentoAsync(string documento)
+        => Task.FromResult(Datos.FirstOrDefault(c => c.Documento == documento));
+}
+
+public class EventosOutboxEnMemoria
+    : RepositorioEnMemoria<EventoOutbox>, IEventoOutboxRepositorio
+{
+    public Task<IReadOnlyList<EventoOutbox>> ObtenerPendientesAsync(int limite = 50)
+        => Task.FromResult<IReadOnlyList<EventoOutbox>>(
+            Datos.Where(e => !e.Procesado).OrderBy(e => e.Id).Take(limite).ToList());
 }

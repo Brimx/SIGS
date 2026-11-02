@@ -1,6 +1,7 @@
 using System.Text;
 using Supermercado.Entidades.Configuracion;
 using Supermercado.Entidades.Excepciones;
+using Supermercado.Entidades.Clientes;
 using Supermercado.Entidades.Finanzas;
 using Supermercado.Entidades.Inventario;
 using Supermercado.Entidades.Seguridad;
@@ -148,4 +149,50 @@ public class ReportesPdfTests
             () => servicio.GenerarReporteArqueoAsync(
                 new TurnoCaja(), new ResultadoArqueo(0, 0, 0, true)));
     }
+    [Fact]
+    public async Task GeneradorTicket_ConClienteYPuntos_GeneraPdfCorrecto()
+    {
+        var parametros = new ParametrosFalsos();
+        parametros.Valores[ClavesParametro.NegocioNombre] = "Supermercado SIGS";
+        parametros.Valores[ClavesParametro.NegocioNit] = "900.123.456-1";
+        parametros.Valores[ClavesParametro.NegocioDireccion] = "Carrera 7 # 100-20";
+        parametros.Valores[ClavesParametro.NegocioTelefono] = "3001234567";
+        var generador = new GeneradorTicketQuestPdf(parametros);
+
+        var cliente = new Cliente
+        {
+            Id = 5,
+            Documento = "1020304050",
+            Nombres = "Lucía",
+            Apellidos = "Martínez",
+            PuntosAcumulados = 350
+        };
+
+        var venta = new Venta
+        {
+            Id = 42,
+            Fecha = DateTime.UtcNow,
+            TurnoCajaId = 2,
+            ClienteId = 5,
+            Cliente = cliente,
+            PuntosGanados = 20,
+            PuntosRedimidos = 50
+        };
+        venta.Detalles.Add(new DetalleVenta
+        {
+            ProductoId = 1,
+            Cantidad = 1,
+            PrecioUnitario = 20000,
+            Subtotal = 20000,
+            Iva = 3193
+        });
+        venta.AgregarPago(new PagoPuntos { Puntos = 50, Monto = 500 });
+        venta.AgregarPago(new PagoEfectivo { Monto = 19500 });
+        venta.Cerrar();
+
+        var pdf = await generador.GenerarPdfAsync(venta);
+
+        ValidarCabeceraPdf(pdf);
+    }
+
 }

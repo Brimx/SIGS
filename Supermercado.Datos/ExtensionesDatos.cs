@@ -31,6 +31,8 @@ public static class ExtensionesDatos
         servicios.AddScoped<IReabastecimientoRepositorio,
             ReabastecimientoRepositorio>();
         servicios.AddScoped<IVentaRepositorio, VentaRepositorio>();
+        servicios.AddScoped<IClienteRepositorio, ClienteRepositorio>();
+        servicios.AddScoped<IEventoOutboxRepositorio, EventoOutboxRepositorio>();
         servicios.AddScoped<ITurnoCajaRepositorio, TurnoCajaRepositorio>();
         servicios.AddScoped<IUsuarioRepositorio, UsuarioRepositorio>();
         servicios.AddScoped<IRolRepositorio, RolRepositorio>();

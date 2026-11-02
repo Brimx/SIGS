@@ -46,7 +46,7 @@ public class ServicioEmpleadosTests
         var servicio = CrearServicio();
         var emp = new Empleado
         {
-            Documento = "101",
+            Documento = "1010101",
             Nombres = "Laura",
             Apellidos = "Gómez",
             Correo = "laura@sigs.local",
@@ -70,13 +70,13 @@ public class ServicioEmpleadosTests
         await empleados.AgregarAsync(new Empleado
         {
             Id = 1,
-            Documento = "101",
+            Documento = "1010101",
             Nombres = "Existente"
         });
 
         var nuevo = new Empleado
         {
-            Documento = "101",
+            Documento = "1010101",
             Nombres = "Otro"
         };
 
@@ -90,7 +90,7 @@ public class ServicioEmpleadosTests
         var emp = new Empleado
         {
             Id = 1,
-            Documento = "101",
+            Documento = "1010101",
             Nombres = "Ana",
             RolId = 1
         };
@@ -102,7 +102,7 @@ public class ServicioEmpleadosTests
         var editado = new Empleado
         {
             Id = 1,
-            Documento = "101",
+            Documento = "1010101",
             Nombres = "Ana",
             RolId = 2 // Intenta cambiar rol
         };
@@ -117,7 +117,7 @@ public class ServicioEmpleadosTests
         var emp = new Empleado
         {
             Id = 1,
-            Documento = "101",
+            Documento = "1010101",
             Nombres = "Pedro",
             RolId = 1
         };
@@ -138,7 +138,7 @@ public class ServicioEmpleadosTests
         var emp = new Empleado
         {
             Id = 1,
-            Documento = "101",
+            Documento = "1010101",
             Nombres = "Marta",
             Activo = true
         };
@@ -160,7 +160,7 @@ public class ServicioEmpleadosTests
         var emp = new Empleado
         {
             Id = 5,
-            Documento = "555",
+            Documento = "5550555",
             Nombres = "Usuario"
         };
         await empleados.AgregarAsync(emp);
@@ -182,7 +182,7 @@ public class ServicioEmpleadosTests
         var emp = new Empleado
         {
             Id = 5,
-            Documento = "555",
+            Documento = "5550555",
             Nombres = "Usuario"
         };
         await empleados.AgregarAsync(emp);

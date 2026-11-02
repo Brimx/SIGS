@@ -112,6 +112,8 @@ public class FlujoPuntaAPuntaSqliteTests
             ventaRepo,
             turnoRepo,
             servicioInventario,
+            new ClienteRepositorio(contexto.Db),
+            servicioParametros,
             servicioAuditoria,
             sesion,
             trabajo,

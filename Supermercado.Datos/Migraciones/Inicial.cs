@@ -25,7 +25,7 @@ public class Inicial : Migration
             "Gastos", "Pago", "DetalleVenta", "Ventas", "Turnos", "Cajas",
             "Reabastecimientos", "Mermas", "Movimientos", "StockBodega",
             "StockEstante", "Lotes", "Productos", "Impuestos", "Proveedores",
-            "Categorias", "Usuarios", "Empleados", "Roles", "Cargos"
+            "Categorias", "Clientes", "Usuarios", "Empleados", "Roles", "Cargos"
         ];
 
         foreach (var tabla in tablas)

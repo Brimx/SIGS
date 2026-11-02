@@ -19,6 +19,17 @@ public class VentaRepositorio(SigsDbContext db)
             .Where(v => v.Fecha >= desde && v.Fecha < hasta)
             .ToListAsync();
 
+    public async Task<Venta?> ObtenerPorClaveIdempotenciaAsync(
+        string claveIdempotencia)
+    {
+        if (string.IsNullOrWhiteSpace(claveIdempotencia))
+            return null;
+
+        return await Completas()
+            .Include(v => v.Cliente)
+            .FirstOrDefaultAsync(v => v.ClaveIdempotencia == claveIdempotencia);
+    }
+
     private IQueryable<Venta> Completas()
         => Db.Ventas.Include(v => v.Detalles).Include(v => v.Pagos);
 }
