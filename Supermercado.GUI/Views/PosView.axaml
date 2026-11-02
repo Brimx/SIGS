@@ -1,0 +1,643 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Supermercado.GUI.ViewModels"
+             xmlns:views="using:Supermercado.GUI.Views"
+             xmlns:prod="using:Supermercado.Entidades.Productos"
+             x:Class="Supermercado.GUI.Views.PosView"
+             x:DataType="vm:PosViewModel"
+             FontFamily="{StaticResource FontFamilyPlex}"
+             Focusable="True">
+
+    <UserControl.KeyBindings>
+        <KeyBinding Gesture="F1" Command="{Binding AbrirModalCobroCommand}" />
+        <KeyBinding Gesture="F2" Command="{Binding AbrirModalCantidadCommand}" />
+        <KeyBinding Gesture="F3" Command="{Binding AbrirModalBusquedaCommand}" />
+        <KeyBinding Gesture="F4" Command="{Binding EliminarLineaCommand}" />
+        <KeyBinding Gesture="Delete" Command="{Binding EliminarLineaCommand}" />
+        <KeyBinding Gesture="F5" Command="{Binding AbrirRegistroClienteCommand}" />
+        <KeyBinding Gesture="Escape" Command="{Binding CancelarVentaCommand}" />
+    </UserControl.KeyBindings>
+
+    <Panel>
+        <!-- LAYOUT PRINCIPAL 70% / 30% -->
+        <Grid ColumnDefinitions="*,16,360" Margin="16">
+
+            <!-- COLUMNA IZQUIERDA (70%): ESCANEO, CLIENTE Y GRILLA DE TICKET -->
+            <Grid Grid.Column="0" RowDefinitions="Auto,12,*,12,Auto">
+
+                <!-- Barra Superior de Escaneo y Adquirente DIAN -->
+                <Border Grid.Row="0"
+                        Background="{DynamicResource BrushSurface}"
+                        BorderBrush="{DynamicResource BrushBorderSubtle}"
+                        BorderThickness="1"
+                        CornerRadius="{StaticResource RadiusMedium}"
+                        Padding="14,12">
+                    <Grid ColumnDefinitions="*,12,260,8,Auto">
+                        <!-- Input de Código de Barras / Balanza GS1 -->
+                        <StackPanel Grid.Column="0" Spacing="4">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <LucideIcon Kind="ScanBarcode" Size="16" Foreground="{DynamicResource BrushPrimary}" />
+                                <TextBlock Text="Lector de Código de Barras / PLU o Etiqueta de Balanza (EAN-13)"
+                                           FontWeight="{StaticResource FontWeightSemiBold}"
+                                           FontSize="{StaticResource FontSizeCaption}"
+                                           Foreground="{DynamicResource BrushTextSecondary}" />
+                            </StackPanel>
+                            <Grid ColumnDefinitions="*,8,Auto">
+                                <TextBox Grid.Column="0"
+                                         x:Name="InputCodigoBarras"
+                                         Text="{Binding CodigoBarrasInput}"
+                                         PlaceholderText="Escanee código (ej. 7701001, 7701002 o balanza 2877020001851) y pulse Enter..."
+                                         FontFamily="{StaticResource FontFamilyPlexCondensed}"
+                                         FontSize="{StaticResource FontSizeSubtitle}"
+                                         MinHeight="40">
+                                    <TextBox.KeyBindings>
+                                        <KeyBinding Gesture="Enter" Command="{Binding EscanearOAgregarCommand}" />
+                                    </TextBox.KeyBindings>
+                                </TextBox>
+                                <Button Grid.Column="2"
+                                        Command="{Binding EscanearOAgregarCommand}"
+                                        Background="{DynamicResource BrushPrimary}"
+                                        Foreground="{DynamicResource BrushTextOnPrimary}"
+                                        MinHeight="40"
+                                        Padding="14,0">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <LucideIcon Kind="Plus" Size="16" />
+                                        <TextBlock Text="Agregar" FontWeight="{StaticResource FontWeightSemiBold}" />
+                                    </StackPanel>
+                                </Button>
+                            </Grid>
+                        </StackPanel>
+
+                        <!-- Búsqueda de Adquirente DIAN / Cliente -->
+                        <StackPanel Grid.Column="2" Spacing="4">
+                            <TextBlock Text="Adquirente DIAN (CC / NIT)"
+                                       FontWeight="{StaticResource FontWeightSemiBold}"
+                                       FontSize="{StaticResource FontSizeCaption}"
+                                       Foreground="{DynamicResource BrushTextSecondary}" />
+                            <TextBox Text="{Binding DocumentoClienteInput}"
+                                     PlaceholderText="222222222222 (Enter)"
+                                     FontFamily="{StaticResource FontFamilyPlexCondensed}"
+                                     MinHeight="40">
+                                <TextBox.KeyBindings>
+                                    <KeyBinding Gesture="Enter" Command="{Binding BuscarClientePorDocumentoCommand}" />
+                                </TextBox.KeyBindings>
+                            </TextBox>
+                        </StackPanel>
+
+                        <Button Grid.Column="4"
+                                Command="{Binding AbrirRegistroClienteCommand}"
+                                VerticalAlignment="Bottom"
+                                MinHeight="40"
+                                ToolTip.Tip="Registrar Cliente / Habeas Data (F5)">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <LucideIcon Kind="UserPlus" Size="16" />
+                                <TextBlock Text="F5" FontWeight="{StaticResource FontWeightSemiBold}" />
+                            </StackPanel>
+                        </Button>
+                    </Grid>
+                </Border>
+
+                <!-- Grilla Transaccional de Líneas de Venta -->
+                <Border Grid.Row="2"
+                        Background="{DynamicResource BrushSurface}"
+                        BorderBrush="{DynamicResource BrushBorderSubtle}"
+                        BorderThickness="1"
+                        CornerRadius="{StaticResource RadiusMedium}"
+                        ClipToBounds="True">
+                    <Grid RowDefinitions="Auto,*">
+                        <!-- Subcabecera de Adquirente y Estado de Turno -->
+                        <Border Grid.Row="0"
+                                Background="{DynamicResource BrushSurfaceSubtle}"
+                                BorderBrush="{DynamicResource BrushBorderSubtle}"
+                                BorderThickness="0,0,0,1"
+                                Padding="14,8">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
+                                    <LucideIcon Kind="Users" Size="15" Foreground="{DynamicResource BrushPrimary}" />
+                                    <TextBlock Text="Adquirente:"
+                                               FontSize="{StaticResource FontSizeCaption}"
+                                               FontWeight="{StaticResource FontWeightSemiBold}"
+                                               Foreground="{DynamicResource BrushTextSecondary}" />
+                                    <TextBlock Text="{Binding EtiquetaAdquirente}"
+                                               FontSize="{StaticResource FontSizeCaption}"
+                                               FontWeight="{StaticResource FontWeightBold}"
+                                               Foreground="{DynamicResource BrushTextPrimary}" />
+                                </StackPanel>
+                                <TextBlock Grid.Column="1"
+                                           Text="{Binding InfoTurnoActual}"
+                                           FontFamily="{StaticResource FontFamilyPlexCondensed}"
+                                           FontSize="{StaticResource FontSizeCaption}"
+                                           FontWeight="{StaticResource FontWeightSemiBold}"
+                                           Foreground="{DynamicResource BrushPrimary}" />
+                            </Grid>
+                        </Border>
+
+                        <!-- DataGrid Virtualizado con Tipografía Tabular -->
+                        <DataGrid Grid.Row="1"
+                                  ItemsSource="{Binding Carrito}"
+                                  SelectedItem="{Binding LineaSeleccionada}"
+                                  IsReadOnly="True"
+                                  CanUserResizeColumns="True"
+                                  GridLinesVisibility="Horizontal"
+                                  FontFamily="{StaticResource FontFamilyPlex}">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="CÓDIGO"
+                                                    Binding="{Binding CodigoBarras}"
+                                                    Width="130"
+                                                    FontFamily="{StaticResource FontFamilyPlexCondensed}" />
+                                <DataGridTextColumn Header="DESCRIPCIÓN DEL ARTÍCULO"
+                                                    Binding="{Binding Nombre}"
+                                                    Width="*" />
+                                <DataGridTextColumn Header="ID IVA"
+                                                    Binding="{Binding CodigoTarifaDian}"
+                                                    Width="70"
+                                                    FontFamily="{StaticResource FontFamilyPlexCondensed}" />
+                                <DataGridTextColumn Header="CANT / UM"
+                                                    Binding="{Binding CantidadFormateada}"
+                                                    Width="110"
+                                                    FontFamily="{StaticResource FontFamilyPlexCondensed}" />
+                                <DataGridTextColumn Header="VALOR/U"
+                                                    Binding="{Binding PrecioUnitarioFormateado}"
+                                                    Width="120"
+                                                    FontFamily="{StaticResource FontFamilyPlexCondensed}" />
+                                <DataGridTextColumn Header="VALOR/T"
+                                                    Binding="{Binding SubtotalFormateado}"
+                                                    Width="130"
+                                                    FontFamily="{StaticResource FontFamilyPlexCondensed}" />
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Grid>
+                </Border>
+
+                <!-- Barra de Estado Inferior -->
+                <Border Grid.Row="4"
+                        Background="{DynamicResource BrushSurface}"
+                        BorderBrush="{DynamicResource BrushBorderSubtle}"
+                        BorderThickness="1"
+                        CornerRadius="{StaticResource RadiusSmall}"
+                        Padding="12,8">
+                    <Grid ColumnDefinitions="Auto,8,*,Auto">
+                        <LucideIcon Grid.Column="0"
+                                    Kind="Receipt"
+                                    Size="16"
+                                    Foreground="{DynamicResource BrushPrimary}"
+                                    VerticalAlignment="Center" />
+                        <TextBlock Grid.Column="2"
+                                   Text="{Binding MensajeEstado}"
+                                   FontSize="{StaticResource FontSizeBody}"
+                                   FontWeight="{StaticResource FontWeightMedium}"
+                                   Foreground="{DynamicResource BrushTextPrimary}"
+                                   VerticalAlignment="Center" />
+                        <TextBlock Grid.Column="3"
+                                   Text="{Binding TotalArticulos, StringFormat='Ítems: {0}'}"
+                                   FontFamily="{StaticResource FontFamilyPlexCondensed}"
+                                   FontWeight="{StaticResource FontWeightBold}"
+                                   Foreground="{DynamicResource BrushTextSecondary}"
+                                   VerticalAlignment="Center" />
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <!-- COLUMNA DERECHA (30%): VISOR DE TOTAL A 32PX, IMPUESTOS DIAN Y BOTONERA F1-F5 -->
+            <Border Grid.Column="2"
+                    Background="{DynamicResource BrushSurface}"
+                    BorderBrush="{DynamicResource BrushBorderSubtle}"
+                    BorderThickness="1"
+                    CornerRadius="{StaticResource RadiusLarge}"
+                    Padding="18">
+                <Grid RowDefinitions="Auto,16,Auto,16,*,Auto">
+
+                    <!-- VISOR DE TOTAL A PAGAR (32PX DISPLAY TABULAR) -->
+                    <Border Grid.Row="0"
+                            Background="{DynamicResource BrushPrimarySubtle}"
+                            BorderBrush="{DynamicResource BrushPrimary}"
+                            BorderThickness="1"
+                            CornerRadius="{StaticResource RadiusMedium}"
+                            Padding="16,14">
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="TOTAL A PAGAR (COP)"
+                                       FontFamily="{StaticResource FontFamilyStackSans}"
+                                       FontSize="{StaticResource FontSizeCaption}"
+                                       FontWeight="{StaticResource FontWeightBold}"
+                                       Foreground="{DynamicResource BrushPrimary}" />
+                            <TextBlock Text="{Binding TotalFormateado}"
+                                       FontFamily="{StaticResource FontFamilyPlexCondensed}"
+                                       FontSize="{StaticResource FontSizeDisplay}"
+                                       FontWeight="{StaticResource FontWeightBold}"
+                                       Foreground="{DynamicResource BrushTextPrimary}"
+                                       HorizontalAlignment="Right" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- DESGLOSE TRIBUTARIO DIAN (TARIFAS C: 0%, M: 5%, J: 19%) -->
+                    <Border Grid.Row="2"
+                            Background="{DynamicResource BrushSurfaceSubtle}"
+                            BorderBrush="{DynamicResource BrushBorderSubtle}"
+                            BorderThickness="1"
+                            CornerRadius="{StaticResource RadiusMedium}"
+                            Padding="12,10">
+                        <StackPanel Spacing="6">
+                            <TextBlock Text="DISCRIMINACIÓN IVA (RES. DIAN 000165)"
+                                       FontFamily="{StaticResource FontFamilyStackSans}"
+                                       FontSize="{StaticResource FontSizeCaption}"
+                                       FontWeight="{StaticResource FontWeightBold}"
+                                       Foreground="{DynamicResource BrushTextSecondary}" />
+
+                            <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,4,Auto,4,Auto,4,Auto,4,Auto">
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="Subtotal Base Gravable:" FontSize="{StaticResource FontSizeBody}" Foreground="{DynamicResource BrushTextSecondary}" />
+                                <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding SubtotalBaseFormateado}" FontFamily="{StaticResource FontFamilyPlexCondensed}" FontWeight="{StaticResource FontWeightSemiBold}" />
+
+                                <TextBlock Grid.Row="2" Grid.Column="0" Text="C · Excluido / Exento (0%):" FontSize="{StaticResource FontSizeCaption}" Foreground="{DynamicResource BrushTextSecondary}" />
+                                <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding BaseTarifaC, StringFormat='$ {0:N0}'}" FontFamily="{StaticResource FontFamilyPlexCondensed}" FontSize="{StaticResource FontSizeCaption}" />
+
+                                <TextBlock Grid.Row="4" Grid.Column="0" Text="M · Tarifa 5% (IVA):" FontSize="{StaticResource FontSizeCaption}" Foreground="{DynamicResource BrushTextSecondary}" />
+                                <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding IvaTarifaM, StringFormat='$ {0:N0}'}" FontFamily="{StaticResource FontFamilyPlexCondensed}" FontSize="{StaticResource FontSizeCaption}" />
+
+                                <TextBlock Grid.Row="6" Grid.Column="0" Text="J · Tarifa 19% (IVA):" FontSize="{StaticResource FontSizeCaption}" Foreground="{DynamicResource BrushTextSecondary}" />
+                                <TextBlock Grid.Row="6" Grid.Column="1" Text="{Binding IvaTarifaJ, StringFormat='$ {0:N0}'}" FontFamily="{StaticResource FontFamilyPlexCondensed}" FontSize="{StaticResource FontSizeCaption}" />
+
+                                <TextBlock Grid.Row="8" Grid.Column="0" Text="Total Impuestos (IVA):" FontSize="{StaticResource FontSizeBody}" FontWeight="{StaticResource FontWeightSemiBold}" Foreground="{DynamicResource BrushTextPrimary}" />
+                                <TextBlock Grid.Row="8" Grid.Column="1" Text="{Binding IvaFormateado}" FontFamily="{StaticResource FontFamilyPlexCondensed}" FontWeight="{StaticResource FontWeightBold}" Foreground="{DynamicResource BrushPrimary}" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- BOTONERA DE ACCIONES RÁPIDAS Y TECLAS DE FUNCIÓN (ALTURA MÍNIMA 44PX) -->
+                    <StackPanel Grid.Row="4" Spacing="8" VerticalAlignment="Top">
+                        <Button Command="{Binding AbrirModalCobroCommand}"
+                                HorizontalAlignment="Stretch"
+                                HorizontalContentAlignment="Stretch"
+                                MinHeight="52"
+                                Background="{DynamicResource BrushPrimary}"
+                                Foreground="{DynamicResource BrushTextOnPrimary}"
+                                CornerRadius="{StaticResource RadiusMedium}">
+                            <Grid ColumnDefinitions="Auto,10,*,Auto">
+                                <LucideIcon Grid.Column="0" Kind="Banknote" Size="20" VerticalAlignment="Center" />
+                                <TextBlock Grid.Column="2"
+                                           Text="COBRAR Y EMITIR POS"
+                                           FontFamily="{StaticResource FontFamilyStackSans}"
+                                           FontWeight="{StaticResource FontWeightBold}"
+                                           FontSize="{StaticResource FontSizeSubtitle}"
+                                           VerticalAlignment="Center" />
+                                <Border Grid.Column="3"
+                                        Background="#33FFFFFF"
+                                        CornerRadius="{StaticResource RadiusSmall}"
+                                        Padding="8,2">
+                                    <TextBlock Text="F1" FontFamily="{StaticResource FontFamilyPlexCondensed}" FontWeight="{StaticResource FontWeightBold}" />
+                                </Border>
+                            </Grid>
+                        </Button>
+
+                        <Button Command="{Binding AbrirModalCantidadCommand}"
+                                HorizontalAlignment="Stretch"
+                                HorizontalContentAlignment="Stretch"
+                                MinHeight="44">
+                            <Grid ColumnDefinitions="Auto,10,*,Auto">
+                                <LucideIcon Grid.Column="0" Kind="Calculator" Size="18" VerticalAlignment="Center" />
+                                <TextBlock Grid.Column="2" Text="Cambiar Cantidad / Gramos" FontWeight="{StaticResource FontWeightSemiBold}" VerticalAlignment="Center" />
+                                <TextBlock Grid.Column="3" Text="F2" FontFamily="{StaticResource FontFamilyPlexCondensed}" FontWeight="{StaticResource FontWeightSemiBold}" Foreground="{DynamicResource BrushTextSecondary}" VerticalAlignment="Center" />
+                            </Grid>
+                        </Button>
+
+                        <Button Command="{Binding AbrirModalBusquedaCommand}"
+                                HorizontalAlignment="Stretch"
+                                HorizontalContentAlignment="Stretch"
+                                MinHeight="44">
+                            <Grid ColumnDefinitions="Auto,10,*,Auto">
+                                <LucideIcon Grid.Column="0" Kind="Search" Size="18" VerticalAlignment="Center" />
+                                <TextBlock Grid.Column="2" Text="Buscar Producto por Nombre" FontWeight="{StaticResource FontWeightSemiBold}" VerticalAlignment="Center" />
+                                <TextBlock Grid.Column="3" Text="F3" FontFamily="{StaticResource FontFamilyPlexCondensed}" FontWeight="{StaticResource FontWeightSemiBold}" Foreground="{DynamicResource BrushTextSecondary}" VerticalAlignment="Center" />
+                            </Grid>
+                        </Button>
+
+                        <Button Command="{Binding EliminarLineaCommand}"
+                                HorizontalAlignment="Stretch"
+                                HorizontalContentAlignment="Stretch"
+                                MinHeight="44">
+                            <Grid ColumnDefinitions="Auto,10,*,Auto">
+                                <LucideIcon Grid.Column="0" Kind="Trash" Size="18" VerticalAlignment="Center" />
+                                <TextBlock Grid.Column="2" Text="Quitar Línea Seleccionada" FontWeight="{StaticResource FontWeightSemiBold}" VerticalAlignment="Center" />
+                                <TextBlock Grid.Column="3" Text="F4" FontFamily="{StaticResource FontFamilyPlexCondensed}" FontWeight="{StaticResource FontWeightSemiBold}" Foreground="{DynamicResource BrushTextSecondary}" VerticalAlignment="Center" />
+                            </Grid>
+                        </Button>
+                    </StackPanel>
+
+                    <!-- Cancelar Venta (Escape) -->
+                    <Button Grid.Row="5"
+                            Command="{Binding CancelarVentaCommand}"
+                            HorizontalAlignment="Stretch"
+                            HorizontalContentAlignment="Center"
+                            MinHeight="40">
+                        <TextBlock Text="Cancelar / Limpiar Ticket (Esc)"
+                                   FontWeight="{StaticResource FontWeightMedium}"
+                                   Foreground="{DynamicResource BrushError}" />
+                    </Button>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!-- OVERLAY 1: MODAL DE COBRO Y CÁLCULO DE CAMBIO (F1) -->
+        <Border IsVisible="{Binding ModalCobroAbierto}"
+                Background="#99020617">
+            <Border Background="{DynamicResource BrushSurface}"
+                    BorderBrush="{DynamicResource BrushBorderSubtle}"
+                    BorderThickness="1"
+                    CornerRadius="{StaticResource RadiusLarge}"
+                    BoxShadow="{StaticResource ShadowElevation3}"
+                    Width="540"
+                    VerticalAlignment="Center"
+                    HorizontalAlignment="Center"
+                    Padding="24">
+                <StackPanel Spacing="16">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <LucideIcon Kind="Wallet" Size="22" Foreground="{DynamicResource BrushPrimary}" />
+                        <TextBlock Text="Finalizar Venta · Recepción de Pago y Emisión DIAN"
+                                   FontFamily="{StaticResource FontFamilyStackSans}"
+                                   FontSize="{StaticResource FontSizeTitle}"
+                                   FontWeight="{StaticResource FontWeightBold}" />
+                    </StackPanel>
+
+                    <Border Background="{DynamicResource BrushPrimarySubtle}"
+                            CornerRadius="{StaticResource RadiusMedium}"
+                            Padding="14,10">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Grid.Column="0" Text="TOTAL FACTURA:" VerticalAlignment="Center" FontWeight="{StaticResource FontWeightSemiBold}" />
+                            <TextBlock Grid.Column="1" Text="{Binding TotalFormateado}" FontFamily="{StaticResource FontFamilyPlexCondensed}" FontSize="{StaticResource FontSizeHeadline}" FontWeight="{StaticResource FontWeightBold}" Foreground="{DynamicResource BrushPrimary}" />
+                        </Grid>
+                    </Border>
+
+                    <!-- Selector de Medio de Pago -->
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="Medio de Pago" FontWeight="{StaticResource FontWeightMedium}" Foreground="{DynamicResource BrushTextSecondary}" />
+                        <ComboBox ItemsSource="{Binding MetodosPagoDisponibles}"
+                                  SelectedItem="{Binding MetodoPagoSeleccionado}"
+                                  HorizontalAlignment="Stretch" />
+                    </StackPanel>
+
+                    <!-- Panel Efectivo y Cálculo Instantáneo de Cambio -->
+                    <StackPanel Spacing="10" IsVisible="{Binding EsPagoEfectivo}">
+                        <TextBlock Text="Efectivo Recibido (Pesos COP)" FontWeight="{StaticResource FontWeightMedium}" Foreground="{DynamicResource BrushTextSecondary}" />
+                        <NumericUpDown Value="{Binding EfectivoEntregadoPesos}"
+                                       Minimum="0"
+                                       Increment="1000"
+                                       FormatString="N0"
+                                       FontFamily="{StaticResource FontFamilyPlexCondensed}"
+                                       FontSize="{StaticResource FontSizeTitle}"
+                                       FontWeight="{StaticResource FontWeightBold}" />
+
+                        <!-- Billetes Rápidos Colombianos -->
+                        <Grid ColumnDefinitions="*,8,*,8,*,8,*">
+                            <Button Grid.Column="0" Command="{Binding AsignarBilleteRapidoCommand}" CommandParameter="10000" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center">
+                                <TextBlock Text="$ 10.000" FontFamily="{StaticResource FontFamilyPlexCondensed}" FontWeight="{StaticResource FontWeightSemiBold}" />
+                            </Button>
+                            <Button Grid.Column="2" Command="{Binding AsignarBilleteRapidoCommand}" CommandParameter="20000" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center">
+                                <TextBlock Text="$ 20.000" FontFamily="{StaticResource FontFamilyPlexCondensed}" FontWeight="{StaticResource FontWeightSemiBold}" />
+                            </Button>
+                            <Button Grid.Column="4" Command="{Binding AsignarBilleteRapidoCommand}" CommandParameter="50000" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center">
+                                <TextBlock Text="$ 50.000" FontFamily="{StaticResource FontFamilyPlexCondensed}" FontWeight="{StaticResource FontWeightSemiBold}" />
+                            </Button>
+                            <Button Grid.Column="6" Command="{Binding AsignarBilleteRapidoCommand}" CommandParameter="100000" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center">
+                                <TextBlock Text="$ 100.000" FontFamily="{StaticResource FontFamilyPlexCondensed}" FontWeight="{StaticResource FontWeightSemiBold}" />
+                            </Button>
+                        </Grid>
+
+                        <Border Background="{DynamicResource BrushSurfaceSubtle}"
+                                BorderBrush="{DynamicResource BrushBorderSubtle}"
+                                BorderThickness="1"
+                                CornerRadius="{StaticResource RadiusMedium}"
+                                Padding="14,10">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBlock Grid.Column="0" Text="CAMBIO / DEVUELTA AL CLIENTE:" VerticalAlignment="Center" FontWeight="{StaticResource FontWeightSemiBold}" />
+                                <TextBlock Grid.Column="1"
+                                           Text="{Binding CambioFormateado}"
+                                           FontFamily="{StaticResource FontFamilyPlexCondensed}"
+                                           FontSize="{StaticResource FontSizeHeadline}"
+                                           FontWeight="{StaticResource FontWeightBold}"
+                                           Foreground="{DynamicResource BrushSuccess}" />
+                            </Grid>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- Panel Tarjeta -->
+                    <StackPanel Spacing="6" IsVisible="{Binding EsPagoTarjeta}">
+                        <TextBlock Text="Últimos 4 Dígitos de la Tarjeta (Datafono)" FontWeight="{StaticResource FontWeightMedium}" />
+                        <TextBox Text="{Binding UltimosDigitosTarjeta}" MaxLength="4" FontFamily="{StaticResource FontFamilyPlexCondensed}" />
+                    </StackPanel>
+
+                    <!-- Panel Transferencia -->
+                    <StackPanel Spacing="6" IsVisible="{Binding EsPagoTransferencia}">
+                        <TextBlock Text="Referencia de Transferencia (Nequi / Daviplata / PSE)" FontWeight="{StaticResource FontWeightMedium}" />
+                        <TextBox Text="{Binding ReferenciaTransferencia}" FontFamily="{StaticResource FontFamilyPlexCondensed}" />
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10">
+                        <Button Command="{Binding CerrarModalCobroCommand}" MinHeight="42" Padding="16,0">
+                            <TextBlock Text="Volver" />
+                        </Button>
+                        <Button Command="{Binding ConfirmarCobroCommand}"
+                                Background="{DynamicResource BrushSuccess}"
+                                Foreground="#FFFFFF"
+                                MinHeight="42"
+                                Padding="20,0">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <LucideIcon Kind="Printer" Size="18" />
+                                <TextBlock Text="Confirmar Pago e Imprimir Tirilla" FontWeight="{StaticResource FontWeightBold}" />
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Border>
+
+        <!-- OVERLAY 2: MODAL CAMBIO DE CANTIDAD (F2) -->
+        <Border IsVisible="{Binding ModalCantidadAbierto}"
+                Background="#99020617">
+            <Border Background="{DynamicResource BrushSurface}"
+                    BorderBrush="{DynamicResource BrushBorderSubtle}"
+                    BorderThickness="1"
+                    CornerRadius="{StaticResource RadiusLarge}"
+                    Width="400"
+                    VerticalAlignment="Center"
+                    HorizontalAlignment="Center"
+                    Padding="24">
+                <StackPanel Spacing="14">
+                    <TextBlock Text="Modificar Cantidad / Peso (Gramos)"
+                               FontFamily="{StaticResource FontFamilyStackSans}"
+                               FontSize="{StaticResource FontSizeTitle}"
+                               FontWeight="{StaticResource FontWeightBold}" />
+                    <NumericUpDown Value="{Binding NuevaCantidadInput}"
+                                   Minimum="1"
+                                   Increment="1"
+                                   FontFamily="{StaticResource FontFamilyPlexCondensed}"
+                                   FontSize="{StaticResource FontSizeTitle}" />
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+                        <Button Command="{Binding AplicarCambioCantidadCommand}"
+                                Background="{DynamicResource BrushPrimary}"
+                                Foreground="{DynamicResource BrushTextOnPrimary}"
+                                Padding="16,8">
+                            <TextBlock Text="Aplicar (Enter)" FontWeight="{StaticResource FontWeightSemiBold}" />
+                        </Button>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Border>
+
+        <!-- OVERLAY 3: MODAL BÚSQUEDA RÁPIDA POR NOMBRE (F3) -->
+        <Border IsVisible="{Binding ModalBusquedaAbierto}"
+                Background="#99020617">
+            <Border Background="{DynamicResource BrushSurface}"
+                    BorderBrush="{DynamicResource BrushBorderSubtle}"
+                    BorderThickness="1"
+                    CornerRadius="{StaticResource RadiusLarge}"
+                    Width="620"
+                    Height="460"
+                    VerticalAlignment="Center"
+                    HorizontalAlignment="Center"
+                    Padding="24">
+                <Grid RowDefinitions="Auto,12,Auto,12,*,12,Auto">
+                    <TextBlock Grid.Row="0"
+                               Text="Búsqueda Rápida en Catálogo (F3)"
+                               FontFamily="{StaticResource FontFamilyStackSans}"
+                               FontSize="{StaticResource FontSizeTitle}"
+                               FontWeight="{StaticResource FontWeightBold}" />
+                    <Grid Grid.Row="2" ColumnDefinitions="*,8,Auto">
+                        <TextBox Grid.Column="0"
+                                 Text="{Binding TerminoBusquedaRapida}"
+                                 PlaceholderText="Escriba nombre del producto (ej. Arroz, Leche, Tomate)...">
+                            <TextBox.KeyBindings>
+                                <KeyBinding Gesture="Enter" Command="{Binding EjecutarBusquedaRapidaCommand}" />
+                            </TextBox.KeyBindings>
+                        </TextBox>
+                        <Button Grid.Column="2"
+                                Command="{Binding EjecutarBusquedaRapidaCommand}"
+                                Background="{DynamicResource BrushPrimary}"
+                                Foreground="{DynamicResource BrushTextOnPrimary}">
+                            <TextBlock Text="Buscar" FontWeight="{StaticResource FontWeightSemiBold}" />
+                        </Button>
+                    </Grid>
+                    <ListBox Grid.Row="4"
+                             ItemsSource="{Binding ResultadosBusqueda}"
+                             Background="{DynamicResource BrushSurfaceSubtle}"
+                             CornerRadius="{StaticResource RadiusSmall}">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate x:DataType="prod:Producto">
+                                <Grid ColumnDefinitions="110,*,110,Auto" Margin="4">
+                                    <TextBlock Grid.Column="0" Text="{Binding CodigoBarras}" FontFamily="{StaticResource FontFamilyPlexCondensed}" VerticalAlignment="Center" />
+                                    <TextBlock Grid.Column="1" Text="{Binding Nombre}" FontWeight="{StaticResource FontWeightMedium}" VerticalAlignment="Center" />
+                                    <TextBlock Grid.Column="2" Text="{Binding PrecioVenta, StringFormat='$ {0:N0}'}" FontFamily="{StaticResource FontFamilyPlexCondensed}" FontWeight="{StaticResource FontWeightBold}" VerticalAlignment="Center" />
+                                    <Button Grid.Column="3"
+                                            Command="{Binding $parent[UserControl].((vm:PosViewModel)DataContext).SeleccionarProductoBuscadoCommand}"
+                                            CommandParameter="{Binding}"
+                                            Padding="10,4">
+                                        <TextBlock Text="Seleccionar" />
+                                    </Button>
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                    <Button Grid.Row="6"
+                            Command="{Binding CancelarVentaCommand}"
+                            HorizontalAlignment="Right">
+                        <TextBlock Text="Cerrar" />
+                    </Button>
+                </Grid>
+            </Border>
+        </Border>
+
+        <!-- OVERLAY 4: MODAL DE REGISTRO DE CLIENTE Y HABEAS DATA (F5) -->
+        <Border IsVisible="{Binding ModalRegistroClienteAbierto}"
+                Background="#99020617">
+            <views:RegistroUsuarioView DataContext="{Binding RegistroClienteVm}"
+                                       VerticalAlignment="Center"
+                                       HorizontalAlignment="Center" />
+        </Border>
+
+        <!-- OVERLAY 5: APERTURA OBLIGATORIA DE TURNO CON BASE INICIAL -->
+        <Border IsVisible="{Binding ModalAperturaTurnoAbierto}"
+                Background="#B3020617">
+            <Border Background="{DynamicResource BrushSurface}"
+                    BorderBrush="{DynamicResource BrushBorderSubtle}"
+                    BorderThickness="1"
+                    CornerRadius="{StaticResource RadiusLarge}"
+                    Width="460"
+                    VerticalAlignment="Center"
+                    HorizontalAlignment="Center"
+                    Padding="28">
+                <StackPanel Spacing="16">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <LucideIcon Kind="Lock" Size="22" Foreground="{DynamicResource BrushWarning}" />
+                        <TextBlock Text="Apertura de Turno de Caja Requerida"
+                                   FontFamily="{StaticResource FontFamilyStackSans}"
+                                   FontSize="{StaticResource FontSizeTitle}"
+                                   FontWeight="{StaticResource FontWeightBold}" />
+                    </StackPanel>
+                    <TextBlock Text="Para registrar ventas en el POS debes iniciar un turno de caja indicando el efectivo base en gaveta."
+                               TextWrapping="Wrap"
+                               Foreground="{DynamicResource BrushTextSecondary}" />
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="Base Inicial en Efectivo (COP)" FontWeight="{StaticResource FontWeightSemiBold}" />
+                        <NumericUpDown Value="{Binding EfectivoInicialApertura}"
+                                       Minimum="0"
+                                       Increment="10000"
+                                       FormatString="N0"
+                                       FontFamily="{StaticResource FontFamilyPlexCondensed}"
+                                       FontSize="{StaticResource FontSizeTitle}"
+                                       FontWeight="{StaticResource FontWeightBold}" />
+                    </StackPanel>
+                    <Button Command="{Binding ConfirmarAperturaTurnoCommand}"
+                            HorizontalAlignment="Stretch"
+                            HorizontalContentAlignment="Center"
+                            MinHeight="44"
+                            Background="{DynamicResource BrushPrimary}"
+                            Foreground="{DynamicResource BrushTextOnPrimary}">
+                        <TextBlock Text="Abrir Turno e Iniciar Operación" FontWeight="{StaticResource FontWeightBold}" />
+                    </Button>
+                </StackPanel>
+            </Border>
+        </Border>
+
+        <!-- OVERLAY 6: VISTA PREVIA DE TIRILLA POS 80MM (ESTILO TIENDAS ARA / DIAN) -->
+        <Border IsVisible="{Binding MostrarVistaPreviaTicket}"
+                Background="#99020617">
+            <Border Background="{DynamicResource BrushSurface}"
+                    BorderBrush="{DynamicResource BrushBorderSubtle}"
+                    BorderThickness="1"
+                    CornerRadius="{StaticResource RadiusLarge}"
+                    Width="520"
+                    MaxHeight="680"
+                    VerticalAlignment="Center"
+                    HorizontalAlignment="Center"
+                    Padding="24">
+                <Grid RowDefinitions="Auto,12,*,16,Auto">
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="10">
+                        <LucideIcon Kind="Receipt" Size="20" Foreground="{DynamicResource BrushPrimary}" />
+                        <TextBlock Text="Comprobante Emitido · Tirilla POS Electrónica 80mm"
+                                   FontFamily="{StaticResource FontFamilyStackSans}"
+                                   FontSize="{StaticResource FontSizeTitle}"
+                                   FontWeight="{StaticResource FontWeightBold}" />
+                    </StackPanel>
+                    <ScrollViewer Grid.Row="2">
+                        <Border Background="#FAF8F5"
+                                BorderBrush="#D9D3C7"
+                                BorderThickness="1"
+                                CornerRadius="4"
+                                Padding="16">
+                            <TextBlock Text="{Binding UltimoTicketTexto}"
+                                       FontFamily="Monospace"
+                                       FontSize="11.5"
+                                       Foreground="#1C1917" />
+                        </Border>
+                    </ScrollViewer>
+                    <Button Grid.Row="4"
+                            Command="{Binding CerrarVistaPreviaTicketCommand}"
+                            HorizontalAlignment="Right"
+                            Background="{DynamicResource BrushPrimary}"
+                            Foreground="{DynamicResource BrushTextOnPrimary}"
+                            Padding="20,10">
+                        <TextBlock Text="Continuar Próximo Cliente (Enter)" FontWeight="{StaticResource FontWeightSemiBold}" />
+                    </Button>
+                </Grid>
+            </Border>
+        </Border>
+    </Panel>
+</UserControl>
