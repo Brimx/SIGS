@@ -17,6 +17,10 @@ public class ClienteCodigoBarrasOff(
             || string.IsNullOrWhiteSpace(codigo))
             return null;
 
+        if (!await parametros.ObtenerBoolAsync(
+                ClavesParametro.CodigoBarrasHabilitado))
+            return null;
+
         var timeout = await parametros.ObtenerEnteroAsync(
             ClavesParametro.TimeoutSegundos);
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);

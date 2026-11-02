@@ -16,6 +16,10 @@ public class ServicioTrm(
 
     public async Task<Trm?> ObtenerAsync(CancellationToken ct = default)
     {
+        // Interruptor administrativo: apagado, solo se usa el último valor.
+        if (!await parametros.ObtenerBoolAsync(ClavesParametro.TrmHabilitada))
+            return await LeerRespaldoAsync();
+
         var reintentos = Math.Max(0, await parametros.ObtenerEnteroAsync(
             ClavesParametro.Reintentos));
         var timeout = await parametros.ObtenerEnteroAsync(
