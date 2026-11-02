@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Extensions.DependencyInjection;
 using Supermercado.Entidades.Clientes;
 using Supermercado.Entidades.Productos;
 using Supermercado.Entidades.Ventas;
@@ -63,6 +64,8 @@ public partial class PosViewModel : ViewModelBase
     private readonly IServicioClientes? _servicioClientes;
     private readonly IImpresorTicket? _impresorTicket;
     private readonly ITraductorExcepciones? _traductor;
+    private readonly IServiceScopeFactory? _scopeFactory;
+    private string? _claveIdempotenciaCobro;
 
     public ObservableCollection<LineaVentaItemViewModel> Carrito { get; } = [];
     public ObservableCollection<Producto> ResultadosBusqueda { get; } = [];
@@ -226,6 +229,14 @@ public partial class PosViewModel : ViewModelBase
         RegistroClienteVm.ConfigurarModo(ModoRegistroUsuario.ClientePos);
     }
 
+    public PosViewModel(IServiceScopeFactory scopeFactory)
+    {
+        _scopeFactory = scopeFactory;
+        RegistroClienteVm = new RegistroUsuarioViewModel(scopeFactory);
+        RegistroClienteVm.ConfigurarModo(ModoRegistroUsuario.ClientePos);
+        EnlazarRegistroCliente();
+    }
+
     public PosViewModel(
         IServicioVentas servicioVentas,
         IServicioCaja servicioCaja,
@@ -243,12 +254,13 @@ public partial class PosViewModel : ViewModelBase
         _impresorTicket = impresorTicket;
         _traductor = traductor;
 
-        RegistroClienteVm = new RegistroUsuarioViewModel(
-            inicializacion: null,
-            clientes: servicioClientes,
-            datosDemo: null,
-            traductor: traductor);
+        RegistroClienteVm = new RegistroUsuarioViewModel();
         RegistroClienteVm.ConfigurarModo(ModoRegistroUsuario.ClientePos);
+        EnlazarRegistroCliente();
+    }
+
+    private void EnlazarRegistroCliente()
+    {
         RegistroClienteVm.ClienteRegistrado += cliente =>
         {
             ClienteActual = cliente;
@@ -264,12 +276,15 @@ public partial class PosViewModel : ViewModelBase
 
     public async Task InicializarEstadoCajaAsync()
     {
-        if (_servicioCaja is null)
+        using var scope = _scopeFactory?.CreateScope();
+        var servicioCaja = _servicioCaja
+            ?? scope?.ServiceProvider.GetService<IServicioCaja>();
+        if (servicioCaja is null)
             return;
 
         try
         {
-            var turno = await _servicioCaja.ObtenerTurnoActualAsync();
+            var turno = await servicioCaja.ObtenerTurnoActualAsync();
             TieneTurnoAbierto = turno is not null;
             if (turno is not null)
             {
@@ -285,7 +300,7 @@ public partial class PosViewModel : ViewModelBase
         catch (Exception ex)
         {
             TieneTurnoAbierto = false;
-            InfoTurnoActual = _traductor?.Traducir(ex) ?? ex.Message;
+            InfoTurnoActual = Traducir(scope?.ServiceProvider, ex);
         }
     }
 
@@ -293,7 +308,10 @@ public partial class PosViewModel : ViewModelBase
     public async Task EscanearOAgregarAsync()
     {
         var entrada = CodigoBarrasInput?.Trim();
-        if (string.IsNullOrWhiteSpace(entrada) || _servicioProductos is null)
+        using var scope = _scopeFactory?.CreateScope();
+        var servicioProductos = _servicioProductos
+            ?? scope?.ServiceProvider.GetService<IServicioProductos>();
+        if (string.IsNullOrWhiteSpace(entrada) || servicioProductos is null)
             return;
 
         TieneAlerta = false;
@@ -301,12 +319,12 @@ public partial class PosViewModel : ViewModelBase
         try
         {
             var datosBalanza = ParserCodigoBalanza.Parsear(entrada);
-            var producto = await _servicioProductos.BuscarPorCodigoBarrasAsync(entrada);
+            var producto = await servicioProductos.BuscarPorCodigoBarrasAsync(entrada);
 
             if (producto is null && datosBalanza.EsCodigoBalanza)
             {
-                producto = await _servicioProductos.BuscarPorCodigoBarrasAsync(datosBalanza.Plu)
-                    ?? await _servicioProductos.BuscarPorCodigoBarrasAsync(datosBalanza.Plu.TrimStart('0'));
+                producto = await servicioProductos.BuscarPorCodigoBarrasAsync(datosBalanza.Plu)
+                    ?? await servicioProductos.BuscarPorCodigoBarrasAsync(datosBalanza.Plu.TrimStart('0'));
             }
 
             if (producto is null)
@@ -330,7 +348,7 @@ public partial class PosViewModel : ViewModelBase
         catch (Exception ex)
         {
             TieneAlerta = true;
-            MensajeEstado = _traductor?.Traducir(ex) ?? ex.Message;
+            MensajeEstado = Traducir(scope?.ServiceProvider, ex);
         }
         finally
         {
@@ -439,7 +457,13 @@ public partial class PosViewModel : ViewModelBase
     [RelayCommand(CanExecute = nameof(PuedeCobrar))]
     public async Task ConfirmarCobroAsync()
     {
-        if (_servicioVentas is null || !PuedeCobrar)
+        using var scope = _scopeFactory?.CreateScope();
+        var servicios = scope?.ServiceProvider;
+        var servicioVentas = _servicioVentas
+            ?? servicios?.GetService<IServicioVentas>();
+        var impresor = _impresorTicket
+            ?? servicios?.GetService<IImpresorTicket>();
+        if (servicioVentas is null || !PuedeCobrar)
             return;
 
         if (EsPagoEfectivo && !EfectivoSuficiente)
@@ -483,30 +507,40 @@ public partial class PosViewModel : ViewModelBase
                 Pagos: [pago],
                 ClienteId: ClienteActual?.Id,
                 PuntosARedimir: 0,
-                ClaveIdempotencia: Guid.NewGuid().ToString("N"));
+                ClaveIdempotencia: _claveIdempotenciaCobro ??= Guid.NewGuid().ToString("N"));
 
-            var ventaRegistrada = await _servicioVentas.RegistrarVentaAsync(solicitud);
-
-            if (_impresorTicket is not null)
-            {
-                UltimoTicketTexto = await _impresorTicket.FormatearTirillaTextoAsync(ventaRegistrada);
-                await _impresorTicket.ImprimirTicketVentaAsync(ventaRegistrada);
-                MostrarVistaPreviaTicket = true;
-            }
+            var ventaRegistrada = await servicioVentas.RegistrarVentaAsync(solicitud);
 
             var cambio = ventaRegistrada.Cambio;
             Carrito.Clear();
             ClienteActual = null;
             DocumentoClienteInput = string.Empty;
             ModalCobroAbierto = false;
+            _claveIdempotenciaCobro = null;
             RecalcularTotales();
+
+            if (impresor is not null)
+            {
+                UltimoTicketTexto = await impresor.FormatearTirillaTextoAsync(ventaRegistrada);
+                MostrarVistaPreviaTicket = true;
+                try
+                {
+                    await impresor.ImprimirTicketVentaAsync(ventaRegistrada);
+                }
+                catch (Exception ex)
+                {
+                    TieneAlerta = true;
+                    MensajeEstado = $"La venta quedó registrada, pero no se pudo imprimir: {Traducir(servicios, ex)}";
+                    return;
+                }
+            }
 
             MensajeEstado = $"Venta #{ventaRegistrada.PrefijoDian}{ventaRegistrada.ConsecutivoDian} completada. Cambio: $ {cambio.ToString("N0", CulturaCo)}.";
         }
         catch (Exception ex)
         {
             TieneAlerta = true;
-            MensajeEstado = _traductor?.Traducir(ex) ?? ex.Message;
+            MensajeEstado = Traducir(servicios, ex);
         }
         finally
         {
@@ -549,10 +583,13 @@ public partial class PosViewModel : ViewModelBase
     [RelayCommand]
     public async Task EjecutarBusquedaRapidaAsync()
     {
-        if (_servicioBusqueda is null || string.IsNullOrWhiteSpace(TerminoBusquedaRapida))
+        using var scope = _scopeFactory?.CreateScope();
+        var servicioBusqueda = _servicioBusqueda
+            ?? scope?.ServiceProvider.GetService<IServicioBusquedaProductos>();
+        if (servicioBusqueda is null || string.IsNullOrWhiteSpace(TerminoBusquedaRapida))
             return;
 
-        var encontrados = await _servicioBusqueda.BuscarPorNombreAsync(TerminoBusquedaRapida.Trim(), 25);
+        var encontrados = await servicioBusqueda.BuscarPorNombreAsync(TerminoBusquedaRapida.Trim(), 25);
         ResultadosBusqueda.Clear();
         foreach (var prod in encontrados)
         {
@@ -590,6 +627,7 @@ public partial class PosViewModel : ViewModelBase
     [RelayCommand]
     public void CancelarVenta()
     {
+        _claveIdempotenciaCobro = null;
         Carrito.Clear();
         LineaSeleccionada = null;
         ClienteActual = null;
@@ -606,11 +644,14 @@ public partial class PosViewModel : ViewModelBase
     [RelayCommand]
     public async Task BuscarClientePorDocumentoAsync()
     {
-        if (_servicioClientes is null || string.IsNullOrWhiteSpace(DocumentoClienteInput))
+        using var scope = _scopeFactory?.CreateScope();
+        var servicioClientes = _servicioClientes
+            ?? scope?.ServiceProvider.GetService<IServicioClientes>();
+        if (servicioClientes is null || string.IsNullOrWhiteSpace(DocumentoClienteInput))
             return;
 
         var doc = DocumentoClienteInput.Trim();
-        var cliente = await _servicioClientes.BuscarPorDocumentoAsync(doc);
+        var cliente = await servicioClientes.BuscarPorDocumentoAsync(doc);
         if (cliente is not null)
         {
             ClienteActual = cliente;
@@ -636,12 +677,16 @@ public partial class PosViewModel : ViewModelBase
     [RelayCommand]
     public async Task ConfirmarAperturaTurnoAsync()
     {
-        if (_servicioCaja is null)
+        using var scope = _scopeFactory?.CreateScope();
+        var servicios = scope?.ServiceProvider;
+        var servicioCaja = _servicioCaja
+            ?? servicios?.GetService<IServicioCaja>();
+        if (servicioCaja is null)
             return;
 
         try
         {
-            var turno = await _servicioCaja.AbrirTurnoAsync(1, EfectivoInicialApertura);
+            var turno = await servicioCaja.AbrirTurnoAsync(1, EfectivoInicialApertura);
             TieneTurnoAbierto = true;
             ModalAperturaTurnoAbierto = false;
             InfoTurnoActual = $"Turno #{turno.Id} Activo · Base $ {turno.EfectivoInicial.ToString("N0", CulturaCo)}";
@@ -651,7 +696,7 @@ public partial class PosViewModel : ViewModelBase
         catch (Exception ex)
         {
             TieneAlerta = true;
-            MensajeEstado = _traductor?.Traducir(ex) ?? ex.Message;
+            MensajeEstado = Traducir(servicios, ex);
         }
     }
 
@@ -661,4 +706,9 @@ public partial class PosViewModel : ViewModelBase
         MostrarVistaPreviaTicket = false;
         SolicitarFocoEscaneo?.Invoke();
     }
+
+    private string Traducir(IServiceProvider? servicios, Exception ex)
+        => _traductor?.Traducir(ex)
+            ?? servicios?.GetService<ITraductorExcepciones>()?.Traducir(ex)
+            ?? ex.Message;
 }

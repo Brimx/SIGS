@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Extensions.DependencyInjection;
 using Supermercado.Entidades.Inventario;
 using Supermercado.Logica.Comunes;
 using Supermercado.Logica.Inventario;
@@ -34,6 +35,7 @@ public partial class InventarioViewModel : ViewModelBase
     private readonly IServicioAlertasInventario? _alertasInventario;
     private readonly IServicioMermas? _servicioMermas;
     private readonly ITraductorExcepciones? _traductor;
+    private readonly IServiceScopeFactory? _scopeFactory;
 
     private readonly List<ProductoInventarioItemViewModel> _todosLosItems = [];
 
@@ -80,6 +82,9 @@ public partial class InventarioViewModel : ViewModelBase
     {
     }
 
+    public InventarioViewModel(IServiceScopeFactory scopeFactory)
+        => _scopeFactory = scopeFactory;
+
     public InventarioViewModel(
         IServicioConsultaInventario consultaInventario,
         IServicioAlertasInventario? alertasInventario = null,
@@ -109,23 +114,32 @@ public partial class InventarioViewModel : ViewModelBase
     [RelayCommand]
     public async Task ActualizarListadoAsync()
     {
-        if (_consultaInventario is null || Cargando)
+        if (Cargando)
+            return;
+
+        using var scope = _scopeFactory?.CreateScope();
+        var servicios = scope?.ServiceProvider;
+        var consulta = _consultaInventario
+            ?? servicios?.GetService<IServicioConsultaInventario>();
+        var alertas = _alertasInventario
+            ?? servicios?.GetService<IServicioAlertasInventario>();
+        if (consulta is null)
             return;
 
         Cargando = true;
         try
         {
-            var consolidado = await _consultaInventario.ObtenerStockConsolidadoAsync();
+            var consolidado = await consulta.ObtenerStockConsolidadoAsync();
             var idsBajoMinimo = new HashSet<int>();
             var lotesPorVencerIds = new HashSet<int>();
 
-            if (_alertasInventario is not null)
+            if (alertas is not null)
             {
-                var bajos = await _alertasInventario.ObtenerBajoMinimoAsync();
+                var bajos = await alertas.ObtenerBajoMinimoAsync();
                 foreach (var b in bajos)
                     idsBajoMinimo.Add(b.Producto.Id);
 
-                var porVencer = await _alertasInventario.ObtenerLotesPorVencerAsync();
+                var porVencer = await alertas.ObtenerLotesPorVencerAsync();
                 foreach (var l in porVencer)
                     lotesPorVencerIds.Add(l.Id);
             }
@@ -150,7 +164,7 @@ public partial class InventarioViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            MensajeEstado = _traductor?.Traducir(ex) ?? ex.Message;
+            MensajeEstado = Traducir(servicios, ex);
         }
         finally
         {
@@ -207,12 +221,16 @@ public partial class InventarioViewModel : ViewModelBase
     [RelayCommand]
     public async Task ConfirmarMermaAsync()
     {
-        if (_servicioMermas is null || ItemSeleccionado is null || CantidadMermaInput <= 0)
+        using var scope = _scopeFactory?.CreateScope();
+        var servicios = scope?.ServiceProvider;
+        var servicioMermas = _servicioMermas
+            ?? servicios?.GetService<IServicioMermas>();
+        if (servicioMermas is null || ItemSeleccionado is null || CantidadMermaInput <= 0)
             return;
 
         try
         {
-            await _servicioMermas.RegistrarAsync(
+            await servicioMermas.RegistrarAsync(
                 ItemSeleccionado.ProductoId,
                 ItemSeleccionado.LoteId,
                 UbicacionStock.Estante,
@@ -225,7 +243,12 @@ public partial class InventarioViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            MensajeEstado = _traductor?.Traducir(ex) ?? ex.Message;
+            MensajeEstado = Traducir(servicios, ex);
         }
     }
+
+    private string Traducir(IServiceProvider? servicios, Exception ex)
+        => _traductor?.Traducir(ex)
+            ?? servicios?.GetService<ITraductorExcepciones>()?.Traducir(ex)
+            ?? ex.Message;
 }

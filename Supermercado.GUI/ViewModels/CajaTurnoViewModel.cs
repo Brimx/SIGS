@@ -1,6 +1,7 @@
 using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Extensions.DependencyInjection;
 using Supermercado.Logica.Comunes;
 using Supermercado.Logica.Dian;
 using Supermercado.Logica.Ventas;
@@ -14,6 +15,7 @@ public partial class CajaTurnoViewModel : ViewModelBase
     private readonly IServicioCaja? _servicioCaja;
     private readonly IServicioDian? _servicioDian;
     private readonly ITraductorExcepciones? _traductor;
+    private readonly IServiceScopeFactory? _scopeFactory;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(RequiereAperturaConBase))]
@@ -57,6 +59,9 @@ public partial class CajaTurnoViewModel : ViewModelBase
     {
     }
 
+    public CajaTurnoViewModel(IServiceScopeFactory scopeFactory)
+        => _scopeFactory = scopeFactory;
+
     public CajaTurnoViewModel(
         IServicioCaja servicioCaja,
         IServicioDian? servicioDian = null,
@@ -70,13 +75,17 @@ public partial class CajaTurnoViewModel : ViewModelBase
     [RelayCommand]
     public async Task VerificarEstadoCajaAsync()
     {
-        if (_servicioCaja is null)
+        using var scope = _scopeFactory?.CreateScope();
+        var servicios = scope?.ServiceProvider;
+        var servicioCaja = _servicioCaja ?? servicios?.GetService<IServicioCaja>();
+        var servicioDian = _servicioDian ?? servicios?.GetService<IServicioDian>();
+        if (servicioCaja is null)
             return;
 
         TieneError = false;
         try
         {
-            var turno = await _servicioCaja.ObtenerTurnoActualAsync();
+            var turno = await servicioCaja.ObtenerTurnoActualAsync();
             TurnoAbierto = turno is not null;
             if (turno is not null)
             {
@@ -93,9 +102,9 @@ public partial class CajaTurnoViewModel : ViewModelBase
                 MensajeEstado = "La caja se encuentra cerrada. Debe realizar la apertura con base inicial.";
             }
 
-            if (_servicioDian is not null)
+            if (servicioDian is not null)
             {
-                EstadoDian = await _servicioDian.ConsultarEstadoResolucionAsync();
+                EstadoDian = await servicioDian.ConsultarEstadoResolucionAsync();
             }
 
             OnPropertyChanged(nameof(EfectivoInicialFormateado));
@@ -103,20 +112,23 @@ public partial class CajaTurnoViewModel : ViewModelBase
         catch (Exception ex)
         {
             TieneError = true;
-            MensajeEstado = _traductor?.Traducir(ex) ?? ex.Message;
+            MensajeEstado = Traducir(servicios, ex);
         }
     }
 
     [RelayCommand]
     public async Task AbrirTurnoAsync()
     {
-        if (_servicioCaja is null)
+        using var scope = _scopeFactory?.CreateScope();
+        var servicios = scope?.ServiceProvider;
+        var servicioCaja = _servicioCaja ?? servicios?.GetService<IServicioCaja>();
+        if (servicioCaja is null)
             return;
 
         TieneError = false;
         try
         {
-            var turno = await _servicioCaja.AbrirTurnoAsync(CajaSeleccionadaId, EfectivoInicialInput);
+            var turno = await servicioCaja.AbrirTurnoAsync(CajaSeleccionadaId, EfectivoInicialInput);
             TurnoAbierto = true;
             TurnoActualId = turno.Id;
             EfectivoInicialActual = turno.EfectivoInicial;
@@ -128,20 +140,23 @@ public partial class CajaTurnoViewModel : ViewModelBase
         catch (Exception ex)
         {
             TieneError = true;
-            MensajeEstado = _traductor?.Traducir(ex) ?? ex.Message;
+            MensajeEstado = Traducir(servicios, ex);
         }
     }
 
     [RelayCommand]
     public async Task CerrarTurnoConArqueoAsync()
     {
-        if (_servicioCaja is null)
+        using var scope = _scopeFactory?.CreateScope();
+        var servicios = scope?.ServiceProvider;
+        var servicioCaja = _servicioCaja ?? servicios?.GetService<IServicioCaja>();
+        if (servicioCaja is null)
             return;
 
         TieneError = false;
         try
         {
-            var resultado = await _servicioCaja.CerrarTurnoAsync(EfectivoContadoInput);
+            var resultado = await servicioCaja.CerrarTurnoAsync(EfectivoContadoInput);
             UltimoArqueo = resultado;
             TurnoAbierto = false;
             MensajeEstado = resultado.DentroDeTolerancia
@@ -151,7 +166,12 @@ public partial class CajaTurnoViewModel : ViewModelBase
         catch (Exception ex)
         {
             TieneError = true;
-            MensajeEstado = _traductor?.Traducir(ex) ?? ex.Message;
+            MensajeEstado = Traducir(servicios, ex);
         }
     }
+
+    private string Traducir(IServiceProvider? servicios, Exception ex)
+        => _traductor?.Traducir(ex)
+            ?? servicios?.GetService<ITraductorExcepciones>()?.Traducir(ex)
+            ?? ex.Message;
 }

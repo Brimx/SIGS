@@ -1,6 +1,7 @@
 using Supermercado.Entidades.Finanzas;
 using Supermercado.Entidades.Productos;
 using Supermercado.Entidades.Ventas;
+using Supermercado.GUI.Servicios.Impresion;
 using Supermercado.GUI.ViewModels;
 using Supermercado.Logica.Productos;
 using Supermercado.Logica.Servicios;
@@ -71,8 +72,15 @@ public class PosViewModelTests
 
     private sealed class ServicioVentasFalso : IServicioVentas
     {
+        public List<SolicitudVenta> Solicitudes { get; } = [];
+        public bool FallarPrimera { get; set; }
+
         public Task<Venta> RegistrarVentaAsync(SolicitudVenta solicitud)
         {
+            Solicitudes.Add(solicitud);
+            if (FallarPrimera && Solicitudes.Count == 1)
+                throw new IOException("Fallo temporal de persistencia");
+
             var v = new Venta
             {
                 Id = 101,
@@ -85,6 +93,17 @@ public class PosViewModelTests
         }
 
         public Task AnularVentaAsync(int ventaId, string motivo) => Task.CompletedTask;
+    }
+
+    private sealed class ImpresorFalso(bool fallar) : IImpresorTicket
+    {
+        public Task<string> FormatearTirillaTextoAsync(Venta venta, CancellationToken ct = default)
+            => Task.FromResult("ticket");
+        public Task<byte[]> GenerarComandosEscPosAsync(Venta venta, CancellationToken ct = default)
+            => Task.FromResult(Array.Empty<byte>());
+        public Task ImprimirTicketVentaAsync(Venta venta, CancellationToken ct = default)
+            => fallar ? throw new IOException("Impresora desconectada") : Task.CompletedTask;
+        public Task AbrirGavetaAsync(CancellationToken ct = default) => Task.CompletedTask;
     }
 
     [Fact]
@@ -176,5 +195,49 @@ public class PosViewModelTests
         Assert.True(vm.EfectivoSuficiente);
         Assert.Equal(0, vm.FaltantePesos);
         Assert.Equal(8000, vm.CambioPesos);
+    }
+
+    [Fact]
+    public async Task Cobro_ReintentoDeMismaCanasta_ReutilizaClaveIdempotencia()
+    {
+        var ventas = new ServicioVentasFalso { FallarPrimera = true };
+        var vm = new PosViewModel(
+            ventas,
+            new ServicioCajaFalso(turnoAbierto: true),
+            new ServicioProductosFalso());
+        await vm.InicializarEstadoCajaAsync();
+        vm.CodigoBarrasInput = "7701001";
+        await vm.EscanearOAgregarAsync();
+        vm.EfectivoEntregadoPesos = 4500;
+
+        await vm.ConfirmarCobroAsync();
+        await vm.ConfirmarCobroAsync();
+
+        Assert.Equal(2, ventas.Solicitudes.Count);
+        Assert.Equal(
+            ventas.Solicitudes[0].ClaveIdempotencia,
+            ventas.Solicitudes[1].ClaveIdempotencia);
+    }
+
+    [Fact]
+    public async Task Cobro_FalloDeImpresionNoDejaCanastaParaDuplicarVenta()
+    {
+        var ventas = new ServicioVentasFalso();
+        var vm = new PosViewModel(
+            ventas,
+            new ServicioCajaFalso(turnoAbierto: true),
+            new ServicioProductosFalso(),
+            impresorTicket: new ImpresorFalso(fallar: true));
+        await vm.InicializarEstadoCajaAsync();
+        vm.CodigoBarrasInput = "7701001";
+        await vm.EscanearOAgregarAsync();
+        vm.EfectivoEntregadoPesos = 4500;
+
+        await vm.ConfirmarCobroAsync();
+        await vm.ConfirmarCobroAsync();
+
+        Assert.Single(ventas.Solicitudes);
+        Assert.Empty(vm.Carrito);
+        Assert.Contains("no se pudo imprimir", vm.MensajeEstado);
     }
 }
