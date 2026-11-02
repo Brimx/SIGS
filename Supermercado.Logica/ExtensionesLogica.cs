@@ -58,6 +58,7 @@ public static class ExtensionesLogica
             ServicioReabastecimiento>();
         servicios.AddScoped<IServicioCaja, ServicioCaja>();
         servicios.AddScoped<IServicioVentas, ServicioVentas>();
+        servicios.AddScoped<IServicioVentasEnEspera, ServicioVentasEnEspera>();
         servicios.AddScoped<IServicioClientes, ServicioClientes>();
         servicios.AddScoped<IServicioEmpleados, ServicioEmpleados>();
         servicios.AddScoped<IServicioEstructura, ServicioEstructura>();
