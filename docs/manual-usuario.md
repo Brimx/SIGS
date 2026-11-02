@@ -183,7 +183,7 @@ Un parámetro ausente **no** tiene valor por defecto silencioso: lanza `Parametr
 - Si todos los intentos fallan, se usa el último respaldo. Si nunca hubo uno, devuelve `null`.
 - Se puede apagar con `SIGS_TRM_HABILITADA=0` o con `integraciones.trm_habilitada=0`; en ese caso solo se usa el respaldo.
 
-## 10.1. Documento Equivalente POS DIAN
+## 11. Documento Equivalente POS DIAN
 
 - Se genera localmente al cerrar la venta si `dian.habilitado = 1`.
 - Incluye CUDE (SHA-384), XML UBL 2.1, prefijo, consecutivo y cadena QR.
@@ -191,14 +191,14 @@ Un parámetro ausente **no** tiene valor por defecto silencioso: lanza `Parametr
 - **No transmite, no firma y no maneja contingencia.** El documento no tiene validez fiscal hasta completar ese circuito.
 - La resolución vencida o el rango agotado bloquean la venta con `ValidacionException`; revise `dian.*`.
 
-## 10.2. Reportes PDF
+## 12. Reportes PDF
 
 - Ticket POS de 80 mm con totales, pagos, puntos y datos DIAN si existen.
 - Desprendible de nómina (permiso `GestionarPersonal`).
 - Reporte de ventas por rango (permiso `VerReportes`).
 - Se generan con QuestPDF; no requieren conexión.
 
-## 11. Problemas frecuentes
+## 13. Problemas frecuentes
 
 | Síntoma | Causa probable | Solución |
 | :-- | :-- | :-- |
@@ -213,7 +213,7 @@ Un parámetro ausente **no** tiene valor por defecto silencioso: lanza `Parametr
 | «Se agotó el rango autorizado» | `dian.siguiente_consecutivo` supera `dian.rango_hasta` | Solicitar nueva numeración a la DIAN |
 | La base no aparece | Ruta de datos distinta | Revisar `RutasDatos.BaseDatosPorDefecto()` |
 
-## 12. Buenas prácticas de operación
+## 14. Buenas prácticas de operación
 
 - Cierre el turno antes de cambiar de cajero; no comparta usuarios.
 - Registre la merma en el momento; no la acumule para el cierre.

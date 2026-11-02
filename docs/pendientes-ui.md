@@ -1,6 +1,6 @@
 # Pendientes de interfaz (handoff backend → UI)
 
-Lo que el backend ya expone y la interfaz (`Supermercado.GUI`) debe consumir. El backend valida siempre; la UI da aviso temprano y atajos. Estado: **pendiente en GUI**. El backend tiene **261 pruebas en verde**, pero la auditoría del **2026-11-02** encontró hallazgos críticos de seguridad e integridad (sección 6); **no se considera cerrado para producción**.
+Lo que el backend ya expone y la interfaz (`Supermercado.GUI`) debe consumir. El backend valida siempre; la UI da aviso temprano y atajos. Estado: **pendiente en GUI**. El backend tiene **302 pruebas en verde**, pero la auditoría del **2026-11-02** encontró hallazgos críticos de seguridad e integridad (sección 6); **no se considera cerrado para producción**.
 
 ## 1. Validación de formularios
 

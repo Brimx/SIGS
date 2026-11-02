@@ -13,7 +13,7 @@ Punto de venta, inventario dual estante/bodega, caja con arqueo, personal, finan
 
 [![Estado](https://img.shields.io/badge/estado-en%20desarrollo-orange?style=flat-square)](#estado-del-proyecto)
 [![Build](https://img.shields.io/github/actions/workflow/status/Brimx/SIGS/ci.yml?style=flat-square&label=build)](https://github.com/Brimx/SIGS/actions)
-[![Pruebas](https://img.shields.io/badge/pruebas-261%20passing-brightgreen?style=flat-square)](#pruebas)
+[![Pruebas](https://img.shields.io/badge/pruebas-302%20passing-brightgreen?style=flat-square)](#pruebas)
 [![Licencia](https://img.shields.io/github/license/Brimx/SIGS?style=flat-square&label=licencia)](LICENSE)
 [![Último commit](https://img.shields.io/github/last-commit/Brimx/SIGS?style=flat-square&label=%C3%BAltimo%20commit)](https://github.com/Brimx/SIGS/commits)
 
@@ -120,7 +120,7 @@ En el primer arranque se siembran roles, cargos, impuestos, una caja y los pará
 dotnet test Supermercado.Pruebas/Supermercado.Pruebas.csproj
 ```
 
-Estado actual: **261 pruebas en verde** (~4 s). Cubren impuestos, dinero, ventas, FEFO, arqueo, nómina, autenticación, permisos, sesión, parámetros, TRM, clientes/puntos, validaciones de formulario, PDF e integración con SQLite. Ver [`docs/plan-pruebas.md`](docs/plan-pruebas.md).
+Estado actual: **302 pruebas en verde** (~4 s). Cubren impuestos, dinero, ventas, FEFO, arqueo, nómina, autenticación, permisos, sesión, parámetros, TRM, clientes/puntos, validaciones de formulario, PDF e integración con SQLite. Ver [`docs/plan-pruebas.md`](docs/plan-pruebas.md).
 
 ## Estructura del repositorio
 
@@ -162,7 +162,7 @@ Detalle y valores iniciales en [`docs/diccionario-datos.md`](docs/diccionario-da
 | Dominio y reglas de negocio | Completo |
 | Persistencia SQLite + semilla | Completo |
 | Seguridad, permisos y auditoría | Implementado con hallazgos abiertos (ver [`docs/pendientes-ui.md`](docs/pendientes-ui.md)) |
-| Pruebas | Completo (261) |
+| Pruebas | Completo (302) |
 | Documentación | Completo |
 | GUI Avalonia | Shell inicial; pantallas pendientes |
 | PDF con QuestPDF | Implementado (ticket, nómina y reporte de ventas) |
