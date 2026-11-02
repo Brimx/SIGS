@@ -127,6 +127,7 @@ public class GeneradorDatosDemo(
         await productos.AgregarAsync(pAceite);
         await productos.AgregarAsync(pLeche);
         await productos.AgregarAsync(pTomate);
+        await trabajo.GuardarAsync();
 
         // 4. Lotes e inventario inicial
         // Arroz: L1 vigente (6 meses), L2 próximo (7 días)
@@ -150,6 +151,7 @@ public class GeneradorDatosDemo(
         };
         await lotes.AgregarAsync(lArroz1);
         await lotes.AgregarAsync(lArroz2);
+        await trabajo.GuardarAsync();
 
         // Stock Arroz L1: 50 en bodega, 30 en estante
         var sbArroz1 = new StockBodega
@@ -258,18 +260,22 @@ public class GeneradorDatosDemo(
         };
         await empleados.AgregarAsync(empAdmin);
         await empleados.AgregarAsync(empCajero);
+        await trabajo.GuardarAsync();
 
         var usrAdmin = new Usuario
         {
             NombreUsuario = "admin_demo",
             HashClave = hasheador.Hashear("Admin123*"),
-            Empleado = empAdmin
+            Empleado = empAdmin,
+            EmpleadoId = empAdmin.Id
         };
         var usrCajero = new Usuario
         {
             NombreUsuario = "cajero_demo",
             HashClave = hasheador.Hashear("Cajero123*"),
-            Empleado = empCajero
+            HashPin = hasheador.Hashear("1234"),
+            Empleado = empCajero,
+            EmpleadoId = empCajero.Id
         };
         await usuarios.AgregarAsync(usrAdmin);
         await usuarios.AgregarAsync(usrCajero);
@@ -281,6 +287,7 @@ public class GeneradorDatosDemo(
             efectivoInicial: 100000,
             ahora: ahora.AddHours(-4));
         await turnos.AgregarAsync(turno);
+        await trabajo.GuardarAsync();
 
         // Venta 1: 2 Arroz ($9.000) en efectivo
         var v1 = new Venta

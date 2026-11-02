@@ -11,11 +11,56 @@ using Supermercado.Logica.Productos;
 using Supermercado.Logica.Seguridad;
 using Supermercado.Logica.Servicios;
 using Supermercado.Logica.Ventas;
+using Supermercado.Pruebas.Falsos;
 
 namespace Supermercado.Pruebas.Integracion;
 
 public class FlujoPuntaAPuntaSqliteTests
 {
+    [Fact]
+    public async Task GeneradorDatosDemo_ContraSqlite_GeneraCorrectamente()
+    {
+        using var contexto = new ContextoPruebasSqlite();
+        var inicializador = new InicializadorBaseDatos(contexto.Db);
+        await inicializador.CrearYSembrarAsync();
+
+        var demo = new Supermercado.Logica.DatosDemo.GeneradorDatosDemo(
+            new Repositorio<Categoria>(contexto.Db),
+            new Repositorio<Proveedor>(contexto.Db),
+            new Repositorio<Supermercado.Entidades.Finanzas.Impuesto>(contexto.Db),
+            new ProductoRepositorio(contexto.Db),
+            new LoteRepositorio(contexto.Db),
+            new StockRepositorio<StockEstante>(contexto.Db),
+            new StockRepositorio<StockBodega>(contexto.Db),
+            new MovimientoRepositorio(contexto.Db),
+            new Repositorio<Cargo>(contexto.Db),
+            new RolRepositorio(contexto.Db),
+            new Repositorio<Empleado>(contexto.Db),
+            new UsuarioRepositorio(contexto.Db),
+            new Repositorio<Caja>(contexto.Db),
+            new TurnoCajaRepositorio(contexto.Db),
+            new VentaRepositorio(contexto.Db),
+            new GastoRepositorio(contexto.Db),
+            new HasheadorFalso(),
+            new UnidadDeTrabajo(contexto.Db),
+            contexto.Reloj);
+
+        await demo.GenerarAsync();
+
+        var auth = new ServicioAutenticacion(
+            new UsuarioRepositorio(contexto.Db),
+            new Repositorio<IntentoAcceso>(contexto.Db),
+            new AuditoriaFalsa(),
+            new ParametrosFalsos(),
+            new HasheadorFalso(),
+            new SesionActual(),
+            new UnidadDeTrabajo(contexto.Db),
+            contexto.Reloj);
+
+        await auth.IniciarSesionAsync("cajero_demo", "Cajero123*");
+        await auth.IniciarSesionAsync("admin_demo", "Admin123*");
+    }
+
     [Fact]
     public async Task FlujoCompleto_InicializarTurnoVentaYAnulacion()
     {
