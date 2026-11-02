@@ -1,0 +1,214 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Supermercado.GUI.ViewModels"
+             x:Class="Supermercado.GUI.Views.ShellView"
+             x:DataType="vm:ShellViewModel"
+             Background="{DynamicResource BrushBackground}"
+             FontFamily="{StaticResource FontFamilyPlex}">
+
+    <Grid ColumnDefinitions="240,*">
+
+        <!-- BARRA LATERAL MODULAR (SIDEBAR) -->
+        <Border Grid.Column="0"
+                Background="{DynamicResource BrushSurface}"
+                BorderBrush="{DynamicResource BrushBorderSubtle}"
+                BorderThickness="0,0,1,0"
+                Padding="14,18">
+            <Grid RowDefinitions="Auto,24,*,Auto">
+
+                <!-- Identidad de Marca SIGS -->
+                <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="10" Margin="6,0">
+                    <Border Background="{DynamicResource BrushPrimary}"
+                            CornerRadius="{StaticResource RadiusMedium}"
+                            Width="36" Height="36">
+                        <LucideIcon Kind="Store"
+                                    Size="20"
+                                    Foreground="#FFFFFF"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center" />
+                    </Border>
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="SIGS RETAIL"
+                                   FontFamily="{StaticResource FontFamilyStackSans}"
+                                   FontSize="{StaticResource FontSizeSubtitle}"
+                                   FontWeight="{StaticResource FontWeightBold}"
+                                   Foreground="{DynamicResource BrushTextPrimary}" />
+                        <TextBlock Text="DIAN POS · v1.0"
+                                   FontFamily="{StaticResource FontFamilyPlexCondensed}"
+                                   FontSize="{StaticResource FontSizeCaption}"
+                                   Foreground="{DynamicResource BrushTextSecondary}" />
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- Menú de Módulos -->
+                <StackPanel Grid.Row="2" Spacing="6">
+                    <TextBlock Text="OPERACIÓN DE CAJA"
+                               Margin="8,0,0,4"
+                               FontFamily="{StaticResource FontFamilyStackSans}"
+                               FontSize="10.5"
+                               FontWeight="{StaticResource FontWeightBold}"
+                               Foreground="{DynamicResource BrushTextMuted}" />
+
+                    <Button Command="{Binding NavegarCommand}"
+                            CommandParameter="POS"
+                            HorizontalAlignment="Stretch"
+                            HorizontalContentAlignment="Left"
+                            MinHeight="42"
+                            Padding="12,0">
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <LucideIcon Kind="ShoppingCart" Size="18" Foreground="{DynamicResource BrushPrimary}" />
+                            <TextBlock Text="Punto de Venta (POS)" FontWeight="{StaticResource FontWeightSemiBold}" />
+                        </StackPanel>
+                    </Button>
+
+                    <Button Command="{Binding NavegarCommand}"
+                            CommandParameter="Turno"
+                            HorizontalAlignment="Stretch"
+                            HorizontalContentAlignment="Left"
+                            MinHeight="42"
+                            Padding="12,0">
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <LucideIcon Kind="Wallet" Size="18" Foreground="{DynamicResource BrushPrimary}" />
+                            <TextBlock Text="Turno y Arqueo Z" FontWeight="{StaticResource FontWeightSemiBold}" />
+                        </StackPanel>
+                    </Button>
+
+                    <Button Command="{Binding NavegarCommand}"
+                            CommandParameter="Clientes"
+                            HorizontalAlignment="Stretch"
+                            HorizontalContentAlignment="Left"
+                            MinHeight="42"
+                            Padding="12,0">
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <LucideIcon Kind="UserPlus" Size="18" Foreground="{DynamicResource BrushPrimary}" />
+                            <TextBlock Text="Clientes / Habeas Data" FontWeight="{StaticResource FontWeightSemiBold}" />
+                        </StackPanel>
+                    </Button>
+
+                    <Separator Background="{DynamicResource BrushBorderSubtle}" Margin="0,8" Height="1" />
+
+                    <TextBlock Text="ADMINISTRACIÓN"
+                               Margin="8,0,0,4"
+                               FontFamily="{StaticResource FontFamilyStackSans}"
+                               FontSize="10.5"
+                               FontWeight="{StaticResource FontWeightBold}"
+                               Foreground="{DynamicResource BrushTextMuted}" />
+
+                    <Button Command="{Binding NavegarCommand}"
+                            CommandParameter="Inventario"
+                            HorizontalAlignment="Stretch"
+                            HorizontalContentAlignment="Left"
+                            MinHeight="42"
+                            Padding="12,0">
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <LucideIcon Kind="Boxes" Size="18" Foreground="{DynamicResource BrushPrimary}" />
+                            <TextBlock Text="Inventario y Mermas" FontWeight="{StaticResource FontWeightSemiBold}" />
+                        </StackPanel>
+                    </Button>
+
+                    <Button Command="{Binding NavegarCommand}"
+                            CommandParameter="Dashboard"
+                            HorizontalAlignment="Stretch"
+                            HorizontalContentAlignment="Left"
+                            MinHeight="42"
+                            Padding="12,0">
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <LucideIcon Kind="LayoutDashboard" Size="18" Foreground="{DynamicResource BrushPrimary}" />
+                            <TextBlock Text="Dashboard Ejecutivo" FontWeight="{StaticResource FontWeightSemiBold}" />
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+
+                <!-- Pie de Barra Lateral: Usuario, Tema y Cierre de Sesión -->
+                <StackPanel Grid.Row="3" Spacing="10">
+                    <Separator Background="{DynamicResource BrushBorderSubtle}" Height="1" />
+
+                    <Border Background="{DynamicResource BrushSurfaceSubtle}"
+                            BorderBrush="{DynamicResource BrushBorderSubtle}"
+                            BorderThickness="1"
+                            CornerRadius="{StaticResource RadiusMedium}"
+                            Padding="10,8">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <StackPanel Grid.Column="0" Spacing="2">
+                                <TextBlock Text="{Binding NombreUsuarioActivo}"
+                                           FontWeight="{StaticResource FontWeightBold}"
+                                           FontSize="{StaticResource FontSizeBody}"
+                                           Foreground="{DynamicResource BrushTextPrimary}" />
+                                <TextBlock Text="{Binding RolUsuarioActivo}"
+                                           FontSize="{StaticResource FontSizeCaption}"
+                                           Foreground="{DynamicResource BrushPrimary}"
+                                           FontWeight="{StaticResource FontWeightSemiBold}" />
+                            </StackPanel>
+                            <Button Grid.Column="1"
+                                    Command="{Binding AlternarTemaCommand}"
+                                    ToolTip.Tip="Alternar Modo Claro Cálido / Modo Oscuro Slate"
+                                    Padding="8,6">
+                                <LucideIcon Kind="Sun" Size="16" />
+                            </Button>
+                        </Grid>
+                    </Border>
+
+                    <Button Command="{Binding CerrarSesionCommand}"
+                            HorizontalAlignment="Stretch"
+                            HorizontalContentAlignment="Center"
+                            MinHeight="38">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <LucideIcon Kind="LogOut" Size="16" Foreground="{DynamicResource BrushError}" />
+                            <TextBlock Text="Cerrar Sesión"
+                                       FontWeight="{StaticResource FontWeightSemiBold}"
+                                       Foreground="{DynamicResource BrushError}" />
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- ÁREA PRINCIPAL (HEADER + CONTENIDO TRANSACCIONAL) -->
+        <Grid Grid.Column="1" RowDefinitions="Auto,*">
+
+            <!-- Header Superior -->
+            <Border Grid.Row="0"
+                    Background="{DynamicResource BrushSurface}"
+                    BorderBrush="{DynamicResource BrushBorderSubtle}"
+                    BorderThickness="0,0,0,1"
+                    Padding="20,12">
+                <Grid ColumnDefinitions="*,Auto">
+                    <StackPanel Grid.Column="0" Spacing="2">
+                        <TextBlock Text="{Binding TituloModulo}"
+                                   FontFamily="{StaticResource FontFamilyStackSans}"
+                                   FontSize="{StaticResource FontSizeTitle}"
+                                   FontWeight="{StaticResource FontWeightBold}"
+                                   Foreground="{DynamicResource BrushTextPrimary}" />
+                        <TextBlock Text="{Binding SubtituloModulo}"
+                                   FontSize="{StaticResource FontSizeCaption}"
+                                   Foreground="{DynamicResource BrushTextSecondary}" />
+                    </StackPanel>
+
+                    <Border Grid.Column="1"
+                            Background="{DynamicResource BrushSuccessSubtle}"
+                            BorderBrush="{DynamicResource BrushSuccess}"
+                            BorderThickness="1"
+                            CornerRadius="{StaticResource RadiusPill}"
+                            VerticalAlignment="Center"
+                            Padding="12,4">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <LucideIcon Kind="ShieldCheck" Size="14" Foreground="{DynamicResource BrushSuccess}" />
+                            <TextBlock Text="SQLite ACID + DIAN Sandbox Activo"
+                                       FontFamily="{StaticResource FontFamilyPlexCondensed}"
+                                       FontSize="{StaticResource FontSizeCaption}"
+                                       FontWeight="{StaticResource FontWeightBold}"
+                                       Foreground="{DynamicResource BrushSuccess}" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Border>
+
+            <!-- Contenedor de Vistas con Transición Asimétrica Suave (150ms CrossFade) -->
+            <TransitioningContentControl Grid.Row="1" Content="{Binding PaginaActual}">
+                <TransitioningContentControl.PageTransition>
+                    <CrossFade Duration="0:0:0.15" />
+                </TransitioningContentControl.PageTransition>
+            </TransitioningContentControl>
+        </Grid>
+    </Grid>
+</UserControl>
