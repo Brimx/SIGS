@@ -16,7 +16,8 @@ public class ServicioCaja(
     IServicioAuditoria auditoria,
     ISesionActual sesion,
     IUnidadDeTrabajo trabajo,
-    TimeProvider reloj) : IServicioCaja
+    TimeProvider reloj,
+    IRepositorio<RetiroCaja>? retiros = null) : IServicioCaja
 {
     public async Task<TurnoCaja> AbrirTurnoAsync(
         int cajaId,
@@ -78,4 +79,55 @@ public class ServicioCaja(
 
     public Task<TurnoCaja?> ObtenerTurnoActualAsync()
         => turnos.ObtenerAbiertoPorEmpleadoAsync(sesion.EmpleadoId);
+
+    public async Task<RetiroCaja> RegistrarRetiroAsync(
+        long monto,
+        string motivo,
+        int supervisorId)
+    {
+        sesion.Exigir(Permiso.AbrirCerrarTurno);
+
+        var turno = await ObtenerTurnoActualAsync()
+            ?? throw new TurnoInvalidoException("No hay un turno abierto.");
+
+        var retiro = new RetiroCaja
+        {
+            TurnoCajaId = turno.Id,
+            Monto = monto,
+            Motivo = motivo?.Trim() ?? string.Empty,
+            EmpleadoAutorizaId = supervisorId,
+            Fecha = reloj.AhoraUtc()
+        };
+        retiro.Validar();
+
+        var delTurno = await ventas.ObtenerPorTurnoAsync(turno.Id);
+        var efectivoActual = turno.CalcularEfectivoEsperado(delTurno);
+        if (monto > efectivoActual)
+        {
+            throw new ValidacionException(
+                $"No se puede retirar ${monto:N0}; el efectivo actual en caja es ${efectivoActual:N0}.");
+        }
+
+        turno.Retiros.Add(retiro);
+        if (retiros is not null)
+            await retiros.AgregarAsync(retiro);
+
+        turnos.Actualizar(turno);
+        await auditoria.RegistrarAsync(
+            AccionAuditoria.RetiroCajaRegistrado,
+            nameof(RetiroCaja),
+            retiro.Id,
+            $"Retiro de ${monto:N0} en turno {turno.Id}. Autorizado por supervisor {supervisorId}. Motivo: {motivo}");
+        await trabajo.GuardarAsync();
+        return retiro;
+    }
+
+    public async Task<IReadOnlyList<RetiroCaja>> ObtenerRetirosTurnoActualAsync()
+    {
+        var turno = await ObtenerTurnoActualAsync();
+        if (turno is null)
+            return [];
+
+        return turno.Retiros.ToList();
+    }
 }

@@ -16,7 +16,9 @@ public class TurnoCaja : EntidadBase
     public long? EfectivoEsperado { get; set; }
     public long? EfectivoContado { get; set; }
     public EstadoTurno Estado { get; set; } = EstadoTurno.Abierto;
+    public ICollection<RetiroCaja> Retiros { get; set; } = new List<RetiroCaja>();
 
+    public long TotalRetiros => Retiros.Sum(r => r.Monto);
     public long? Diferencia => EfectivoContado - EfectivoEsperado;
 
     public static TurnoCaja Abrir(
@@ -43,7 +45,8 @@ public class TurnoCaja : EntidadBase
             .Sum(v => v.EfectivoNeto)
             - ventas
             .Where(v => v.Estado == EstadoVenta.Anulada)
-            .Sum(v => v.EfectivoNeto);
+            .Sum(v => v.EfectivoNeto)
+            - TotalRetiros;
 
     public void Cerrar(DateTime ahora, long esperado, long contado)
     {

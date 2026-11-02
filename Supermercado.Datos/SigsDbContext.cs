@@ -32,6 +32,7 @@ public class SigsDbContext(
     public DbSet<Venta> Ventas => Set<Venta>();
     public DbSet<Caja> Cajas => Set<Caja>();
     public DbSet<TurnoCaja> Turnos => Set<TurnoCaja>();
+    public DbSet<RetiroCaja> RetirosCaja => Set<RetiroCaja>();
     public DbSet<Cargo> Cargos => Set<Cargo>();
     public DbSet<Rol> Roles => Set<Rol>();
     public DbSet<Empleado> Empleados => Set<Empleado>();

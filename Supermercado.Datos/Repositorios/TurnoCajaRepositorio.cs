@@ -8,10 +8,10 @@ public class TurnoCajaRepositorio(SigsDbContext db)
     : Repositorio<TurnoCaja>(db), ITurnoCajaRepositorio
 {
     public Task<TurnoCaja?> ObtenerAbiertoPorEmpleadoAsync(int empleadoId)
-        => Db.Turnos.FirstOrDefaultAsync(t =>
+        => Db.Turnos.Include(t => t.Retiros).FirstOrDefaultAsync(t =>
             t.EmpleadoId == empleadoId && t.Estado == EstadoTurno.Abierto);
 
     public Task<TurnoCaja?> ObtenerAbiertoPorCajaAsync(int cajaId)
-        => Db.Turnos.FirstOrDefaultAsync(t =>
+        => Db.Turnos.Include(t => t.Retiros).FirstOrDefaultAsync(t =>
             t.CajaId == cajaId && t.Estado == EstadoTurno.Abierto);
 }

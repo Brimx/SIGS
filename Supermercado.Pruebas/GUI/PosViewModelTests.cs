@@ -68,6 +68,12 @@ public class PosViewModelTests
 
         public Task<TurnoCaja?> ObtenerTurnoActualAsync()
             => Task.FromResult(Abierto ? TurnoCaja.Abrir(1, 1, 100000, DateTime.UtcNow) : null);
+
+        public Task<RetiroCaja> RegistrarRetiroAsync(long monto, string motivo, int supervisorId)
+            => Task.FromResult(new RetiroCaja { Monto = monto, Motivo = motivo, EmpleadoAutorizaId = supervisorId });
+
+        public Task<IReadOnlyList<RetiroCaja>> ObtenerRetirosTurnoActualAsync()
+            => Task.FromResult<IReadOnlyList<RetiroCaja>>([]);
     }
 
     private sealed class ServicioVentasFalso : IServicioVentas

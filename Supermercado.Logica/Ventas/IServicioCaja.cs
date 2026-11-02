@@ -13,4 +13,6 @@ public interface IServicioCaja
     Task<TurnoCaja> AbrirTurnoAsync(int cajaId, long efectivoInicial);
     Task<ResultadoArqueo> CerrarTurnoAsync(long efectivoContado);
     Task<TurnoCaja?> ObtenerTurnoActualAsync();
+    Task<RetiroCaja> RegistrarRetiroAsync(long monto, string motivo, int supervisorId);
+    Task<IReadOnlyList<RetiroCaja>> ObtenerRetirosTurnoActualAsync();
 }
