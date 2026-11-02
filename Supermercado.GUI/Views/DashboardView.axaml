@@ -1,0 +1,69 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Supermercado.GUI.ViewModels"
+             x:Class="Supermercado.GUI.Views.DashboardView"
+             x:DataType="vm:DashboardViewModel"
+             FontFamily="{StaticResource FontFamilyPlex}">
+
+    <Grid RowDefinitions="Auto,16,*" Margin="16">
+        <Border Grid.Row="0"
+                Background="{DynamicResource BrushSurface}"
+                BorderBrush="{DynamicResource BrushBorderSubtle}"
+                BorderThickness="1"
+                CornerRadius="{StaticResource RadiusMedium}"
+                Padding="16,12">
+            <Grid ColumnDefinitions="*,Auto">
+                <TextBlock Grid.Column="0"
+                           Text="{Binding MensajeEstado}"
+                           VerticalAlignment="Center"
+                           FontWeight="{StaticResource FontWeightMedium}" />
+                <Button Grid.Column="1"
+                        Command="{Binding ActualizarDashboardCommand}"
+                        Background="{DynamicResource BrushPrimary}"
+                        Foreground="{DynamicResource BrushTextOnPrimary}">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <LucideIcon Kind="RefreshCw" Size="16" />
+                        <TextBlock Text="Refrescar Indicadores" FontWeight="{StaticResource FontWeightSemiBold}" />
+                    </StackPanel>
+                </Button>
+            </Grid>
+        </Border>
+
+        <ScrollViewer Grid.Row="2">
+            <ItemsControl ItemsSource="{Binding Tarjetas}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel Orientation="Horizontal" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="vm:WidgetCardViewModel">
+                        <Border Background="{DynamicResource BrushSurface}"
+                                BorderBrush="{DynamicResource BrushBorderSubtle}"
+                                BorderThickness="1"
+                                CornerRadius="{StaticResource RadiusLarge}"
+                                Width="280"
+                                Margin="0,0,16,16"
+                                Padding="20">
+                            <StackPanel Spacing="10">
+                                <TextBlock Text="{Binding Titulo}"
+                                           FontFamily="{StaticResource FontFamilyStackSans}"
+                                           FontSize="{StaticResource FontSizeBody}"
+                                           FontWeight="{StaticResource FontWeightSemiBold}"
+                                           Foreground="{DynamicResource BrushTextSecondary}" />
+                                <TextBlock Text="{Binding ValorPrincipal}"
+                                           FontFamily="{StaticResource FontFamilyPlexCondensed}"
+                                           FontSize="{StaticResource FontSizeHeadline}"
+                                           FontWeight="{StaticResource FontWeightBold}"
+                                           Foreground="{DynamicResource BrushPrimary}" />
+                                <TextBlock Text="{Binding Subtitulo}"
+                                           FontSize="{StaticResource FontSizeCaption}"
+                                           Foreground="{DynamicResource BrushTextMuted}" />
+                            </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+    </Grid>
+</UserControl>
