@@ -1,0 +1,161 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Supermercado.GUI.ViewModels"
+             x:Class="Supermercado.GUI.Views.LoginView"
+             x:DataType="vm:LoginViewModel"
+             Background="{DynamicResource BrushBackground}"
+             FontFamily="{StaticResource FontFamilyPlex}">
+
+    <Grid ColumnDefinitions="*,480,*">
+        <Border Grid.Column="1"
+                VerticalAlignment="Center"
+                Margin="16"
+                Background="{DynamicResource BrushSurface}"
+                BorderBrush="{DynamicResource BrushBorderSubtle}"
+                BorderThickness="1"
+                CornerRadius="{StaticResource RadiusLarge}"
+                BoxShadow="{StaticResource ShadowElevation2}"
+                Padding="32">
+            <StackPanel Spacing="20">
+                <!-- Cabecera de Identidad de Marca -->
+                <StackPanel Spacing="6" HorizontalAlignment="Center">
+                    <Border Background="{DynamicResource BrushPrimarySubtle}"
+                            CornerRadius="{StaticResource RadiusMedium}"
+                            Width="48" Height="48"
+                            HorizontalAlignment="Center">
+                        <LucideIcon Kind="Store"
+                                    Size="24"
+                                    Foreground="{DynamicResource BrushPrimary}"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center" />
+                    </Border>
+                    <TextBlock Text="SIGS · POS &amp; Gestión"
+                               HorizontalAlignment="Center"
+                               FontFamily="{StaticResource FontFamilyStackSans}"
+                               FontSize="{StaticResource FontSizeHeadline}"
+                               FontWeight="{StaticResource FontWeightBold}"
+                               Foreground="{DynamicResource BrushTextPrimary}" />
+                    <TextBlock Text="Sistema Integral de Gestión de Supermercado · DIAN POS"
+                               HorizontalAlignment="Center"
+                               FontSize="{StaticResource FontSizeBody}"
+                               Foreground="{DynamicResource BrushTextSecondary}" />
+                </StackPanel>
+
+                <Separator Background="{DynamicResource BrushBorderSubtle}" Height="1" />
+
+                <!-- Formulario de Credenciales -->
+                <StackPanel Spacing="14">
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="Usuario Operador"
+                                   FontWeight="{StaticResource FontWeightMedium}"
+                                   FontSize="{StaticResource FontSizeBody}"
+                                   Foreground="{DynamicResource BrushTextSecondary}" />
+                        <TextBox Text="{Binding NombreUsuario}"
+                                 PlaceholderText="Ej. cajero_demo o admin_demo"
+                                 MinHeight="40" />
+                    </StackPanel>
+
+                    <StackPanel Spacing="6" IsVisible="{Binding !ModoPin}">
+                        <TextBlock Text="Contraseña"
+                                   FontWeight="{StaticResource FontWeightMedium}"
+                                   FontSize="{StaticResource FontSizeBody}"
+                                   Foreground="{DynamicResource BrushTextSecondary}" />
+                        <TextBox Text="{Binding Clave}"
+                                 PasswordChar="•"
+                                 PlaceholderText="Ingresa tu clave de acceso"
+                                 MinHeight="40" />
+                    </StackPanel>
+
+                    <StackPanel Spacing="6" IsVisible="{Binding ModoPin}">
+                        <TextBlock Text="PIN Numérico de Caja"
+                                   FontWeight="{StaticResource FontWeightMedium}"
+                                   FontSize="{StaticResource FontSizeBody}"
+                                   Foreground="{DynamicResource BrushTextSecondary}" />
+                        <TextBox Text="{Binding PinAcceso}"
+                                 PasswordChar="•"
+                                 PlaceholderText="PIN de 4 a 6 dígitos"
+                                 FontFamily="{StaticResource FontFamilyPlexCondensed}"
+                                 MinHeight="40" />
+                    </StackPanel>
+
+                    <!-- Alerta de Error -->
+                    <Border IsVisible="{Binding TieneError}"
+                            Background="{DynamicResource BrushErrorSubtle}"
+                            BorderBrush="{DynamicResource BrushError}"
+                            BorderThickness="1"
+                            CornerRadius="{StaticResource RadiusSmall}"
+                            Padding="12,8">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <LucideIcon Kind="CircleAlert" Size="16" Foreground="{DynamicResource BrushError}" />
+                            <TextBlock Text="{Binding MensajeError}"
+                                       TextWrapping="Wrap"
+                                       FontSize="{StaticResource FontSizeBody}"
+                                       FontWeight="{StaticResource FontWeightMedium}"
+                                       Foreground="{DynamicResource BrushError}" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Botón Principal de Ingreso -->
+                    <Button Command="{Binding IngresarCommand}"
+                            IsDefault="True"
+                            HorizontalAlignment="Stretch"
+                            HorizontalContentAlignment="Center"
+                            MinHeight="44"
+                            Background="{DynamicResource BrushPrimary}"
+                            Foreground="{DynamicResource BrushTextOnPrimary}"
+                            CornerRadius="{StaticResource RadiusMedium}">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <LucideIcon Kind="KeyRound" Size="18" />
+                            <TextBlock Text="Iniciar Sesión en Terminal"
+                                       FontWeight="{StaticResource FontWeightSemiBold}"
+                                       FontSize="{StaticResource FontSizeSubtitle}" />
+                        </StackPanel>
+                    </Button>
+
+                    <Button Command="{Binding AlternarModoPinCommand}"
+                            HorizontalAlignment="Center"
+                            Padding="8,4">
+                        <TextBlock Text="Alternar ingreso con Contraseña / PIN Rápido"
+                                   FontSize="{StaticResource FontSizeCaption}"
+                                   Foreground="{DynamicResource BrushTextSecondary}" />
+                    </Button>
+                </StackPanel>
+
+                <Separator Background="{DynamicResource BrushBorderSubtle}" Height="1" />
+
+                <!-- Acceso Rápido Semilla Demo (1 Clic) -->
+                <StackPanel Spacing="8">
+                    <TextBlock Text="Entorno de Pruebas y Semilla Demo Automática"
+                               HorizontalAlignment="Center"
+                               FontSize="{StaticResource FontSizeCaption}"
+                               FontWeight="{StaticResource FontWeightSemiBold}"
+                               Foreground="{DynamicResource BrushTextSecondary}" />
+                    <Grid ColumnDefinitions="*,8,*">
+                        <Button Grid.Column="0"
+                                Command="{Binding IngresarDemoRapidoCommand}"
+                                CommandParameter="cajero"
+                                HorizontalAlignment="Stretch"
+                                HorizontalContentAlignment="Center"
+                                MinHeight="38">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <LucideIcon Kind="ShoppingCart" Size="16" />
+                                <TextBlock Text="Cajero Demo" FontWeight="{StaticResource FontWeightMedium}" />
+                            </StackPanel>
+                        </Button>
+                        <Button Grid.Column="2"
+                                Command="{Binding IngresarDemoRapidoCommand}"
+                                CommandParameter="admin"
+                                HorizontalAlignment="Stretch"
+                                HorizontalContentAlignment="Center"
+                                MinHeight="38">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <LucideIcon Kind="ShieldCheck" Size="16" />
+                                <TextBlock Text="Admin Demo" FontWeight="{StaticResource FontWeightMedium}" />
+                            </StackPanel>
+                        </Button>
+                    </Grid>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>

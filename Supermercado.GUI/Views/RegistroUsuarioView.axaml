@@ -1,0 +1,170 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Supermercado.GUI.ViewModels"
+             x:Class="Supermercado.GUI.Views.RegistroUsuarioView"
+             x:DataType="vm:RegistroUsuarioViewModel"
+             FontFamily="{StaticResource FontFamilyPlex}">
+
+    <Border Background="{DynamicResource BrushSurface}"
+            BorderBrush="{DynamicResource BrushBorderSubtle}"
+            BorderThickness="1"
+            CornerRadius="{StaticResource RadiusLarge}"
+            Padding="{StaticResource PaddingDialog}"
+            MaxWidth="640"
+            HorizontalAlignment="Stretch">
+        <StackPanel Spacing="16">
+            <!-- Encabezado -->
+            <StackPanel Spacing="4">
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                    <LucideIcon Kind="UserPlus" Size="22" Foreground="{DynamicResource BrushPrimary}" />
+                    <TextBlock Text="{Binding TituloFormulario}"
+                               FontFamily="{StaticResource FontFamilyStackSans}"
+                               FontSize="{StaticResource FontSizeTitle}"
+                               FontWeight="{StaticResource FontWeightBold}"
+                               Foreground="{DynamicResource BrushTextPrimary}" />
+                </StackPanel>
+                <TextBlock Text="{Binding SubtituloFormulario}"
+                           FontSize="{StaticResource FontSizeBody}"
+                           Foreground="{DynamicResource BrushTextSecondary}" />
+            </StackPanel>
+
+            <Separator Background="{DynamicResource BrushBorderSubtle}" Height="1" />
+
+            <!-- Campos de Cliente / Personal -->
+            <Grid ColumnDefinitions="140,12,*,12,90" RowDefinitions="Auto,12,Auto,12,Auto">
+                <!-- Tipo Documento -->
+                <StackPanel Grid.Row="0" Grid.Column="0" Spacing="4">
+                    <TextBlock Text="Tipo Doc."
+                               FontWeight="{StaticResource FontWeightMedium}"
+                               FontSize="{StaticResource FontSizeBody}"
+                               Foreground="{DynamicResource BrushTextSecondary}" />
+                    <ComboBox ItemsSource="{Binding TiposDocumentoDisponibles}"
+                              SelectedItem="{Binding TipoDocumento}"
+                              HorizontalAlignment="Stretch" />
+                </StackPanel>
+
+                <!-- Número Documento -->
+                <StackPanel Grid.Row="0" Grid.Column="2" Spacing="4">
+                    <TextBlock Text="Número de Identificación / NIT"
+                               FontWeight="{StaticResource FontWeightMedium}"
+                               FontSize="{StaticResource FontSizeBody}"
+                               Foreground="{DynamicResource BrushTextSecondary}" />
+                    <TextBox Text="{Binding Documento}"
+                             PlaceholderText="Ej. 900480569 o 10203040"
+                             FontFamily="{StaticResource FontFamilyPlexCondensed}" />
+                </StackPanel>
+
+                <!-- Dígito de Verificación DIAN (Módulo 11) -->
+                <StackPanel Grid.Row="0" Grid.Column="4" Spacing="4" IsVisible="{Binding EsNit}">
+                    <TextBlock Text="DV (DIAN)"
+                               FontWeight="{StaticResource FontWeightSemiBold}"
+                               FontSize="{StaticResource FontSizeBody}"
+                               Foreground="{DynamicResource BrushPrimary}" />
+                    <TextBox Text="{Binding DigitoVerificacion}"
+                             IsReadOnly="True"
+                             HorizontalContentAlignment="Center"
+                             FontFamily="{StaticResource FontFamilyPlexCondensed}"
+                             FontWeight="{StaticResource FontWeightBold}" />
+                </StackPanel>
+
+                <!-- Nombres / Razón Social -->
+                <StackPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3" Spacing="4">
+                    <TextBlock Text="Nombres o Razón Social"
+                               FontWeight="{StaticResource FontWeightMedium}"
+                               FontSize="{StaticResource FontSizeBody}"
+                               Foreground="{DynamicResource BrushTextSecondary}" />
+                    <TextBox Text="{Binding Nombres}"
+                             PlaceholderText="Nombres completos o empresa" />
+                </StackPanel>
+
+                <!-- Apellidos -->
+                <StackPanel Grid.Row="2" Grid.Column="4" Spacing="4">
+                    <TextBlock Text="Apellidos"
+                               FontWeight="{StaticResource FontWeightMedium}"
+                               FontSize="{StaticResource FontSizeBody}"
+                               Foreground="{DynamicResource BrushTextSecondary}" />
+                    <TextBox Text="{Binding Apellidos}"
+                             PlaceholderText="Opcional NIT" />
+                </StackPanel>
+
+                <!-- Teléfono y Correo -->
+                <StackPanel Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" Spacing="4">
+                    <TextBlock Text="Teléfono Móvil"
+                               FontWeight="{StaticResource FontWeightMedium}"
+                               FontSize="{StaticResource FontSizeBody}"
+                               Foreground="{DynamicResource BrushTextSecondary}" />
+                    <TextBox Text="{Binding Telefono}"
+                             PlaceholderText="300 000 0000"
+                             FontFamily="{StaticResource FontFamilyPlexCondensed}" />
+                </StackPanel>
+
+                <StackPanel Grid.Row="4" Grid.Column="2" Grid.ColumnSpan="3" Spacing="4">
+                    <TextBlock Text="Correo Electrónico (Envío Factura XML/PDF)"
+                               FontWeight="{StaticResource FontWeightMedium}"
+                               FontSize="{StaticResource FontSizeBody}"
+                               Foreground="{DynamicResource BrushTextSecondary}" />
+                    <TextBox Text="{Binding Correo}"
+                             PlaceholderText="cliente@correo.com" />
+                </StackPanel>
+            </Grid>
+
+            <!-- Bloque Legal: Ley 1581 de 2012 (Habeas Data) -->
+            <Border Background="{DynamicResource BrushSurfaceSubtle}"
+                    BorderBrush="{DynamicResource BrushBorderSubtle}"
+                    BorderThickness="1"
+                    CornerRadius="{StaticResource RadiusMedium}"
+                    Padding="12">
+                <StackPanel Spacing="8">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <LucideIcon Kind="ShieldCheck" Size="18" Foreground="{DynamicResource BrushPrimary}" />
+                        <TextBlock Text="Protección de Datos Personales — Ley Estatutaria 1581 de 2012"
+                                   FontWeight="{StaticResource FontWeightSemiBold}"
+                                   FontSize="{StaticResource FontSizeBody}"
+                                   Foreground="{DynamicResource BrushTextPrimary}" />
+                    </StackPanel>
+
+                    <CheckBox IsChecked="{Binding AutorizaHabeasData}">
+                        <TextBlock Text="{Binding TextoLegalHabeasData}"
+                                   TextWrapping="Wrap"
+                                   FontSize="{StaticResource FontSizeCaption}"
+                                   Foreground="{DynamicResource BrushTextSecondary}" />
+                    </CheckBox>
+
+                    <TextBlock Text="{Binding AvisoHabeasData}"
+                               FontSize="{StaticResource FontSizeCaption}"
+                               FontWeight="{StaticResource FontWeightSemiBold}"
+                               Foreground="{DynamicResource BrushPrimary}" />
+                </StackPanel>
+            </Border>
+
+            <!-- Mensaje de retroalimentación -->
+            <Border IsVisible="{Binding MensajeEstado, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                    Background="{DynamicResource BrushSurfaceSubtle}"
+                    CornerRadius="{StaticResource RadiusSmall}"
+                    Padding="10,8">
+                <TextBlock Text="{Binding MensajeEstado}"
+                           TextWrapping="Wrap"
+                           FontSize="{StaticResource FontSizeBody}"
+                           FontWeight="{StaticResource FontWeightMedium}"
+                           Foreground="{DynamicResource BrushTextPrimary}" />
+            </Border>
+
+            <!-- Acciones -->
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10">
+                <Button Command="{Binding CancelarCommand}"
+                        Padding="{StaticResource PaddingButton}">
+                    <TextBlock Text="Cancelar (Esc)" />
+                </Button>
+                <Button Command="{Binding GuardarCommand}"
+                        Background="{DynamicResource BrushPrimary}"
+                        Foreground="{DynamicResource BrushTextOnPrimary}"
+                        Padding="{StaticResource PaddingButton}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <LucideIcon Kind="Check" Size="16" />
+                        <TextBlock Text="Guardar Registro" FontWeight="{StaticResource FontWeightSemiBold}" />
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+        </StackPanel>
+    </Border>
+</UserControl>
