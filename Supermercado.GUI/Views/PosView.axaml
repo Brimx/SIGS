@@ -39,7 +39,7 @@
                         <!-- Input de Código de Barras / Balanza GS1 -->
                         <StackPanel Grid.Column="0" Spacing="4">
                             <StackPanel Orientation="Horizontal" Spacing="6">
-                                <LucideIcon Kind="ScanBarcode" Size="16" Foreground="{DynamicResource BrushPrimary}" />
+                                <LucideIcon Kind="ScanBarcode" Size="16" Foreground="{DynamicResource BrushPrimaryText}" />
                                 <TextBlock Text="Lector de Código de Barras / PLU o Etiqueta de Balanza (EAN-13)"
                                            FontWeight="{StaticResource FontWeightSemiBold}"
                                            FontSize="{StaticResource FontSizeCaption}"
@@ -59,8 +59,7 @@
                                 </TextBox>
                                 <Button Grid.Column="2"
                                         Command="{Binding EscanearOAgregarCommand}"
-                                        Background="{DynamicResource BrushPrimary}"
-                                        Foreground="{DynamicResource BrushTextOnPrimary}"
+                                        Classes="Primary" Theme="{DynamicResource SolidButton}"
                                         MinHeight="40"
                                         Padding="14,0">
                                     <StackPanel Orientation="Horizontal" Spacing="6">
@@ -116,7 +115,7 @@
                                 Padding="14,8">
                             <Grid ColumnDefinitions="*,Auto,12,Auto">
                                 <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
-                                    <LucideIcon Kind="Users" Size="15" Foreground="{DynamicResource BrushPrimary}" />
+                                    <LucideIcon Kind="Users" Size="15" Foreground="{DynamicResource BrushPrimaryText}" />
                                     <TextBlock Text="Adquirente:"
                                                FontSize="{StaticResource FontSizeCaption}"
                                                FontWeight="{StaticResource FontWeightSemiBold}"
@@ -133,12 +132,12 @@
                                         CornerRadius="{StaticResource RadiusPill}"
                                         Background="{DynamicResource BrushPrimarySubtle}">
                                     <StackPanel Orientation="Horizontal" Spacing="6">
-                                        <LucideIcon Kind="Clock" Size="14" Foreground="{DynamicResource BrushPrimary}" />
+                                        <LucideIcon Kind="Clock" Size="14" Foreground="{DynamicResource BrushPrimaryText}" />
                                         <TextBlock Text="{Binding EtiquetaBotonVentasEnEspera}"
                                                    FontFamily="{StaticResource FontFamilyPlexCondensed}"
                                                    FontSize="{StaticResource FontSizeCaption}"
                                                    FontWeight="{StaticResource FontWeightBold}"
-                                                   Foreground="{DynamicResource BrushPrimary}" />
+                                                   Foreground="{DynamicResource BrushPrimaryText}" />
                                     </StackPanel>
                                 </Button>
 
@@ -148,7 +147,7 @@
                                            FontFamily="{StaticResource FontFamilyPlexCondensed}"
                                            FontSize="{StaticResource FontSizeCaption}"
                                            FontWeight="{StaticResource FontWeightSemiBold}"
-                                           Foreground="{DynamicResource BrushPrimary}" />
+                                           Foreground="{DynamicResource BrushPrimaryText}" />
                             </Grid>
                         </Border>
 
@@ -200,7 +199,7 @@
                         <LucideIcon Grid.Column="0"
                                     Kind="Receipt"
                                     Size="16"
-                                    Foreground="{DynamicResource BrushPrimary}"
+                                    Foreground="{DynamicResource BrushPrimaryText}"
                                     VerticalAlignment="Center" />
                         <TextBlock Grid.Column="2"
                                    Text="{Binding MensajeEstado}"
@@ -230,7 +229,7 @@
                     <!-- VISOR DE TOTAL A PAGAR (32PX DISPLAY TABULAR) -->
                     <Border Grid.Row="0"
                             Background="{DynamicResource BrushPrimarySubtle}"
-                            BorderBrush="{DynamicResource BrushPrimary}"
+                            BorderBrush="{DynamicResource BrushPrimaryText}"
                             BorderThickness="1"
                             CornerRadius="{StaticResource RadiusMedium}"
                             Padding="16,14">
@@ -239,7 +238,7 @@
                                        FontFamily="{StaticResource FontFamilyStackSans}"
                                        FontSize="{StaticResource FontSizeCaption}"
                                        FontWeight="{StaticResource FontWeightBold}"
-                                       Foreground="{DynamicResource BrushPrimary}" />
+                                       Foreground="{DynamicResource BrushPrimaryText}" />
                             <TextBlock Text="{Binding TotalFormateado}"
                                        FontFamily="{StaticResource FontFamilyPlexCondensed}"
                                        FontSize="{StaticResource FontSizeDisplay}"
@@ -277,7 +276,7 @@
                                 <TextBlock Grid.Row="6" Grid.Column="1" Text="{Binding IvaTarifaJ, StringFormat='$ {0:N0}'}" FontFamily="{StaticResource FontFamilyPlexCondensed}" FontSize="{StaticResource FontSizeCaption}" />
 
                                 <TextBlock Grid.Row="8" Grid.Column="0" Text="Total Impuestos (IVA):" FontSize="{StaticResource FontSizeBody}" FontWeight="{StaticResource FontWeightSemiBold}" Foreground="{DynamicResource BrushTextPrimary}" />
-                                <TextBlock Grid.Row="8" Grid.Column="1" Text="{Binding IvaFormateado}" FontFamily="{StaticResource FontFamilyPlexCondensed}" FontWeight="{StaticResource FontWeightBold}" Foreground="{DynamicResource BrushPrimary}" />
+                                <TextBlock Grid.Row="8" Grid.Column="1" Text="{Binding IvaFormateado}" FontFamily="{StaticResource FontFamilyPlexCondensed}" FontWeight="{StaticResource FontWeightBold}" Foreground="{DynamicResource BrushPrimaryText}" />
                             </Grid>
                         </StackPanel>
                     </Border>
@@ -288,8 +287,7 @@
                                 HorizontalAlignment="Stretch"
                                 HorizontalContentAlignment="Stretch"
                                 MinHeight="52"
-                                Background="{DynamicResource BrushPrimary}"
-                                Foreground="{DynamicResource BrushTextOnPrimary}"
+                                Classes="Primary" Theme="{DynamicResource SolidButton}"
                                 CornerRadius="{StaticResource RadiusMedium}">
                             <Grid ColumnDefinitions="Auto,10,*,Auto">
                                 <LucideIcon Grid.Column="0" Kind="Banknote" Size="20" VerticalAlignment="Center" />
@@ -300,7 +298,7 @@
                                            FontSize="{StaticResource FontSizeSubtitle}"
                                            VerticalAlignment="Center" />
                                 <Border Grid.Column="3"
-                                        Background="#33FFFFFF"
+                                        Background="{DynamicResource BrushOnPrimarySubtle}"
                                         CornerRadius="{StaticResource RadiusSmall}"
                                         Padding="8,2">
                                     <TextBlock Text="F1" FontFamily="{StaticResource FontFamilyPlexCondensed}" FontWeight="{StaticResource FontWeightBold}" />
@@ -350,7 +348,7 @@
                                     MinHeight="42"
                                     ToolTip.Tip="Suspender el carrito actual en espera (F6)">
                                 <StackPanel Orientation="Horizontal" Spacing="6">
-                                    <LucideIcon Kind="Pause" Size="16" Foreground="{DynamicResource BrushWarning}" />
+                                    <LucideIcon Kind="Pause" Size="16" Foreground="{DynamicResource BrushWarningText}" />
                                     <TextBlock Text="Pausar (F6)" FontWeight="{StaticResource FontWeightSemiBold}" FontSize="{StaticResource FontSizeCaption}" />
                                 </StackPanel>
                             </Button>
@@ -362,7 +360,7 @@
                                     MinHeight="42"
                                     ToolTip.Tip="Ver y recuperar tickets en espera (F7)">
                                 <StackPanel Orientation="Horizontal" Spacing="6">
-                                    <LucideIcon Kind="Clock" Size="16" Foreground="{DynamicResource BrushPrimary}" />
+                                    <LucideIcon Kind="Clock" Size="16" Foreground="{DynamicResource BrushPrimaryText}" />
                                     <TextBlock Text="{Binding EtiquetaBotonVentasEnEspera}" FontWeight="{StaticResource FontWeightSemiBold}" FontSize="{StaticResource FontSizeCaption}" />
                                 </StackPanel>
                             </Button>
@@ -376,7 +374,7 @@
                                 HorizontalContentAlignment="Center"
                                 MinHeight="36">
                             <StackPanel Orientation="Horizontal" Spacing="6">
-                                <LucideIcon Kind="ShieldAlert" Size="15" Foreground="{DynamicResource BrushWarning}" />
+                                <LucideIcon Kind="ShieldAlert" Size="15" Foreground="{DynamicResource BrushWarningText}" />
                                 <TextBlock Text="Anular Factura Emitida (PIN Supervisor)"
                                            FontSize="{StaticResource FontSizeCaption}"
                                            FontWeight="{StaticResource FontWeightSemiBold}"
@@ -390,7 +388,7 @@
                                 MinHeight="38">
                             <TextBlock Text="Cancelar / Limpiar Ticket (Esc)"
                                        FontWeight="{StaticResource FontWeightMedium}"
-                                       Foreground="{DynamicResource BrushError}" />
+                                       Foreground="{DynamicResource BrushErrorText}" />
                         </Button>
                     </StackPanel>
                 </Grid>
@@ -399,7 +397,7 @@
 
         <!-- OVERLAY 1: MODAL DE COBRO, PAGOS MIXTOS Y CÁLCULO DE CAMBIO (F1) -->
         <Border IsVisible="{Binding ModalCobroAbierto}"
-                Background="#99020617">
+                Background="{DynamicResource BrushOverlayScrim}">
             <Border Background="{DynamicResource BrushSurface}"
                     BorderBrush="{DynamicResource BrushBorderSubtle}"
                     BorderThickness="1"
@@ -413,7 +411,7 @@
                 <ScrollViewer>
                     <StackPanel Spacing="14">
                         <StackPanel Orientation="Horizontal" Spacing="10">
-                            <LucideIcon Kind="Wallet" Size="22" Foreground="{DynamicResource BrushPrimary}" />
+                            <LucideIcon Kind="Wallet" Size="22" Foreground="{DynamicResource BrushPrimaryText}" />
                             <TextBlock Text="Finalizar Venta · Pagos Mixtos y Emisión DIAN"
                                        FontFamily="{StaticResource FontFamilyStackSans}"
                                        FontSize="{StaticResource FontSizeTitle}"
@@ -425,7 +423,7 @@
                                 Padding="14,10">
                             <Grid ColumnDefinitions="*,Auto,24,Auto,Auto">
                                 <TextBlock Grid.Column="0" Text="TOTAL FACTURA:" VerticalAlignment="Center" FontWeight="{StaticResource FontWeightSemiBold}" />
-                                <TextBlock Grid.Column="1" Text="{Binding TotalFormateado}" FontFamily="{StaticResource FontFamilyPlexCondensed}" FontSize="{StaticResource FontSizeHeadline}" FontWeight="{StaticResource FontWeightBold}" Foreground="{DynamicResource BrushPrimary}" />
+                                <TextBlock Grid.Column="1" Text="{Binding TotalFormateado}" FontFamily="{StaticResource FontFamilyPlexCondensed}" FontSize="{StaticResource FontSizeHeadline}" FontWeight="{StaticResource FontWeightBold}" Foreground="{DynamicResource BrushPrimaryText}" />
                                 <TextBlock Grid.Column="3" Text="ABONADO: " VerticalAlignment="Center" FontSize="{StaticResource FontSizeCaption}" Foreground="{DynamicResource BrushTextSecondary}" />
                                 <TextBlock Grid.Column="4" Text="{Binding TotalAbonadoFormateado}" VerticalAlignment="Center" FontFamily="{StaticResource FontFamilyPlexCondensed}" FontSize="{StaticResource FontSizeSubtitle}" FontWeight="{StaticResource FontWeightBold}" />
                             </Grid>
@@ -457,8 +455,7 @@
                                     Command="{Binding AgregarRenglonPagoCommand}"
                                     VerticalAlignment="Bottom"
                                     MinHeight="40"
-                                    Background="{DynamicResource BrushPrimary}"
-                                    Foreground="{DynamicResource BrushTextOnPrimary}"
+                                    Classes="Primary" Theme="{DynamicResource SolidButton}"
                                     Padding="14,0"
                                     ToolTip.Tip="Añadir este abono a la lista de pagos mixtos">
                                 <StackPanel Orientation="Horizontal" Spacing="6">
@@ -515,7 +512,7 @@
                                     <Button Grid.Column="1"
                                             Command="{Binding LimpiarRenglonesPagoCommand}"
                                             Padding="8,2">
-                                        <TextBlock Text="Limpiar pagos" FontSize="{StaticResource FontSizeCaption}" Foreground="{DynamicResource BrushError}" />
+                                        <TextBlock Text="Limpiar pagos" FontSize="{StaticResource FontSizeCaption}" Foreground="{DynamicResource BrushErrorText}" />
                                     </Button>
                                 </Grid>
 
@@ -537,13 +534,13 @@
                                                                Text="{Binding MontoFormateado}"
                                                                FontFamily="{StaticResource FontFamilyPlexCondensed}"
                                                                FontWeight="{StaticResource FontWeightBold}"
-                                                               Foreground="{DynamicResource BrushPrimary}"
+                                                               Foreground="{DynamicResource BrushPrimaryText}"
                                                                VerticalAlignment="Center" />
                                                     <Button Grid.Column="3"
                                                             Command="{Binding $parent[UserControl].((vm:PosViewModel)DataContext).QuitarRenglonPagoCommand}"
                                                             CommandParameter="{Binding}"
                                                             Padding="6,2">
-                                                        <LucideIcon Kind="X" Size="14" Foreground="{DynamicResource BrushError}" />
+                                                        <LucideIcon Kind="X" Size="14" Foreground="{DynamicResource BrushErrorText}" />
                                                     </Button>
                                                 </Grid>
                                             </Border>
@@ -566,7 +563,7 @@
                                            FontFamily="{StaticResource FontFamilyPlexCondensed}"
                                            FontSize="{StaticResource FontSizeHeadline}"
                                            FontWeight="{StaticResource FontWeightBold}"
-                                           Foreground="{DynamicResource BrushSuccess}" />
+                                           Foreground="{DynamicResource BrushSuccessText}" />
                             </Grid>
                         </Border>
 
@@ -575,8 +572,7 @@
                                 <TextBlock Text="Volver" />
                             </Button>
                             <Button Command="{Binding ConfirmarCobroCommand}"
-                                    Background="{DynamicResource BrushSuccess}"
-                                    Foreground="#FFFFFF"
+                                    Classes="Success" Theme="{DynamicResource SolidButton}"
                                     MinHeight="42"
                                     Padding="20,0">
                                 <StackPanel Orientation="Horizontal" Spacing="8">
@@ -592,7 +588,7 @@
 
         <!-- OVERLAY 2: MODAL CAMBIO DE CANTIDAD (F2) -->
         <Border IsVisible="{Binding ModalCantidadAbierto}"
-                Background="#99020617">
+                Background="{DynamicResource BrushOverlayScrim}">
             <Border Background="{DynamicResource BrushSurface}"
                     BorderBrush="{DynamicResource BrushBorderSubtle}"
                     BorderThickness="1"
@@ -613,8 +609,7 @@
                                    FontSize="{StaticResource FontSizeTitle}" />
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
                         <Button Command="{Binding AplicarCambioCantidadCommand}"
-                                Background="{DynamicResource BrushPrimary}"
-                                Foreground="{DynamicResource BrushTextOnPrimary}"
+                                Classes="Primary" Theme="{DynamicResource SolidButton}"
                                 Padding="16,8">
                             <TextBlock Text="Aplicar (Enter)" FontWeight="{StaticResource FontWeightSemiBold}" />
                         </Button>
@@ -625,7 +620,7 @@
 
         <!-- OVERLAY 3: MODAL BÚSQUEDA RÁPIDA POR NOMBRE (F3) -->
         <Border IsVisible="{Binding ModalBusquedaAbierto}"
-                Background="#99020617">
+                Background="{DynamicResource BrushOverlayScrim}">
             <Border Background="{DynamicResource BrushSurface}"
                     BorderBrush="{DynamicResource BrushBorderSubtle}"
                     BorderThickness="1"
@@ -651,8 +646,7 @@
                         </TextBox>
                         <Button Grid.Column="2"
                                 Command="{Binding EjecutarBusquedaRapidaCommand}"
-                                Background="{DynamicResource BrushPrimary}"
-                                Foreground="{DynamicResource BrushTextOnPrimary}">
+                                Classes="Primary" Theme="{DynamicResource SolidButton}">
                             <TextBlock Text="Buscar" FontWeight="{StaticResource FontWeightSemiBold}" />
                         </Button>
                     </Grid>
@@ -687,7 +681,7 @@
 
         <!-- OVERLAY 4: MODAL DE REGISTRO DE CLIENTE Y HABEAS DATA (F5) -->
         <Border IsVisible="{Binding ModalRegistroClienteAbierto}"
-                Background="#99020617">
+                Background="{DynamicResource BrushOverlayScrim}">
             <views:RegistroUsuarioView DataContext="{Binding RegistroClienteVm}"
                                        VerticalAlignment="Center"
                                        HorizontalAlignment="Center" />
@@ -695,7 +689,7 @@
 
         <!-- OVERLAY 5: APERTURA OBLIGATORIA DE TURNO CON BASE INICIAL -->
         <Border IsVisible="{Binding ModalAperturaTurnoAbierto}"
-                Background="#B3020617">
+                Background="{DynamicResource BrushOverlayScrimStrong}">
             <Border Background="{DynamicResource BrushSurface}"
                     BorderBrush="{DynamicResource BrushBorderSubtle}"
                     BorderThickness="1"
@@ -706,7 +700,7 @@
                     Padding="28">
                 <StackPanel Spacing="16">
                     <StackPanel Orientation="Horizontal" Spacing="10">
-                        <LucideIcon Kind="Lock" Size="22" Foreground="{DynamicResource BrushWarning}" />
+                        <LucideIcon Kind="Lock" Size="22" Foreground="{DynamicResource BrushWarningText}" />
                         <TextBlock Text="Apertura de Turno de Caja Requerida"
                                    FontFamily="{StaticResource FontFamilyStackSans}"
                                    FontSize="{StaticResource FontSizeTitle}"
@@ -729,8 +723,7 @@
                             HorizontalAlignment="Stretch"
                             HorizontalContentAlignment="Center"
                             MinHeight="44"
-                            Background="{DynamicResource BrushPrimary}"
-                            Foreground="{DynamicResource BrushTextOnPrimary}">
+                            Classes="Primary" Theme="{DynamicResource SolidButton}">
                         <TextBlock Text="Abrir Turno e Iniciar Operación" FontWeight="{StaticResource FontWeightBold}" />
                     </Button>
                 </StackPanel>
@@ -739,7 +732,7 @@
 
         <!-- OVERLAY 6: VISTA PREVIA DE TIRILLA POS 80MM (ESTILO TIENDAS ARA / DIAN) -->
         <Border IsVisible="{Binding MostrarVistaPreviaTicket}"
-                Background="#99020617">
+                Background="{DynamicResource BrushOverlayScrim}">
             <Border Background="{DynamicResource BrushSurface}"
                     BorderBrush="{DynamicResource BrushBorderSubtle}"
                     BorderThickness="1"
@@ -751,29 +744,28 @@
                     Padding="24">
                 <Grid RowDefinitions="Auto,12,*,16,Auto">
                     <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="10">
-                        <LucideIcon Kind="Receipt" Size="20" Foreground="{DynamicResource BrushPrimary}" />
+                        <LucideIcon Kind="Receipt" Size="20" Foreground="{DynamicResource BrushPrimaryText}" />
                         <TextBlock Text="Comprobante Emitido · Tirilla POS Electrónica 80mm"
                                    FontFamily="{StaticResource FontFamilyStackSans}"
                                    FontSize="{StaticResource FontSizeTitle}"
                                    FontWeight="{StaticResource FontWeightBold}" />
                     </StackPanel>
                     <ScrollViewer Grid.Row="2">
-                        <Border Background="#FAF8F5"
-                                BorderBrush="#D9D3C7"
+                        <Border Background="{DynamicResource BrushTicketPaper}"
+                                BorderBrush="{DynamicResource BrushTicketBorder}"
                                 BorderThickness="1"
                                 CornerRadius="4"
                                 Padding="16">
                             <TextBlock Text="{Binding UltimoTicketTexto}"
                                        FontFamily="Monospace"
                                        FontSize="11.5"
-                                       Foreground="#1C1917" />
+                                       Foreground="{DynamicResource BrushTicketInk}" />
                         </Border>
                     </ScrollViewer>
                     <Button Grid.Row="4"
                             Command="{Binding CerrarVistaPreviaTicketCommand}"
                             HorizontalAlignment="Right"
-                            Background="{DynamicResource BrushPrimary}"
-                            Foreground="{DynamicResource BrushTextOnPrimary}"
+                            Classes="Primary" Theme="{DynamicResource SolidButton}"
                             Padding="20,10">
                         <TextBlock Text="Continuar Próximo Cliente (Enter)" FontWeight="{StaticResource FontWeightSemiBold}" />
                     </Button>
@@ -783,7 +775,7 @@
 
         <!-- OVERLAY 7: MODAL DE AUTORIZACIÓN DE SUPERVISOR EN CALIENTE (PIN) -->
         <Border IsVisible="{Binding ModalSupervisorAbierto}"
-                Background="#B3020617">
+                Background="{DynamicResource BrushOverlayScrimStrong}">
             <Border Background="{DynamicResource BrushSurface}"
                     BorderBrush="{DynamicResource BrushBorderSubtle}"
                     BorderThickness="1"
@@ -795,7 +787,7 @@
                     Padding="24">
                 <StackPanel Spacing="14">
                     <StackPanel Orientation="Horizontal" Spacing="10">
-                        <LucideIcon Kind="ShieldAlert" Size="22" Foreground="{DynamicResource BrushWarning}" />
+                        <LucideIcon Kind="ShieldAlert" Size="22" Foreground="{DynamicResource BrushWarningText}" />
                         <TextBlock Text="Autorización de Supervisor"
                                    FontFamily="{StaticResource FontFamilyStackSans}"
                                    FontSize="{StaticResource FontSizeTitle}"
@@ -850,12 +842,12 @@
 
                         <Button Grid.Row="6" Grid.Column="0" Command="{Binding BorrarDigitoPinSupervisorCommand}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" MinHeight="38"><LucideIcon Kind="Delete" Size="16" /></Button>
                         <Button Grid.Row="6" Grid.Column="2" Command="{Binding AgregarDigitoPinSupervisorCommand}" CommandParameter="0" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" MinHeight="38"><TextBlock Text="0" FontFamily="{StaticResource FontFamilyPlexCondensed}" FontWeight="{StaticResource FontWeightBold}" /></Button>
-                        <Button Grid.Row="6" Grid.Column="4" Command="{Binding ConfirmarAutorizacionSupervisorCommand}" Background="{DynamicResource BrushWarning}" Foreground="#FFFFFF" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" MinHeight="38"><TextBlock Text="OK" FontWeight="{StaticResource FontWeightBold}" /></Button>
+                        <Button Grid.Row="6" Grid.Column="4" Command="{Binding ConfirmarAutorizacionSupervisorCommand}" Classes="Warning" Theme="{DynamicResource SolidButton}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" MinHeight="38"><TextBlock Text="OK" FontWeight="{StaticResource FontWeightBold}" /></Button>
                     </Grid>
 
                     <Border IsVisible="{Binding TieneErrorSupervisor}"
                             Background="{DynamicResource BrushErrorSubtle}"
-                            BorderBrush="{DynamicResource BrushError}"
+                            BorderBrush="{DynamicResource BrushErrorText}"
                             BorderThickness="1"
                             CornerRadius="{StaticResource RadiusSmall}"
                             Padding="10,6">
@@ -863,7 +855,7 @@
                                    TextWrapping="Wrap"
                                    FontSize="{StaticResource FontSizeCaption}"
                                    FontWeight="{StaticResource FontWeightMedium}"
-                                   Foreground="{DynamicResource BrushError}" />
+                                   Foreground="{DynamicResource BrushErrorText}" />
                     </Border>
 
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10">
@@ -871,8 +863,7 @@
                             <TextBlock Text="Cancelar" />
                         </Button>
                         <Button Command="{Binding ConfirmarAutorizacionSupervisorCommand}"
-                                Background="{DynamicResource BrushPrimary}"
-                                Foreground="{DynamicResource BrushTextOnPrimary}"
+                                Classes="Primary" Theme="{DynamicResource SolidButton}"
                                 MinHeight="38"
                                 Padding="18,0">
                             <TextBlock Text="Autorizar Operación" FontWeight="{StaticResource FontWeightBold}" />
@@ -884,7 +875,7 @@
 
         <!-- OVERLAY 8: MODAL DE VENTAS EN ESPERA / PARKED SALES (F7) -->
         <Border IsVisible="{Binding ModalVentasEnEsperaAbierto}"
-                Background="#99020617">
+                Background="{DynamicResource BrushOverlayScrim}">
             <Border Background="{DynamicResource BrushSurface}"
                     BorderBrush="{DynamicResource BrushBorderSubtle}"
                     BorderThickness="1"
@@ -897,7 +888,7 @@
                     Padding="24">
                 <Grid RowDefinitions="Auto,12,*,12,Auto">
                     <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="10">
-                        <LucideIcon Kind="Clock" Size="20" Foreground="{DynamicResource BrushPrimary}" />
+                        <LucideIcon Kind="Clock" Size="20" Foreground="{DynamicResource BrushPrimaryText}" />
                         <TextBlock Text="Tickets Pausados · Ventas en Espera"
                                    FontFamily="{StaticResource FontFamilyStackSans}"
                                    FontSize="{StaticResource FontSizeTitle}"
@@ -919,7 +910,7 @@
                                         <TextBlock Text="{Binding Id, StringFormat='#{0}'}"
                                                    FontFamily="{StaticResource FontFamilyPlexCondensed}"
                                                    FontWeight="{StaticResource FontWeightBold}"
-                                                   Foreground="{DynamicResource BrushPrimary}" />
+                                                   Foreground="{DynamicResource BrushPrimaryText}" />
                                     </Border>
 
                                     <StackPanel Grid.Column="2" VerticalAlignment="Center" Spacing="2">
@@ -935,14 +926,13 @@
                                                FontFamily="{StaticResource FontFamilyPlexCondensed}"
                                                FontSize="{StaticResource FontSizeSubtitle}"
                                                FontWeight="{StaticResource FontWeightBold}"
-                                               Foreground="{DynamicResource BrushPrimary}"
+                                               Foreground="{DynamicResource BrushPrimaryText}"
                                                VerticalAlignment="Center" />
 
                                     <Button Grid.Column="5"
                                             Command="{Binding $parent[UserControl].((vm:PosViewModel)DataContext).RecuperarVentaEnEsperaCommand}"
                                             CommandParameter="{Binding}"
-                                            Background="{DynamicResource BrushPrimary}"
-                                            Foreground="{DynamicResource BrushTextOnPrimary}"
+                                            Classes="Primary" Theme="{DynamicResource SolidButton}"
                                             Padding="12,6">
                                         <TextBlock Text="Recuperar" FontWeight="{StaticResource FontWeightSemiBold}" />
                                     </Button>
@@ -952,7 +942,7 @@
                                             CommandParameter="{Binding}"
                                             Padding="8,6"
                                             ToolTip.Tip="Descartar ticket en espera">
-                                        <LucideIcon Kind="Trash" Size="14" Foreground="{DynamicResource BrushError}" />
+                                        <LucideIcon Kind="Trash" Size="14" Foreground="{DynamicResource BrushErrorText}" />
                                     </Button>
                                 </Grid>
                             </DataTemplate>

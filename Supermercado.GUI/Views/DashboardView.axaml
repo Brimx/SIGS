@@ -19,8 +19,7 @@
                            FontWeight="{StaticResource FontWeightMedium}" />
                 <Button Grid.Column="1"
                         Command="{Binding ActualizarDashboardCommand}"
-                        Background="{DynamicResource BrushPrimary}"
-                        Foreground="{DynamicResource BrushTextOnPrimary}">
+                        Classes="Primary" Theme="{DynamicResource SolidButton}">
                     <StackPanel Orientation="Horizontal" Spacing="6">
                         <LucideIcon Kind="RefreshCw" Size="16" />
                         <TextBlock Text="Refrescar Indicadores" FontWeight="{StaticResource FontWeightSemiBold}" />
@@ -55,7 +54,7 @@
                                            FontFamily="{StaticResource FontFamilyPlexCondensed}"
                                            FontSize="{StaticResource FontSizeHeadline}"
                                            FontWeight="{StaticResource FontWeightBold}"
-                                           Foreground="{DynamicResource BrushPrimary}" />
+                                           Foreground="{DynamicResource BrushPrimaryText}" />
                                 <TextBlock Text="{Binding Subtitulo}"
                                            FontSize="{StaticResource FontSizeCaption}"
                                            Foreground="{DynamicResource BrushTextMuted}" />

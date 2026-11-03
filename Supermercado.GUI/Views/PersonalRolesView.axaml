@@ -38,8 +38,7 @@
 
                 <Button Grid.Column="6"
                         Command="{Binding CargarDatosCommand}"
-                        Background="{DynamicResource BrushPrimary}"
-                        Foreground="{DynamicResource BrushTextOnPrimary}"
+                        Classes="Primary" Theme="{DynamicResource SolidButton}"
                         MinHeight="38">
                     <StackPanel Orientation="Horizontal" Spacing="6">
                         <LucideIcon Kind="RefreshCw" Size="16" />
@@ -108,8 +107,7 @@
 
                             <Button Grid.Column="6"
                                     Command="{Binding RegistrarEmpleadoCommand}"
-                                    Background="{DynamicResource BrushPrimary}"
-                                    Foreground="{DynamicResource BrushTextOnPrimary}"
+                                    Classes="Primary" Theme="{DynamicResource SolidButton}"
                                     Padding="16,0">
                                 <StackPanel Orientation="Horizontal" Spacing="6">
                                     <LucideIcon Kind="UserPlus" Size="16" />
@@ -156,8 +154,7 @@
                         <TextBox Grid.Column="2" Text="{Binding ClaveTemporalInput}" PasswordChar="•" PlaceholderText="Clave mín. 8 chars" />
                         <Button Grid.Column="4"
                                 Command="{Binding CrearUsuarioParaEmpleadoCommand}"
-                                Background="{DynamicResource BrushPrimary}"
-                                Foreground="{DynamicResource BrushTextOnPrimary}">
+                                Classes="Primary" Theme="{DynamicResource SolidButton}">
                             <TextBlock Text="Asignar Usuario" FontWeight="{StaticResource FontWeightSemiBold}" />
                         </Button>
 
@@ -165,10 +162,10 @@
                             <TextBlock Text="Desbloquear" FontWeight="{StaticResource FontWeightSemiBold}" />
                         </Button>
                         <Button Grid.Column="8" Command="{Binding RestablecerClaveTemporalCommand}">
-                            <TextBlock Text="Reset Clave" FontWeight="{StaticResource FontWeightSemiBold}" Foreground="{DynamicResource BrushWarning}" />
+                            <TextBlock Text="Reset Clave" FontWeight="{StaticResource FontWeightSemiBold}" Foreground="{DynamicResource BrushWarningText}" />
                         </Button>
                         <Button Grid.Column="10" Command="{Binding DesactivarEmpleadoSeleccionadoCommand}">
-                            <TextBlock Text="Desactivar" FontWeight="{StaticResource FontWeightSemiBold}" Foreground="{DynamicResource BrushError}" />
+                            <TextBlock Text="Desactivar" FontWeight="{StaticResource FontWeightSemiBold}" Foreground="{DynamicResource BrushErrorText}" />
                         </Button>
                     </Grid>
                 </Border>
@@ -183,7 +180,7 @@
                     Padding="18">
                 <Grid RowDefinitions="Auto,12,Auto,12,*,12,Auto">
                     <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="8">
-                        <LucideIcon Kind="ShieldCheck" Size="20" Foreground="{DynamicResource BrushPrimary}" />
+                        <LucideIcon Kind="ShieldCheck" Size="20" Foreground="{DynamicResource BrushPrimaryText}" />
                         <TextBlock Text="Matriz de Permisos por Rol"
                                    FontFamily="{StaticResource FontFamilyStackSans}"
                                    FontSize="{StaticResource FontSizeTitle}"
@@ -236,8 +233,7 @@
 
                     <Button Grid.Row="6"
                             Command="{Binding GuardarPermisosRolSeleccionadoCommand}"
-                            Background="{DynamicResource BrushPrimary}"
-                            Foreground="{DynamicResource BrushTextOnPrimary}"
+                            Classes="Primary" Theme="{DynamicResource SolidButton}"
                             HorizontalAlignment="Stretch"
                             HorizontalContentAlignment="Center"
                             MinHeight="42">

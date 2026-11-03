@@ -37,8 +37,7 @@
 
                 <Button Grid.Column="6"
                         Command="{Binding CargarDatosCommand}"
-                        Background="{DynamicResource BrushPrimary}"
-                        Foreground="{DynamicResource BrushTextOnPrimary}"
+                        Classes="Primary" Theme="{DynamicResource SolidButton}"
                         MinHeight="38">
                     <StackPanel Orientation="Horizontal" Spacing="6">
                         <LucideIcon Kind="RefreshCw" Size="16" />
@@ -76,8 +75,7 @@
                                 <TextBlock Text="Nuevo / Limpiar" />
                             </Button>
                             <Button Command="{Binding GuardarProveedorCommand}"
-                                    Background="{DynamicResource BrushPrimary}"
-                                    Foreground="{DynamicResource BrushTextOnPrimary}"
+                                    Classes="Primary" Theme="{DynamicResource SolidButton}"
                                     Padding="16,8">
                                 <StackPanel Orientation="Horizontal" Spacing="6">
                                     <LucideIcon Kind="Save" Size="16" />
@@ -119,7 +117,7 @@
                     Padding="18">
                 <Grid RowDefinitions="Auto,12,Auto,12,*">
                     <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="8">
-                        <LucideIcon Kind="Truck" Size="20" Foreground="{DynamicResource BrushPrimary}" />
+                        <LucideIcon Kind="Truck" Size="20" Foreground="{DynamicResource BrushPrimaryText}" />
                         <TextBlock Text="Sugeridos de Compra y Traslado"
                                    FontFamily="{StaticResource FontFamilyStackSans}"
                                    FontSize="{StaticResource FontSizeTitle}"
@@ -129,16 +127,16 @@
                     <Button Grid.Row="2"
                             Command="{Binding GenerarSugeridosAutomaticosCommand}"
                             Background="{DynamicResource BrushPrimarySubtle}"
-                            BorderBrush="{DynamicResource BrushPrimary}"
+                            BorderBrush="{DynamicResource BrushPrimaryText}"
                             BorderThickness="1"
                             HorizontalAlignment="Stretch"
                             HorizontalContentAlignment="Center"
                             MinHeight="40">
                         <StackPanel Orientation="Horizontal" Spacing="8">
-                            <LucideIcon Kind="Sparkles" Size="16" Foreground="{DynamicResource BrushPrimary}" />
+                            <LucideIcon Kind="Sparkles" Size="16" Foreground="{DynamicResource BrushPrimaryText}" />
                             <TextBlock Text="Calcular Sugeridos según Stock Mínimo"
                                        FontWeight="{StaticResource FontWeightBold}"
-                                       Foreground="{DynamicResource BrushPrimary}" />
+                                       Foreground="{DynamicResource BrushPrimaryText}" />
                         </StackPanel>
                     </Button>
 
@@ -163,15 +161,14 @@
                                                 <TextBlock Text="{Binding CantidadSolicitada, StringFormat='Cantidad sugerida a surtir: {0} uds/g'}"
                                                            FontFamily="{StaticResource FontFamilyPlexCondensed}"
                                                            FontWeight="{StaticResource FontWeightSemiBold}"
-                                                           Foreground="{DynamicResource BrushWarning}" />
+                                                           Foreground="{DynamicResource BrushWarningText}" />
                                             </StackPanel>
 
                                             <Button Grid.Column="1"
                                                     Command="{Binding $parent[UserControl].((vm:ComprasProveedoresViewModel)DataContext).AtenderSolicitudReabastecimientoCommand}"
                                                     CommandParameter="{Binding}"
                                                     VerticalAlignment="Center"
-                                                    Background="{DynamicResource BrushSuccess}"
-                                                    Foreground="#FFFFFF"
+                                                    Classes="Success" Theme="{DynamicResource SolidButton}"
                                                     Padding="12,6">
                                                 <TextBlock Text="Surtir Estante" FontWeight="{StaticResource FontWeightBold}" />
                                             </Button>

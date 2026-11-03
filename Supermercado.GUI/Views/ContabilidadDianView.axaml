@@ -45,8 +45,7 @@
 
                 <Button Grid.Column="8"
                         Command="{Binding ExportarCsvContableCommand}"
-                        Background="{DynamicResource BrushSuccess}"
-                        Foreground="#FFFFFF"
+                        Classes="Success" Theme="{DynamicResource SolidButton}"
                         MinHeight="38">
                     <StackPanel Orientation="Horizontal" Spacing="6">
                         <LucideIcon Kind="FileSpreadsheet" Size="16" />
@@ -56,8 +55,7 @@
 
                 <Button Grid.Column="10"
                         Command="{Binding ExportarPdfVentasDianCommand}"
-                        Background="{DynamicResource BrushPrimary}"
-                        Foreground="{DynamicResource BrushTextOnPrimary}"
+                        Classes="Primary" Theme="{DynamicResource SolidButton}"
                         MinHeight="38">
                     <StackPanel Orientation="Horizontal" Spacing="6">
                         <LucideIcon Kind="FileText" Size="16" />
@@ -72,28 +70,28 @@
             <Border Grid.Column="0" Background="{DynamicResource BrushSurface}" BorderBrush="{DynamicResource BrushBorderSubtle}" BorderThickness="1" CornerRadius="{StaticResource RadiusLarge}" Padding="16">
                 <StackPanel Spacing="4">
                     <TextBlock Text="INGRESOS BRUTOS VENTAS" FontFamily="{StaticResource FontFamilyStackSans}" FontSize="{StaticResource FontSizeCaption}" FontWeight="{StaticResource FontWeightBold}" Foreground="{DynamicResource BrushTextSecondary}" />
-                    <TextBlock Text="{Binding IngresosTotalesFormateado}" FontFamily="{StaticResource FontFamilyPlexCondensed}" FontSize="{StaticResource FontSizeHeadline}" FontWeight="{StaticResource FontWeightBold}" Foreground="{DynamicResource BrushPrimary}" />
+                    <TextBlock Text="{Binding IngresosTotalesFormateado}" FontFamily="{StaticResource FontFamilyPlexCondensed}" FontSize="{StaticResource FontSizeHeadline}" FontWeight="{StaticResource FontWeightBold}" Foreground="{DynamicResource BrushPrimaryText}" />
                 </StackPanel>
             </Border>
 
             <Border Grid.Column="2" Background="{DynamicResource BrushSurface}" BorderBrush="{DynamicResource BrushBorderSubtle}" BorderThickness="1" CornerRadius="{StaticResource RadiusLarge}" Padding="16">
                 <StackPanel Spacing="4">
                     <TextBlock Text="TOTAL IVA GENERADO (DIAN)" FontFamily="{StaticResource FontFamilyStackSans}" FontSize="{StaticResource FontSizeCaption}" FontWeight="{StaticResource FontWeightBold}" Foreground="{DynamicResource BrushTextSecondary}" />
-                    <TextBlock Text="{Binding IvaTotalGeneradoFormateado}" FontFamily="{StaticResource FontFamilyPlexCondensed}" FontSize="{StaticResource FontSizeHeadline}" FontWeight="{StaticResource FontWeightBold}" Foreground="{DynamicResource BrushWarning}" />
+                    <TextBlock Text="{Binding IvaTotalGeneradoFormateado}" FontFamily="{StaticResource FontFamilyPlexCondensed}" FontSize="{StaticResource FontSizeHeadline}" FontWeight="{StaticResource FontWeightBold}" Foreground="{DynamicResource BrushWarningText}" />
                 </StackPanel>
             </Border>
 
             <Border Grid.Column="4" Background="{DynamicResource BrushSurface}" BorderBrush="{DynamicResource BrushBorderSubtle}" BorderThickness="1" CornerRadius="{StaticResource RadiusLarge}" Padding="16">
                 <StackPanel Spacing="4">
                     <TextBlock Text="GASTOS OPERATIVOS" FontFamily="{StaticResource FontFamilyStackSans}" FontSize="{StaticResource FontSizeCaption}" FontWeight="{StaticResource FontWeightBold}" Foreground="{DynamicResource BrushTextSecondary}" />
-                    <TextBlock Text="{Binding EgresosTotalesFormateado}" FontFamily="{StaticResource FontFamilyPlexCondensed}" FontSize="{StaticResource FontSizeHeadline}" FontWeight="{StaticResource FontWeightBold}" Foreground="{DynamicResource BrushError}" />
+                    <TextBlock Text="{Binding EgresosTotalesFormateado}" FontFamily="{StaticResource FontFamilyPlexCondensed}" FontSize="{StaticResource FontSizeHeadline}" FontWeight="{StaticResource FontWeightBold}" Foreground="{DynamicResource BrushErrorText}" />
                 </StackPanel>
             </Border>
 
             <Border Grid.Column="6" Background="{DynamicResource BrushSurface}" BorderBrush="{DynamicResource BrushBorderSubtle}" BorderThickness="1" CornerRadius="{StaticResource RadiusLarge}" Padding="16">
                 <StackPanel Spacing="4">
                     <TextBlock Text="MARGEN NETO OPERATIVO" FontFamily="{StaticResource FontFamilyStackSans}" FontSize="{StaticResource FontSizeCaption}" FontWeight="{StaticResource FontWeightBold}" Foreground="{DynamicResource BrushTextSecondary}" />
-                    <TextBlock Text="{Binding MargenOperativoFormateado}" FontFamily="{StaticResource FontFamilyPlexCondensed}" FontSize="{StaticResource FontSizeHeadline}" FontWeight="{StaticResource FontWeightBold}" Foreground="{DynamicResource BrushSuccess}" />
+                    <TextBlock Text="{Binding MargenOperativoFormateado}" FontFamily="{StaticResource FontFamilyPlexCondensed}" FontSize="{StaticResource FontSizeHeadline}" FontWeight="{StaticResource FontWeightBold}" Foreground="{DynamicResource BrushSuccessText}" />
                 </StackPanel>
             </Border>
         </Grid>
@@ -152,8 +150,7 @@
                                        FontFamily="{StaticResource FontFamilyPlexCondensed}" />
                         <Button Grid.Column="4"
                                 Command="{Binding RegistrarGastoOperativoCommand}"
-                                Background="{DynamicResource BrushPrimary}"
-                                Foreground="{DynamicResource BrushTextOnPrimary}">
+                                Classes="Primary" Theme="{DynamicResource SolidButton}">
                             <TextBlock Text="Registrar Egreso" FontWeight="{StaticResource FontWeightSemiBold}" />
                         </Button>
                     </Grid>

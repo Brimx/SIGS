@@ -19,7 +19,7 @@
                         Padding="20">
                     <StackPanel Spacing="12">
                         <StackPanel Orientation="Horizontal" Spacing="8">
-                            <LucideIcon Kind="Wallet" Size="20" Foreground="{DynamicResource BrushPrimary}" />
+                            <LucideIcon Kind="Wallet" Size="20" Foreground="{DynamicResource BrushPrimaryText}" />
                             <TextBlock Text="Estado de Turno de Caja"
                                        FontFamily="{StaticResource FontFamilyStackSans}"
                                        FontSize="{StaticResource FontSizeTitle}"
@@ -31,10 +31,10 @@
                             <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding TurnoActualId}" FontFamily="{StaticResource FontFamilyPlexCondensed}" FontWeight="{StaticResource FontWeightBold}" />
 
                             <TextBlock Grid.Row="2" Grid.Column="0" Text="Efectivo Inicial (Base):" Foreground="{DynamicResource BrushTextSecondary}" />
-                            <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding EfectivoInicialFormateado}" FontFamily="{StaticResource FontFamilyPlexCondensed}" FontWeight="{StaticResource FontWeightBold}" Foreground="{DynamicResource BrushPrimary}" />
+                            <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding EfectivoInicialFormateado}" FontFamily="{StaticResource FontFamilyPlexCondensed}" FontWeight="{StaticResource FontWeightBold}" Foreground="{DynamicResource BrushPrimaryText}" />
 
                             <TextBlock Grid.Row="4" Grid.Column="0" Text="Total Retiros (Recogidas):" Foreground="{DynamicResource BrushTextSecondary}" />
-                            <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding TotalRetirosFormateado}" FontFamily="{StaticResource FontFamilyPlexCondensed}" FontWeight="{StaticResource FontWeightBold}" Foreground="{DynamicResource BrushWarning}" />
+                            <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding TotalRetirosFormateado}" FontFamily="{StaticResource FontFamilyPlexCondensed}" FontWeight="{StaticResource FontWeightBold}" Foreground="{DynamicResource BrushWarningText}" />
 
                             <TextBlock Grid.Row="6" Grid.Column="0" Text="Apertura:" Foreground="{DynamicResource BrushTextSecondary}" />
                             <TextBlock Grid.Row="6" Grid.Column="1" Text="{Binding FechaAperturaTexto}" FontFamily="{StaticResource FontFamilyPlexCondensed}" />
@@ -56,7 +56,7 @@
                         Padding="20">
                     <StackPanel Spacing="12">
                         <StackPanel Orientation="Horizontal" Spacing="8">
-                            <LucideIcon Kind="ShieldCheck" Size="20" Foreground="{DynamicResource BrushSuccess}" />
+                            <LucideIcon Kind="ShieldCheck" Size="20" Foreground="{DynamicResource BrushSuccessText}" />
                             <TextBlock Text="Numeración DIAN POS Electrónico"
                                        FontFamily="{StaticResource FontFamilyStackSans}"
                                        FontSize="{StaticResource FontSizeTitle}"
@@ -74,7 +74,7 @@
                             <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding SiguienteConsecutivo, FallbackValue='169477'}" FontFamily="{StaticResource FontFamilyPlexCondensed}" FontWeight="{StaticResource FontWeightBold}" />
 
                             <TextBlock Grid.Row="6" Grid.Column="0" Text="Folios Restantes:" Foreground="{DynamicResource BrushTextSecondary}" />
-                            <TextBlock Grid.Row="6" Grid.Column="1" Text="{Binding FoliosRestantes, FallbackValue='830522'}" FontFamily="{StaticResource FontFamilyPlexCondensed}" FontWeight="{StaticResource FontWeightBold}" Foreground="{DynamicResource BrushSuccess}" />
+                            <TextBlock Grid.Row="6" Grid.Column="1" Text="{Binding FoliosRestantes, FallbackValue='830522'}" FontFamily="{StaticResource FontFamilyPlexCondensed}" FontWeight="{StaticResource FontWeightBold}" Foreground="{DynamicResource BrushSuccessText}" />
                         </Grid>
                     </StackPanel>
                 </Border>
@@ -106,8 +106,7 @@
                                        FontSize="{StaticResource FontSizeTitle}" />
                         <Button Command="{Binding AbrirTurnoCommand}"
                                 IsEnabled="{Binding !TurnoAbierto}"
-                                Background="{DynamicResource BrushPrimary}"
-                                Foreground="{DynamicResource BrushTextOnPrimary}"
+                                Classes="Primary" Theme="{DynamicResource SolidButton}"
                                 HorizontalAlignment="Stretch"
                                 HorizontalContentAlignment="Center"
                                 MinHeight="42">
@@ -140,8 +139,7 @@
                                        FontSize="{StaticResource FontSizeTitle}" />
                         <Button Command="{Binding CerrarTurnoConArqueoCommand}"
                                 IsEnabled="{Binding TurnoAbierto}"
-                                Background="{DynamicResource BrushWarning}"
-                                Foreground="#FFFFFF"
+                                Classes="Warning" Theme="{DynamicResource SolidButton}"
                                 HorizontalAlignment="Stretch"
                                 HorizontalContentAlignment="Center"
                                 MinHeight="42">
@@ -159,7 +157,7 @@
                     Padding="20">
                 <StackPanel Spacing="14">
                     <StackPanel Orientation="Horizontal" Spacing="8">
-                        <LucideIcon Kind="Banknote" Size="20" Foreground="{DynamicResource BrushPrimary}" />
+                        <LucideIcon Kind="Banknote" Size="20" Foreground="{DynamicResource BrushPrimaryText}" />
                         <TextBlock Text="3. Retiro Parcial de Efectivo (Recogida a Caja Fuerte)"
                                    FontFamily="{StaticResource FontFamilyStackSans}"
                                    FontSize="{StaticResource FontSizeSubtitle}"
@@ -210,8 +208,7 @@
                                 Command="{Binding RegistrarRetiroEfectivoCommand}"
                                 IsEnabled="{Binding TurnoAbierto}"
                                 VerticalAlignment="Bottom"
-                                Background="{DynamicResource BrushPrimary}"
-                                Foreground="{DynamicResource BrushTextOnPrimary}"
+                                Classes="Primary" Theme="{DynamicResource SolidButton}"
                                 MinHeight="40"
                                 Padding="16,0">
                             <StackPanel Orientation="Horizontal" Spacing="6">
@@ -232,7 +229,7 @@
                                         Margin="0,3"
                                         Padding="12,8">
                                     <Grid ColumnDefinitions="Auto,12,*,Auto">
-                                        <LucideIcon Grid.Column="0" Kind="ArrowUpRight" Size="16" Foreground="{DynamicResource BrushWarning}" VerticalAlignment="Center" />
+                                        <LucideIcon Grid.Column="0" Kind="ArrowUpRight" Size="16" Foreground="{DynamicResource BrushWarningText}" VerticalAlignment="Center" />
                                         <TextBlock Grid.Column="2"
                                                    Text="{Binding Motivo}"
                                                    FontWeight="{StaticResource FontWeightMedium}"
@@ -241,7 +238,7 @@
                                                    Text="{Binding Monto, StringFormat='- $ {0:N0}'}"
                                                    FontFamily="{StaticResource FontFamilyPlexCondensed}"
                                                    FontWeight="{StaticResource FontWeightBold}"
-                                                   Foreground="{DynamicResource BrushWarning}"
+                                                   Foreground="{DynamicResource BrushWarningText}"
                                                    VerticalAlignment="Center" />
                                     </Grid>
                                 </Border>
