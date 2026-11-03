@@ -57,8 +57,9 @@ public class FlujoPuntaAPuntaSqliteTests
             new UnidadDeTrabajo(contexto.Db),
             contexto.Reloj);
 
-        await auth.IniciarSesionAsync("cajero_demo", "Cajero123*");
-        await auth.IniciarSesionAsync("admin_demo", "Admin123*");
+        await auth.IniciarSesionAsync("cajero", "Cajero123*");
+        await auth.IniciarSesionAsync("admin", "Admin123*");
+        await auth.IniciarSesionAsync("supervisor", "Super123*");
     }
 
     [Fact]
