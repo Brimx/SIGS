@@ -20,32 +20,75 @@
     <Color x:Key="ColorWarm300">#D9D3C7</Color>
     <Color x:Key="ColorWarm400">#BDB6AA</Color>
     <Color x:Key="ColorWarm500">#8C8477</Color>
+    <Color x:Key="ColorWarm600">#6F675B</Color>
     <Color x:Key="ColorWarm700">#57534E</Color>
+    <Color x:Key="ColorWarm800">#3F3A35</Color>
     <Color x:Key="ColorWarm900">#292524</Color>
     <Color x:Key="ColorWarm950">#1C1917</Color>
 
     <!-- Colores de marca y primarios (Azul Retail / Petróleo) -->
     <Color x:Key="ColorBrand50">#F0F9FF</Color>
     <Color x:Key="ColorBrand100">#E0F2FE</Color>
+    <Color x:Key="ColorBrand200">#BAE6FD</Color>
+    <Color x:Key="ColorBrand300">#7DD3FC</Color>
     <Color x:Key="ColorBrand500">#0EA5E9</Color>
     <Color x:Key="ColorBrand600">#0284C7</Color>
     <Color x:Key="ColorBrand700">#0369A1</Color>
     <Color x:Key="ColorBrand800">#075985</Color>
     <Color x:Key="ColorBrand900">#0C4A6E</Color>
+    <Color x:Key="ColorBrand950">#082F49</Color>
 
     <!-- Colores de estado (Éxito, Advertencia, Error) -->
     <Color x:Key="ColorSuccess50">#F0FDF4</Color>
+    <Color x:Key="ColorSuccess100">#DCFCE7</Color>
+    <Color x:Key="ColorSuccess300">#86EFAC</Color>
     <Color x:Key="ColorSuccess500">#22C55E</Color>
     <Color x:Key="ColorSuccess600">#16A34A</Color>
     <Color x:Key="ColorSuccess700">#15803D</Color>
+    <Color x:Key="ColorSuccess800">#166534</Color>
+    <Color x:Key="ColorSuccess950">#052E16</Color>
 
     <Color x:Key="ColorWarning50">#FFFBEB</Color>
+    <Color x:Key="ColorWarning100">#FEF3C7</Color>
+    <Color x:Key="ColorWarning300">#FCD34D</Color>
     <Color x:Key="ColorWarning500">#F59E0B</Color>
     <Color x:Key="ColorWarning600">#D97706</Color>
     <Color x:Key="ColorWarning700">#B45309</Color>
+    <Color x:Key="ColorWarning800">#92400E</Color>
+    <Color x:Key="ColorWarning950">#451A03</Color>
 
     <Color x:Key="ColorError50">#FEF2F2</Color>
+    <Color x:Key="ColorError100">#FEE2E2</Color>
+    <Color x:Key="ColorError300">#FCA5A5</Color>
     <Color x:Key="ColorError500">#EF4444</Color>
     <Color x:Key="ColorError600">#DC2626</Color>
     <Color x:Key="ColorError700">#B91C1C</Color>
+    <Color x:Key="ColorError800">#991B1B</Color>
+    <Color x:Key="ColorError950">#450A0A</Color>
+
+    <!-- Superficies especiales -->
+    <Color x:Key="ColorOverlayScrim">#99020617</Color>
+    <Color x:Key="ColorOverlayScrimStrong">#B3020617</Color>
+    <Color x:Key="ColorOnPrimarySubtle">#33FFFFFF</Color>
+    <Color x:Key="ColorTicketPaper">#FAF8F5</Color>
+    <Color x:Key="ColorTicketBorder">#D9D3C7</Color>
+    <Color x:Key="ColorTicketInk">#1C1917</Color>
+
+    <!-- Alto contraste (WCAG AAA sobre negro) -->
+    <Color x:Key="ColorHcBlack">#000000</Color>
+    <Color x:Key="ColorHcSurface">#1A1A1A</Color>
+    <Color x:Key="ColorHcSurfaceRaised">#262626</Color>
+    <Color x:Key="ColorHcWhite">#FFFFFF</Color>
+    <Color x:Key="ColorHcBorder">#FFFFFF</Color>
+    <Color x:Key="ColorHcTextMuted">#E6E6E6</Color>
+    <Color x:Key="ColorHcPrimary">#1F6FEB</Color>
+    <Color x:Key="ColorHcPrimaryText">#66B2FF</Color>
+    <Color x:Key="ColorHcPrimaryHover">#2F81F7</Color>
+    <Color x:Key="ColorHcPrimaryPressed">#1158C7</Color>
+    <Color x:Key="ColorHcSuccess">#166534</Color>
+    <Color x:Key="ColorHcSuccessText">#00E676</Color>
+    <Color x:Key="ColorHcWarning">#92400E</Color>
+    <Color x:Key="ColorHcWarningText">#FFD400</Color>
+    <Color x:Key="ColorHcError">#991B1B</Color>
+    <Color x:Key="ColorHcErrorText">#FF6B6B</Color>
 </ResourceDictionary>

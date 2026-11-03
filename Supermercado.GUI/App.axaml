@@ -4,8 +4,7 @@
              xmlns:semi="using:Semi.Avalonia"
              xmlns:semiDataGrid="using:Semi.Avalonia.DataGrid"
              xmlns:dialogHost="using:DialogHostAvalonia"
-             x:Class="Supermercado.GUI.App"
-             RequestedThemeVariant="Default">
+             x:Class="Supermercado.GUI.App">
 
     <Application.DataTemplates>
         <local:ViewLocator />
@@ -18,6 +17,7 @@
                 <ResourceInclude Source="avares://Supermercado.GUI/Resources/Geometry.axaml" />
                 <ResourceInclude Source="avares://Supermercado.GUI/Resources/Typography.axaml" />
                 <ResourceInclude Source="avares://Supermercado.GUI/Resources/Semantic.axaml" />
+                <ResourceInclude Source="avares://Supermercado.GUI/Resources/SemiBridge.axaml" />
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Application.Resources>
@@ -26,5 +26,6 @@
         <semi:SemiTheme Locale="es-ES" />
         <semiDataGrid:DataGridSemiTheme />
         <dialogHost:DialogHostStyles />
+        <StyleInclude Source="avares://Supermercado.GUI/Resources/Controles.axaml" />
     </Application.Styles>
 </Application>

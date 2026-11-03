@@ -1,0 +1,99 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!--
+        Solo lo que Semi no cubre. Los colores y estados de Button, TextBox, CheckBox, ComboBox y DataGrid
+        vienen de SemiBridge.axaml; aquí quedan layout, tipografía y superficies.
+
+        Los estados que deben ganar al ControlTheme de Semi se aplican sobre
+        `/template/ ContentPresenter#PART_ContentPresenter`, porque Semi pinta ahí el fondo y el borde.
+    -->
+
+    <!-- ============================ NAVEGACIÓN LATERAL ============================ -->
+    <Style Selector="Button.Navegacion">
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="HorizontalContentAlignment" Value="Left" />
+        <Setter Property="MinHeight" Value="40" />
+        <Setter Property="Padding" Value="12,0" />
+    </Style>
+    <Style Selector="Button.NavegacionActiva /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource BrushPrimarySubtle}" />
+    </Style>
+    <Style Selector="Button.NavegacionActiva:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource BrushSurfaceSelected}" />
+    </Style>
+
+    <!-- ============================ ICONO ============================ -->
+    <Style Selector="Button.Icono">
+        <Setter Property="Padding" Value="8" />
+        <Setter Property="MinWidth" Value="36" />
+        <Setter Property="MinHeight" Value="36" />
+        <Setter Property="HorizontalAlignment" Value="Center" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+
+    <!-- ============================ DESTRUCTIVO SUAVE ============================ -->
+    <Style Selector="Button.DestructivoSuave">
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="MinHeight" Value="38" />
+    </Style>
+    <Style Selector="Button.DestructivoSuave:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource BrushErrorSubtle}" />
+    </Style>
+
+    <!-- ============================ TARJETA DE TEMA ============================ -->
+    <Style Selector="Button.Tarjeta">
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="HorizontalContentAlignment" Value="Left" />
+        <Setter Property="Padding" Value="12" />
+    </Style>
+    <Style Selector="Button.Tarjeta.Seleccionada /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="BorderBrush" Value="{DynamicResource BrushPrimary}" />
+        <Setter Property="Background" Value="{DynamicResource BrushPrimarySubtle}" />
+    </Style>
+    <Style Selector="Button.Tarjeta.Seleccionada:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="BorderBrush" Value="{DynamicResource BrushPrimary}" />
+        <Setter Property="Background" Value="{DynamicResource BrushPrimarySubtle}" />
+    </Style>
+
+    <!-- ============================ CLASES DE TEXTO ============================ -->
+    <Style Selector="TextBlock.Titulo">
+        <Setter Property="FontFamily" Value="{DynamicResource FontFamilyStackSans}" />
+        <Setter Property="FontSize" Value="{StaticResource FontSizeTitle}" />
+        <Setter Property="FontWeight" Value="{StaticResource FontWeightBold}" />
+        <Setter Property="Foreground" Value="{DynamicResource BrushTextPrimary}" />
+    </Style>
+    <Style Selector="TextBlock.Etiqueta">
+        <Setter Property="FontSize" Value="{StaticResource FontSizeBody}" />
+        <Setter Property="FontWeight" Value="{StaticResource FontWeightMedium}" />
+        <Setter Property="Foreground" Value="{DynamicResource BrushTextSecondary}" />
+    </Style>
+    <Style Selector="TextBlock.Ayuda">
+        <Setter Property="FontSize" Value="{StaticResource FontSizeCaption}" />
+        <Setter Property="Foreground" Value="{DynamicResource BrushTextMuted}" />
+    </Style>
+    <Style Selector="TextBlock.Seccion">
+        <Setter Property="FontFamily" Value="{DynamicResource FontFamilyStackSans}" />
+        <Setter Property="FontSize" Value="{StaticResource FontSizeCaption}" />
+        <Setter Property="FontWeight" Value="{StaticResource FontWeightBold}" />
+        <Setter Property="Foreground" Value="{DynamicResource BrushTextMuted}" />
+    </Style>
+    <Style Selector="TextBlock.Cifra">
+        <Setter Property="FontFamily" Value="{DynamicResource FontFamilyPlexCondensed}" />
+        <Setter Property="FontWeight" Value="{StaticResource FontWeightBold}" />
+    </Style>
+
+    <!-- ============================ SUPERFICIES ============================ -->
+    <Style Selector="Border.Tarjeta">
+        <Setter Property="Background" Value="{DynamicResource BrushSurface}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BrushBorderSubtle}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="{StaticResource RadiusLarge}" />
+        <Setter Property="Padding" Value="{StaticResource PaddingCard}" />
+    </Style>
+    <Style Selector="Border.Scrim">
+        <Setter Property="Background" Value="{DynamicResource BrushOverlayScrim}" />
+    </Style>
+</Styles>

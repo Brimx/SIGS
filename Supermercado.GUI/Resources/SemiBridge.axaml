@@ -1,0 +1,617 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:tema="using:Supermercado.GUI.Servicios.Tema">
+    <!--
+        Puente entre Semi.Avalonia y SIGS.
+
+        Los ControlTheme de Semi consumen sus colores con {DynamicResource Clave}. Esas claves se resuelven
+        en tiempo de ejecución desde el control, y Application.Resources se consulta antes que
+        Application.Styles (donde vive SemiTheme). Definir aquí la clave remapea el control completo.
+
+        No se sobrescriben las claves `SemiColor*`: Semi las resuelve con {StaticResource} dentro de sus
+        propios diccionarios de tema, así que un override en Application.Resources no surte efecto. Por eso
+        se remapean las claves finales (`ButtonDefault*`, `ButtonSolid*`, `TextBox*`, `ComboBox*`, ...).
+
+        Solo se cubren los controles que usa el repo: Button, TextBox, CheckBox, ComboBox, DataGrid,
+        ScrollBar, ToolTip, Flyout, DataValidationErrors e HyperlinkButton. Las clases Secondary/Tertiary y
+        Colorful de Semi no se usan.
+    -->
+    <ResourceDictionary.ThemeDictionaries>
+        <ResourceDictionary x:Key="Light">
+            <!-- Botón base (fondo transparente, texto por rol) -->
+            <SolidColorBrush x:Key="ButtonDefaultBackground" Color="Transparent" />
+            <SolidColorBrush x:Key="ButtonDefaultPointeroverBackground" Color="{StaticResource ColorWarm200}" />
+            <SolidColorBrush x:Key="ButtonDefaultPressedBackground" Color="{StaticResource ColorWarm300}" />
+            <SolidColorBrush x:Key="ButtonDefaultBorderBrush" Color="Transparent" />
+            <SolidColorBrush x:Key="ButtonDefaultPointeroverBorderBrush" Color="Transparent" />
+            <SolidColorBrush x:Key="ButtonDefaultPressedBorderBrush" Color="Transparent" />
+            <SolidColorBrush x:Key="ButtonDefaultPrimaryForeground" Color="{StaticResource ColorWarm900}" />
+            <SolidColorBrush x:Key="ButtonDefaultSecondaryForeground" Color="{StaticResource ColorWarm700}" />
+            <SolidColorBrush x:Key="ButtonDefaultTertiaryForeground" Color="{StaticResource ColorWarm700}" />
+            <SolidColorBrush x:Key="ButtonDefaultSuccessForeground" Color="{StaticResource ColorSuccess700}" />
+            <SolidColorBrush x:Key="ButtonDefaultWarningForeground" Color="{StaticResource ColorWarning700}" />
+            <SolidColorBrush x:Key="ButtonDefaultDangerForeground" Color="{StaticResource ColorError700}" />
+            <SolidColorBrush x:Key="ButtonDefaultDisabledForeground" Color="{StaticResource ColorWarm600}" />
+            <SolidColorBrush x:Key="ButtonDefaultDisabledBorderBrush" Color="Transparent" />
+
+            <!-- Botón sólido -->
+            <SolidColorBrush x:Key="ButtonSolidForeground" Color="#FFFFFF" />
+            <SolidColorBrush x:Key="ButtonSolidPrimaryBackground" Color="{StaticResource ColorBrand700}" />
+            <SolidColorBrush x:Key="ButtonSolidPrimaryPointeroverBackground" Color="{StaticResource ColorBrand800}" />
+            <SolidColorBrush x:Key="ButtonSolidPrimaryPressedBackground" Color="{StaticResource ColorBrand900}" />
+            <SolidColorBrush x:Key="ButtonSolidPrimaryPressedForeground" Color="#FFFFFF" />
+            <SolidColorBrush x:Key="ButtonSolidPrimaryBorderBrush" Color="{StaticResource ColorBrand700}" />
+            <SolidColorBrush x:Key="ButtonSolidPrimaryPointeroverBorderBrush" Color="{StaticResource ColorBrand800}" />
+            <SolidColorBrush x:Key="ButtonSolidPrimaryPressedBorderBrush" Color="{StaticResource ColorBrand900}" />
+            <SolidColorBrush x:Key="ButtonSolidSuccessBackground" Color="{StaticResource ColorSuccess700}" />
+            <SolidColorBrush x:Key="ButtonSolidSuccessPointeroverBackground" Color="{StaticResource ColorSuccess800}" />
+            <SolidColorBrush x:Key="ButtonSolidSuccessPressedBackground" Color="{StaticResource ColorSuccess950}" />
+            <SolidColorBrush x:Key="ButtonSolidSuccessBorderBrush" Color="{StaticResource ColorSuccess700}" />
+            <SolidColorBrush x:Key="ButtonSolidSuccessPointeroverBorderBrush" Color="{StaticResource ColorSuccess800}" />
+            <SolidColorBrush x:Key="ButtonSolidSuccessPressedBorderBrush" Color="{StaticResource ColorSuccess950}" />
+            <SolidColorBrush x:Key="ButtonSolidWarningBackground" Color="{StaticResource ColorWarning700}" />
+            <SolidColorBrush x:Key="ButtonSolidWarningPointeroverBackground" Color="{StaticResource ColorWarning800}" />
+            <SolidColorBrush x:Key="ButtonSolidWarningPressedBackground" Color="{StaticResource ColorWarning950}" />
+            <SolidColorBrush x:Key="ButtonSolidWarningBorderBrush" Color="{StaticResource ColorWarning700}" />
+            <SolidColorBrush x:Key="ButtonSolidWarningPointeroverBorderBrush" Color="{StaticResource ColorWarning800}" />
+            <SolidColorBrush x:Key="ButtonSolidWarningPressedBorderBrush" Color="{StaticResource ColorWarning950}" />
+            <SolidColorBrush x:Key="ButtonSolidDangerBackground" Color="{StaticResource ColorError700}" />
+            <SolidColorBrush x:Key="ButtonSolidDangerPointeroverBackground" Color="{StaticResource ColorError800}" />
+            <SolidColorBrush x:Key="ButtonSolidDangerPressedBackground" Color="{StaticResource ColorError950}" />
+            <SolidColorBrush x:Key="ButtonSolidDangerBorderBrush" Color="{StaticResource ColorError700}" />
+            <SolidColorBrush x:Key="ButtonSolidDangerPointeroverBorderBrush" Color="{StaticResource ColorError800}" />
+            <SolidColorBrush x:Key="ButtonSolidDangerPressedBorderBrush" Color="{StaticResource ColorError950}" />
+            <SolidColorBrush x:Key="ButtonSolidDisabledForeground" Color="{StaticResource ColorWarm600}" />
+            <SolidColorBrush x:Key="ButtonSolidDisabledBackground" Color="{StaticResource ColorWarm200}" />
+            <SolidColorBrush x:Key="ButtonSolidDisabledBorderBrush" Color="{StaticResource ColorWarm300}" />
+
+            <!-- Botón outline -->
+            <SolidColorBrush x:Key="ButtonOutlineBackground" Color="Transparent" />
+            <SolidColorBrush x:Key="ButtonOutlinePointeroverBackground" Color="{StaticResource ColorWarm100}" />
+            <SolidColorBrush x:Key="ButtonOutlinePressedBackground" Color="{StaticResource ColorWarm200}" />
+            <SolidColorBrush x:Key="ButtonOutlineBorderBrush" Color="{StaticResource ColorWarm600}" />
+            <SolidColorBrush x:Key="ButtonOutlineSuccessBorderBrush" Color="{StaticResource ColorSuccess700}" />
+            <SolidColorBrush x:Key="ButtonOutlineWarningBorderBrush" Color="{StaticResource ColorWarning700}" />
+            <SolidColorBrush x:Key="ButtonOutlineDangerBorderBrush" Color="{StaticResource ColorError700}" />
+
+            <!-- Botón borderless -->
+            <SolidColorBrush x:Key="ButtonBorderlessBackground" Color="Transparent" />
+            <SolidColorBrush x:Key="ButtonBorderlessBorderBrush" Color="Transparent" />
+
+            <!-- TextBox -->
+            <SolidColorBrush x:Key="TextBoxDefaultBackground" Color="#FFFFFF" />
+            <SolidColorBrush x:Key="TextBoxForeground" Color="{StaticResource ColorWarm900}" />
+            <SolidColorBrush x:Key="TextBoxPlaceholderForeground" Color="{StaticResource ColorWarm600}" />
+            <SolidColorBrush x:Key="TextBoxInnerForeground" Color="{StaticResource ColorWarm700}" />
+            <SolidColorBrush x:Key="TextBoxTextCaretBrush" Color="{StaticResource ColorWarm900}" />
+            <SolidColorBrush x:Key="TextBoxDefaultBorderBrush" Color="{StaticResource ColorWarm300}" />
+            <SolidColorBrush x:Key="TextBoxPointeroverBackground" Color="#FFFFFF" />
+            <SolidColorBrush x:Key="TextBoxPointeroverBorderBrush" Color="{StaticResource ColorWarm600}" />
+            <SolidColorBrush x:Key="TextBoxPressedBackground" Color="{StaticResource ColorWarm100}" />
+            <SolidColorBrush x:Key="TextBoxFocusBorderBrush" Color="{StaticResource ColorBrand600}" />
+            <SolidColorBrush x:Key="TextBoxDisabledBackground" Color="{StaticResource ColorWarm100}" />
+            <SolidColorBrush x:Key="TextBoxDisabledForeground" Color="{StaticResource ColorWarm600}" />
+            <SolidColorBrush x:Key="TextBoxDisabledBorderBrush" Color="{StaticResource ColorWarm200}" />
+            <SolidColorBrush x:Key="TextBoxSelectionBackground" Color="{StaticResource ColorBrand700}" />
+            <SolidColorBrush x:Key="TextBoxSelectionForeground" Color="#FFFFFF" />
+            <SolidColorBrush x:Key="TextBoxBorderedDefaultBackground" Color="Transparent" />
+            <SolidColorBrush x:Key="TextBoxBorderedDefaultBorderBrush" Color="{StaticResource ColorWarm300}" />
+            <SolidColorBrush x:Key="TextBoxBorderedPointeroverBackground" Color="Transparent" />
+            <SolidColorBrush x:Key="TextBoxBorderedPointeroverBorderBrush" Color="{StaticResource ColorWarm600}" />
+
+            <!-- CheckBox -->
+            <SolidColorBrush x:Key="CheckBoxForeground" Color="{StaticResource ColorWarm900}" />
+            <SolidColorBrush x:Key="CheckBoxDisabledForeground" Color="{StaticResource ColorWarm600}" />
+            <SolidColorBrush x:Key="CheckBoxGlyphFill" Color="#FFFFFF" />
+            <SolidColorBrush x:Key="CheckBoxDefaultBackground" Color="Transparent" />
+            <SolidColorBrush x:Key="CheckBoxDefaultBorderBrush" Color="{StaticResource ColorWarm600}" />
+            <SolidColorBrush x:Key="CheckBoxPointeroverBackground" Color="{StaticResource ColorWarm100}" />
+            <SolidColorBrush x:Key="CheckBoxPointeroverBorderBrush" Color="{StaticResource ColorBrand700}" />
+            <SolidColorBrush x:Key="CheckBoxPressedBackground" Color="{StaticResource ColorWarm200}" />
+            <SolidColorBrush x:Key="CheckBoxPressedBorderBrush" Color="{StaticResource ColorBrand800}" />
+            <SolidColorBrush x:Key="CheckBoxCheckedDefaultBackground" Color="{StaticResource ColorBrand700}" />
+            <SolidColorBrush x:Key="CheckBoxCheckedDefaultBorderBrush" Color="{StaticResource ColorBrand700}" />
+            <SolidColorBrush x:Key="CheckBoxCheckedPointeroverBackground" Color="{StaticResource ColorBrand800}" />
+            <SolidColorBrush x:Key="CheckBoxCheckedPointeroverBorderBrush" Color="{StaticResource ColorBrand800}" />
+            <SolidColorBrush x:Key="CheckBoxCheckedPressedBackground" Color="{StaticResource ColorBrand900}" />
+            <SolidColorBrush x:Key="CheckBoxCheckedPressedBorderBrush" Color="{StaticResource ColorBrand900}" />
+            <SolidColorBrush x:Key="CheckBoxDefaultDisabledBackground" Color="{StaticResource ColorWarm200}" />
+            <SolidColorBrush x:Key="CheckBoxDefaultDisabledBorderBrush" Color="{StaticResource ColorWarm300}" />
+            <SolidColorBrush x:Key="CheckBoxCheckedDisabledBackground" Color="{StaticResource ColorWarm400}" />
+            <SolidColorBrush x:Key="CheckBoxCheckedDisabledBorderBrush" Color="{StaticResource ColorWarm400}" />
+            <SolidColorBrush x:Key="RadioButtonCheckGlyphFill" Color="#FFFFFF" />
+
+            <!-- ComboBox -->
+            <SolidColorBrush x:Key="ComboBoxSelectorBackground" Color="#FFFFFF" />
+            <SolidColorBrush x:Key="ComboBoxSelectorBorderBrush" Color="{StaticResource ColorWarm300}" />
+            <SolidColorBrush x:Key="ComboBoxSelectorPointeroverBackground" Color="{StaticResource ColorWarm100}" />
+            <SolidColorBrush x:Key="ComboBoxSelectorPointeroverBorderBrush" Color="{StaticResource ColorWarm600}" />
+            <SolidColorBrush x:Key="ComboBoxSelectorFocusBackground" Color="#FFFFFF" />
+            <SolidColorBrush x:Key="ComboBoxSelectorFocusBorderBrush" Color="{StaticResource ColorBrand600}" />
+            <SolidColorBrush x:Key="ComboBoxSelectorPressedBackground" Color="{StaticResource ColorWarm100}" />
+            <SolidColorBrush x:Key="ComboBoxSelectorPressedBorderBrush" Color="{StaticResource ColorBrand700}" />
+            <SolidColorBrush x:Key="ComboBoxSelectorDisabledBackground" Color="{StaticResource ColorWarm100}" />
+            <SolidColorBrush x:Key="ComboBoxSelectorDisabledBorderBrush" Color="{StaticResource ColorWarm200}" />
+            <SolidColorBrush x:Key="ComboBoxSelectorPlaceHolderForeground" Color="{StaticResource ColorWarm600}" />
+            <SolidColorBrush x:Key="ComboBoxDisabledForeground" Color="{StaticResource ColorWarm600}" />
+            <SolidColorBrush x:Key="ComboBoxIconDefaultForeground" Color="{StaticResource ColorWarm700}" />
+            <SolidColorBrush x:Key="ComboBoxIconPointeroverForeground" Color="{StaticResource ColorWarm900}" />
+            <SolidColorBrush x:Key="ComboBoxIconFocusForeground" Color="{StaticResource ColorBrand700}" />
+            <SolidColorBrush x:Key="ComboBoxIconPressedForeground" Color="{StaticResource ColorWarm900}" />
+            <SolidColorBrush x:Key="ComboBoxIconDisabledForeground" Color="{StaticResource ColorWarm600}" />
+            <SolidColorBrush x:Key="ComboBoxPopupBackground" Color="#FFFFFF" />
+            <SolidColorBrush x:Key="ComboBoxPopupBorderBrush" Color="{StaticResource ColorWarm300}" />
+            <SolidColorBrush x:Key="ComboBoxItemForeground" Color="{StaticResource ColorWarm900}" />
+            <SolidColorBrush x:Key="ComboBoxItemBackground" Color="Transparent" />
+            <SolidColorBrush x:Key="ComboBoxItemPointeroverForeground" Color="{StaticResource ColorWarm900}" />
+            <SolidColorBrush x:Key="ComboBoxItemPointeroverBackground" Color="{StaticResource ColorWarm200}" />
+            <SolidColorBrush x:Key="ComboBoxItemFocusForeground" Color="{StaticResource ColorWarm900}" />
+            <SolidColorBrush x:Key="ComboBoxItemFocusBackground" Color="{StaticResource ColorWarm200}" />
+            <SolidColorBrush x:Key="ComboBoxItemPressedForeground" Color="{StaticResource ColorWarm900}" />
+            <SolidColorBrush x:Key="ComboBoxItemPressedBackground" Color="{StaticResource ColorWarm300}" />
+            <SolidColorBrush x:Key="ComboBoxItemSelectedForeground" Color="{StaticResource ColorBrand700}" />
+            <SolidColorBrush x:Key="ComboBoxItemSelectedBackground" Color="{StaticResource ColorBrand100}" />
+            <SolidColorBrush x:Key="ComboBoxItemSelectedPointeroverBackground" Color="{StaticResource ColorBrand200}" />
+            <SolidColorBrush x:Key="ComboBoxItemDisabledBackground" Color="Transparent" />
+            <SolidColorBrush x:Key="ComboBoxItemSelectedDisabledBackground" Color="{StaticResource ColorWarm200}" />
+            <SolidColorBrush x:Key="ComboBoxSelectorBorderedBackground" Color="Transparent" />
+            <SolidColorBrush x:Key="ComboBoxSelectorBorderedBorderBrush" Color="{StaticResource ColorWarm300}" />
+            <SolidColorBrush x:Key="ComboBoxSelectorBorderedPointeroverBackground" Color="Transparent" />
+            <SolidColorBrush x:Key="ComboBoxSelectorBorderedPointeroverBorderBrush" Color="{StaticResource ColorWarm600}" />
+            <SolidColorBrush x:Key="ComboBoxSelectorBorderedFocusBackground" Color="Transparent" />
+            <SolidColorBrush x:Key="ComboBoxSelectorBorderedFocusBorderBrush" Color="{StaticResource ColorBrand600}" />
+            <SolidColorBrush x:Key="ComboBoxSelectorBorderedPressedBackground" Color="Transparent" />
+            <SolidColorBrush x:Key="ComboBoxSelectorBorderedPressedBorderBrush" Color="{StaticResource ColorBrand700}" />
+
+            <!-- Popups -->
+            <SolidColorBrush x:Key="FlyoutBackground" Color="#FFFFFF" />
+            <SolidColorBrush x:Key="FlyoutForeground" Color="{StaticResource ColorWarm900}" />
+            <SolidColorBrush x:Key="FlyoutBorderBrush" Color="{StaticResource ColorWarm300}" />
+            <SolidColorBrush x:Key="MenuFlyoutBackground" Color="#FFFFFF" />
+            <SolidColorBrush x:Key="ToolTipBackground" Color="{StaticResource ColorWarm900}" />
+            <SolidColorBrush x:Key="ToolTipForeground" Color="#FFFFFF" />
+            <SolidColorBrush x:Key="ToolTipBorderBrush" Color="Transparent" />
+
+            <!-- ScrollBar -->
+            <SolidColorBrush x:Key="ScrollBarBackground" Color="Transparent" />
+            <SolidColorBrush x:Key="ScrollBarThumbForeground" Color="{StaticResource ColorWarm400}" />
+            <SolidColorBrush x:Key="ScrollBarThumbPointeroverForeground" Color="{StaticResource ColorWarm600}" />
+            <SolidColorBrush x:Key="ScrollBarButtonDefaultForeground" Color="{StaticResource ColorWarm400}" />
+            <SolidColorBrush x:Key="ScrollBarButtonPointeroverForeground" Color="{StaticResource ColorWarm600}" />
+
+            <!-- Errores de validación -->
+            <SolidColorBrush x:Key="DataValidationErrorsForeground" Color="{StaticResource ColorWarm900}" />
+            <SolidColorBrush x:Key="DataValidationErrorsBackground" Color="{StaticResource ColorError50}" />
+            <SolidColorBrush x:Key="DataValidationErrorsBorderBrush" Color="{StaticResource ColorError700}" />
+            <SolidColorBrush x:Key="DataValidationErrorsPointeroverBackground" Color="{StaticResource ColorError100}" />
+            <SolidColorBrush x:Key="DataValidationErrorsPointeroverBorderBrush" Color="{StaticResource ColorError700}" />
+            <SolidColorBrush x:Key="DataValidationErrorsPointerOverBackground" Color="{StaticResource ColorError100}" />
+            <SolidColorBrush x:Key="DataValidationErrorsPointerOverBorderBrush" Color="{StaticResource ColorError700}" />
+            <SolidColorBrush x:Key="DataValidationErrorsPressedBackground" Color="{StaticResource ColorError100}" />
+            <SolidColorBrush x:Key="DataValidationErrorsPressedBorderBrush" Color="{StaticResource ColorError800}" />
+            <SolidColorBrush x:Key="DataValidationErrorsSelectedBackground" Color="{StaticResource ColorError50}" />
+            <SolidColorBrush x:Key="DataValidationErrorsSelectedBorderBrush" Color="{StaticResource ColorError700}" />
+
+            <!-- DataGrid -->
+            <SolidColorBrush x:Key="DataGridBackground" Color="#FFFFFF" />
+            <SolidColorBrush x:Key="DataGridRowBackground" Color="#FFFFFF" />
+            <SolidColorBrush x:Key="DataGridRowPointeroverBackground" Color="{StaticResource ColorWarm200}" />
+            <SolidColorBrush x:Key="DataGridRowSelectedBackground" Color="{StaticResource ColorBrand100}" />
+            <SolidColorBrush x:Key="DataGridRowSelectedPointeroverBackground" Color="{StaticResource ColorBrand200}" />
+            <SolidColorBrush x:Key="DataGridCellBackground" Color="Transparent" />
+            <SolidColorBrush x:Key="DataGridLineBrush" Color="{StaticResource ColorWarm300}" />
+            <SolidColorBrush x:Key="DataGridCellFocusBorderBrush" Color="{StaticResource ColorBrand600}" />
+            <SolidColorBrush x:Key="DataGridCellCurrentBorderBrush" Color="{StaticResource ColorWarm600}" />
+            <SolidColorBrush x:Key="DataGridCellErrorBrush" Color="{StaticResource ColorError700}" />
+            <SolidColorBrush x:Key="DataGridDisabledBackground" Color="{StaticResource ColorWarm100}" />
+            <SolidColorBrush x:Key="DataGridColumnHeaderBackground" Color="Transparent" />
+            <SolidColorBrush x:Key="DataGridColumnHeaderForeground" Color="{StaticResource ColorWarm700}" />
+            <SolidColorBrush x:Key="DataGridColumnHeaderPointeroverBackground" Color="{StaticResource ColorWarm200}" />
+            <SolidColorBrush x:Key="DataGridColumnHeaderPressedBackground" Color="{StaticResource ColorWarm300}" />
+            <SolidColorBrush x:Key="DataGridRowErrorBackground" Color="{StaticResource ColorError50}" />
+            <SolidColorBrush x:Key="DataGridDetailsPresenterBackground" Color="Transparent" />
+            <SolidColorBrush x:Key="DataGridRowGroupHeaderBackground" Color="{StaticResource ColorWarm100}" />
+            <SolidColorBrush x:Key="DataGridRowGroupHeaderExpandIconForeground" Color="{StaticResource ColorWarm700}" />
+            <SolidColorBrush x:Key="DataGridRowGroupHeaderCurrentBorderBrush" Color="{StaticResource ColorWarm300}" />
+            <SolidColorBrush x:Key="DataGridScrollBarsSeparatorBackground" Color="{StaticResource ColorWarm100}" />
+            <SolidColorBrush x:Key="DataGridDropLocationIndicatorBackground" Color="{StaticResource ColorBrand100}" />
+
+            <!-- Enlaces -->
+            <SolidColorBrush x:Key="HyperlinkButtonForeground" Color="{StaticResource ColorBrand700}" />
+            <SolidColorBrush x:Key="HyperlinkButtonPointeroverForeground" Color="{StaticResource ColorBrand800}" />
+            <SolidColorBrush x:Key="HyperlinkButtonPressedForeground" Color="{StaticResource ColorBrand900}" />
+            <SolidColorBrush x:Key="HyperlinkButtonDisabledForeground" Color="{StaticResource ColorWarm600}" />
+            <SolidColorBrush x:Key="HyperlinkButtonVisitedForeground" Color="{StaticResource ColorBrand700}" />
+        </ResourceDictionary>
+
+        <ResourceDictionary x:Key="Dark">
+            <SolidColorBrush x:Key="ButtonDefaultBackground" Color="Transparent" />
+            <SolidColorBrush x:Key="ButtonDefaultPointeroverBackground" Color="{StaticResource ColorSlate700}" />
+            <SolidColorBrush x:Key="ButtonDefaultPressedBackground" Color="{StaticResource ColorSlate600}" />
+            <SolidColorBrush x:Key="ButtonDefaultBorderBrush" Color="Transparent" />
+            <SolidColorBrush x:Key="ButtonDefaultPointeroverBorderBrush" Color="Transparent" />
+            <SolidColorBrush x:Key="ButtonDefaultPressedBorderBrush" Color="Transparent" />
+            <SolidColorBrush x:Key="ButtonDefaultPrimaryForeground" Color="{StaticResource ColorSlate50}" />
+            <SolidColorBrush x:Key="ButtonDefaultSecondaryForeground" Color="{StaticResource ColorSlate300}" />
+            <SolidColorBrush x:Key="ButtonDefaultTertiaryForeground" Color="{StaticResource ColorSlate300}" />
+            <SolidColorBrush x:Key="ButtonDefaultSuccessForeground" Color="{StaticResource ColorSuccess300}" />
+            <SolidColorBrush x:Key="ButtonDefaultWarningForeground" Color="{StaticResource ColorWarning300}" />
+            <SolidColorBrush x:Key="ButtonDefaultDangerForeground" Color="{StaticResource ColorError300}" />
+            <SolidColorBrush x:Key="ButtonDefaultDisabledForeground" Color="{StaticResource ColorSlate400}" />
+            <SolidColorBrush x:Key="ButtonDefaultDisabledBorderBrush" Color="Transparent" />
+
+            <SolidColorBrush x:Key="ButtonSolidForeground" Color="#FFFFFF" />
+            <SolidColorBrush x:Key="ButtonSolidPrimaryBackground" Color="{StaticResource ColorBrand800}" />
+            <SolidColorBrush x:Key="ButtonSolidPrimaryPointeroverBackground" Color="{StaticResource ColorBrand700}" />
+            <SolidColorBrush x:Key="ButtonSolidPrimaryPressedBackground" Color="{StaticResource ColorBrand900}" />
+            <SolidColorBrush x:Key="ButtonSolidPrimaryPressedForeground" Color="#FFFFFF" />
+            <SolidColorBrush x:Key="ButtonSolidPrimaryBorderBrush" Color="{StaticResource ColorBrand800}" />
+            <SolidColorBrush x:Key="ButtonSolidPrimaryPointeroverBorderBrush" Color="{StaticResource ColorBrand700}" />
+            <SolidColorBrush x:Key="ButtonSolidPrimaryPressedBorderBrush" Color="{StaticResource ColorBrand900}" />
+            <SolidColorBrush x:Key="ButtonSolidSuccessBackground" Color="{StaticResource ColorSuccess700}" />
+            <SolidColorBrush x:Key="ButtonSolidSuccessPointeroverBackground" Color="{StaticResource ColorSuccess800}" />
+            <SolidColorBrush x:Key="ButtonSolidSuccessPressedBackground" Color="{StaticResource ColorSuccess950}" />
+            <SolidColorBrush x:Key="ButtonSolidSuccessBorderBrush" Color="{StaticResource ColorSuccess700}" />
+            <SolidColorBrush x:Key="ButtonSolidSuccessPointeroverBorderBrush" Color="{StaticResource ColorSuccess800}" />
+            <SolidColorBrush x:Key="ButtonSolidSuccessPressedBorderBrush" Color="{StaticResource ColorSuccess950}" />
+            <SolidColorBrush x:Key="ButtonSolidWarningBackground" Color="{StaticResource ColorWarning700}" />
+            <SolidColorBrush x:Key="ButtonSolidWarningPointeroverBackground" Color="{StaticResource ColorWarning800}" />
+            <SolidColorBrush x:Key="ButtonSolidWarningPressedBackground" Color="{StaticResource ColorWarning950}" />
+            <SolidColorBrush x:Key="ButtonSolidWarningBorderBrush" Color="{StaticResource ColorWarning700}" />
+            <SolidColorBrush x:Key="ButtonSolidWarningPointeroverBorderBrush" Color="{StaticResource ColorWarning800}" />
+            <SolidColorBrush x:Key="ButtonSolidWarningPressedBorderBrush" Color="{StaticResource ColorWarning950}" />
+            <SolidColorBrush x:Key="ButtonSolidDangerBackground" Color="{StaticResource ColorError700}" />
+            <SolidColorBrush x:Key="ButtonSolidDangerPointeroverBackground" Color="{StaticResource ColorError800}" />
+            <SolidColorBrush x:Key="ButtonSolidDangerPressedBackground" Color="{StaticResource ColorError950}" />
+            <SolidColorBrush x:Key="ButtonSolidDangerBorderBrush" Color="{StaticResource ColorError700}" />
+            <SolidColorBrush x:Key="ButtonSolidDangerPointeroverBorderBrush" Color="{StaticResource ColorError800}" />
+            <SolidColorBrush x:Key="ButtonSolidDangerPressedBorderBrush" Color="{StaticResource ColorError950}" />
+            <SolidColorBrush x:Key="ButtonSolidDisabledForeground" Color="{StaticResource ColorSlate400}" />
+            <SolidColorBrush x:Key="ButtonSolidDisabledBackground" Color="{StaticResource ColorSlate700}" />
+            <SolidColorBrush x:Key="ButtonSolidDisabledBorderBrush" Color="{StaticResource ColorSlate600}" />
+
+            <SolidColorBrush x:Key="ButtonOutlineBackground" Color="Transparent" />
+            <SolidColorBrush x:Key="ButtonOutlinePointeroverBackground" Color="{StaticResource ColorSlate700}" />
+            <SolidColorBrush x:Key="ButtonOutlinePressedBackground" Color="{StaticResource ColorSlate600}" />
+            <SolidColorBrush x:Key="ButtonOutlineBorderBrush" Color="{StaticResource ColorSlate400}" />
+            <SolidColorBrush x:Key="ButtonOutlineSuccessBorderBrush" Color="{StaticResource ColorSuccess300}" />
+            <SolidColorBrush x:Key="ButtonOutlineWarningBorderBrush" Color="{StaticResource ColorWarning300}" />
+            <SolidColorBrush x:Key="ButtonOutlineDangerBorderBrush" Color="{StaticResource ColorError300}" />
+
+            <SolidColorBrush x:Key="ButtonBorderlessBackground" Color="Transparent" />
+            <SolidColorBrush x:Key="ButtonBorderlessBorderBrush" Color="Transparent" />
+
+            <SolidColorBrush x:Key="TextBoxDefaultBackground" Color="{StaticResource ColorSlate800}" />
+            <SolidColorBrush x:Key="TextBoxForeground" Color="{StaticResource ColorSlate50}" />
+            <SolidColorBrush x:Key="TextBoxPlaceholderForeground" Color="{StaticResource ColorSlate400}" />
+            <SolidColorBrush x:Key="TextBoxInnerForeground" Color="{StaticResource ColorSlate300}" />
+            <SolidColorBrush x:Key="TextBoxTextCaretBrush" Color="{StaticResource ColorSlate50}" />
+            <SolidColorBrush x:Key="TextBoxDefaultBorderBrush" Color="{StaticResource ColorSlate600}" />
+            <SolidColorBrush x:Key="TextBoxPointeroverBackground" Color="{StaticResource ColorSlate700}" />
+            <SolidColorBrush x:Key="TextBoxPointeroverBorderBrush" Color="{StaticResource ColorSlate400}" />
+            <SolidColorBrush x:Key="TextBoxPressedBackground" Color="{StaticResource ColorSlate700}" />
+            <SolidColorBrush x:Key="TextBoxFocusBorderBrush" Color="{StaticResource ColorBrand300}" />
+            <SolidColorBrush x:Key="TextBoxDisabledBackground" Color="{StaticResource ColorSlate800}" />
+            <SolidColorBrush x:Key="TextBoxDisabledForeground" Color="{StaticResource ColorSlate400}" />
+            <SolidColorBrush x:Key="TextBoxDisabledBorderBrush" Color="{StaticResource ColorSlate700}" />
+            <SolidColorBrush x:Key="TextBoxSelectionBackground" Color="{StaticResource ColorBrand700}" />
+            <SolidColorBrush x:Key="TextBoxSelectionForeground" Color="#FFFFFF" />
+            <SolidColorBrush x:Key="TextBoxBorderedDefaultBackground" Color="Transparent" />
+            <SolidColorBrush x:Key="TextBoxBorderedDefaultBorderBrush" Color="{StaticResource ColorSlate600}" />
+            <SolidColorBrush x:Key="TextBoxBorderedPointeroverBackground" Color="Transparent" />
+            <SolidColorBrush x:Key="TextBoxBorderedPointeroverBorderBrush" Color="{StaticResource ColorSlate400}" />
+
+            <SolidColorBrush x:Key="CheckBoxForeground" Color="{StaticResource ColorSlate50}" />
+            <SolidColorBrush x:Key="CheckBoxDisabledForeground" Color="{StaticResource ColorSlate400}" />
+            <SolidColorBrush x:Key="CheckBoxGlyphFill" Color="#FFFFFF" />
+            <SolidColorBrush x:Key="CheckBoxDefaultBackground" Color="Transparent" />
+            <SolidColorBrush x:Key="CheckBoxDefaultBorderBrush" Color="{StaticResource ColorSlate400}" />
+            <SolidColorBrush x:Key="CheckBoxPointeroverBackground" Color="{StaticResource ColorSlate700}" />
+            <SolidColorBrush x:Key="CheckBoxPointeroverBorderBrush" Color="{StaticResource ColorBrand300}" />
+            <SolidColorBrush x:Key="CheckBoxPressedBackground" Color="{StaticResource ColorSlate600}" />
+            <SolidColorBrush x:Key="CheckBoxPressedBorderBrush" Color="{StaticResource ColorBrand300}" />
+            <SolidColorBrush x:Key="CheckBoxCheckedDefaultBackground" Color="{StaticResource ColorBrand700}" />
+            <SolidColorBrush x:Key="CheckBoxCheckedDefaultBorderBrush" Color="{StaticResource ColorBrand700}" />
+            <SolidColorBrush x:Key="CheckBoxCheckedPointeroverBackground" Color="{StaticResource ColorBrand600}" />
+            <SolidColorBrush x:Key="CheckBoxCheckedPointeroverBorderBrush" Color="{StaticResource ColorBrand600}" />
+            <SolidColorBrush x:Key="CheckBoxCheckedPressedBackground" Color="{StaticResource ColorBrand800}" />
+            <SolidColorBrush x:Key="CheckBoxCheckedPressedBorderBrush" Color="{StaticResource ColorBrand800}" />
+            <SolidColorBrush x:Key="CheckBoxDefaultDisabledBackground" Color="{StaticResource ColorSlate700}" />
+            <SolidColorBrush x:Key="CheckBoxDefaultDisabledBorderBrush" Color="{StaticResource ColorSlate600}" />
+            <SolidColorBrush x:Key="CheckBoxCheckedDisabledBackground" Color="{StaticResource ColorSlate500}" />
+            <SolidColorBrush x:Key="CheckBoxCheckedDisabledBorderBrush" Color="{StaticResource ColorSlate500}" />
+            <SolidColorBrush x:Key="RadioButtonCheckGlyphFill" Color="#FFFFFF" />
+
+            <SolidColorBrush x:Key="ComboBoxSelectorBackground" Color="{StaticResource ColorSlate800}" />
+            <SolidColorBrush x:Key="ComboBoxSelectorBorderBrush" Color="{StaticResource ColorSlate600}" />
+            <SolidColorBrush x:Key="ComboBoxSelectorPointeroverBackground" Color="{StaticResource ColorSlate700}" />
+            <SolidColorBrush x:Key="ComboBoxSelectorPointeroverBorderBrush" Color="{StaticResource ColorSlate400}" />
+            <SolidColorBrush x:Key="ComboBoxSelectorFocusBackground" Color="{StaticResource ColorSlate800}" />
+            <SolidColorBrush x:Key="ComboBoxSelectorFocusBorderBrush" Color="{StaticResource ColorBrand300}" />
+            <SolidColorBrush x:Key="ComboBoxSelectorPressedBackground" Color="{StaticResource ColorSlate700}" />
+            <SolidColorBrush x:Key="ComboBoxSelectorPressedBorderBrush" Color="{StaticResource ColorBrand300}" />
+            <SolidColorBrush x:Key="ComboBoxSelectorDisabledBackground" Color="{StaticResource ColorSlate800}" />
+            <SolidColorBrush x:Key="ComboBoxSelectorDisabledBorderBrush" Color="{StaticResource ColorSlate700}" />
+            <SolidColorBrush x:Key="ComboBoxSelectorPlaceHolderForeground" Color="{StaticResource ColorSlate400}" />
+            <SolidColorBrush x:Key="ComboBoxDisabledForeground" Color="{StaticResource ColorSlate400}" />
+            <SolidColorBrush x:Key="ComboBoxIconDefaultForeground" Color="{StaticResource ColorSlate300}" />
+            <SolidColorBrush x:Key="ComboBoxIconPointeroverForeground" Color="{StaticResource ColorSlate50}" />
+            <SolidColorBrush x:Key="ComboBoxIconFocusForeground" Color="{StaticResource ColorBrand300}" />
+            <SolidColorBrush x:Key="ComboBoxIconPressedForeground" Color="{StaticResource ColorSlate50}" />
+            <SolidColorBrush x:Key="ComboBoxIconDisabledForeground" Color="{StaticResource ColorSlate400}" />
+            <SolidColorBrush x:Key="ComboBoxPopupBackground" Color="{StaticResource ColorSlate700}" />
+            <SolidColorBrush x:Key="ComboBoxPopupBorderBrush" Color="{StaticResource ColorSlate600}" />
+            <SolidColorBrush x:Key="ComboBoxItemForeground" Color="{StaticResource ColorSlate50}" />
+            <SolidColorBrush x:Key="ComboBoxItemBackground" Color="Transparent" />
+            <SolidColorBrush x:Key="ComboBoxItemPointeroverForeground" Color="{StaticResource ColorSlate50}" />
+            <SolidColorBrush x:Key="ComboBoxItemPointeroverBackground" Color="{StaticResource ColorSlate700}" />
+            <SolidColorBrush x:Key="ComboBoxItemFocusForeground" Color="{StaticResource ColorSlate50}" />
+            <SolidColorBrush x:Key="ComboBoxItemFocusBackground" Color="{StaticResource ColorSlate700}" />
+            <SolidColorBrush x:Key="ComboBoxItemPressedForeground" Color="{StaticResource ColorSlate50}" />
+            <SolidColorBrush x:Key="ComboBoxItemPressedBackground" Color="{StaticResource ColorSlate600}" />
+            <SolidColorBrush x:Key="ComboBoxItemSelectedForeground" Color="{StaticResource ColorBrand300}" />
+            <SolidColorBrush x:Key="ComboBoxItemSelectedBackground" Color="{StaticResource ColorBrand900}" />
+            <SolidColorBrush x:Key="ComboBoxItemSelectedPointeroverBackground" Color="{StaticResource ColorBrand800}" />
+            <SolidColorBrush x:Key="ComboBoxItemDisabledBackground" Color="Transparent" />
+            <SolidColorBrush x:Key="ComboBoxItemSelectedDisabledBackground" Color="{StaticResource ColorSlate700}" />
+            <SolidColorBrush x:Key="ComboBoxSelectorBorderedBackground" Color="Transparent" />
+            <SolidColorBrush x:Key="ComboBoxSelectorBorderedBorderBrush" Color="{StaticResource ColorSlate600}" />
+            <SolidColorBrush x:Key="ComboBoxSelectorBorderedPointeroverBackground" Color="Transparent" />
+            <SolidColorBrush x:Key="ComboBoxSelectorBorderedPointeroverBorderBrush" Color="{StaticResource ColorSlate400}" />
+            <SolidColorBrush x:Key="ComboBoxSelectorBorderedFocusBackground" Color="Transparent" />
+            <SolidColorBrush x:Key="ComboBoxSelectorBorderedFocusBorderBrush" Color="{StaticResource ColorBrand300}" />
+            <SolidColorBrush x:Key="ComboBoxSelectorBorderedPressedBackground" Color="Transparent" />
+            <SolidColorBrush x:Key="ComboBoxSelectorBorderedPressedBorderBrush" Color="{StaticResource ColorBrand300}" />
+
+            <SolidColorBrush x:Key="FlyoutBackground" Color="{StaticResource ColorSlate700}" />
+            <SolidColorBrush x:Key="FlyoutForeground" Color="{StaticResource ColorSlate50}" />
+            <SolidColorBrush x:Key="FlyoutBorderBrush" Color="{StaticResource ColorSlate600}" />
+            <SolidColorBrush x:Key="MenuFlyoutBackground" Color="{StaticResource ColorSlate700}" />
+            <SolidColorBrush x:Key="ToolTipBackground" Color="{StaticResource ColorSlate700}" />
+            <SolidColorBrush x:Key="ToolTipForeground" Color="{StaticResource ColorSlate50}" />
+            <SolidColorBrush x:Key="ToolTipBorderBrush" Color="{StaticResource ColorSlate600}" />
+
+            <SolidColorBrush x:Key="ScrollBarBackground" Color="Transparent" />
+            <SolidColorBrush x:Key="ScrollBarThumbForeground" Color="{StaticResource ColorSlate500}" />
+            <SolidColorBrush x:Key="ScrollBarThumbPointeroverForeground" Color="{StaticResource ColorSlate400}" />
+            <SolidColorBrush x:Key="ScrollBarButtonDefaultForeground" Color="{StaticResource ColorSlate500}" />
+            <SolidColorBrush x:Key="ScrollBarButtonPointeroverForeground" Color="{StaticResource ColorSlate400}" />
+
+            <SolidColorBrush x:Key="DataValidationErrorsForeground" Color="{StaticResource ColorSlate50}" />
+            <SolidColorBrush x:Key="DataValidationErrorsBackground" Color="{StaticResource ColorError950}" />
+            <SolidColorBrush x:Key="DataValidationErrorsBorderBrush" Color="{StaticResource ColorError500}" />
+            <SolidColorBrush x:Key="DataValidationErrorsPointeroverBackground" Color="{StaticResource ColorError950}" />
+            <SolidColorBrush x:Key="DataValidationErrorsPointeroverBorderBrush" Color="{StaticResource ColorError300}" />
+            <SolidColorBrush x:Key="DataValidationErrorsPointerOverBackground" Color="{StaticResource ColorError950}" />
+            <SolidColorBrush x:Key="DataValidationErrorsPointerOverBorderBrush" Color="{StaticResource ColorError300}" />
+            <SolidColorBrush x:Key="DataValidationErrorsPressedBackground" Color="{StaticResource ColorError950}" />
+            <SolidColorBrush x:Key="DataValidationErrorsPressedBorderBrush" Color="{StaticResource ColorError300}" />
+            <SolidColorBrush x:Key="DataValidationErrorsSelectedBackground" Color="{StaticResource ColorError950}" />
+            <SolidColorBrush x:Key="DataValidationErrorsSelectedBorderBrush" Color="{StaticResource ColorError300}" />
+
+            <SolidColorBrush x:Key="DataGridBackground" Color="{StaticResource ColorSlate800}" />
+            <SolidColorBrush x:Key="DataGridRowBackground" Color="{StaticResource ColorSlate800}" />
+            <SolidColorBrush x:Key="DataGridRowPointeroverBackground" Color="{StaticResource ColorSlate700}" />
+            <SolidColorBrush x:Key="DataGridRowSelectedBackground" Color="{StaticResource ColorBrand900}" />
+            <SolidColorBrush x:Key="DataGridRowSelectedPointeroverBackground" Color="{StaticResource ColorBrand800}" />
+            <SolidColorBrush x:Key="DataGridCellBackground" Color="Transparent" />
+            <SolidColorBrush x:Key="DataGridLineBrush" Color="{StaticResource ColorSlate700}" />
+            <SolidColorBrush x:Key="DataGridCellFocusBorderBrush" Color="{StaticResource ColorBrand300}" />
+            <SolidColorBrush x:Key="DataGridCellCurrentBorderBrush" Color="{StaticResource ColorSlate400}" />
+            <SolidColorBrush x:Key="DataGridCellErrorBrush" Color="{StaticResource ColorError500}" />
+            <SolidColorBrush x:Key="DataGridDisabledBackground" Color="{StaticResource ColorSlate900}" />
+            <SolidColorBrush x:Key="DataGridColumnHeaderBackground" Color="Transparent" />
+            <SolidColorBrush x:Key="DataGridColumnHeaderForeground" Color="{StaticResource ColorSlate300}" />
+            <SolidColorBrush x:Key="DataGridColumnHeaderPointeroverBackground" Color="{StaticResource ColorSlate700}" />
+            <SolidColorBrush x:Key="DataGridColumnHeaderPressedBackground" Color="{StaticResource ColorSlate600}" />
+            <SolidColorBrush x:Key="DataGridRowErrorBackground" Color="{StaticResource ColorError950}" />
+            <SolidColorBrush x:Key="DataGridDetailsPresenterBackground" Color="Transparent" />
+            <SolidColorBrush x:Key="DataGridRowGroupHeaderBackground" Color="{StaticResource ColorSlate700}" />
+            <SolidColorBrush x:Key="DataGridRowGroupHeaderExpandIconForeground" Color="{StaticResource ColorSlate300}" />
+            <SolidColorBrush x:Key="DataGridRowGroupHeaderCurrentBorderBrush" Color="{StaticResource ColorSlate600}" />
+            <SolidColorBrush x:Key="DataGridScrollBarsSeparatorBackground" Color="{StaticResource ColorSlate700}" />
+            <SolidColorBrush x:Key="DataGridDropLocationIndicatorBackground" Color="{StaticResource ColorBrand900}" />
+
+            <SolidColorBrush x:Key="HyperlinkButtonForeground" Color="{StaticResource ColorBrand300}" />
+            <SolidColorBrush x:Key="HyperlinkButtonPointeroverForeground" Color="{StaticResource ColorBrand200}" />
+            <SolidColorBrush x:Key="HyperlinkButtonPressedForeground" Color="{StaticResource ColorBrand100}" />
+            <SolidColorBrush x:Key="HyperlinkButtonDisabledForeground" Color="{StaticResource ColorSlate400}" />
+            <SolidColorBrush x:Key="HyperlinkButtonVisitedForeground" Color="{StaticResource ColorBrand300}" />
+        </ResourceDictionary>
+
+        <ResourceDictionary x:Key="{x:Static tema:TemaSigs.AltoContraste}">
+            <SolidColorBrush x:Key="ButtonDefaultBackground" Color="Transparent" />
+            <SolidColorBrush x:Key="ButtonDefaultPointeroverBackground" Color="{StaticResource ColorHcSurfaceRaised}" />
+            <SolidColorBrush x:Key="ButtonDefaultPressedBackground" Color="{StaticResource ColorHcPrimaryPressed}" />
+            <SolidColorBrush x:Key="ButtonDefaultBorderBrush" Color="Transparent" />
+            <SolidColorBrush x:Key="ButtonDefaultPointeroverBorderBrush" Color="{StaticResource ColorHcBorder}" />
+            <SolidColorBrush x:Key="ButtonDefaultPressedBorderBrush" Color="{StaticResource ColorHcBorder}" />
+            <SolidColorBrush x:Key="ButtonDefaultPrimaryForeground" Color="{StaticResource ColorHcWhite}" />
+            <SolidColorBrush x:Key="ButtonDefaultSecondaryForeground" Color="{StaticResource ColorHcWhite}" />
+            <SolidColorBrush x:Key="ButtonDefaultTertiaryForeground" Color="{StaticResource ColorHcWhite}" />
+            <SolidColorBrush x:Key="ButtonDefaultSuccessForeground" Color="{StaticResource ColorHcSuccessText}" />
+            <SolidColorBrush x:Key="ButtonDefaultWarningForeground" Color="{StaticResource ColorHcWarningText}" />
+            <SolidColorBrush x:Key="ButtonDefaultDangerForeground" Color="{StaticResource ColorHcErrorText}" />
+            <SolidColorBrush x:Key="ButtonDefaultDisabledForeground" Color="{StaticResource ColorHcTextMuted}" />
+            <SolidColorBrush x:Key="ButtonDefaultDisabledBorderBrush" Color="Transparent" />
+
+            <SolidColorBrush x:Key="ButtonSolidForeground" Color="#FFFFFF" />
+            <SolidColorBrush x:Key="ButtonSolidPrimaryBackground" Color="{StaticResource ColorHcPrimary}" />
+            <SolidColorBrush x:Key="ButtonSolidPrimaryPointeroverBackground" Color="{StaticResource ColorHcPrimaryHover}" />
+            <SolidColorBrush x:Key="ButtonSolidPrimaryPressedBackground" Color="{StaticResource ColorHcPrimaryPressed}" />
+            <SolidColorBrush x:Key="ButtonSolidPrimaryPressedForeground" Color="#FFFFFF" />
+            <SolidColorBrush x:Key="ButtonSolidPrimaryBorderBrush" Color="{StaticResource ColorHcWhite}" />
+            <SolidColorBrush x:Key="ButtonSolidPrimaryPointeroverBorderBrush" Color="{StaticResource ColorHcWhite}" />
+            <SolidColorBrush x:Key="ButtonSolidPrimaryPressedBorderBrush" Color="{StaticResource ColorHcWhite}" />
+            <SolidColorBrush x:Key="ButtonSolidSuccessBackground" Color="{StaticResource ColorHcSuccess}" />
+            <SolidColorBrush x:Key="ButtonSolidSuccessPointeroverBackground" Color="{StaticResource ColorSuccess700}" />
+            <SolidColorBrush x:Key="ButtonSolidSuccessPressedBackground" Color="{StaticResource ColorSuccess950}" />
+            <SolidColorBrush x:Key="ButtonSolidSuccessBorderBrush" Color="{StaticResource ColorHcSuccess}" />
+            <SolidColorBrush x:Key="ButtonSolidSuccessPointeroverBorderBrush" Color="{StaticResource ColorSuccess700}" />
+            <SolidColorBrush x:Key="ButtonSolidSuccessPressedBorderBrush" Color="{StaticResource ColorSuccess950}" />
+            <SolidColorBrush x:Key="ButtonSolidWarningBackground" Color="{StaticResource ColorHcWarning}" />
+            <SolidColorBrush x:Key="ButtonSolidWarningPointeroverBackground" Color="{StaticResource ColorWarning700}" />
+            <SolidColorBrush x:Key="ButtonSolidWarningPressedBackground" Color="{StaticResource ColorWarning950}" />
+            <SolidColorBrush x:Key="ButtonSolidWarningBorderBrush" Color="{StaticResource ColorHcWarning}" />
+            <SolidColorBrush x:Key="ButtonSolidWarningPointeroverBorderBrush" Color="{StaticResource ColorWarning700}" />
+            <SolidColorBrush x:Key="ButtonSolidWarningPressedBorderBrush" Color="{StaticResource ColorWarning950}" />
+            <SolidColorBrush x:Key="ButtonSolidDangerBackground" Color="{StaticResource ColorHcError}" />
+            <SolidColorBrush x:Key="ButtonSolidDangerPointeroverBackground" Color="{StaticResource ColorError700}" />
+            <SolidColorBrush x:Key="ButtonSolidDangerPressedBackground" Color="{StaticResource ColorError950}" />
+            <SolidColorBrush x:Key="ButtonSolidDangerBorderBrush" Color="{StaticResource ColorHcError}" />
+            <SolidColorBrush x:Key="ButtonSolidDangerPointeroverBorderBrush" Color="{StaticResource ColorError700}" />
+            <SolidColorBrush x:Key="ButtonSolidDangerPressedBorderBrush" Color="{StaticResource ColorError950}" />
+            <SolidColorBrush x:Key="ButtonSolidDisabledForeground" Color="{StaticResource ColorHcTextMuted}" />
+            <SolidColorBrush x:Key="ButtonSolidDisabledBackground" Color="{StaticResource ColorHcSurfaceRaised}" />
+            <SolidColorBrush x:Key="ButtonSolidDisabledBorderBrush" Color="{StaticResource ColorHcTextMuted}" />
+
+            <SolidColorBrush x:Key="ButtonOutlineBackground" Color="Transparent" />
+            <SolidColorBrush x:Key="ButtonOutlinePointeroverBackground" Color="{StaticResource ColorHcSurfaceRaised}" />
+            <SolidColorBrush x:Key="ButtonOutlinePressedBackground" Color="{StaticResource ColorHcPrimaryPressed}" />
+            <SolidColorBrush x:Key="ButtonOutlineBorderBrush" Color="{StaticResource ColorHcWhite}" />
+            <SolidColorBrush x:Key="ButtonOutlineSuccessBorderBrush" Color="{StaticResource ColorHcSuccessText}" />
+            <SolidColorBrush x:Key="ButtonOutlineWarningBorderBrush" Color="{StaticResource ColorHcWarningText}" />
+            <SolidColorBrush x:Key="ButtonOutlineDangerBorderBrush" Color="{StaticResource ColorHcErrorText}" />
+
+            <SolidColorBrush x:Key="ButtonBorderlessBackground" Color="Transparent" />
+            <SolidColorBrush x:Key="ButtonBorderlessBorderBrush" Color="Transparent" />
+
+            <SolidColorBrush x:Key="TextBoxDefaultBackground" Color="{StaticResource ColorHcBlack}" />
+            <SolidColorBrush x:Key="TextBoxForeground" Color="{StaticResource ColorHcWhite}" />
+            <SolidColorBrush x:Key="TextBoxPlaceholderForeground" Color="{StaticResource ColorHcTextMuted}" />
+            <SolidColorBrush x:Key="TextBoxInnerForeground" Color="{StaticResource ColorHcWhite}" />
+            <SolidColorBrush x:Key="TextBoxTextCaretBrush" Color="{StaticResource ColorHcWhite}" />
+            <SolidColorBrush x:Key="TextBoxDefaultBorderBrush" Color="{StaticResource ColorHcBorder}" />
+            <SolidColorBrush x:Key="TextBoxPointeroverBackground" Color="{StaticResource ColorHcSurface}" />
+            <SolidColorBrush x:Key="TextBoxPointeroverBorderBrush" Color="{StaticResource ColorHcWarningText}" />
+            <SolidColorBrush x:Key="TextBoxPressedBackground" Color="{StaticResource ColorHcSurfaceRaised}" />
+            <SolidColorBrush x:Key="TextBoxFocusBorderBrush" Color="{StaticResource ColorHcWarningText}" />
+            <SolidColorBrush x:Key="TextBoxDisabledBackground" Color="{StaticResource ColorHcBlack}" />
+            <SolidColorBrush x:Key="TextBoxDisabledForeground" Color="{StaticResource ColorHcTextMuted}" />
+            <SolidColorBrush x:Key="TextBoxDisabledBorderBrush" Color="{StaticResource ColorHcTextMuted}" />
+            <SolidColorBrush x:Key="TextBoxSelectionBackground" Color="{StaticResource ColorHcPrimary}" />
+            <SolidColorBrush x:Key="TextBoxSelectionForeground" Color="#FFFFFF" />
+            <SolidColorBrush x:Key="TextBoxBorderedDefaultBackground" Color="Transparent" />
+            <SolidColorBrush x:Key="TextBoxBorderedDefaultBorderBrush" Color="{StaticResource ColorHcBorder}" />
+            <SolidColorBrush x:Key="TextBoxBorderedPointeroverBackground" Color="Transparent" />
+            <SolidColorBrush x:Key="TextBoxBorderedPointeroverBorderBrush" Color="{StaticResource ColorHcWarningText}" />
+
+            <SolidColorBrush x:Key="CheckBoxForeground" Color="{StaticResource ColorHcWhite}" />
+            <SolidColorBrush x:Key="CheckBoxDisabledForeground" Color="{StaticResource ColorHcTextMuted}" />
+            <SolidColorBrush x:Key="CheckBoxGlyphFill" Color="#FFFFFF" />
+            <SolidColorBrush x:Key="CheckBoxDefaultBackground" Color="Transparent" />
+            <SolidColorBrush x:Key="CheckBoxDefaultBorderBrush" Color="{StaticResource ColorHcBorder}" />
+            <SolidColorBrush x:Key="CheckBoxPointeroverBackground" Color="{StaticResource ColorHcSurfaceRaised}" />
+            <SolidColorBrush x:Key="CheckBoxPointeroverBorderBrush" Color="{StaticResource ColorHcWarningText}" />
+            <SolidColorBrush x:Key="CheckBoxPressedBackground" Color="{StaticResource ColorHcSurfaceRaised}" />
+            <SolidColorBrush x:Key="CheckBoxPressedBorderBrush" Color="{StaticResource ColorHcWarningText}" />
+            <SolidColorBrush x:Key="CheckBoxCheckedDefaultBackground" Color="{StaticResource ColorHcPrimary}" />
+            <SolidColorBrush x:Key="CheckBoxCheckedDefaultBorderBrush" Color="{StaticResource ColorHcWhite}" />
+            <SolidColorBrush x:Key="CheckBoxCheckedPointeroverBackground" Color="{StaticResource ColorHcPrimaryHover}" />
+            <SolidColorBrush x:Key="CheckBoxCheckedPointeroverBorderBrush" Color="{StaticResource ColorHcWhite}" />
+            <SolidColorBrush x:Key="CheckBoxCheckedPressedBackground" Color="{StaticResource ColorHcPrimaryPressed}" />
+            <SolidColorBrush x:Key="CheckBoxCheckedPressedBorderBrush" Color="{StaticResource ColorHcWhite}" />
+            <SolidColorBrush x:Key="CheckBoxDefaultDisabledBackground" Color="{StaticResource ColorHcBlack}" />
+            <SolidColorBrush x:Key="CheckBoxDefaultDisabledBorderBrush" Color="{StaticResource ColorHcTextMuted}" />
+            <SolidColorBrush x:Key="CheckBoxCheckedDisabledBackground" Color="{StaticResource ColorHcSurfaceRaised}" />
+            <SolidColorBrush x:Key="CheckBoxCheckedDisabledBorderBrush" Color="{StaticResource ColorHcTextMuted}" />
+            <SolidColorBrush x:Key="RadioButtonCheckGlyphFill" Color="#FFFFFF" />
+
+            <SolidColorBrush x:Key="ComboBoxSelectorBackground" Color="{StaticResource ColorHcBlack}" />
+            <SolidColorBrush x:Key="ComboBoxSelectorBorderBrush" Color="{StaticResource ColorHcBorder}" />
+            <SolidColorBrush x:Key="ComboBoxSelectorPointeroverBackground" Color="{StaticResource ColorHcSurfaceRaised}" />
+            <SolidColorBrush x:Key="ComboBoxSelectorPointeroverBorderBrush" Color="{StaticResource ColorHcWarningText}" />
+            <SolidColorBrush x:Key="ComboBoxSelectorFocusBackground" Color="{StaticResource ColorHcBlack}" />
+            <SolidColorBrush x:Key="ComboBoxSelectorFocusBorderBrush" Color="{StaticResource ColorHcWarningText}" />
+            <SolidColorBrush x:Key="ComboBoxSelectorPressedBackground" Color="{StaticResource ColorHcSurfaceRaised}" />
+            <SolidColorBrush x:Key="ComboBoxSelectorPressedBorderBrush" Color="{StaticResource ColorHcWarningText}" />
+            <SolidColorBrush x:Key="ComboBoxSelectorDisabledBackground" Color="{StaticResource ColorHcBlack}" />
+            <SolidColorBrush x:Key="ComboBoxSelectorDisabledBorderBrush" Color="{StaticResource ColorHcTextMuted}" />
+            <SolidColorBrush x:Key="ComboBoxSelectorPlaceHolderForeground" Color="{StaticResource ColorHcTextMuted}" />
+            <SolidColorBrush x:Key="ComboBoxDisabledForeground" Color="{StaticResource ColorHcTextMuted}" />
+            <SolidColorBrush x:Key="ComboBoxIconDefaultForeground" Color="{StaticResource ColorHcWhite}" />
+            <SolidColorBrush x:Key="ComboBoxIconPointeroverForeground" Color="{StaticResource ColorHcWarningText}" />
+            <SolidColorBrush x:Key="ComboBoxIconFocusForeground" Color="{StaticResource ColorHcWarningText}" />
+            <SolidColorBrush x:Key="ComboBoxIconPressedForeground" Color="{StaticResource ColorHcWhite}" />
+            <SolidColorBrush x:Key="ComboBoxIconDisabledForeground" Color="{StaticResource ColorHcTextMuted}" />
+            <SolidColorBrush x:Key="ComboBoxPopupBackground" Color="{StaticResource ColorHcSurface}" />
+            <SolidColorBrush x:Key="ComboBoxPopupBorderBrush" Color="{StaticResource ColorHcBorder}" />
+            <SolidColorBrush x:Key="ComboBoxItemForeground" Color="{StaticResource ColorHcWhite}" />
+            <SolidColorBrush x:Key="ComboBoxItemBackground" Color="Transparent" />
+            <SolidColorBrush x:Key="ComboBoxItemPointeroverForeground" Color="{StaticResource ColorHcWhite}" />
+            <SolidColorBrush x:Key="ComboBoxItemPointeroverBackground" Color="{StaticResource ColorHcSurfaceRaised}" />
+            <SolidColorBrush x:Key="ComboBoxItemFocusForeground" Color="{StaticResource ColorHcWhite}" />
+            <SolidColorBrush x:Key="ComboBoxItemFocusBackground" Color="{StaticResource ColorHcSurfaceRaised}" />
+            <SolidColorBrush x:Key="ComboBoxItemPressedForeground" Color="{StaticResource ColorHcWhite}" />
+            <SolidColorBrush x:Key="ComboBoxItemPressedBackground" Color="{StaticResource ColorHcSurfaceRaised}" />
+            <SolidColorBrush x:Key="ComboBoxItemSelectedForeground" Color="{StaticResource ColorHcPrimaryText}" />
+            <SolidColorBrush x:Key="ComboBoxItemSelectedBackground" Color="{StaticResource ColorHcPrimaryPressed}" />
+            <SolidColorBrush x:Key="ComboBoxItemSelectedPointeroverBackground" Color="{StaticResource ColorHcPrimaryHover}" />
+            <SolidColorBrush x:Key="ComboBoxItemDisabledBackground" Color="Transparent" />
+            <SolidColorBrush x:Key="ComboBoxItemSelectedDisabledBackground" Color="{StaticResource ColorHcSurfaceRaised}" />
+            <SolidColorBrush x:Key="ComboBoxSelectorBorderedBackground" Color="Transparent" />
+            <SolidColorBrush x:Key="ComboBoxSelectorBorderedBorderBrush" Color="{StaticResource ColorHcBorder}" />
+            <SolidColorBrush x:Key="ComboBoxSelectorBorderedPointeroverBackground" Color="Transparent" />
+            <SolidColorBrush x:Key="ComboBoxSelectorBorderedPointeroverBorderBrush" Color="{StaticResource ColorHcWarningText}" />
+            <SolidColorBrush x:Key="ComboBoxSelectorBorderedFocusBackground" Color="Transparent" />
+            <SolidColorBrush x:Key="ComboBoxSelectorBorderedFocusBorderBrush" Color="{StaticResource ColorHcWarningText}" />
+            <SolidColorBrush x:Key="ComboBoxSelectorBorderedPressedBackground" Color="Transparent" />
+            <SolidColorBrush x:Key="ComboBoxSelectorBorderedPressedBorderBrush" Color="{StaticResource ColorHcWarningText}" />
+
+            <SolidColorBrush x:Key="FlyoutBackground" Color="{StaticResource ColorHcSurface}" />
+            <SolidColorBrush x:Key="FlyoutForeground" Color="{StaticResource ColorHcWhite}" />
+            <SolidColorBrush x:Key="FlyoutBorderBrush" Color="{StaticResource ColorHcBorder}" />
+            <SolidColorBrush x:Key="MenuFlyoutBackground" Color="{StaticResource ColorHcSurface}" />
+            <SolidColorBrush x:Key="ToolTipBackground" Color="{StaticResource ColorHcSurfaceRaised}" />
+            <SolidColorBrush x:Key="ToolTipForeground" Color="{StaticResource ColorHcWhite}" />
+            <SolidColorBrush x:Key="ToolTipBorderBrush" Color="{StaticResource ColorHcBorder}" />
+
+            <SolidColorBrush x:Key="ScrollBarBackground" Color="Transparent" />
+            <SolidColorBrush x:Key="ScrollBarThumbForeground" Color="{StaticResource ColorHcBorder}" />
+            <SolidColorBrush x:Key="ScrollBarThumbPointeroverForeground" Color="{StaticResource ColorHcWarningText}" />
+            <SolidColorBrush x:Key="ScrollBarButtonDefaultForeground" Color="{StaticResource ColorHcBorder}" />
+            <SolidColorBrush x:Key="ScrollBarButtonPointeroverForeground" Color="{StaticResource ColorHcWarningText}" />
+
+            <SolidColorBrush x:Key="DataValidationErrorsForeground" Color="{StaticResource ColorHcWhite}" />
+            <SolidColorBrush x:Key="DataValidationErrorsBackground" Color="#2B0505" />
+            <SolidColorBrush x:Key="DataValidationErrorsBorderBrush" Color="{StaticResource ColorHcErrorText}" />
+            <SolidColorBrush x:Key="DataValidationErrorsPointeroverBackground" Color="#2B0505" />
+            <SolidColorBrush x:Key="DataValidationErrorsPointeroverBorderBrush" Color="{StaticResource ColorHcErrorText}" />
+            <SolidColorBrush x:Key="DataValidationErrorsPointerOverBackground" Color="#2B0505" />
+            <SolidColorBrush x:Key="DataValidationErrorsPointerOverBorderBrush" Color="{StaticResource ColorHcErrorText}" />
+            <SolidColorBrush x:Key="DataValidationErrorsPressedBackground" Color="#2B0505" />
+            <SolidColorBrush x:Key="DataValidationErrorsPressedBorderBrush" Color="{StaticResource ColorHcErrorText}" />
+            <SolidColorBrush x:Key="DataValidationErrorsSelectedBackground" Color="#2B0505" />
+            <SolidColorBrush x:Key="DataValidationErrorsSelectedBorderBrush" Color="{StaticResource ColorHcErrorText}" />
+
+            <SolidColorBrush x:Key="DataGridBackground" Color="{StaticResource ColorHcBlack}" />
+            <SolidColorBrush x:Key="DataGridRowBackground" Color="{StaticResource ColorHcBlack}" />
+            <SolidColorBrush x:Key="DataGridRowPointeroverBackground" Color="{StaticResource ColorHcSurfaceRaised}" />
+            <SolidColorBrush x:Key="DataGridRowSelectedBackground" Color="{StaticResource ColorHcPrimaryPressed}" />
+            <SolidColorBrush x:Key="DataGridRowSelectedPointeroverBackground" Color="{StaticResource ColorHcPrimaryHover}" />
+            <SolidColorBrush x:Key="DataGridCellBackground" Color="Transparent" />
+            <SolidColorBrush x:Key="DataGridLineBrush" Color="{StaticResource ColorHcBorder}" />
+            <SolidColorBrush x:Key="DataGridCellFocusBorderBrush" Color="{StaticResource ColorHcWarningText}" />
+            <SolidColorBrush x:Key="DataGridCellCurrentBorderBrush" Color="{StaticResource ColorHcBorder}" />
+            <SolidColorBrush x:Key="DataGridCellErrorBrush" Color="{StaticResource ColorHcErrorText}" />
+            <SolidColorBrush x:Key="DataGridDisabledBackground" Color="{StaticResource ColorHcSurface}" />
+            <SolidColorBrush x:Key="DataGridColumnHeaderBackground" Color="Transparent" />
+            <SolidColorBrush x:Key="DataGridColumnHeaderForeground" Color="{StaticResource ColorHcWhite}" />
+            <SolidColorBrush x:Key="DataGridColumnHeaderPointeroverBackground" Color="{StaticResource ColorHcSurfaceRaised}" />
+            <SolidColorBrush x:Key="DataGridColumnHeaderPressedBackground" Color="{StaticResource ColorHcSurfaceRaised}" />
+            <SolidColorBrush x:Key="DataGridRowErrorBackground" Color="#2B0505" />
+            <SolidColorBrush x:Key="DataGridDetailsPresenterBackground" Color="Transparent" />
+            <SolidColorBrush x:Key="DataGridRowGroupHeaderBackground" Color="{StaticResource ColorHcSurfaceRaised}" />
+            <SolidColorBrush x:Key="DataGridRowGroupHeaderExpandIconForeground" Color="{StaticResource ColorHcWhite}" />
+            <SolidColorBrush x:Key="DataGridRowGroupHeaderCurrentBorderBrush" Color="{StaticResource ColorHcBorder}" />
+            <SolidColorBrush x:Key="DataGridScrollBarsSeparatorBackground" Color="{StaticResource ColorHcSurfaceRaised}" />
+            <SolidColorBrush x:Key="DataGridDropLocationIndicatorBackground" Color="{StaticResource ColorHcPrimary}" />
+
+            <SolidColorBrush x:Key="HyperlinkButtonForeground" Color="{StaticResource ColorHcPrimaryText}" />
+            <SolidColorBrush x:Key="HyperlinkButtonPointeroverForeground" Color="{StaticResource ColorHcWhite}" />
+            <SolidColorBrush x:Key="HyperlinkButtonPressedForeground" Color="{StaticResource ColorHcPrimaryText}" />
+            <SolidColorBrush x:Key="HyperlinkButtonDisabledForeground" Color="{StaticResource ColorHcTextMuted}" />
+            <SolidColorBrush x:Key="HyperlinkButtonVisitedForeground" Color="{StaticResource ColorHcPrimaryText}" />
+        </ResourceDictionary>
+    </ResourceDictionary.ThemeDictionaries>
+</ResourceDictionary>

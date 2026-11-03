@@ -1,64 +1,167 @@
 <ResourceDictionary xmlns="https://github.com/avaloniaui"
-                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:tema="using:Supermercado.GUI.Servicios.Tema">
+    <!--
+        Cada variante define los mismos tokens semánticos. Regla de roles:
+          * BrushPrimary / BrushSuccess / BrushWarning / BrushError: RELLENO con texto blanco encima
+            (BrushOnPrimary). Deben cumplir >= 4.5:1 contra #FFFFFF.
+          * BrushPrimaryText / BrushSuccessText / ...: TEXTO o icono sobre superficie. Deben cumplir
+            >= 4.5:1 contra BrushBackground y BrushSurface.
+        Mezclar ambos roles es lo que producía texto blanco sobre #22C55E (2.28:1).
+    -->
     <ResourceDictionary.ThemeDictionaries>
-        <!-- TEMA CLARO ESTÁNDAR / SUAVE (Warm Light) -->
+        <!-- TEMA CLARO CÁLIDO (Warm Light, anti-fatiga para turnos largos) -->
         <ResourceDictionary x:Key="Light">
             <SolidColorBrush x:Key="BrushBackground" Color="{StaticResource ColorWarm50}" />
             <SolidColorBrush x:Key="BrushSurface" Color="#FFFFFF" />
             <SolidColorBrush x:Key="BrushSurfaceRaised" Color="#FFFFFF" />
             <SolidColorBrush x:Key="BrushSurfaceSubtle" Color="{StaticResource ColorWarm100}" />
             <SolidColorBrush x:Key="BrushSurfaceHover" Color="{StaticResource ColorWarm200}" />
+            <SolidColorBrush x:Key="BrushSurfaceSelected" Color="{StaticResource ColorBrand100}" />
 
             <SolidColorBrush x:Key="BrushBorderSubtle" Color="{StaticResource ColorWarm300}" />
-            <SolidColorBrush x:Key="BrushBorderStrong" Color="{StaticResource ColorWarm500}" />
+            <SolidColorBrush x:Key="BrushBorderStrong" Color="{StaticResource ColorWarm600}" />
+            <SolidColorBrush x:Key="BrushFocusRing" Color="{StaticResource ColorBrand600}" />
+            <SolidColorBrush x:Key="BrushOverlayScrim" Color="{StaticResource ColorOverlayScrim}" />
+            <SolidColorBrush x:Key="BrushOverlayScrimStrong" Color="{StaticResource ColorOverlayScrimStrong}" />
+            <SolidColorBrush x:Key="BrushOnPrimarySubtle" Color="{StaticResource ColorOnPrimarySubtle}" />
 
             <SolidColorBrush x:Key="BrushTextPrimary" Color="{StaticResource ColorWarm900}" />
             <SolidColorBrush x:Key="BrushTextSecondary" Color="{StaticResource ColorWarm700}" />
-            <SolidColorBrush x:Key="BrushTextMuted" Color="{StaticResource ColorWarm500}" />
+            <SolidColorBrush x:Key="BrushTextMuted" Color="{StaticResource ColorWarm600}" />
             <SolidColorBrush x:Key="BrushTextOnPrimary" Color="#FFFFFF" />
+            <SolidColorBrush x:Key="BrushTextOnPrimaryMuted" Color="#D9EAF7" />
 
             <SolidColorBrush x:Key="BrushPrimary" Color="{StaticResource ColorBrand700}" />
             <SolidColorBrush x:Key="BrushPrimaryHover" Color="{StaticResource ColorBrand800}" />
+            <SolidColorBrush x:Key="BrushPrimaryPressed" Color="{StaticResource ColorBrand900}" />
+            <SolidColorBrush x:Key="BrushPrimaryText" Color="{StaticResource ColorBrand700}" />
             <SolidColorBrush x:Key="BrushPrimarySubtle" Color="{StaticResource ColorBrand100}" />
 
             <SolidColorBrush x:Key="BrushSuccess" Color="{StaticResource ColorSuccess700}" />
+            <SolidColorBrush x:Key="BrushSuccessHover" Color="{StaticResource ColorSuccess800}" />
+            <SolidColorBrush x:Key="BrushSuccessPressed" Color="{StaticResource ColorSuccess950}" />
+            <SolidColorBrush x:Key="BrushSuccessText" Color="{StaticResource ColorSuccess700}" />
             <SolidColorBrush x:Key="BrushSuccessSubtle" Color="{StaticResource ColorSuccess50}" />
 
             <SolidColorBrush x:Key="BrushWarning" Color="{StaticResource ColorWarning700}" />
+            <SolidColorBrush x:Key="BrushWarningHover" Color="{StaticResource ColorWarning800}" />
+            <SolidColorBrush x:Key="BrushWarningPressed" Color="{StaticResource ColorWarning950}" />
+            <SolidColorBrush x:Key="BrushWarningText" Color="{StaticResource ColorWarning700}" />
             <SolidColorBrush x:Key="BrushWarningSubtle" Color="{StaticResource ColorWarning50}" />
 
             <SolidColorBrush x:Key="BrushError" Color="{StaticResource ColorError700}" />
+            <SolidColorBrush x:Key="BrushErrorHover" Color="{StaticResource ColorError800}" />
+            <SolidColorBrush x:Key="BrushErrorPressed" Color="{StaticResource ColorError950}" />
+            <SolidColorBrush x:Key="BrushErrorText" Color="{StaticResource ColorError700}" />
             <SolidColorBrush x:Key="BrushErrorSubtle" Color="{StaticResource ColorError50}" />
+
+            <!-- Papel de tirilla: siempre claro, no depende del tema -->
+            <SolidColorBrush x:Key="BrushTicketPaper" Color="{StaticResource ColorTicketPaper}" />
+            <SolidColorBrush x:Key="BrushTicketBorder" Color="{StaticResource ColorTicketBorder}" />
+            <SolidColorBrush x:Key="BrushTicketInk" Color="{StaticResource ColorTicketInk}" />
         </ResourceDictionary>
 
-        <!-- TEMA OSCURO EQUILIBRADO (Default / Slate) -->
-        <ResourceDictionary x:Key="Default">
+        <!-- TEMA OSCURO (Slate) -->
+        <ResourceDictionary x:Key="Dark">
             <SolidColorBrush x:Key="BrushBackground" Color="{StaticResource ColorSlate900}" />
             <SolidColorBrush x:Key="BrushSurface" Color="{StaticResource ColorSlate800}" />
             <SolidColorBrush x:Key="BrushSurfaceRaised" Color="{StaticResource ColorSlate700}" />
             <SolidColorBrush x:Key="BrushSurfaceSubtle" Color="{StaticResource ColorSlate800}" />
             <SolidColorBrush x:Key="BrushSurfaceHover" Color="{StaticResource ColorSlate700}" />
+            <SolidColorBrush x:Key="BrushSurfaceSelected" Color="{StaticResource ColorBrand900}" />
 
             <SolidColorBrush x:Key="BrushBorderSubtle" Color="{StaticResource ColorSlate700}" />
-            <SolidColorBrush x:Key="BrushBorderStrong" Color="{StaticResource ColorSlate500}" />
+            <SolidColorBrush x:Key="BrushBorderStrong" Color="{StaticResource ColorSlate400}" />
+            <SolidColorBrush x:Key="BrushFocusRing" Color="{StaticResource ColorBrand300}" />
+            <SolidColorBrush x:Key="BrushOverlayScrim" Color="{StaticResource ColorOverlayScrim}" />
+            <SolidColorBrush x:Key="BrushOverlayScrimStrong" Color="{StaticResource ColorOverlayScrimStrong}" />
+            <SolidColorBrush x:Key="BrushOnPrimarySubtle" Color="{StaticResource ColorOnPrimarySubtle}" />
 
             <SolidColorBrush x:Key="BrushTextPrimary" Color="{StaticResource ColorSlate50}" />
-            <SolidColorBrush x:Key="BrushTextSecondary" Color="{StaticResource ColorSlate400}" />
-            <SolidColorBrush x:Key="BrushTextMuted" Color="{StaticResource ColorSlate500}" />
+            <SolidColorBrush x:Key="BrushTextSecondary" Color="{StaticResource ColorSlate300}" />
+            <SolidColorBrush x:Key="BrushTextMuted" Color="{StaticResource ColorSlate400}" />
             <SolidColorBrush x:Key="BrushTextOnPrimary" Color="#FFFFFF" />
+            <SolidColorBrush x:Key="BrushTextOnPrimaryMuted" Color="#D9EAF7" />
 
-            <SolidColorBrush x:Key="BrushPrimary" Color="{StaticResource ColorBrand500}" />
-            <SolidColorBrush x:Key="BrushPrimaryHover" Color="{StaticResource ColorBrand600}" />
+            <SolidColorBrush x:Key="BrushPrimary" Color="{StaticResource ColorBrand800}" />
+            <SolidColorBrush x:Key="BrushPrimaryHover" Color="{StaticResource ColorBrand700}" />
+            <SolidColorBrush x:Key="BrushPrimaryPressed" Color="{StaticResource ColorBrand900}" />
+            <SolidColorBrush x:Key="BrushPrimaryText" Color="{StaticResource ColorBrand300}" />
             <SolidColorBrush x:Key="BrushPrimarySubtle" Color="{StaticResource ColorBrand900}" />
 
-            <SolidColorBrush x:Key="BrushSuccess" Color="{StaticResource ColorSuccess500}" />
-            <SolidColorBrush x:Key="BrushSuccessSubtle" Color="#052E16" />
+            <SolidColorBrush x:Key="BrushSuccess" Color="{StaticResource ColorSuccess700}" />
+            <SolidColorBrush x:Key="BrushSuccessHover" Color="{StaticResource ColorSuccess800}" />
+            <SolidColorBrush x:Key="BrushSuccessPressed" Color="{StaticResource ColorSuccess950}" />
+            <SolidColorBrush x:Key="BrushSuccessText" Color="{StaticResource ColorSuccess300}" />
+            <SolidColorBrush x:Key="BrushSuccessSubtle" Color="{StaticResource ColorSuccess950}" />
 
-            <SolidColorBrush x:Key="BrushWarning" Color="{StaticResource ColorWarning500}" />
-            <SolidColorBrush x:Key="BrushWarningSubtle" Color="#451A03" />
+            <SolidColorBrush x:Key="BrushWarning" Color="{StaticResource ColorWarning700}" />
+            <SolidColorBrush x:Key="BrushWarningHover" Color="{StaticResource ColorWarning800}" />
+            <SolidColorBrush x:Key="BrushWarningPressed" Color="{StaticResource ColorWarning950}" />
+            <SolidColorBrush x:Key="BrushWarningText" Color="{StaticResource ColorWarning300}" />
+            <SolidColorBrush x:Key="BrushWarningSubtle" Color="{StaticResource ColorWarning950}" />
 
-            <SolidColorBrush x:Key="BrushError" Color="{StaticResource ColorError500}" />
-            <SolidColorBrush x:Key="BrushErrorSubtle" Color="#450A0A" />
+            <SolidColorBrush x:Key="BrushError" Color="{StaticResource ColorError700}" />
+            <SolidColorBrush x:Key="BrushErrorHover" Color="{StaticResource ColorError800}" />
+            <SolidColorBrush x:Key="BrushErrorPressed" Color="{StaticResource ColorError950}" />
+            <SolidColorBrush x:Key="BrushErrorText" Color="{StaticResource ColorError300}" />
+            <SolidColorBrush x:Key="BrushErrorSubtle" Color="{StaticResource ColorError950}" />
+
+            <SolidColorBrush x:Key="BrushTicketPaper" Color="{StaticResource ColorTicketPaper}" />
+            <SolidColorBrush x:Key="BrushTicketBorder" Color="{StaticResource ColorTicketBorder}" />
+            <SolidColorBrush x:Key="BrushTicketInk" Color="{StaticResource ColorTicketInk}" />
+        </ResourceDictionary>
+
+        <!-- TEMA DE ALTO CONTRASTE (fondo negro, texto blanco, acentos AAA) -->
+        <ResourceDictionary x:Key="{x:Static tema:TemaSigs.AltoContraste}">
+            <SolidColorBrush x:Key="BrushBackground" Color="{StaticResource ColorHcBlack}" />
+            <SolidColorBrush x:Key="BrushSurface" Color="{StaticResource ColorHcSurface}" />
+            <SolidColorBrush x:Key="BrushSurfaceRaised" Color="{StaticResource ColorHcSurfaceRaised}" />
+            <SolidColorBrush x:Key="BrushSurfaceSubtle" Color="{StaticResource ColorHcSurface}" />
+            <SolidColorBrush x:Key="BrushSurfaceHover" Color="{StaticResource ColorHcSurfaceRaised}" />
+            <SolidColorBrush x:Key="BrushSurfaceSelected" Color="{StaticResource ColorHcPrimaryPressed}" />
+
+            <SolidColorBrush x:Key="BrushBorderSubtle" Color="{StaticResource ColorHcBorder}" />
+            <SolidColorBrush x:Key="BrushBorderStrong" Color="{StaticResource ColorHcBorder}" />
+            <SolidColorBrush x:Key="BrushFocusRing" Color="{StaticResource ColorHcWarningText}" />
+            <SolidColorBrush x:Key="BrushOverlayScrim" Color="#CC000000" />
+            <SolidColorBrush x:Key="BrushOverlayScrimStrong" Color="#E6000000" />
+            <SolidColorBrush x:Key="BrushOnPrimarySubtle" Color="#33FFFFFF" />
+
+            <SolidColorBrush x:Key="BrushTextPrimary" Color="{StaticResource ColorHcWhite}" />
+            <SolidColorBrush x:Key="BrushTextSecondary" Color="{StaticResource ColorHcWhite}" />
+            <SolidColorBrush x:Key="BrushTextMuted" Color="{StaticResource ColorHcTextMuted}" />
+            <SolidColorBrush x:Key="BrushTextOnPrimary" Color="#FFFFFF" />
+            <SolidColorBrush x:Key="BrushTextOnPrimaryMuted" Color="#FFFFFF" />
+
+            <SolidColorBrush x:Key="BrushPrimary" Color="{StaticResource ColorHcPrimary}" />
+            <SolidColorBrush x:Key="BrushPrimaryHover" Color="{StaticResource ColorHcPrimaryHover}" />
+            <SolidColorBrush x:Key="BrushPrimaryPressed" Color="{StaticResource ColorHcPrimaryPressed}" />
+            <SolidColorBrush x:Key="BrushPrimaryText" Color="{StaticResource ColorHcPrimaryText}" />
+            <SolidColorBrush x:Key="BrushPrimarySubtle" Color="#0A2A5E" />
+
+            <SolidColorBrush x:Key="BrushSuccess" Color="{StaticResource ColorHcSuccess}" />
+            <SolidColorBrush x:Key="BrushSuccessHover" Color="{StaticResource ColorSuccess700}" />
+            <SolidColorBrush x:Key="BrushSuccessPressed" Color="{StaticResource ColorSuccess950}" />
+            <SolidColorBrush x:Key="BrushSuccessText" Color="{StaticResource ColorHcSuccessText}" />
+            <SolidColorBrush x:Key="BrushSuccessSubtle" Color="#03210F" />
+
+            <SolidColorBrush x:Key="BrushWarning" Color="{StaticResource ColorHcWarning}" />
+            <SolidColorBrush x:Key="BrushWarningHover" Color="{StaticResource ColorWarning700}" />
+            <SolidColorBrush x:Key="BrushWarningPressed" Color="{StaticResource ColorWarning950}" />
+            <SolidColorBrush x:Key="BrushWarningText" Color="{StaticResource ColorHcWarningText}" />
+            <SolidColorBrush x:Key="BrushWarningSubtle" Color="#2E1A00" />
+
+            <SolidColorBrush x:Key="BrushError" Color="{StaticResource ColorHcError}" />
+            <SolidColorBrush x:Key="BrushErrorHover" Color="{StaticResource ColorError700}" />
+            <SolidColorBrush x:Key="BrushErrorPressed" Color="{StaticResource ColorError950}" />
+            <SolidColorBrush x:Key="BrushErrorText" Color="{StaticResource ColorHcErrorText}" />
+            <SolidColorBrush x:Key="BrushErrorSubtle" Color="#2B0505" />
+
+            <SolidColorBrush x:Key="BrushTicketPaper" Color="{StaticResource ColorTicketPaper}" />
+            <SolidColorBrush x:Key="BrushTicketBorder" Color="{StaticResource ColorTicketBorder}" />
+            <SolidColorBrush x:Key="BrushTicketInk" Color="{StaticResource ColorTicketInk}" />
         </ResourceDictionary>
     </ResourceDictionary.ThemeDictionaries>
 </ResourceDictionary>
