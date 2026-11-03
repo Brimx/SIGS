@@ -1,9 +1,13 @@
+using System.Collections.ObjectModel;
 using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.DependencyInjection;
+using Supermercado.Entidades.Seguridad;
+using Supermercado.Entidades.Ventas;
 using Supermercado.Logica.Comunes;
 using Supermercado.Logica.Dian;
+using Supermercado.Logica.Seguridad;
 using Supermercado.Logica.Ventas;
 
 namespace Supermercado.GUI.ViewModels;
@@ -14,8 +18,11 @@ public partial class CajaTurnoViewModel : ViewModelBase
 
     private readonly IServicioCaja? _servicioCaja;
     private readonly IServicioDian? _servicioDian;
+    private readonly IServicioAutenticacion? _servicioAutenticacion;
     private readonly ITraductorExcepciones? _traductor;
     private readonly IServiceScopeFactory? _scopeFactory;
+
+    public ObservableCollection<RetiroCaja> RetirosTurnoActual { get; } = [];
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(RequiereAperturaConBase))]
@@ -39,6 +46,23 @@ public partial class CajaTurnoViewModel : ViewModelBase
     [ObservableProperty]
     public partial long EfectivoContadoInput { get; set; }
 
+    // Campos de Retiro Parcial (Recogida a Caja Fuerte)
+    [ObservableProperty]
+    public partial long MontoRetiroInput { get; set; } = 50000;
+
+    [ObservableProperty]
+    public partial string MotivoRetiroInput { get; set; } = "Traslado parcial a caja fuerte";
+
+    [ObservableProperty]
+    public partial string UsuarioSupervisorRetiroInput { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial string PinSupervisorRetiroInput { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(TotalRetirosFormateado))]
+    public partial long TotalRetirosTurnoActual { get; set; }
+
     [ObservableProperty]
     public partial ResultadoArqueo? UltimoArqueo { get; set; }
 
@@ -54,6 +78,7 @@ public partial class CajaTurnoViewModel : ViewModelBase
     public bool RequiereAperturaConBase => !TurnoAbierto;
 
     public string EfectivoInicialFormateado => $"$ {EfectivoInicialActual.ToString("N0", CulturaCo)}";
+    public string TotalRetirosFormateado => $"$ {TotalRetirosTurnoActual.ToString("N0", CulturaCo)}";
 
     public CajaTurnoViewModel()
     {
@@ -65,11 +90,13 @@ public partial class CajaTurnoViewModel : ViewModelBase
     public CajaTurnoViewModel(
         IServicioCaja servicioCaja,
         IServicioDian? servicioDian = null,
-        ITraductorExcepciones? traductor = null)
+        ITraductorExcepciones? traductor = null,
+        IServicioAutenticacion? servicioAutenticacion = null)
     {
         _servicioCaja = servicioCaja;
         _servicioDian = servicioDian;
         _traductor = traductor;
+        _servicioAutenticacion = servicioAutenticacion;
     }
 
     [RelayCommand]
@@ -92,12 +119,15 @@ public partial class CajaTurnoViewModel : ViewModelBase
                 TurnoActualId = turno.Id;
                 EfectivoInicialActual = turno.EfectivoInicial;
                 FechaAperturaTexto = turno.FechaApertura.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss");
+                await CargarRetirosDelTurnoAsync(servicioCaja);
                 MensajeEstado = $"Turno #{turno.Id} abierto y operativo.";
             }
             else
             {
                 TurnoActualId = 0;
                 EfectivoInicialActual = 0;
+                TotalRetirosTurnoActual = 0;
+                RetirosTurnoActual.Clear();
                 FechaAperturaTexto = "Sin turno activo";
                 MensajeEstado = "La caja se encuentra cerrada. Debe realizar la apertura con base inicial.";
             }
@@ -116,6 +146,19 @@ public partial class CajaTurnoViewModel : ViewModelBase
         }
     }
 
+    private async Task CargarRetirosDelTurnoAsync(IServicioCaja servicioCaja)
+    {
+        var retiros = await servicioCaja.ObtenerRetirosTurnoActualAsync();
+        RetirosTurnoActual.Clear();
+        long acumulado = 0;
+        foreach (var r in retiros)
+        {
+            RetirosTurnoActual.Add(r);
+            acumulado += r.Monto;
+        }
+        TotalRetirosTurnoActual = acumulado;
+    }
+
     [RelayCommand]
     public async Task AbrirTurnoAsync()
     {
@@ -132,10 +175,54 @@ public partial class CajaTurnoViewModel : ViewModelBase
             TurnoAbierto = true;
             TurnoActualId = turno.Id;
             EfectivoInicialActual = turno.EfectivoInicial;
+            TotalRetirosTurnoActual = 0;
+            RetirosTurnoActual.Clear();
             FechaAperturaTexto = turno.FechaApertura.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss");
             UltimoArqueo = null;
             MensajeEstado = $"Turno #{turno.Id} iniciado con base de $ {turno.EfectivoInicial.ToString("N0", CulturaCo)}.";
             OnPropertyChanged(nameof(EfectivoInicialFormateado));
+        }
+        catch (Exception ex)
+        {
+            TieneError = true;
+            MensajeEstado = Traducir(servicios, ex);
+        }
+    }
+
+    [RelayCommand]
+    public async Task RegistrarRetiroEfectivoAsync()
+    {
+        using var scope = _scopeFactory?.CreateScope();
+        var servicios = scope?.ServiceProvider;
+        var servicioCaja = _servicioCaja ?? servicios?.GetService<IServicioCaja>();
+        var servicioAuth = _servicioAutenticacion ?? servicios?.GetService<IServicioAutenticacion>();
+        if (servicioCaja is null)
+            return;
+
+        TieneError = false;
+        try
+        {
+            var supervisorId = 1;
+            var nombreSupervisor = "Supervisor";
+
+            if (servicioAuth is not null)
+            {
+                var supervisor = await servicioAuth.ValidarSupervisorAsync(
+                    UsuarioSupervisorRetiroInput.Trim(),
+                    PinSupervisorRetiroInput.Trim(),
+                    Permiso.AutorizarOperacionPos);
+                supervisorId = supervisor.Id;
+                nombreSupervisor = supervisor.NombreCompleto;
+            }
+
+            var retiro = await servicioCaja.RegistrarRetiroAsync(
+                MontoRetiroInput,
+                MotivoRetiroInput.Trim(),
+                supervisorId);
+
+            PinSupervisorRetiroInput = string.Empty;
+            await CargarRetirosDelTurnoAsync(servicioCaja);
+            MensajeEstado = $"Retiro de $ {retiro.Monto.ToString("N0", CulturaCo)} registrado y autorizado por {nombreSupervisor}.";
         }
         catch (Exception ex)
         {
@@ -172,6 +259,6 @@ public partial class CajaTurnoViewModel : ViewModelBase
 
     private string Traducir(IServiceProvider? servicios, Exception ex)
         => _traductor?.Traducir(ex)
-            ?? servicios?.GetService<ITraductorExcepciones>()?.Traducir(ex)
-            ?? ex.Message;
+           ?? servicios?.GetService<ITraductorExcepciones>()?.Traducir(ex)
+           ?? ex.Message;
 }

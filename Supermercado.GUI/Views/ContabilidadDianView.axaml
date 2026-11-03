@@ -1,0 +1,205 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Supermercado.GUI.ViewModels"
+             x:Class="Supermercado.GUI.Views.ContabilidadDianView"
+             x:DataType="vm:ContabilidadDianViewModel"
+             FontFamily="{StaticResource FontFamilyPlex}">
+
+    <Grid RowDefinitions="Auto,16,Auto,16,*,12,Auto" Margin="16">
+
+        <!-- Cabecera de Filtros y Exportación Fiscal CSV / PDF -->
+        <Border Grid.Row="0"
+                Background="{DynamicResource BrushSurface}"
+                BorderBrush="{DynamicResource BrushBorderSubtle}"
+                BorderThickness="1"
+                CornerRadius="{StaticResource RadiusMedium}"
+                Padding="16,12">
+            <Grid ColumnDefinitions="*,16,Auto,8,110,12,Auto,8,Auto,8,Auto">
+                <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+                    <TextBlock Text="Contabilidad, Consolidado de IVA DIAN y Arqueos Z"
+                               FontFamily="{StaticResource FontFamilyStackSans}"
+                               FontSize="{StaticResource FontSizeSubtitle}"
+                               FontWeight="{StaticResource FontWeightBold}" />
+                    <TextBlock Text="Liquidación discriminada por tarifas (0%, 5%, 19%), registro de gastos y exportación para declaración tributaria."
+                               FontSize="{StaticResource FontSizeCaption}"
+                               Foreground="{DynamicResource BrushTextSecondary}" />
+                </StackPanel>
+
+                <TextBlock Grid.Column="2" Text="Días a consultar:" VerticalAlignment="Center" FontSize="{StaticResource FontSizeCaption}" Foreground="{DynamicResource BrushTextSecondary}" />
+                <NumericUpDown Grid.Column="4"
+                               Value="{Binding DiasRangoConsulta}"
+                               Minimum="1"
+                               Maximum="365"
+                               FormatString="0"
+                               FontFamily="{StaticResource FontFamilyPlexCondensed}"
+                               MinHeight="38" />
+
+                <Button Grid.Column="6"
+                        Command="{Binding ActualizarConsolidadoFiscalCommand}"
+                        MinHeight="38">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <LucideIcon Kind="RefreshCw" Size="16" />
+                        <TextBlock Text="Calcular" FontWeight="{StaticResource FontWeightSemiBold}" />
+                    </StackPanel>
+                </Button>
+
+                <Button Grid.Column="8"
+                        Command="{Binding ExportarCsvContableCommand}"
+                        Background="{DynamicResource BrushSuccess}"
+                        Foreground="#FFFFFF"
+                        MinHeight="38">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <LucideIcon Kind="FileSpreadsheet" Size="16" />
+                        <TextBlock Text="Exportar CSV / Excel" FontWeight="{StaticResource FontWeightBold}" />
+                    </StackPanel>
+                </Button>
+
+                <Button Grid.Column="10"
+                        Command="{Binding ExportarPdfVentasDianCommand}"
+                        Background="{DynamicResource BrushPrimary}"
+                        Foreground="{DynamicResource BrushTextOnPrimary}"
+                        MinHeight="38">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <LucideIcon Kind="FileText" Size="16" />
+                        <TextBlock Text="Exportar PDF" FontWeight="{StaticResource FontWeightBold}" />
+                    </StackPanel>
+                </Button>
+            </Grid>
+        </Border>
+
+        <!-- Tarjetas KPI de Resumen Financiero del Periodo -->
+        <Grid Grid.Row="2" ColumnDefinitions="*,14,*,14,*,14,*">
+            <Border Grid.Column="0" Background="{DynamicResource BrushSurface}" BorderBrush="{DynamicResource BrushBorderSubtle}" BorderThickness="1" CornerRadius="{StaticResource RadiusLarge}" Padding="16">
+                <StackPanel Spacing="4">
+                    <TextBlock Text="INGRESOS BRUTOS VENTAS" FontFamily="{StaticResource FontFamilyStackSans}" FontSize="{StaticResource FontSizeCaption}" FontWeight="{StaticResource FontWeightBold}" Foreground="{DynamicResource BrushTextSecondary}" />
+                    <TextBlock Text="{Binding IngresosTotalesFormateado}" FontFamily="{StaticResource FontFamilyPlexCondensed}" FontSize="{StaticResource FontSizeHeadline}" FontWeight="{StaticResource FontWeightBold}" Foreground="{DynamicResource BrushPrimary}" />
+                </StackPanel>
+            </Border>
+
+            <Border Grid.Column="2" Background="{DynamicResource BrushSurface}" BorderBrush="{DynamicResource BrushBorderSubtle}" BorderThickness="1" CornerRadius="{StaticResource RadiusLarge}" Padding="16">
+                <StackPanel Spacing="4">
+                    <TextBlock Text="TOTAL IVA GENERADO (DIAN)" FontFamily="{StaticResource FontFamilyStackSans}" FontSize="{StaticResource FontSizeCaption}" FontWeight="{StaticResource FontWeightBold}" Foreground="{DynamicResource BrushTextSecondary}" />
+                    <TextBlock Text="{Binding IvaTotalGeneradoFormateado}" FontFamily="{StaticResource FontFamilyPlexCondensed}" FontSize="{StaticResource FontSizeHeadline}" FontWeight="{StaticResource FontWeightBold}" Foreground="{DynamicResource BrushWarning}" />
+                </StackPanel>
+            </Border>
+
+            <Border Grid.Column="4" Background="{DynamicResource BrushSurface}" BorderBrush="{DynamicResource BrushBorderSubtle}" BorderThickness="1" CornerRadius="{StaticResource RadiusLarge}" Padding="16">
+                <StackPanel Spacing="4">
+                    <TextBlock Text="GASTOS OPERATIVOS" FontFamily="{StaticResource FontFamilyStackSans}" FontSize="{StaticResource FontSizeCaption}" FontWeight="{StaticResource FontWeightBold}" Foreground="{DynamicResource BrushTextSecondary}" />
+                    <TextBlock Text="{Binding EgresosTotalesFormateado}" FontFamily="{StaticResource FontFamilyPlexCondensed}" FontSize="{StaticResource FontSizeHeadline}" FontWeight="{StaticResource FontWeightBold}" Foreground="{DynamicResource BrushError}" />
+                </StackPanel>
+            </Border>
+
+            <Border Grid.Column="6" Background="{DynamicResource BrushSurface}" BorderBrush="{DynamicResource BrushBorderSubtle}" BorderThickness="1" CornerRadius="{StaticResource RadiusLarge}" Padding="16">
+                <StackPanel Spacing="4">
+                    <TextBlock Text="MARGEN NETO OPERATIVO" FontFamily="{StaticResource FontFamilyStackSans}" FontSize="{StaticResource FontSizeCaption}" FontWeight="{StaticResource FontWeightBold}" Foreground="{DynamicResource BrushTextSecondary}" />
+                    <TextBlock Text="{Binding MargenOperativoFormateado}" FontFamily="{StaticResource FontFamilyPlexCondensed}" FontSize="{StaticResource FontSizeHeadline}" FontWeight="{StaticResource FontWeightBold}" Foreground="{DynamicResource BrushSuccess}" />
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- Cuerpo: Izquierda Discriminación por Tarifas de IVA y Gastos / Derecha Historial de Arqueos Z -->
+        <Grid Grid.Row="4" ColumnDefinitions="*,16,*">
+
+            <!-- Izquierda: Desglose Tributario IVA (0%, 5%, 19%) y Registro de Gastos -->
+            <Grid Grid.Column="0" RowDefinitions="*,12,Auto">
+                <Border Grid.Row="0"
+                        Background="{DynamicResource BrushSurface}"
+                        BorderBrush="{DynamicResource BrushBorderSubtle}"
+                        BorderThickness="1"
+                        CornerRadius="{StaticResource RadiusMedium}"
+                        ClipToBounds="True">
+                    <Grid RowDefinitions="Auto,*">
+                        <Border Grid.Row="0" Background="{DynamicResource BrushSurfaceSubtle}" Padding="14,10" BorderBrush="{DynamicResource BrushBorderSubtle}" BorderThickness="0,0,0,1">
+                            <TextBlock Text="DISCRIMINACIÓN FISCAL POR TARIFA DE IVA (0% · 5% · 19%)"
+                                       FontFamily="{StaticResource FontFamilyStackSans}"
+                                       FontSize="{StaticResource FontSizeCaption}"
+                                       FontWeight="{StaticResource FontWeightBold}"
+                                       Foreground="{DynamicResource BrushTextSecondary}" />
+                        </Border>
+                        <DataGrid Grid.Row="1"
+                                  ItemsSource="{Binding DesgloseIvaTarifas}"
+                                  IsReadOnly="True"
+                                  CanUserResizeColumns="True"
+                                  GridLinesVisibility="Horizontal">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="TARIFA" Binding="{Binding CodigoTarifa}" Width="75" FontFamily="{StaticResource FontFamilyPlexCondensed}" />
+                                <DataGridTextColumn Header="CONCEPTO TRIBUTARIO" Binding="{Binding DescripcionTarifa}" Width="*" />
+                                <DataGridTextColumn Header="BASE GRAVABLE" Binding="{Binding BaseFormateada}" Width="125" FontFamily="{StaticResource FontFamilyPlexCondensed}" />
+                                <DataGridTextColumn Header="IVA GENERADO" Binding="{Binding ImpuestoFormateado}" Width="120" FontFamily="{StaticResource FontFamilyPlexCondensed}" />
+                                <DataGridTextColumn Header="TOTAL" Binding="{Binding TotalFormateado}" Width="125" FontFamily="{StaticResource FontFamilyPlexCondensed}" />
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Grid>
+                </Border>
+
+                <!-- Formulario de Registro de Gasto Operativo -->
+                <Border Grid.Row="2"
+                        Background="{DynamicResource BrushSurface}"
+                        BorderBrush="{DynamicResource BrushBorderSubtle}"
+                        BorderThickness="1"
+                        CornerRadius="{StaticResource RadiusMedium}"
+                        Padding="14,10">
+                    <Grid ColumnDefinitions="*,8,170,8,Auto">
+                        <TextBox Grid.Column="0"
+                                 Text="{Binding DescripcionGastoInput}"
+                                 PlaceholderText="Registrar egreso / gasto operativo (ej. Servicios públicos, flete)..." />
+                        <NumericUpDown Grid.Column="2"
+                                       Value="{Binding MontoGastoInput}"
+                                       Minimum="1000"
+                                       Increment="10000"
+                                       FormatString="N0"
+                                       FontFamily="{StaticResource FontFamilyPlexCondensed}" />
+                        <Button Grid.Column="4"
+                                Command="{Binding RegistrarGastoOperativoCommand}"
+                                Background="{DynamicResource BrushPrimary}"
+                                Foreground="{DynamicResource BrushTextOnPrimary}">
+                            <TextBlock Text="Registrar Egreso" FontWeight="{StaticResource FontWeightSemiBold}" />
+                        </Button>
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <!-- Derecha: Auditoría de Arqueos Diarios / Cierres Z -->
+            <Border Grid.Column="2"
+                    Background="{DynamicResource BrushSurface}"
+                    BorderBrush="{DynamicResource BrushBorderSubtle}"
+                    BorderThickness="1"
+                    CornerRadius="{StaticResource RadiusMedium}"
+                    ClipToBounds="True">
+                <Grid RowDefinitions="Auto,*">
+                    <Border Grid.Row="0" Background="{DynamicResource BrushSurfaceSubtle}" Padding="14,10" BorderBrush="{DynamicResource BrushBorderSubtle}" BorderThickness="0,0,0,1">
+                        <TextBlock Text="CONCILIACIÓN DE TURNOS Y ARQUEOS CIEGOS (CIERRE Z)"
+                                   FontFamily="{StaticResource FontFamilyStackSans}"
+                                   FontSize="{StaticResource FontSizeCaption}"
+                                   FontWeight="{StaticResource FontWeightBold}"
+                                   Foreground="{DynamicResource BrushTextSecondary}" />
+                    </Border>
+                    <DataGrid Grid.Row="1"
+                              ItemsSource="{Binding HistorialArqueos}"
+                              IsReadOnly="True"
+                              CanUserResizeColumns="True"
+                              GridLinesVisibility="Horizontal">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="TURNO" Binding="{Binding Id}" Width="70" FontFamily="{StaticResource FontFamilyPlexCondensed}" />
+                            <DataGridTextColumn Header="APERTURA" Binding="{Binding AperturaTexto}" Width="130" FontFamily="{StaticResource FontFamilyPlexCondensed}" />
+                            <DataGridTextColumn Header="ESPERADO" Binding="{Binding EsperadoFormateado}" Width="115" FontFamily="{StaticResource FontFamilyPlexCondensed}" />
+                            <DataGridTextColumn Header="CONTADO" Binding="{Binding ContadoFormateado}" Width="115" FontFamily="{StaticResource FontFamilyPlexCondensed}" />
+                            <DataGridTextColumn Header="DIFERENCIA" Binding="{Binding DiferenciaFormateada}" Width="*" FontFamily="{StaticResource FontFamilyPlexCondensed}" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!-- Barra de Estado -->
+        <Border Grid.Row="6"
+                Background="{DynamicResource BrushSurface}"
+                BorderBrush="{DynamicResource BrushBorderSubtle}"
+                BorderThickness="1"
+                CornerRadius="{StaticResource RadiusSmall}"
+                Padding="12,8">
+            <TextBlock Text="{Binding MensajeEstado}" FontWeight="{StaticResource FontWeightMedium}" />
+        </Border>
+    </Grid>
+</UserControl>

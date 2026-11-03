@@ -1,4 +1,5 @@
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Styling;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -16,6 +17,9 @@ public partial class ShellViewModel : ViewModelBase
     public CajaTurnoViewModel CajaTurnoVm { get; }
     public DashboardViewModel DashboardVm { get; }
     public RegistroUsuarioViewModel RegistroClienteVm { get; }
+    public PersonalRolesViewModel PersonalRolesVm { get; }
+    public ComprasProveedoresViewModel ComprasProveedoresVm { get; }
+    public ContabilidadDianViewModel ContabilidadDianVm { get; }
 
     [ObservableProperty]
     public partial ViewModelBase PaginaActual { get; set; }
@@ -26,6 +30,9 @@ public partial class ShellViewModel : ViewModelBase
     [NotifyPropertyChangedFor(nameof(EsModuloTurno))]
     [NotifyPropertyChangedFor(nameof(EsModuloDashboard))]
     [NotifyPropertyChangedFor(nameof(EsModuloClientes))]
+    [NotifyPropertyChangedFor(nameof(EsModuloPersonal))]
+    [NotifyPropertyChangedFor(nameof(EsModuloCompras))]
+    [NotifyPropertyChangedFor(nameof(EsModuloContabilidad))]
     public partial string ModuloActivo { get; set; } = "POS";
 
     [ObservableProperty]
@@ -43,11 +50,50 @@ public partial class ShellViewModel : ViewModelBase
     [ObservableProperty]
     public partial bool TemaOscuroActivo { get; set; }
 
+    // Filtrado Dinámico RBAC y Modo Pantalla Completa (Cajero Puro)
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(AnchoColumnaSidebar))]
+    [NotifyPropertyChangedFor(nameof(EsModoCajeroPantallaCompleta))]
+    public partial bool MostrarBarraLateral { get; set; } = true;
+
+    [ObservableProperty]
+    public partial bool PuedeVerPos { get; set; } = true;
+
+    [ObservableProperty]
+    public partial bool PuedeVerTurno { get; set; } = true;
+
+    [ObservableProperty]
+    public partial bool PuedeVerClientes { get; set; } = true;
+
+    [ObservableProperty]
+    public partial bool PuedeVerInventario { get; set; } = true;
+
+    [ObservableProperty]
+    public partial bool PuedeVerCompras { get; set; } = true;
+
+    [ObservableProperty]
+    public partial bool PuedeVerPersonal { get; set; } = true;
+
+    [ObservableProperty]
+    public partial bool PuedeVerContabilidad { get; set; } = true;
+
+    [ObservableProperty]
+    public partial bool PuedeVerDashboard { get; set; } = true;
+
+    public GridLength AnchoColumnaSidebar => MostrarBarraLateral
+        ? new GridLength(240)
+        : new GridLength(0);
+
+    public bool EsModoCajeroPantallaCompleta => !MostrarBarraLateral;
+
     public bool EsModuloPos => ModuloActivo == "POS";
     public bool EsModuloInventario => ModuloActivo == "Inventario";
     public bool EsModuloTurno => ModuloActivo == "Turno";
     public bool EsModuloDashboard => ModuloActivo == "Dashboard";
     public bool EsModuloClientes => ModuloActivo == "Clientes";
+    public bool EsModuloPersonal => ModuloActivo == "Personal";
+    public bool EsModuloCompras => ModuloActivo == "Compras";
+    public bool EsModuloContabilidad => ModuloActivo == "Contabilidad";
 
     public event Action? SesionCerrada;
 
@@ -58,6 +104,10 @@ public partial class ShellViewModel : ViewModelBase
         CajaTurnoVm = new CajaTurnoViewModel();
         DashboardVm = new DashboardViewModel();
         RegistroClienteVm = new RegistroUsuarioViewModel();
+        PersonalRolesVm = new PersonalRolesViewModel();
+        ComprasProveedoresVm = new ComprasProveedoresViewModel();
+        ContabilidadDianVm = new ContabilidadDianViewModel();
+
         RegistroClienteVm.ConfigurarModo(ModoRegistroUsuario.ClientePos);
         PaginaActual = PosVm;
     }
@@ -68,7 +118,10 @@ public partial class ShellViewModel : ViewModelBase
         InventarioViewModel inventarioVm,
         CajaTurnoViewModel cajaTurnoVm,
         DashboardViewModel dashboardVm,
-        RegistroUsuarioViewModel registroClienteVm)
+        RegistroUsuarioViewModel registroClienteVm,
+        PersonalRolesViewModel? personalRolesVm = null,
+        ComprasProveedoresViewModel? comprasProveedoresVm = null,
+        ContabilidadDianViewModel? contabilidadDianVm = null)
     {
         _sesion = sesion;
         PosVm = posVm;
@@ -76,6 +129,10 @@ public partial class ShellViewModel : ViewModelBase
         CajaTurnoVm = cajaTurnoVm;
         DashboardVm = dashboardVm;
         RegistroClienteVm = registroClienteVm;
+        PersonalRolesVm = personalRolesVm ?? new PersonalRolesViewModel();
+        ComprasProveedoresVm = comprasProveedoresVm ?? new ComprasProveedoresViewModel();
+        ContabilidadDianVm = contabilidadDianVm ?? new ContabilidadDianViewModel();
+
         RegistroClienteVm.ConfigurarModo(ModoRegistroUsuario.ClientePos);
         PaginaActual = PosVm;
     }
@@ -86,9 +143,58 @@ public partial class ShellViewModel : ViewModelBase
         {
             NombreUsuarioActivo = _sesion.Usuario.NombreUsuario;
             RolUsuarioActivo = _sesion.Usuario.Empleado?.Rol?.Nombre ?? "Operador";
+            AplicarPermisosDeNavegacion(_sesion);
+        }
+        else
+        {
+            HabilitarTodosLosModulos();
         }
 
-        await PosVm.InicializarEstadoCajaAsync();
+        var moduloInicial = DeterminarModuloInicial();
+        await NavegarAsync(moduloInicial);
+    }
+
+    public void AplicarPermisosDeNavegacion(ISesionActual sesion)
+    {
+        PuedeVerPos = sesion.Tiene(Permiso.Vender);
+        PuedeVerTurno = sesion.Tiene(Permiso.AbrirCerrarTurno);
+        PuedeVerClientes = sesion.Tiene(Permiso.GestionarClientes) || sesion.Tiene(Permiso.Vender);
+        PuedeVerInventario = sesion.Tiene(Permiso.VerInventario) || sesion.Tiene(Permiso.AjustarInventario);
+        PuedeVerCompras = sesion.Tiene(Permiso.GestionarCompras) || sesion.Tiene(Permiso.Reabastecer) || sesion.Tiene(Permiso.GestionarProductos);
+        PuedeVerPersonal = sesion.Tiene(Permiso.GestionarPersonal) || sesion.Tiene(Permiso.GestionarRoles);
+        PuedeVerContabilidad = sesion.Tiene(Permiso.GestionarContabilidad) || sesion.Tiene(Permiso.VerFinanzas) || sesion.Tiene(Permiso.VerAuditoria);
+        PuedeVerDashboard = sesion.Tiene(Permiso.VerReportes) || sesion.Tiene(Permiso.VerFinanzas) || sesion.Tiene(Permiso.VerAuditoria);
+
+        var tieneModulosBackOffice = PuedeVerInventario || PuedeVerCompras || PuedeVerPersonal || PuedeVerContabilidad || PuedeVerDashboard;
+        var esCajeroPuro = PuedeVerPos && !tieneModulosBackOffice && !sesion.Tiene(Permiso.AutorizarOperacionPos);
+
+        // Si el rol es Cajero puro, se oculta la barra lateral y opera en pantalla completa POS
+        MostrarBarraLateral = !esCajeroPuro;
+    }
+
+    private void HabilitarTodosLosModulos()
+    {
+        PuedeVerPos = true;
+        PuedeVerTurno = true;
+        PuedeVerClientes = true;
+        PuedeVerInventario = true;
+        PuedeVerCompras = true;
+        PuedeVerPersonal = true;
+        PuedeVerContabilidad = true;
+        PuedeVerDashboard = true;
+        MostrarBarraLateral = true;
+    }
+
+    private string DeterminarModuloInicial()
+    {
+        if (PuedeVerPos) return "POS";
+        if (PuedeVerInventario) return "Inventario";
+        if (PuedeVerCompras) return "Compras";
+        if (PuedeVerContabilidad) return "Contabilidad";
+        if (PuedeVerDashboard) return "Dashboard";
+        if (PuedeVerPersonal) return "Personal";
+        if (PuedeVerTurno) return "Turno";
+        return "POS";
     }
 
     [RelayCommand]
@@ -114,7 +220,7 @@ public partial class ShellViewModel : ViewModelBase
 
             case "Turno":
                 TituloModulo = "Control de Turno y Arqueo de Caja";
-                SubtituloModulo = "Apertura con base inicial, Cierre Z y estado de numeración DIAN";
+                SubtituloModulo = "Apertura con base inicial, retiros parciales, Cierre Z y numeración DIAN";
                 PaginaActual = CajaTurnoVm;
                 await CajaTurnoVm.VerificarEstadoCajaAsync();
                 break;
@@ -124,6 +230,27 @@ public partial class ShellViewModel : ViewModelBase
                 SubtituloModulo = "Registro de adquirentes DIAN, validación NIT (Módulo 11) y Ley 1581 de 2012";
                 RegistroClienteVm.ConfigurarModo(ModoRegistroUsuario.ClientePos);
                 PaginaActual = RegistroClienteVm;
+                break;
+
+            case "Personal":
+                TituloModulo = "Administración de Personal y Roles RBAC";
+                SubtituloModulo = "Empleados, cargos, credenciales de usuario y matriz de 18 permisos";
+                PaginaActual = PersonalRolesVm;
+                await PersonalRolesVm.CargarDatosAsync();
+                break;
+
+            case "Compras":
+                TituloModulo = "Compras, Proveedores y Reabastecimiento";
+                SubtituloModulo = "Directorio de proveedores NIT, categorías y sugeridos automáticos por stock mínimo";
+                PaginaActual = ComprasProveedoresVm;
+                await ComprasProveedoresVm.CargarDatosAsync();
+                break;
+
+            case "Contabilidad":
+                TituloModulo = "Contabilidad y Exportación Fiscal DIAN";
+                SubtituloModulo = "Discriminación de IVA (0%, 5%, 19%), gastos operativos, cierres Z y reportes CSV/PDF";
+                PaginaActual = ContabilidadDianVm;
+                await ContabilidadDianVm.ActualizarConsolidadoFiscalAsync();
                 break;
 
             case "Dashboard":

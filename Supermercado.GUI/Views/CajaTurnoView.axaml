@@ -1,12 +1,13 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:Supermercado.GUI.ViewModels"
+             xmlns:ventas="using:Supermercado.Entidades.Ventas"
              x:Class="Supermercado.GUI.Views.CajaTurnoView"
              x:DataType="vm:CajaTurnoViewModel"
              FontFamily="{StaticResource FontFamilyPlex}">
 
     <ScrollViewer Margin="16">
-        <StackPanel Spacing="16" MaxWidth="920">
+        <StackPanel Spacing="16" MaxWidth="960">
             <!-- Estado Actual del Turno y Resolución DIAN -->
             <Grid ColumnDefinitions="*,16,*">
                 <!-- Tarjeta Estado de Turno -->
@@ -25,15 +26,18 @@
                                        FontWeight="{StaticResource FontWeightBold}" />
                         </StackPanel>
 
-                        <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,8,Auto,8,Auto">
+                        <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,8,Auto,8,Auto,8,Auto">
                             <TextBlock Grid.Row="0" Grid.Column="0" Text="Turno Activo ID:" Foreground="{DynamicResource BrushTextSecondary}" />
                             <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding TurnoActualId}" FontFamily="{StaticResource FontFamilyPlexCondensed}" FontWeight="{StaticResource FontWeightBold}" />
 
                             <TextBlock Grid.Row="2" Grid.Column="0" Text="Efectivo Inicial (Base):" Foreground="{DynamicResource BrushTextSecondary}" />
                             <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding EfectivoInicialFormateado}" FontFamily="{StaticResource FontFamilyPlexCondensed}" FontWeight="{StaticResource FontWeightBold}" Foreground="{DynamicResource BrushPrimary}" />
 
-                            <TextBlock Grid.Row="4" Grid.Column="0" Text="Apertura:" Foreground="{DynamicResource BrushTextSecondary}" />
-                            <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding FechaAperturaTexto}" FontFamily="{StaticResource FontFamilyPlexCondensed}" />
+                            <TextBlock Grid.Row="4" Grid.Column="0" Text="Total Retiros (Recogidas):" Foreground="{DynamicResource BrushTextSecondary}" />
+                            <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding TotalRetirosFormateado}" FontFamily="{StaticResource FontFamilyPlexCondensed}" FontWeight="{StaticResource FontWeightBold}" Foreground="{DynamicResource BrushWarning}" />
+
+                            <TextBlock Grid.Row="6" Grid.Column="0" Text="Apertura:" Foreground="{DynamicResource BrushTextSecondary}" />
+                            <TextBlock Grid.Row="6" Grid.Column="1" Text="{Binding FechaAperturaTexto}" FontFamily="{StaticResource FontFamilyPlexCondensed}" />
                         </Grid>
 
                         <TextBlock Text="{Binding MensajeEstado}"
@@ -146,6 +150,106 @@
                     </StackPanel>
                 </Border>
             </Grid>
+
+            <!-- 3. Retiros Parciales / Recogidas de Efectivo a Caja Fuerte -->
+            <Border Background="{DynamicResource BrushSurface}"
+                    BorderBrush="{DynamicResource BrushBorderSubtle}"
+                    BorderThickness="1"
+                    CornerRadius="{StaticResource RadiusLarge}"
+                    Padding="20">
+                <StackPanel Spacing="14">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <LucideIcon Kind="Banknote" Size="20" Foreground="{DynamicResource BrushPrimary}" />
+                        <TextBlock Text="3. Retiro Parcial de Efectivo (Recogida a Caja Fuerte)"
+                                   FontFamily="{StaticResource FontFamilyStackSans}"
+                                   FontSize="{StaticResource FontSizeSubtitle}"
+                                   FontWeight="{StaticResource FontWeightBold}" />
+                    </StackPanel>
+
+                    <TextBlock Text="Registra salidas de efectivo hacia tesorería/caja fuerte durante el turno activo. Exige autorización con PIN de supervisor y descuenta automáticamente del efectivo esperado en el Arqueo Z."
+                               TextWrapping="Wrap"
+                               FontSize="{StaticResource FontSizeBody}"
+                               Foreground="{DynamicResource BrushTextSecondary}" />
+
+                    <Grid ColumnDefinitions="190,12,*,12,170,12,170,12,Auto">
+                        <StackPanel Grid.Column="0" Spacing="4">
+                            <TextBlock Text="Monto a Retirar (COP)" FontSize="{StaticResource FontSizeCaption}" FontWeight="{StaticResource FontWeightSemiBold}" Foreground="{DynamicResource BrushTextSecondary}" />
+                            <NumericUpDown Value="{Binding MontoRetiroInput}"
+                                           Minimum="1000"
+                                           Increment="10000"
+                                           FormatString="N0"
+                                           FontFamily="{StaticResource FontFamilyPlexCondensed}"
+                                           FontWeight="{StaticResource FontWeightBold}"
+                                           MinHeight="40" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="2" Spacing="4">
+                            <TextBlock Text="Motivo / Concepto de Recogida" FontSize="{StaticResource FontSizeCaption}" FontWeight="{StaticResource FontWeightSemiBold}" Foreground="{DynamicResource BrushTextSecondary}" />
+                            <TextBox Text="{Binding MotivoRetiroInput}"
+                                     PlaceholderText="Ej. Recogida de seguridad caja fuerte"
+                                     MinHeight="40" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="4" Spacing="4">
+                            <TextBlock Text="Usuario Supervisor" FontSize="{StaticResource FontSizeCaption}" FontWeight="{StaticResource FontWeightSemiBold}" Foreground="{DynamicResource BrushTextSecondary}" />
+                            <TextBox Text="{Binding UsuarioSupervisorRetiroInput}"
+                                     PlaceholderText="Ej. super1"
+                                     MinHeight="40" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="6" Spacing="4">
+                            <TextBlock Text="PIN Supervisor" FontSize="{StaticResource FontSizeCaption}" FontWeight="{StaticResource FontWeightSemiBold}" Foreground="{DynamicResource BrushTextSecondary}" />
+                            <TextBox Text="{Binding PinSupervisorRetiroInput}"
+                                     PasswordChar="•"
+                                     PlaceholderText="PIN / Clave"
+                                     FontFamily="{StaticResource FontFamilyPlexCondensed}"
+                                     MinHeight="40" />
+                        </StackPanel>
+
+                        <Button Grid.Column="8"
+                                Command="{Binding RegistrarRetiroEfectivoCommand}"
+                                IsEnabled="{Binding TurnoAbierto}"
+                                VerticalAlignment="Bottom"
+                                Background="{DynamicResource BrushPrimary}"
+                                Foreground="{DynamicResource BrushTextOnPrimary}"
+                                MinHeight="40"
+                                Padding="16,0">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <LucideIcon Kind="ShieldCheck" Size="16" />
+                                <TextBlock Text="Registrar Retiro" FontWeight="{StaticResource FontWeightBold}" />
+                            </StackPanel>
+                        </Button>
+                    </Grid>
+
+                    <!-- Historial de Retiros del Turno Actual -->
+                    <ItemsControl ItemsSource="{Binding RetirosTurnoActual}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="ventas:RetiroCaja">
+                                <Border Background="{DynamicResource BrushSurfaceSubtle}"
+                                        BorderBrush="{DynamicResource BrushBorderSubtle}"
+                                        BorderThickness="1"
+                                        CornerRadius="{StaticResource RadiusSmall}"
+                                        Margin="0,3"
+                                        Padding="12,8">
+                                    <Grid ColumnDefinitions="Auto,12,*,Auto">
+                                        <LucideIcon Grid.Column="0" Kind="ArrowUpRight" Size="16" Foreground="{DynamicResource BrushWarning}" VerticalAlignment="Center" />
+                                        <TextBlock Grid.Column="2"
+                                                   Text="{Binding Motivo}"
+                                                   FontWeight="{StaticResource FontWeightMedium}"
+                                                   VerticalAlignment="Center" />
+                                        <TextBlock Grid.Column="3"
+                                                   Text="{Binding Monto, StringFormat='- $ {0:N0}'}"
+                                                   FontFamily="{StaticResource FontFamilyPlexCondensed}"
+                                                   FontWeight="{StaticResource FontWeightBold}"
+                                                   Foreground="{DynamicResource BrushWarning}"
+                                                   VerticalAlignment="Center" />
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
         </StackPanel>
     </ScrollViewer>
 </UserControl>

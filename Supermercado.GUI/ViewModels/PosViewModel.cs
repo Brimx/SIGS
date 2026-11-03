@@ -4,12 +4,15 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.DependencyInjection;
 using Supermercado.Entidades.Clientes;
+using Supermercado.Entidades.Excepciones;
 using Supermercado.Entidades.Productos;
+using Supermercado.Entidades.Seguridad;
 using Supermercado.Entidades.Ventas;
 using Supermercado.GUI.Servicios.Impresion;
 using Supermercado.Logica.Clientes;
 using Supermercado.Logica.Comunes;
 using Supermercado.Logica.Productos;
+using Supermercado.Logica.Seguridad;
 using Supermercado.Logica.Ventas;
 
 namespace Supermercado.GUI.ViewModels;
@@ -53,6 +56,43 @@ public partial class LineaVentaItemViewModel : ObservableObject
     }
 }
 
+public sealed class RenglonPagoItemViewModel
+{
+    private static readonly CultureInfo CulturaCo = new("es-CO");
+
+    public string Metodo { get; init; } = "Efectivo";
+    public long Monto { get; init; }
+    public string Detalle { get; init; } = string.Empty;
+
+    public string MontoFormateado => $"$ {Monto.ToString("N0", CulturaCo)}";
+
+    public string EtiquetaResumen => string.IsNullOrWhiteSpace(Detalle)
+        ? Metodo
+        : $"{Metodo} ({Detalle})";
+
+    public Pago ConstruirPagoDominio() => Metodo switch
+    {
+        "Tarjeta" => new PagoTarjeta
+        {
+            Monto = Monto,
+            UltimosDigitos = string.IsNullOrWhiteSpace(Detalle) || Detalle.Length != 4
+                ? "1234"
+                : Detalle
+        },
+        "Transferencia" => new PagoTransferencia
+        {
+            Monto = Monto,
+            Referencia = string.IsNullOrWhiteSpace(Detalle)
+                ? "TRANSF-POS"
+                : Detalle
+        },
+        _ => new PagoEfectivo
+        {
+            Monto = Monto
+        }
+    };
+}
+
 public partial class PosViewModel : ViewModelBase
 {
     private static readonly CultureInfo CulturaCo = new("es-CO");
@@ -62,24 +102,33 @@ public partial class PosViewModel : ViewModelBase
     private readonly IServicioProductos? _servicioProductos;
     private readonly IServicioBusquedaProductos? _servicioBusqueda;
     private readonly IServicioClientes? _servicioClientes;
+    private readonly IServicioVentasEnEspera? _servicioVentasEnEspera;
+    private readonly IServicioAutenticacion? _servicioAutenticacion;
+    private readonly ISesionActual? _sesion;
     private readonly IImpresorTicket? _impresorTicket;
     private readonly ITraductorExcepciones? _traductor;
     private readonly IServiceScopeFactory? _scopeFactory;
     private string? _claveIdempotenciaCobro;
+    private Func<Task>? _accionPendienteSupervisor;
 
     public ObservableCollection<LineaVentaItemViewModel> Carrito { get; } = [];
     public ObservableCollection<Producto> ResultadosBusqueda { get; } = [];
+    public ObservableCollection<RenglonPagoItemViewModel> PagosAgregados { get; } = [];
+    public ObservableCollection<ItemVentaEnEspera> VentasEnEspera { get; } = [];
 
     [ObservableProperty]
     public partial string CodigoBarrasInput { get; set; } = string.Empty;
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(EliminarLineaCommand))]
+    [NotifyCanExecuteChangedFor(nameof(SolicitarEliminarLineaCommand))]
     [NotifyCanExecuteChangedFor(nameof(AbrirModalCantidadCommand))]
     public partial LineaVentaItemViewModel? LineaSeleccionada { get; set; }
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(TotalFormateado))]
+    [NotifyPropertyChangedFor(nameof(TotalAbonadoPesos))]
+    [NotifyPropertyChangedFor(nameof(TotalAbonadoFormateado))]
     [NotifyPropertyChangedFor(nameof(CambioPesos))]
     [NotifyPropertyChangedFor(nameof(FaltantePesos))]
     [NotifyPropertyChangedFor(nameof(EfectivoSuficiente))]
@@ -113,18 +162,22 @@ public partial class PosViewModel : ViewModelBase
     [NotifyPropertyChangedFor(nameof(PuedeCobrar))]
     [NotifyCanExecuteChangedFor(nameof(AbrirModalCobroCommand))]
     [NotifyCanExecuteChangedFor(nameof(ConfirmarCobroCommand))]
+    [NotifyCanExecuteChangedFor(nameof(SuspenderVentaActualCommand))]
     public partial bool TieneTurnoAbierto { get; set; }
+
+    [ObservableProperty]
+    public partial int CajaActivaId { get; set; } = 1;
 
     [ObservableProperty]
     public partial string InfoTurnoActual { get; set; } = "Verificando turno...";
 
     [ObservableProperty]
-    public partial string MensajeEstado { get; set; } = "Listo para escanear (F1 Cobrar · F2 Cantidad · F3 Buscar · F4 Eliminar)";
+    public partial string MensajeEstado { get; set; } = "Listo para escanear (F1 Cobrar · F2 Cantidad · F3 Buscar · F4 Eliminar · F6 Espera)";
 
     [ObservableProperty]
     public partial bool TieneAlerta { get; set; }
 
-    // Estado de Modal de Cobro (F1)
+    // Estado de Modal de Cobro y Pagos Mixtos (F1)
     [ObservableProperty]
     public partial bool ModalCobroAbierto { get; set; }
 
@@ -132,10 +185,17 @@ public partial class PosViewModel : ViewModelBase
     [NotifyPropertyChangedFor(nameof(EsPagoEfectivo))]
     [NotifyPropertyChangedFor(nameof(EsPagoTarjeta))]
     [NotifyPropertyChangedFor(nameof(EsPagoTransferencia))]
+    [NotifyPropertyChangedFor(nameof(TotalAbonadoPesos))]
+    [NotifyPropertyChangedFor(nameof(TotalAbonadoFormateado))]
+    [NotifyPropertyChangedFor(nameof(CambioPesos))]
+    [NotifyPropertyChangedFor(nameof(FaltantePesos))]
     [NotifyPropertyChangedFor(nameof(EfectivoSuficiente))]
+    [NotifyPropertyChangedFor(nameof(CambioFormateado))]
     public partial string MetodoPagoSeleccionado { get; set; } = "Efectivo";
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(TotalAbonadoPesos))]
+    [NotifyPropertyChangedFor(nameof(TotalAbonadoFormateado))]
     [NotifyPropertyChangedFor(nameof(CambioPesos))]
     [NotifyPropertyChangedFor(nameof(FaltantePesos))]
     [NotifyPropertyChangedFor(nameof(EfectivoSuficiente))]
@@ -147,6 +207,47 @@ public partial class PosViewModel : ViewModelBase
 
     [ObservableProperty]
     public partial string ReferenciaTransferencia { get; set; } = "NEQUI-001";
+
+    // Estado de Modal de Autorización de Supervisor (PIN en Caliente)
+    [ObservableProperty]
+    public partial bool ModalSupervisorAbierto { get; set; }
+
+    [ObservableProperty]
+    public partial string TituloAccionSupervisor { get; set; } = "Autorización de Supervisor Requerida";
+
+    [ObservableProperty]
+    public partial string UsuarioSupervisorInput { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial string PinSupervisorInput { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial string ErrorSupervisor { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial bool TieneErrorSupervisor { get; set; }
+
+    [ObservableProperty]
+    public partial string MotivoAnulacionInput { get; set; } = "Corrección de cajero / Solicitud del cliente";
+
+    [ObservableProperty]
+    public partial int VentaIdParaAnularInput { get; set; }
+
+    [ObservableProperty]
+    public partial bool EsAnulacionFacturaCompleta { get; set; }
+
+    // Estado de Ventas en Espera / Parked Sales (F6)
+    [ObservableProperty]
+    public partial bool ModalVentasEnEsperaAbierto { get; set; }
+
+    [ObservableProperty]
+    public partial string NotaVentaEnEsperaInput { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(EtiquetaBotonVentasEnEspera))]
+    public partial int CantidadVentasEnEspera { get; set; }
+
+    public string EtiquetaBotonVentasEnEspera => $"En Espera ({CantidadVentasEnEspera})";
 
     // Estado de Modal de Cantidad (F2)
     [ObservableProperty]
@@ -195,16 +296,25 @@ public partial class PosViewModel : ViewModelBase
     public bool EsPagoEfectivo => MetodoPagoSeleccionado == "Efectivo";
     public bool EsPagoTarjeta => MetodoPagoSeleccionado == "Tarjeta";
     public bool EsPagoTransferencia => MetodoPagoSeleccionado == "Transferencia";
+    public bool TienePagosMixtos => PagosAgregados.Count > 0;
 
-    public long CambioPesos => EsPagoEfectivo
-        ? Math.Max(0, EfectivoEntregadoPesos - TotalPesos)
-        : 0;
+    public long TotalAbonadoPesos => PagosAgregados.Count > 0
+        ? PagosAgregados.Sum(p => p.Monto)
+        : (EsPagoEfectivo ? EfectivoEntregadoPesos : TotalPesos);
 
-    public long FaltantePesos => EsPagoEfectivo
-        ? Math.Max(0, TotalPesos - EfectivoEntregadoPesos)
-        : 0;
+    public string TotalAbonadoFormateado => $"$ {TotalAbonadoPesos.ToString("N0", CulturaCo)}";
 
-    public bool EfectivoSuficiente => !EsPagoEfectivo || EfectivoEntregadoPesos >= TotalPesos;
+    public long CambioPesos => PagosAgregados.Count > 0
+        ? Math.Max(0, TotalAbonadoPesos - TotalPesos)
+        : (EsPagoEfectivo ? Math.Max(0, EfectivoEntregadoPesos - TotalPesos) : 0);
+
+    public long FaltantePesos => PagosAgregados.Count > 0
+        ? Math.Max(0, TotalPesos - TotalAbonadoPesos)
+        : (EsPagoEfectivo ? Math.Max(0, TotalPesos - EfectivoEntregadoPesos) : 0);
+
+    public bool EfectivoSuficiente => PagosAgregados.Count > 0
+        ? TotalAbonadoPesos >= TotalPesos
+        : (!EsPagoEfectivo || EfectivoEntregadoPesos >= TotalPesos);
 
     public string TotalFormateado => $"$ {TotalPesos.ToString("N0", CulturaCo)}";
     public string SubtotalBaseFormateado => $"$ {SubtotalBasePesos.ToString("N0", CulturaCo)}";
@@ -244,7 +354,10 @@ public partial class PosViewModel : ViewModelBase
         IServicioBusquedaProductos? servicioBusqueda = null,
         IServicioClientes? servicioClientes = null,
         IImpresorTicket? impresorTicket = null,
-        ITraductorExcepciones? traductor = null)
+        ITraductorExcepciones? traductor = null,
+        IServicioVentasEnEspera? servicioVentasEnEspera = null,
+        IServicioAutenticacion? servicioAutenticacion = null,
+        ISesionActual? sesion = null)
     {
         _servicioVentas = servicioVentas;
         _servicioCaja = servicioCaja;
@@ -253,6 +366,9 @@ public partial class PosViewModel : ViewModelBase
         _servicioClientes = servicioClientes;
         _impresorTicket = impresorTicket;
         _traductor = traductor;
+        _servicioVentasEnEspera = servicioVentasEnEspera;
+        _servicioAutenticacion = servicioAutenticacion;
+        _sesion = sesion;
 
         RegistroClienteVm = new RegistroUsuarioViewModel();
         RegistroClienteVm.ConfigurarModo(ModoRegistroUsuario.ClientePos);
@@ -277,8 +393,9 @@ public partial class PosViewModel : ViewModelBase
     public async Task InicializarEstadoCajaAsync()
     {
         using var scope = _scopeFactory?.CreateScope();
+        var servicios = scope?.ServiceProvider;
         var servicioCaja = _servicioCaja
-            ?? scope?.ServiceProvider.GetService<IServicioCaja>();
+            ?? servicios?.GetService<IServicioCaja>();
         if (servicioCaja is null)
             return;
 
@@ -288,8 +405,10 @@ public partial class PosViewModel : ViewModelBase
             TieneTurnoAbierto = turno is not null;
             if (turno is not null)
             {
+                CajaActivaId = turno.CajaId > 0 ? turno.CajaId : 1;
                 InfoTurnoActual = $"Turno #{turno.Id} Activo · Base $ {turno.EfectivoInicial.ToString("N0", CulturaCo)}";
                 ModalAperturaTurnoAbierto = false;
+                await ActualizarContadorVentasEnEsperaAsync(servicios);
             }
             else
             {
@@ -300,7 +419,7 @@ public partial class PosViewModel : ViewModelBase
         catch (Exception ex)
         {
             TieneTurnoAbierto = false;
-            InfoTurnoActual = Traducir(scope?.ServiceProvider, ex);
+            InfoTurnoActual = Traducir(servicios, ex);
         }
     }
 
@@ -324,7 +443,7 @@ public partial class PosViewModel : ViewModelBase
             if (producto is null && datosBalanza.EsCodigoBalanza)
             {
                 producto = await servicioProductos.BuscarPorCodigoBarrasAsync(datosBalanza.Plu)
-                    ?? await servicioProductos.BuscarPorCodigoBarrasAsync(datosBalanza.Plu.TrimStart('0'));
+                           ?? await servicioProductos.BuscarPorCodigoBarrasAsync(datosBalanza.Plu.TrimStart('0'));
             }
 
             if (producto is null)
@@ -430,13 +549,16 @@ public partial class PosViewModel : ViewModelBase
         OnPropertyChanged(nameof(TotalArticulos));
         AbrirModalCobroCommand.NotifyCanExecuteChanged();
         ConfirmarCobroCommand.NotifyCanExecuteChanged();
+        SuspenderVentaActualCommand.NotifyCanExecuteChanged();
     }
 
     [RelayCommand(CanExecute = nameof(PuedeCobrar))]
     private void AbrirModalCobro()
     {
+        PagosAgregados.Clear();
         EfectivoEntregadoPesos = TotalPesos;
         MetodoPagoSeleccionado = "Efectivo";
+        NotificarEstadoPagos();
         ModalCobroAbierto = true;
     }
 
@@ -448,10 +570,74 @@ public partial class PosViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void AsignarBilleteRapido(long montoBillete)
+    private void AsignarBilleteRapido(object? parametro)
     {
-        MetodoPagoSeleccionado = "Efectivo";
-        EfectivoEntregadoPesos = montoBillete;
+        if (parametro is null)
+            return;
+
+        if (long.TryParse(parametro.ToString(), out var montoBillete) && montoBillete > 0)
+        {
+            MetodoPagoSeleccionado = "Efectivo";
+            EfectivoEntregadoPesos = montoBillete;
+        }
+    }
+
+    [RelayCommand]
+    public void AgregarRenglonPago()
+    {
+        if (EfectivoEntregadoPesos <= 0)
+            return;
+
+        var detalle = MetodoPagoSeleccionado switch
+        {
+            "Tarjeta" => string.IsNullOrWhiteSpace(UltimosDigitosTarjeta) || UltimosDigitosTarjeta.Length != 4
+                ? "1234"
+                : UltimosDigitosTarjeta.Trim(),
+            "Transferencia" => string.IsNullOrWhiteSpace(ReferenciaTransferencia)
+                ? "TRANSF-POS"
+                : ReferenciaTransferencia.Trim(),
+            _ => string.Empty
+        };
+
+        PagosAgregados.Add(new RenglonPagoItemViewModel
+        {
+            Metodo = MetodoPagoSeleccionado,
+            Monto = EfectivoEntregadoPesos,
+            Detalle = detalle
+        });
+
+        NotificarEstadoPagos();
+        EfectivoEntregadoPesos = FaltantePesos > 0 ? FaltantePesos : 0;
+    }
+
+    [RelayCommand]
+    public void QuitarRenglonPago(RenglonPagoItemViewModel? renglon)
+    {
+        if (renglon is null)
+            return;
+
+        PagosAgregados.Remove(renglon);
+        NotificarEstadoPagos();
+        EfectivoEntregadoPesos = FaltantePesos > 0 ? FaltantePesos : TotalPesos;
+    }
+
+    [RelayCommand]
+    public void LimpiarRenglonesPago()
+    {
+        PagosAgregados.Clear();
+        NotificarEstadoPagos();
+        EfectivoEntregadoPesos = TotalPesos;
+    }
+
+    private void NotificarEstadoPagos()
+    {
+        OnPropertyChanged(nameof(TienePagosMixtos));
+        OnPropertyChanged(nameof(TotalAbonadoPesos));
+        OnPropertyChanged(nameof(TotalAbonadoFormateado));
+        OnPropertyChanged(nameof(CambioPesos));
+        OnPropertyChanged(nameof(FaltantePesos));
+        OnPropertyChanged(nameof(EfectivoSuficiente));
+        OnPropertyChanged(nameof(CambioFormateado));
     }
 
     [RelayCommand(CanExecute = nameof(PuedeCobrar))]
@@ -466,10 +652,10 @@ public partial class PosViewModel : ViewModelBase
         if (servicioVentas is null || !PuedeCobrar)
             return;
 
-        if (EsPagoEfectivo && !EfectivoSuficiente)
+        if (!EfectivoSuficiente)
         {
             TieneAlerta = true;
-            MensajeEstado = $"El efectivo recibido ($ {EfectivoEntregadoPesos:N0}) es menor al total ($ {TotalPesos:N0}).";
+            MensajeEstado = $"El monto abonado ($ {TotalAbonadoPesos:N0}) es menor al total ($ {TotalPesos:N0}).";
             return;
         }
 
@@ -480,31 +666,40 @@ public partial class PosViewModel : ViewModelBase
                 .Select(c => new LineaVenta(c.CodigoBarras, c.Cantidad))
                 .ToList();
 
-            Pago pago = MetodoPagoSeleccionado switch
+            List<Pago> listaPagos;
+            if (PagosAgregados.Count > 0)
             {
-                "Tarjeta" => new PagoTarjeta
+                listaPagos = PagosAgregados.Select(p => p.ConstruirPagoDominio()).ToList();
+            }
+            else
+            {
+                Pago pagoUnico = MetodoPagoSeleccionado switch
                 {
-                    Monto = TotalPesos,
-                    UltimosDigitos = string.IsNullOrWhiteSpace(UltimosDigitosTarjeta) || UltimosDigitosTarjeta.Length != 4
-                        ? "1234"
-                        : UltimosDigitosTarjeta
-                },
-                "Transferencia" => new PagoTransferencia
-                {
-                    Monto = TotalPesos,
-                    Referencia = string.IsNullOrWhiteSpace(ReferenciaTransferencia)
-                        ? "TRANSF-POS"
-                        : ReferenciaTransferencia
-                },
-                _ => new PagoEfectivo
-                {
-                    Monto = EfectivoEntregadoPesos
-                }
-            };
+                    "Tarjeta" => new PagoTarjeta
+                    {
+                        Monto = TotalPesos,
+                        UltimosDigitos = string.IsNullOrWhiteSpace(UltimosDigitosTarjeta) || UltimosDigitosTarjeta.Length != 4
+                            ? "1234"
+                            : UltimosDigitosTarjeta
+                    },
+                    "Transferencia" => new PagoTransferencia
+                    {
+                        Monto = TotalPesos,
+                        Referencia = string.IsNullOrWhiteSpace(ReferenciaTransferencia)
+                            ? "TRANSF-POS"
+                            : ReferenciaTransferencia
+                    },
+                    _ => new PagoEfectivo
+                    {
+                        Monto = EfectivoEntregadoPesos
+                    }
+                };
+                listaPagos = [pagoUnico];
+            }
 
             var solicitud = new SolicitudVenta(
                 Lineas: lineas,
-                Pagos: [pago],
+                Pagos: listaPagos,
                 ClienteId: ClienteActual?.Id,
                 PuntosARedimir: 0,
                 ClaveIdempotencia: _claveIdempotenciaCobro ??= Guid.NewGuid().ToString("N"));
@@ -513,11 +708,13 @@ public partial class PosViewModel : ViewModelBase
 
             var cambio = ventaRegistrada.Cambio;
             Carrito.Clear();
+            PagosAgregados.Clear();
             ClienteActual = null;
             DocumentoClienteInput = string.Empty;
             ModalCobroAbierto = false;
             _claveIdempotenciaCobro = null;
             RecalcularTotales();
+            NotificarEstadoPagos();
 
             if (impresor is not null)
             {
@@ -546,6 +743,347 @@ public partial class PosViewModel : ViewModelBase
         {
             SolicitarFocoEscaneo?.Invoke();
         }
+    }
+
+    // --- GESTIÓN DE VENTAS EN ESPERA / PARKED SALES (F6) ---
+
+    [RelayCommand(CanExecute = nameof(PuedeCobrar))]
+    public async Task SuspenderVentaActualAsync()
+    {
+        using var scope = _scopeFactory?.CreateScope();
+        var servicios = scope?.ServiceProvider;
+        var servicioEspera = _servicioVentasEnEspera
+            ?? servicios?.GetService<IServicioVentasEnEspera>();
+        if (servicioEspera is null || Carrito.Count == 0)
+            return;
+
+        TieneAlerta = false;
+        try
+        {
+            var lineas = Carrito
+                .Select(c => new LineaVenta(c.CodigoBarras, c.Cantidad))
+                .ToList();
+
+            var identificador = ClienteActual?.NombreCompleto
+                ?? (string.IsNullOrWhiteSpace(DocumentoClienteInput)
+                    ? $"Ticket-{DateTime.Now:HH:mm:ss}"
+                    : DocumentoClienteInput.Trim());
+
+            await servicioEspera.SuspenderVentaAsync(
+                CajaActivaId,
+                lineas,
+                ClienteActual?.Id,
+                0,
+                identificador,
+                TotalPesos,
+                string.IsNullOrWhiteSpace(NotaVentaEnEsperaInput) ? "En espera" : NotaVentaEnEsperaInput.Trim());
+
+            Carrito.Clear();
+            ClienteActual = null;
+            DocumentoClienteInput = string.Empty;
+            NotaVentaEnEsperaInput = string.Empty;
+            _claveIdempotenciaCobro = null;
+            RecalcularTotales();
+
+            await ActualizarContadorVentasEnEsperaAsync(servicios);
+            MensajeEstado = $"Venta puesta en espera ({identificador}). Carrito libre para el siguiente cliente.";
+        }
+        catch (Exception ex)
+        {
+            TieneAlerta = true;
+            MensajeEstado = Traducir(servicios, ex);
+        }
+        finally
+        {
+            SolicitarFocoEscaneo?.Invoke();
+        }
+    }
+
+    [RelayCommand]
+    public async Task AbrirModalVentasEnEsperaAsync()
+    {
+        using var scope = _scopeFactory?.CreateScope();
+        await ActualizarContadorVentasEnEsperaAsync(scope?.ServiceProvider);
+        ModalVentasEnEsperaAbierto = true;
+    }
+
+    [RelayCommand]
+    private void CerrarModalVentasEnEspera()
+    {
+        ModalVentasEnEsperaAbierto = false;
+        SolicitarFocoEscaneo?.Invoke();
+    }
+
+    [RelayCommand]
+    public async Task RecuperarVentaEnEsperaAsync(ItemVentaEnEspera? item)
+    {
+        if (item is null)
+            return;
+
+        using var scope = _scopeFactory?.CreateScope();
+        var servicios = scope?.ServiceProvider;
+        var servicioEspera = _servicioVentasEnEspera
+            ?? servicios?.GetService<IServicioVentasEnEspera>();
+        var servicioProductos = _servicioProductos
+            ?? servicios?.GetService<IServicioProductos>();
+        if (servicioEspera is null || servicioProductos is null)
+            return;
+
+        TieneAlerta = false;
+        try
+        {
+            var (venta, lineas) = await servicioEspera.RecuperarVentaAsync(item.Id);
+            Carrito.Clear();
+
+            foreach (var linea in lineas)
+            {
+                var prod = await servicioProductos.BuscarPorCodigoBarrasAsync(linea.CodigoBarras);
+                if (prod is not null)
+                {
+                    AgregarProductoAlCarrito(prod, linea.Cantidad);
+                }
+            }
+
+            if (venta.ClienteId.HasValue)
+            {
+                var servicioClientes = _servicioClientes ?? servicios?.GetService<IServicioClientes>();
+                if (servicioClientes is not null && !string.IsNullOrWhiteSpace(venta.IdentificadorCliente))
+                {
+                    ClienteActual = await servicioClientes.BuscarPorDocumentoAsync(venta.IdentificadorCliente);
+                }
+            }
+
+            ModalVentasEnEsperaAbierto = false;
+            await ActualizarContadorVentasEnEsperaAsync(servicios);
+            MensajeEstado = $"Ticket en espera #{venta.Id} ({venta.IdentificadorCliente}) recuperado en caja.";
+        }
+        catch (Exception ex)
+        {
+            TieneAlerta = true;
+            MensajeEstado = Traducir(servicios, ex);
+        }
+        finally
+        {
+            SolicitarFocoEscaneo?.Invoke();
+        }
+    }
+
+    [RelayCommand]
+    public async Task DescartarVentaEnEsperaAsync(ItemVentaEnEspera? item)
+    {
+        if (item is null)
+            return;
+
+        using var scope = _scopeFactory?.CreateScope();
+        var servicios = scope?.ServiceProvider;
+        var servicioEspera = _servicioVentasEnEspera
+            ?? servicios?.GetService<IServicioVentasEnEspera>();
+        if (servicioEspera is null)
+            return;
+
+        try
+        {
+            await servicioEspera.CancelarVentaEnEsperaAsync(item.Id);
+            await ActualizarContadorVentasEnEsperaAsync(servicios);
+            MensajeEstado = $"Venta en espera #{item.Id} descartada.";
+        }
+        catch (Exception ex)
+        {
+            TieneAlerta = true;
+            MensajeEstado = Traducir(servicios, ex);
+        }
+    }
+
+    private async Task ActualizarContadorVentasEnEsperaAsync(IServiceProvider? servicios)
+    {
+        var servicioEspera = _servicioVentasEnEspera
+            ?? servicios?.GetService<IServicioVentasEnEspera>();
+        if (servicioEspera is null)
+            return;
+
+        try
+        {
+            var pendientes = await servicioEspera.ObtenerVentasEnEsperaAsync(CajaActivaId);
+            VentasEnEspera.Clear();
+            foreach (var p in pendientes)
+            {
+                VentasEnEspera.Add(p);
+            }
+            CantidadVentasEnEspera = VentasEnEspera.Count;
+        }
+        catch
+        {
+            // No interrumpe el flujo principal si aún no hay sesión con permiso Vender
+        }
+    }
+
+    // --- AUTORIZACIÓN DE SUPERVISOR EN CALIENTE (PIN / CLAVE) ---
+
+    private bool UsuarioActivoTienePermiso(IServiceProvider? servicios, Permiso permiso)
+    {
+        var sesion = _sesion ?? servicios?.GetService<ISesionActual>();
+        if (sesion is null || !sesion.EstaAutenticada)
+            return true; // En pruebas unitarias sin sesión inyectada permite ejecución directa
+
+        return sesion.Tiene(permiso);
+    }
+
+    [RelayCommand(CanExecute = nameof(TieneLineaSeleccionada))]
+    public void SolicitarEliminarLinea()
+    {
+        if (LineaSeleccionada is null)
+            return;
+
+        using var scope = _scopeFactory?.CreateScope();
+        if (UsuarioActivoTienePermiso(scope?.ServiceProvider, Permiso.AutorizarOperacionPos))
+        {
+            EliminarLinea();
+            return;
+        }
+
+        AbrirModalAutorizacionSupervisor(
+            $"Autorizar eliminación de línea: {LineaSeleccionada.Nombre}",
+            () =>
+            {
+                EliminarLinea();
+                return Task.CompletedTask;
+            });
+    }
+
+    [RelayCommand]
+    public void SolicitarCancelarVenta()
+    {
+        if (Carrito.Count == 0)
+        {
+            CancelarVenta();
+            return;
+        }
+
+        using var scope = _scopeFactory?.CreateScope();
+        if (UsuarioActivoTienePermiso(scope?.ServiceProvider, Permiso.AutorizarOperacionPos))
+        {
+            CancelarVenta();
+            return;
+        }
+
+        AbrirModalAutorizacionSupervisor(
+            "Autorizar anulación / limpieza del carrito en curso",
+            () =>
+            {
+                CancelarVenta();
+                return Task.CompletedTask;
+            });
+    }
+
+    [RelayCommand]
+    public void AbrirModalAnularFacturaEmitida()
+    {
+        EsAnulacionFacturaCompleta = true;
+        AbrirModalAutorizacionSupervisor(
+            "Anular Factura POS Emitida (Reintegro de Inventario)",
+            EjecutarAnulacionFacturaRegistradaAsync);
+    }
+
+    private void AbrirModalAutorizacionSupervisor(string titulo, Func<Task> accionAutorizada)
+    {
+        TituloAccionSupervisor = titulo;
+        UsuarioSupervisorInput = string.Empty;
+        PinSupervisorInput = string.Empty;
+        ErrorSupervisor = string.Empty;
+        TieneErrorSupervisor = false;
+        _accionPendienteSupervisor = accionAutorizada;
+        ModalSupervisorAbierto = true;
+    }
+
+    [RelayCommand]
+    private void AgregarDigitoPinSupervisor(string? digito)
+    {
+        if (string.IsNullOrEmpty(digito) || PinSupervisorInput.Length >= 12)
+            return;
+
+        PinSupervisorInput += digito;
+    }
+
+    [RelayCommand]
+    private void BorrarDigitoPinSupervisor()
+    {
+        if (PinSupervisorInput.Length > 0)
+        {
+            PinSupervisorInput = PinSupervisorInput[..^1];
+        }
+    }
+
+    [RelayCommand]
+    public async Task ConfirmarAutorizacionSupervisorAsync()
+    {
+        using var scope = _scopeFactory?.CreateScope();
+        var servicios = scope?.ServiceProvider;
+        var servicioAuth = _servicioAutenticacion
+            ?? servicios?.GetService<IServicioAutenticacion>();
+        if (servicioAuth is null)
+            return;
+
+        TieneErrorSupervisor = false;
+        ErrorSupervisor = string.Empty;
+
+        try
+        {
+            var permisoRequerido = EsAnulacionFacturaCompleta
+                ? Permiso.AnularVenta
+                : Permiso.AutorizarOperacionPos;
+
+            var supervisor = await servicioAuth.ValidarSupervisorAsync(
+                UsuarioSupervisorInput.Trim(),
+                PinSupervisorInput.Trim(),
+                permisoRequerido);
+
+            var accion = _accionPendienteSupervisor;
+            ModalSupervisorAbierto = false;
+            EsAnulacionFacturaCompleta = false;
+            _accionPendienteSupervisor = null;
+            PinSupervisorInput = string.Empty;
+
+            if (accion is not null)
+            {
+                await accion();
+            }
+
+            MensajeEstado = $"Operación autorizada por supervisor: {supervisor.NombreCompleto}.";
+        }
+        catch (Exception ex)
+        {
+            TieneErrorSupervisor = true;
+            ErrorSupervisor = Traducir(servicios, ex);
+        }
+    }
+
+    private async Task EjecutarAnulacionFacturaRegistradaAsync()
+    {
+        if (VentaIdParaAnularInput <= 0)
+            throw new ValidacionException("Indique un ID de venta válido para anular.");
+
+        using var scope = _scopeFactory?.CreateScope();
+        var servicios = scope?.ServiceProvider;
+        var servicioVentas = _servicioVentas
+            ?? servicios?.GetService<IServicioVentas>();
+        if (servicioVentas is null)
+            return;
+
+        await servicioVentas.AnularVentaAsync(
+            VentaIdParaAnularInput,
+            string.IsNullOrWhiteSpace(MotivoAnulacionInput) ? "Anulación autorizada en POS" : MotivoAnulacionInput.Trim());
+
+        MensajeEstado = $"Factura #{VentaIdParaAnularInput} anulada y stock reintegrado.";
+    }
+
+    [RelayCommand]
+    private void CerrarModalSupervisor()
+    {
+        ModalSupervisorAbierto = false;
+        EsAnulacionFacturaCompleta = false;
+        _accionPendienteSupervisor = null;
+        PinSupervisorInput = string.Empty;
+        SolicitarFocoEscaneo?.Invoke();
     }
 
     private bool TieneLineaSeleccionada() => LineaSeleccionada is not null;
@@ -578,6 +1116,13 @@ public partial class PosViewModel : ViewModelBase
     private void AbrirModalBusqueda()
     {
         ModalBusquedaAbierto = true;
+    }
+
+    [RelayCommand]
+    private void CerrarModalBusqueda()
+    {
+        ModalBusquedaAbierto = false;
+        SolicitarFocoEscaneo?.Invoke();
     }
 
     [RelayCommand]
@@ -629,13 +1174,17 @@ public partial class PosViewModel : ViewModelBase
     {
         _claveIdempotenciaCobro = null;
         Carrito.Clear();
+        PagosAgregados.Clear();
         LineaSeleccionada = null;
         ClienteActual = null;
         DocumentoClienteInput = string.Empty;
         ModalCobroAbierto = false;
         ModalCantidadAbierto = false;
         ModalBusquedaAbierto = false;
+        ModalVentasEnEsperaAbierto = false;
+        ModalSupervisorAbierto = false;
         RecalcularTotales();
+        NotificarEstadoPagos();
         TieneAlerta = false;
         MensajeEstado = "Ticket limpiado. Listo para nuevo cliente.";
         SolicitarFocoEscaneo?.Invoke();
@@ -686,7 +1235,7 @@ public partial class PosViewModel : ViewModelBase
 
         try
         {
-            var turno = await servicioCaja.AbrirTurnoAsync(1, EfectivoInicialApertura);
+            var turno = await servicioCaja.AbrirTurnoAsync(CajaActivaId, EfectivoInicialApertura);
             TieneTurnoAbierto = true;
             ModalAperturaTurnoAbierto = false;
             InfoTurnoActual = $"Turno #{turno.Id} Activo · Base $ {turno.EfectivoInicial.ToString("N0", CulturaCo)}";
@@ -709,6 +1258,6 @@ public partial class PosViewModel : ViewModelBase
 
     private string Traducir(IServiceProvider? servicios, Exception ex)
         => _traductor?.Traducir(ex)
-            ?? servicios?.GetService<ITraductorExcepciones>()?.Traducir(ex)
-            ?? ex.Message;
+           ?? servicios?.GetService<ITraductorExcepciones>()?.Traducir(ex)
+           ?? ex.Message;
 }

@@ -6,15 +6,20 @@
              Background="{DynamicResource BrushBackground}"
              FontFamily="{StaticResource FontFamilyPlex}">
 
-    <Grid ColumnDefinitions="240,*">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="{Binding AnchoColumnaSidebar}" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
 
-        <!-- BARRA LATERAL MODULAR (SIDEBAR) -->
+        <!-- BARRA LATERAL MODULAR (SIDEBAR) - OCULTA EN MODO CAJERO PURO PANTALLA COMPLETA -->
         <Border Grid.Column="0"
+                IsVisible="{Binding MostrarBarraLateral}"
                 Background="{DynamicResource BrushSurface}"
                 BorderBrush="{DynamicResource BrushBorderSubtle}"
                 BorderThickness="0,0,1,0"
                 Padding="14,18">
-            <Grid RowDefinitions="Auto,24,*,Auto">
+            <Grid RowDefinitions="Auto,20,*,Auto">
 
                 <!-- Identidad de Marca SIGS -->
                 <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="10" Margin="6,0">
@@ -40,84 +45,131 @@
                     </StackPanel>
                 </StackPanel>
 
-                <!-- Menú de Módulos -->
-                <StackPanel Grid.Row="2" Spacing="6">
-                    <TextBlock Text="OPERACIÓN DE CAJA"
-                               Margin="8,0,0,4"
-                               FontFamily="{StaticResource FontFamilyStackSans}"
-                               FontSize="10.5"
-                               FontWeight="{StaticResource FontWeightBold}"
-                               Foreground="{DynamicResource BrushTextMuted}" />
+                <!-- Menú de Módulos Filtrado Dinámicamente por Permisos RBAC -->
+                <ScrollViewer Grid.Row="2">
+                    <StackPanel Spacing="5">
+                        <TextBlock Text="OPERACIÓN DE CAJA"
+                                   IsVisible="{Binding PuedeVerPos}"
+                                   Margin="8,0,0,4"
+                                   FontFamily="{StaticResource FontFamilyStackSans}"
+                                   FontSize="10.5"
+                                   FontWeight="{StaticResource FontWeightBold}"
+                                   Foreground="{DynamicResource BrushTextMuted}" />
 
-                    <Button Command="{Binding NavegarCommand}"
-                            CommandParameter="POS"
-                            HorizontalAlignment="Stretch"
-                            HorizontalContentAlignment="Left"
-                            MinHeight="42"
-                            Padding="12,0">
-                        <StackPanel Orientation="Horizontal" Spacing="10">
-                            <LucideIcon Kind="ShoppingCart" Size="18" Foreground="{DynamicResource BrushPrimary}" />
-                            <TextBlock Text="Punto de Venta (POS)" FontWeight="{StaticResource FontWeightSemiBold}" />
-                        </StackPanel>
-                    </Button>
+                        <Button Command="{Binding NavegarCommand}"
+                                CommandParameter="POS"
+                                IsVisible="{Binding PuedeVerPos}"
+                                HorizontalAlignment="Stretch"
+                                HorizontalContentAlignment="Left"
+                                MinHeight="40"
+                                Padding="12,0">
+                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                <LucideIcon Kind="ShoppingCart" Size="18" Foreground="{DynamicResource BrushPrimary}" />
+                                <TextBlock Text="Punto de Venta (POS)" FontWeight="{StaticResource FontWeightSemiBold}" />
+                            </StackPanel>
+                        </Button>
 
-                    <Button Command="{Binding NavegarCommand}"
-                            CommandParameter="Turno"
-                            HorizontalAlignment="Stretch"
-                            HorizontalContentAlignment="Left"
-                            MinHeight="42"
-                            Padding="12,0">
-                        <StackPanel Orientation="Horizontal" Spacing="10">
-                            <LucideIcon Kind="Wallet" Size="18" Foreground="{DynamicResource BrushPrimary}" />
-                            <TextBlock Text="Turno y Arqueo Z" FontWeight="{StaticResource FontWeightSemiBold}" />
-                        </StackPanel>
-                    </Button>
+                        <Button Command="{Binding NavegarCommand}"
+                                CommandParameter="Turno"
+                                IsVisible="{Binding PuedeVerTurno}"
+                                HorizontalAlignment="Stretch"
+                                HorizontalContentAlignment="Left"
+                                MinHeight="40"
+                                Padding="12,0">
+                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                <LucideIcon Kind="Wallet" Size="18" Foreground="{DynamicResource BrushPrimary}" />
+                                <TextBlock Text="Turno y Arqueo Z" FontWeight="{StaticResource FontWeightSemiBold}" />
+                            </StackPanel>
+                        </Button>
 
-                    <Button Command="{Binding NavegarCommand}"
-                            CommandParameter="Clientes"
-                            HorizontalAlignment="Stretch"
-                            HorizontalContentAlignment="Left"
-                            MinHeight="42"
-                            Padding="12,0">
-                        <StackPanel Orientation="Horizontal" Spacing="10">
-                            <LucideIcon Kind="UserPlus" Size="18" Foreground="{DynamicResource BrushPrimary}" />
-                            <TextBlock Text="Clientes / Habeas Data" FontWeight="{StaticResource FontWeightSemiBold}" />
-                        </StackPanel>
-                    </Button>
+                        <Button Command="{Binding NavegarCommand}"
+                                CommandParameter="Clientes"
+                                IsVisible="{Binding PuedeVerClientes}"
+                                HorizontalAlignment="Stretch"
+                                HorizontalContentAlignment="Left"
+                                MinHeight="40"
+                                Padding="12,0">
+                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                <LucideIcon Kind="UserPlus" Size="18" Foreground="{DynamicResource BrushPrimary}" />
+                                <TextBlock Text="Clientes / Habeas Data" FontWeight="{StaticResource FontWeightSemiBold}" />
+                            </StackPanel>
+                        </Button>
 
-                    <Separator Background="{DynamicResource BrushBorderSubtle}" Margin="0,8" Height="1" />
+                        <Separator Background="{DynamicResource BrushBorderSubtle}" Margin="0,6" Height="1" />
 
-                    <TextBlock Text="ADMINISTRACIÓN"
-                               Margin="8,0,0,4"
-                               FontFamily="{StaticResource FontFamilyStackSans}"
-                               FontSize="10.5"
-                               FontWeight="{StaticResource FontWeightBold}"
-                               Foreground="{DynamicResource BrushTextMuted}" />
+                        <TextBlock Text="GESTIÓN Y BACK-OFFICE"
+                                   Margin="8,0,0,4"
+                                   FontFamily="{StaticResource FontFamilyStackSans}"
+                                   FontSize="10.5"
+                                   FontWeight="{StaticResource FontWeightBold}"
+                                   Foreground="{DynamicResource BrushTextMuted}" />
 
-                    <Button Command="{Binding NavegarCommand}"
-                            CommandParameter="Inventario"
-                            HorizontalAlignment="Stretch"
-                            HorizontalContentAlignment="Left"
-                            MinHeight="42"
-                            Padding="12,0">
-                        <StackPanel Orientation="Horizontal" Spacing="10">
-                            <LucideIcon Kind="Boxes" Size="18" Foreground="{DynamicResource BrushPrimary}" />
-                            <TextBlock Text="Inventario y Mermas" FontWeight="{StaticResource FontWeightSemiBold}" />
-                        </StackPanel>
-                    </Button>
+                        <Button Command="{Binding NavegarCommand}"
+                                CommandParameter="Inventario"
+                                IsVisible="{Binding PuedeVerInventario}"
+                                HorizontalAlignment="Stretch"
+                                HorizontalContentAlignment="Left"
+                                MinHeight="40"
+                                Padding="12,0">
+                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                <LucideIcon Kind="Boxes" Size="18" Foreground="{DynamicResource BrushPrimary}" />
+                                <TextBlock Text="Inventario y Mermas" FontWeight="{StaticResource FontWeightSemiBold}" />
+                            </StackPanel>
+                        </Button>
 
-                    <Button Command="{Binding NavegarCommand}"
-                            CommandParameter="Dashboard"
-                            HorizontalAlignment="Stretch"
-                            HorizontalContentAlignment="Left"
-                            MinHeight="42"
-                            Padding="12,0">
-                        <StackPanel Orientation="Horizontal" Spacing="10">
-                            <LucideIcon Kind="LayoutDashboard" Size="18" Foreground="{DynamicResource BrushPrimary}" />
-                            <TextBlock Text="Dashboard Ejecutivo" FontWeight="{StaticResource FontWeightSemiBold}" />
-                        </StackPanel>
-                    </Button>
-                </StackPanel>
+                        <Button Command="{Binding NavegarCommand}"
+                                CommandParameter="Compras"
+                                IsVisible="{Binding PuedeVerCompras}"
+                                HorizontalAlignment="Stretch"
+                                HorizontalContentAlignment="Left"
+                                MinHeight="40"
+                                Padding="12,0">
+                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                <LucideIcon Kind="Truck" Size="18" Foreground="{DynamicResource BrushPrimary}" />
+                                <TextBlock Text="Compras y Proveedores" FontWeight="{StaticResource FontWeightSemiBold}" />
+                            </StackPanel>
+                        </Button>
+
+                        <Button Command="{Binding NavegarCommand}"
+                                CommandParameter="Personal"
+                                IsVisible="{Binding PuedeVerPersonal}"
+                                HorizontalAlignment="Stretch"
+                                HorizontalContentAlignment="Left"
+                                MinHeight="40"
+                                Padding="12,0">
+                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                <LucideIcon Kind="Users" Size="18" Foreground="{DynamicResource BrushPrimary}" />
+                                <TextBlock Text="Personal y Roles RBAC" FontWeight="{StaticResource FontWeightSemiBold}" />
+                            </StackPanel>
+                        </Button>
+
+                        <Button Command="{Binding NavegarCommand}"
+                                CommandParameter="Contabilidad"
+                                IsVisible="{Binding PuedeVerContabilidad}"
+                                HorizontalAlignment="Stretch"
+                                HorizontalContentAlignment="Left"
+                                MinHeight="40"
+                                Padding="12,0">
+                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                <LucideIcon Kind="FileSpreadsheet" Size="18" Foreground="{DynamicResource BrushPrimary}" />
+                                <TextBlock Text="Contabilidad Fiscal DIAN" FontWeight="{StaticResource FontWeightSemiBold}" />
+                            </StackPanel>
+                        </Button>
+
+                        <Button Command="{Binding NavegarCommand}"
+                                CommandParameter="Dashboard"
+                                IsVisible="{Binding PuedeVerDashboard}"
+                                HorizontalAlignment="Stretch"
+                                HorizontalContentAlignment="Left"
+                                MinHeight="40"
+                                Padding="12,0">
+                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                <LucideIcon Kind="LayoutDashboard" Size="18" Foreground="{DynamicResource BrushPrimary}" />
+                                <TextBlock Text="Dashboard Ejecutivo" FontWeight="{StaticResource FontWeightSemiBold}" />
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </ScrollViewer>
 
                 <!-- Pie de Barra Lateral: Usuario, Tema y Cierre de Sesión -->
                 <StackPanel Grid.Row="3" Spacing="10">
@@ -166,13 +218,13 @@
         <!-- ÁREA PRINCIPAL (HEADER + CONTENIDO TRANSACCIONAL) -->
         <Grid Grid.Column="1" RowDefinitions="Auto,*">
 
-            <!-- Header Superior -->
+            <!-- Header Superior con Controles Rápidos para Modo Cajero Pantalla Completa -->
             <Border Grid.Row="0"
                     Background="{DynamicResource BrushSurface}"
                     BorderBrush="{DynamicResource BrushBorderSubtle}"
                     BorderThickness="0,0,0,1"
                     Padding="20,12">
-                <Grid ColumnDefinitions="*,Auto">
+                <Grid ColumnDefinitions="*,Auto,10,Auto">
                     <StackPanel Grid.Column="0" Spacing="2">
                         <TextBlock Text="{Binding TituloModulo}"
                                    FontFamily="{StaticResource FontFamilyStackSans}"
@@ -184,7 +236,36 @@
                                    Foreground="{DynamicResource BrushTextSecondary}" />
                     </StackPanel>
 
-                    <Border Grid.Column="1"
+                    <!-- Barra compacta visible cuando la barra lateral está oculta (Modo Cajero Puro) -->
+                    <StackPanel Grid.Column="1"
+                                Orientation="Horizontal"
+                                Spacing="8"
+                                IsVisible="{Binding EsModoCajeroPantallaCompleta}"
+                                VerticalAlignment="Center">
+                        <Button Command="{Binding NavegarCommand}" CommandParameter="POS" Padding="10,6">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <LucideIcon Kind="ShoppingCart" Size="15" Foreground="{DynamicResource BrushPrimary}" />
+                                <TextBlock Text="Terminal POS" FontWeight="{StaticResource FontWeightSemiBold}" />
+                            </StackPanel>
+                        </Button>
+                        <Button Command="{Binding NavegarCommand}" CommandParameter="Turno" Padding="10,6">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <LucideIcon Kind="Wallet" Size="15" Foreground="{DynamicResource BrushPrimary}" />
+                                <TextBlock Text="Turno / Arqueo Z" FontWeight="{StaticResource FontWeightSemiBold}" />
+                            </StackPanel>
+                        </Button>
+                        <Button Command="{Binding AlternarTemaCommand}" Padding="8,6" ToolTip.Tip="Alternar Tema">
+                            <LucideIcon Kind="Sun" Size="15" />
+                        </Button>
+                        <Button Command="{Binding CerrarSesionCommand}" Padding="10,6">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <LucideIcon Kind="LogOut" Size="15" Foreground="{DynamicResource BrushError}" />
+                                <TextBlock Text="{Binding NombreUsuarioActivo, StringFormat='Salir ({0})'}" Foreground="{DynamicResource BrushError}" FontWeight="{StaticResource FontWeightSemiBold}" />
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+
+                    <Border Grid.Column="3"
                             Background="{DynamicResource BrushSuccessSubtle}"
                             BorderBrush="{DynamicResource BrushSuccess}"
                             BorderThickness="1"
