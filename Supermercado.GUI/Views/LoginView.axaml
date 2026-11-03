@@ -25,7 +25,7 @@
                             HorizontalAlignment="Center">
                         <LucideIcon Kind="Store"
                                     Size="24"
-                                    Foreground="{DynamicResource BrushPrimary}"
+                                    Foreground="{DynamicResource BrushPrimaryText}"
                                     HorizontalAlignment="Center"
                                     VerticalAlignment="Center" />
                     </Border>
@@ -115,7 +115,7 @@
                             </Button>
 
                             <Button Grid.Row="6" Grid.Column="0" Command="{Binding LimpiarPinCommand}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" MinHeight="44" ToolTip.Tip="Limpiar PIN">
-                                <TextBlock Text="C" FontFamily="{StaticResource FontFamilyPlexCondensed}" FontSize="{StaticResource FontSizeSubtitle}" FontWeight="{StaticResource FontWeightBold}" Foreground="{DynamicResource BrushError}" />
+                                <TextBlock Text="C" FontFamily="{StaticResource FontFamilyPlexCondensed}" FontSize="{StaticResource FontSizeSubtitle}" FontWeight="{StaticResource FontWeightBold}" Foreground="{DynamicResource BrushErrorText}" />
                             </Button>
                             <Button Grid.Row="6" Grid.Column="2" Command="{Binding AgregarDigitoPinCommand}" CommandParameter="0" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" MinHeight="44">
                                 <TextBlock Text="0" FontFamily="{StaticResource FontFamilyPlexCondensed}" FontSize="{StaticResource FontSizeTitle}" FontWeight="{StaticResource FontWeightBold}" />
@@ -129,34 +129,34 @@
                     <!-- Alerta de Error -->
                     <Border IsVisible="{Binding TieneError}"
                             Background="{DynamicResource BrushErrorSubtle}"
-                            BorderBrush="{DynamicResource BrushError}"
+                            BorderBrush="{DynamicResource BrushErrorText}"
                             BorderThickness="1"
                             CornerRadius="{StaticResource RadiusSmall}"
                             Padding="12,8">
                         <StackPanel Orientation="Horizontal" Spacing="8">
-                            <LucideIcon Kind="CircleAlert" Size="16" Foreground="{DynamicResource BrushError}" />
+                            <LucideIcon Kind="CircleAlert" Size="16" Foreground="{DynamicResource BrushErrorText}" />
                             <TextBlock Text="{Binding MensajeError}"
                                        TextWrapping="Wrap"
                                        FontSize="{StaticResource FontSizeBody}"
                                        FontWeight="{StaticResource FontWeightMedium}"
-                                       Foreground="{DynamicResource BrushError}" />
+                                       Foreground="{DynamicResource BrushErrorText}" />
                         </StackPanel>
                     </Border>
 
                     <!-- Alerta de Éxito / Estado Demo -->
                     <Border IsVisible="{Binding TieneExito}"
                             Background="{DynamicResource BrushSuccessSubtle}"
-                            BorderBrush="{DynamicResource BrushSuccess}"
+                            BorderBrush="{DynamicResource BrushSuccessText}"
                             BorderThickness="1"
                             CornerRadius="{StaticResource RadiusSmall}"
                             Padding="12,8">
                         <StackPanel Orientation="Horizontal" Spacing="8">
-                            <LucideIcon Kind="Check" Size="16" Foreground="{DynamicResource BrushSuccess}" />
+                            <LucideIcon Kind="Check" Size="16" Foreground="{DynamicResource BrushSuccessText}" />
                             <TextBlock Text="{Binding MensajeExito}"
                                        TextWrapping="Wrap"
                                        FontSize="{StaticResource FontSizeBody}"
                                        FontWeight="{StaticResource FontWeightMedium}"
-                                       Foreground="{DynamicResource BrushSuccess}" />
+                                       Foreground="{DynamicResource BrushSuccessText}" />
                         </StackPanel>
                     </Border>
 
@@ -166,8 +166,7 @@
                             HorizontalAlignment="Stretch"
                             HorizontalContentAlignment="Center"
                             MinHeight="44"
-                            Background="{DynamicResource BrushPrimary}"
-                            Foreground="{DynamicResource BrushTextOnPrimary}"
+                            Classes="Primary" Theme="{DynamicResource SolidButton}"
                             CornerRadius="{StaticResource RadiusMedium}">
                         <StackPanel Orientation="Horizontal" Spacing="8">
                             <LucideIcon Kind="KeyRound" Size="18" />
@@ -197,7 +196,7 @@
                                 BorderThickness="1"
                                 CornerRadius="{StaticResource RadiusSmall}">
                             <StackPanel Orientation="Horizontal" Spacing="6">
-                                <LucideIcon Kind="Sparkles" Size="14" Foreground="{DynamicResource BrushPrimary}" />
+                                <LucideIcon Kind="Sparkles" Size="14" Foreground="{DynamicResource BrushPrimaryText}" />
                                 <TextBlock Text="Cuentas de Prueba y Base Demo (10 Roles)"
                                            FontSize="{StaticResource FontSizeCaption}"
                                            FontWeight="{StaticResource FontWeightMedium}"
@@ -217,7 +216,7 @@
                                         HorizontalContentAlignment="Center"
                                         MinHeight="36"
                                         Background="{DynamicResource BrushPrimarySubtle}"
-                                        Foreground="{DynamicResource BrushPrimary}">
+                                        Foreground="{DynamicResource BrushPrimaryText}">
                                     <StackPanel Orientation="Horizontal" Spacing="6">
                                         <LucideIcon Kind="Database" Size="16" />
                                         <TextBlock Text="Sembrar Base Demo (10 Roles + Catálogo + Turno)"
@@ -228,7 +227,7 @@
 
                                 <TextBlock Text="Selecciona un rol para autocompletar credenciales:"
                                            FontSize="{StaticResource FontSizeCaption}"
-                                           Foreground="{DynamicResource BrushTextTertiary}" />
+                                           Foreground="{DynamicResource BrushTextSecondary}" />
 
                                 <WrapPanel Orientation="Horizontal">
                                     <Button Command="{Binding SeleccionarCredencialDemoCommand}" CommandParameter="admin" Margin="2" Padding="6,3" CornerRadius="4">
@@ -265,6 +264,18 @@
                             </StackPanel>
                         </Border>
                     </StackPanel>
+
+                    <Button Command="{Binding AbrirConfiguracionCommand}"
+                            HorizontalAlignment="Center"
+                            Theme="{DynamicResource BorderlessButton}"
+                            Padding="8,4">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <LucideIcon Kind="Settings" Size="14" Foreground="{DynamicResource BrushTextSecondary}" />
+                            <TextBlock Text="Configuración y textos legales"
+                                       FontSize="{StaticResource FontSizeCaption}"
+                                       Foreground="{DynamicResource BrushTextSecondary}" />
+                        </StackPanel>
+                    </Button>
                 </StackPanel>
 
             </StackPanel>

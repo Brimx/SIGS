@@ -4,6 +4,9 @@ using Avalonia.Markup.Xaml;
 using Microsoft.Extensions.DependencyInjection;
 using Supermercado.Entidades.Contratos;
 using Supermercado.GUI.Servicios.Impresion;
+using Supermercado.GUI.Servicios.Legal;
+using Supermercado.GUI.Servicios.Preferencias;
+using Supermercado.GUI.Servicios.Tema;
 using Supermercado.GUI.ViewModels;
 using Supermercado.GUI.Views;
 using Supermercado.Logica;
@@ -41,6 +44,10 @@ public partial class App : Application
 
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
+            // El tema se aplica antes de crear la ventana para evitar el destello del tema por defecto.
+            var preferencias = _appScope.ServiceProvider.GetRequiredService<IServicioPreferencias>();
+            TemaSigs.Aplicar(preferencias.LeerTema());
+
             var mainVm = _appScope.ServiceProvider.GetRequiredService<MainViewModel>();
             desktop.MainWindow = new MainWindow
             {
@@ -55,6 +62,10 @@ public partial class App : Application
     public static void ConfigurarServicios(IServiceCollection servicios)
     {
         servicios.AgregarLogica();
+
+        // Preferencias visuales de la máquina (tema persistido) y textos legales empaquetados
+        servicios.AddSingleton<IServicioPreferencias, ServicioPreferencias>();
+        servicios.AddSingleton<IServicioTextosLegales, ServicioTextosLegales>();
 
         // Adaptador de impresión térmica ESC/POS 80mm por defecto
         servicios.AddScoped<IImpresorTicket, ImpresorTicketEscPos>();
@@ -80,6 +91,7 @@ public partial class App : Application
             sp.GetRequiredService<IServiceScopeFactory>()));
         servicios.AddTransient(sp => new ContabilidadDianViewModel(
             sp.GetRequiredService<IServiceScopeFactory>()));
+        servicios.AddTransient<ConfiguracionViewModel>();
         servicios.AddTransient<ShellViewModel>();
         servicios.AddTransient<MainViewModel>();
     }

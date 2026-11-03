@@ -49,6 +49,7 @@ public partial class LoginViewModel : ViewModelBase
     public RegistroUsuarioViewModel RegistroOnboarding { get; }
 
     public event Action? AutenticacionExitosa;
+    public event Action? ConfiguracionSolicitada;
 
     public LoginViewModel()
     {
@@ -291,4 +292,7 @@ public partial class LoginViewModel : ViewModelBase
     {
         MostrarOnboarding = true;
     }
+
+    [RelayCommand]
+    private void AbrirConfiguracion() => ConfiguracionSolicitada?.Invoke();
 }

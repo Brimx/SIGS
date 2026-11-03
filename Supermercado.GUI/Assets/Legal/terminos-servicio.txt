@@ -1,0 +1,26 @@
+TÉRMINOS Y CONDICIONES DE USO — SIGS
+Versión 1.0 · Borrador operativo sujeto a revisión jurídica
+
+1. OBJETO
+SIGS es un sistema de gestión de supermercado para la operación de caja, inventario, compras, personal y contabilidad.
+
+2. LICENCIA DE USO
+La empresa operadora recibe una licencia de uso interno, no exclusiva e intransferible. No se permite su reventa ni su uso por terceros sin autorización.
+
+3. RESPONSABILIDAD DEL OPERADOR
+La empresa es responsable de la veracidad de los datos, de la custodia de las credenciales y del cumplimiento de sus obligaciones tributarias y laborales.
+
+4. INTEGRACIONES OPCIONALES
+Las integraciones con servicios externos (por ejemplo, facturación electrónica o respaldos en la nube) requieren claves propias de la empresa. SIGS no incluye credenciales ni servicios de terceros.
+
+5. DOCUMENTOS ELECTRÓNICOS
+SIGS genera documentos equivalentes electrónicos POS conforme a la Resolución 000165 de 2023. Su uso no constituye por sí mismo certificación, habilitación ni transmisión ante la DIAN; esos trámites corresponden a la empresa y a su proveedor tecnológico autorizado.
+
+6. DISPONIBILIDAD Y RESPALDO
+La empresa debe realizar respaldos periódicos. El fabricante no garantiza la recuperación de datos no respaldados.
+
+7. ACTUALIZACIONES
+El uso del software implica aceptar las actualizaciones necesarias para mantener la compatibilidad y la seguridad.
+
+8. LEGISLACIÓN APLICABLE
+Estos términos se rigen por las leyes de la República de Colombia.

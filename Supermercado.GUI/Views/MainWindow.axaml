@@ -1,6 +1,7 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:Supermercado.GUI.ViewModels"
+        xmlns:views="using:Supermercado.GUI.Views"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d" d:DesignWidth="1360" d:DesignHeight="820"
@@ -18,9 +19,18 @@
         <vm:MainViewModel />
     </Design.DataContext>
 
-    <TransitioningContentControl Content="{Binding VistaActual}">
-        <TransitioningContentControl.PageTransition>
-            <CrossFade Duration="0:0:0.15" />
-        </TransitioningContentControl.PageTransition>
-    </TransitioningContentControl>
+    <Panel>
+        <TransitioningContentControl Content="{Binding VistaActual}">
+            <TransitioningContentControl.PageTransition>
+                <CrossFade Duration="0:0:0.15" />
+            </TransitioningContentControl.PageTransition>
+        </TransitioningContentControl>
+
+        <!-- Overlay compartido por login y shell -->
+        <Border Classes="Scrim" IsVisible="{Binding MostrarConfiguracion}">
+            <views:ConfiguracionView DataContext="{Binding ConfiguracionVm}"
+                                     HorizontalAlignment="Center"
+                                     VerticalAlignment="Center" />
+        </Border>
+    </Panel>
 </Window>

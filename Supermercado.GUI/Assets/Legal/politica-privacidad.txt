@@ -1,0 +1,28 @@
+POLÍTICA DE PRIVACIDAD — SIGS
+Versión 1.0 · Borrador operativo sujeto a revisión jurídica
+
+1. RESPONSABLE
+La empresa operadora del supermercado es la responsable del tratamiento de los datos personales registrados en SIGS.
+
+2. MARCO LEGAL
+Se aplican la Ley 1581 de 2012, el Decreto 1377 de 2013 y las normas que los modifiquen o sustituyan.
+
+3. DATOS TRATADOS
+SIGS registra datos de identificación y contacto de clientes (nombre, documento, teléfono y correo), datos de facturación e historial de compras. No recopila datos sensibles.
+
+4. FINALIDAD
+- Emitir y conservar comprobantes de venta y documentos equivalentes electrónicos ante la DIAN (Resolución 000165 de 2023).
+- Atender garantías, devoluciones y programas de fidelización.
+- Cumplir obligaciones contables y tributarias.
+
+5. DERECHOS DEL TITULAR
+El titular puede conocer, actualizar, rectificar y suprimir sus datos, revocar la autorización otorgada y presentar quejas ante la Superintendencia de Industria y Comercio.
+
+6. CONSERVACIÓN
+Los datos se conservan mientras exista relación comercial y durante los plazos legales contables y tributarios aplicables.
+
+7. SEGURIDAD Y ALCANCE
+SIGS es una aplicación de escritorio. No recopila datos de usuarios ni telemetría, y no envía información a servidores del fabricante. Los registros operativos permanecen en el equipo de la empresa; solo se generan logs locales en ~/.local/share/SIGS/logs.
+
+8. CONTACTO
+Para ejercer sus derechos, diríjase al área de atención al cliente de la empresa operadora.

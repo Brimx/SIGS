@@ -4,6 +4,8 @@ using Avalonia.Styling;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Supermercado.Entidades.Seguridad;
+using Supermercado.GUI.Servicios.Preferencias;
+using Supermercado.GUI.Servicios.Tema;
 using Supermercado.Logica.Seguridad;
 
 namespace Supermercado.GUI.ViewModels;
@@ -11,6 +13,7 @@ namespace Supermercado.GUI.ViewModels;
 public partial class ShellViewModel : ViewModelBase
 {
     private readonly ISesionActual? _sesion;
+    private readonly IServicioPreferencias? _preferencias;
 
     public PosViewModel PosVm { get; }
     public InventarioViewModel InventarioVm { get; }
@@ -48,7 +51,7 @@ public partial class ShellViewModel : ViewModelBase
     public partial string RolUsuarioActivo { get; set; } = "";
 
     [ObservableProperty]
-    public partial bool TemaOscuroActivo { get; set; }
+    public partial string TemaActual { get; set; } = TemaSigs.ClaveClaro;
 
     // Filtrado Dinámico RBAC y Modo Pantalla Completa (Cajero Puro)
     [ObservableProperty]
@@ -96,6 +99,7 @@ public partial class ShellViewModel : ViewModelBase
     public bool EsModuloContabilidad => ModuloActivo == "Contabilidad";
 
     public event Action? SesionCerrada;
+    public event Action? ConfiguracionSolicitada;
 
     public ShellViewModel()
     {
@@ -110,6 +114,7 @@ public partial class ShellViewModel : ViewModelBase
 
         RegistroClienteVm.ConfigurarModo(ModoRegistroUsuario.ClientePos);
         PaginaActual = PosVm;
+        TemaActual = TemaSigs.ClaveDe(Application.Current?.RequestedThemeVariant ?? ThemeVariant.Light);
     }
 
     public ShellViewModel(
@@ -121,9 +126,13 @@ public partial class ShellViewModel : ViewModelBase
         RegistroUsuarioViewModel registroClienteVm,
         PersonalRolesViewModel? personalRolesVm = null,
         ComprasProveedoresViewModel? comprasProveedoresVm = null,
-        ContabilidadDianViewModel? contabilidadDianVm = null)
+        ContabilidadDianViewModel? contabilidadDianVm = null,
+        IServicioPreferencias? preferencias = null)
     {
         _sesion = sesion;
+        _preferencias = preferencias;
+        TemaActual = preferencias?.LeerTema()
+            ?? TemaSigs.ClaveDe(Application.Current?.RequestedThemeVariant ?? ThemeVariant.Light);
         PosVm = posVm;
         InventarioVm = inventarioVm;
         CajaTurnoVm = cajaTurnoVm;
@@ -265,14 +274,14 @@ public partial class ShellViewModel : ViewModelBase
     [RelayCommand]
     private void AlternarTema()
     {
-        TemaOscuroActivo = !TemaOscuroActivo;
-        if (Application.Current is not null)
-        {
-            Application.Current.RequestedThemeVariant = TemaOscuroActivo
-                ? ThemeVariant.Dark
-                : ThemeVariant.Light;
-        }
+        var siguiente = TemaSigs.Siguiente(TemaActual);
+        TemaActual = siguiente;
+        TemaSigs.Aplicar(siguiente);
+        _preferencias?.GuardarTema(siguiente);
     }
+
+    [RelayCommand]
+    private void AbrirConfiguracion() => ConfiguracionSolicitada?.Invoke();
 
     [RelayCommand]
     private void CerrarSesion()
