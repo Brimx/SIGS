@@ -388,3 +388,33 @@
   - **10 Roles Canónicos:** Modelar en `NombresRol`, `ValoresIniciales` y la matriz de permisos los 10 roles clave con sus 18 permisos atómicos.
   - **Semilla y Login Demo:** Incorporar en `GeneradorDatosDemo` y en la vista de inicio de sesión (`LoginView` / `LoginViewModel`) la siembra automática y acceso rápido a credenciales de prueba para los 10 roles con un solo clic.
 - **Consecuencias:** soporte nativo tanto para entornos de producción LAN multi-terminal con PostgreSQL como para estaciones individuales o desarrollo zero-config con SQLite. El código de la capa lógica y de presentación no tiene acoplamiento con el motor de persistencia subyacente.
+
+## ADR-028: Tokens de dos roles, puente con Semi y temas persistidos por máquina
+
+- **Contexto:** tres defectos visuales convivían. (1) El hover de los botones salía gris: los `Style` de SIGS
+  apuntaban al `Button`, pero Semi pinta `:pointerover` directamente sobre
+  `/template/ ContentPresenter#PART_ContentPresenter`, así que el setter nunca ganaba. (2) Varios pares de color
+  no alcanzaban WCAG AA porque un mismo token se usaba como relleno y como texto (blanco sobre `#22C55E` = 2.28:1).
+  (3) No existía pantalla de Configuración, textos legales ni forma de conservar el tema entre sesiones.
+- **Decisión:**
+  - **Dos roles por familia cromática:** `BrushPrimary/Success/Warning/Error` son relleno y se validan contra
+    `BrushTextOnPrimary`; `BrushPrimaryText/...` son texto e icono y se validan contra `BrushBackground` y
+    `BrushSurface`. Una prueba de contraste (luminancia sRGB propia) exige ≥ 4.5:1 en las tres variantes.
+  - **No reimplementar estados de Semi:** `Resources/SemiBridge.axaml` mapea las claves finales que consumen sus
+    `ControlTheme` (`ButtonSolid*`, `ComboBox*`, `DataGrid*`, `ScrollBar*`…) a colores de `Primitives.axaml`.
+    Las vistas usan el vocabulario nativo: `Theme="{DynamicResource SolidButton|OutlineButton|BorderlessButton}"`
+    + `Classes="Primary|Success|Warning|Danger"`. No se sobrescriben `SemiColor*`: Semi los resuelve con
+    `{StaticResource}` dentro de sus diccionarios y la sobrescritura llega tarde.
+  - **Tercera variante:** `TemaSigs.AltoContraste`, declarada como `ThemeVariant` personalizada (hereda de `Dark`)
+    y referenciada con `{x:Static}` porque Avalonia solo convierte por TypeConverter las variantes integradas.
+  - **Preferencia por máquina:** `IServicioPreferencias` persiste el tema en
+    `~/.local/share/SIGS/preferencias.json` con escritura atómica y lectura tolerante (ausente, corrupto o
+    desconocido → `Claro`). `App.axaml.cs` lo aplica antes de crear `MainWindow` para evitar el destello.
+  - **Configuración como overlay compartido:** `MainWindow.axaml` envuelve el contenido en un `Panel` y muestra
+    `ConfiguracionView` sobre un `Border.Scrim`. Accesible desde login y shell; Apariencia, Legal y Acerca de.
+  - **Textos legales empaquetados:** `Assets/Legal/*.txt` leídos con `AssetLoader` desde `avares://`, sin red.
+- **Consecuencias:** el hover y los estados de foco vuelven a ser los de Semi con la paleta SIGS; el contraste
+  queda verificado por prueba y no por inspección visual; el tema sobrevive al reinicio sin tocar la base de datos;
+  y la aplicación declara su política de datos y sus términos sin depender de un servidor. El costo es mantener
+  `SemiBridge.axaml` cuando se adopte un control nuevo de Semi: hay que añadir sus claves finales.
+  Ver `docs/sistema-diseno-tokens-ui.md`.

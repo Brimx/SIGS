@@ -1,6 +1,6 @@
 # Pendientes de interfaz (handoff backend → UI)
 
-Contrato backend→GUI y auditoría posterior a la implementación de la interfaz. La GUI ya tiene POS, turnos, inventario, dashboard, clientes y login; la revisión del **2026-11-02** encontró riesgos nuevos y controles de backend aún abiertos. La suite tiene **329 pruebas en verde**. Esta nota no certifica preparación para producción.
+Contrato backend→GUI y auditoría posterior a la implementación de la interfaz. La GUI ya tiene POS, turnos, inventario, dashboard, clientes y login; la revisión del **2026-11-02** encontró riesgos nuevos y controles de backend aún abiertos. La suite tiene **361 pruebas en verde**. Esta nota no certifica preparación para producción.
 
 ## 1. Validación de formularios
 
@@ -138,7 +138,7 @@ Esta revisión se actualizó después de aplicar correcciones de producción. «
 | **P1** | Reintento de cobro / idempotencia | **Mitigado en POS y esquema:** se reutiliza la clave durante el reintento; tras persistir, carrito y clave se limpian antes de imprimir, por lo que un fallo de impresión no crea otra venta. Índice único y chequeo de duplicados al arranque. | `PosViewModel.cs`; `ConfiguracionModelo.cs`; `InicializadorBaseDatos.cs`; `ServicioVentas.cs`. |
 | **P1** | Scope de DI y `DbContext` | **Corregido:** ViewModels resuelven servicios de negocio dentro de un scope por operación; la sesión singleton permanece entre pantallas. | `Supermercado.GUI/App.axaml.cs`; ViewModels operativos de POS, inventario, turnos, dashboard, login y registro. |
 | **P1** | Sesión cacheada y permisos visuales | **Sigue abierto.** `SesionActual` solo revoca si el objeto en memoria aparece inactivo; no consulta cambios de rol/estado en BD. La navegación muestra todos los módulos a cualquier rol. Las operaciones protegidas dependen de `Exigir`; el dashboard sí filtra widgets por permiso. | `SesionActual.cs:19-42`; `ShellView.axaml:52-107`; `ServicioDashboard.cs:14-15`. |
-| **P1** | RLS Supabase | **Mitigado solo en el esquema**, no verificado en un proyecto desplegado. La GUI no contiene pantalla de configuración/sincronización ni usa una clave Supabase. | `docs/supabase-schema.sql`; sin conexión/configuración Supabase en `Supermercado.GUI`. |
+| **P1** | RLS Supabase | **Mitigado solo en el esquema**, no verificado en un proyecto desplegado. La GUI tiene una pantalla de Configuración, pero solo de apariencia/legal: no incluye integraciones ni sincronización, y no usa una clave Supabase. | `docs/supabase-schema.sql`; sin conexión/configuración Supabase en `Supermercado.GUI`. |
 | **P1** | Secretos y PII en SQLite | **Sigue abierto en persistencia; no expuesto en pantalla de integraciones.** La base y respaldos mantienen valores en claro; el usuario con acceso al archivo puede leer PII y tokens configurados. | `ServicioParametros.cs:15-18`; `ServicioRespaldo.cs:42`; `RutasDatos.cs`. |
 | **P1** | Respaldo en caliente/ruta de origen libre | **Backend abierto, función no expuesta en GUI actual.** `File.Copy` de la BD activa y `rutaOrigen` arbitraria. | `ServicioRespaldo.cs:17-23,42`; no existe navegación de respaldos en `ShellViewModel`. |
 | **P1** | Concurrencia multi-terminal | **No habilitada ni soportada.** SQLite usa configuración básica, sin WAL ni `busy_timeout`; el check-then-insert de turno no está protegido por índice único parcial. Un solo proceso y operación serial no sustituyen esas garantías. | `ExtensionesDatos.cs:18-20`; `ServicioCaja.cs` (apertura); ADR-010 en `docs/decisiones.md`. |
@@ -153,4 +153,18 @@ Esta revisión se actualizó después de aplicar correcciones de producción. «
 | **P2** | Migración inicial no incremental | **Sigue abierto.** La migración genera el DDL desde el modelo actual al ejecutarse; bases instaladas con esquema anterior no reciben alteraciones incrementales. | `Migraciones/Inicial.cs:11-18`; `InicializadorBaseDatos.cs:10-15`. |
 | **P2** | Validación de formularios | **Parcial.** Hay verificación de DV NIT y validación final en backend, pero en el formulario de cliente la GUI solo valida documento/nombre no vacíos; no valida por campo con las mismas reglas ni normaliza antes de enviar. | `RegistroUsuarioViewModel.cs:230-260`; `Validador.cs`; `ValidadorDian.cs`. |
 
-**Conclusión de riesgo:** el acceso demo, los dos P0 de pagos/privilegios, el reintento, el scope DI, los traslados vencidos y el cálculo del margen quedaron corregidos y probados. Aún no recomiendo producción: continúan cifrado/gestión de secretos, concurrencia entre terminales, sesión que no se revalida ante cambios externos, migración incremental y otros P2 listados en esta sección. La suite actual tiene 329 pruebas; su conteo por sí solo no certifica todos los controles.
+**Conclusión de riesgo:** el acceso demo, los dos P0 de pagos/privilegios, el reintento, el scope DI, los traslados vencidos y el cálculo del margen quedaron corregidos y probados. Aún no recomiendo producción: continúan cifrado/gestión de secretos, concurrencia entre terminales, sesión que no se revalida ante cambios externos, migración incremental y otros P2 listados en esta sección. La suite actual tiene 361 pruebas; su conteo por sí solo no certifica todos los controles.
+
+## 9. Pendientes de la pantalla de Configuración (2026-11-02)
+
+- **Preferencia por máquina, no por usuario:** el tema se guarda en `~/.local/share/SIGS/preferencias.json`
+  junto a la base; en un equipo compartido, el último cambio gana. Si se requiere por usuario, mover la
+  preferencia a `Parametros` con clave por `UsuarioId` y auditarla.
+- **Sin «seguir al sistema»:** solo hay tres temas explícitos. Añadir una cuarta opción requiere escuchar
+  `ActualThemeVariantChanged` y decidir qué hacer con el alto contraste.
+- **Textos legales sin revisión jurídica:** los archivos de `Assets/Legal/` son borradores. Antes de distribuir,
+  un abogado debe validar finalidad, retención, derechos del titular y el aviso DIAN.
+- **Secciones futuras:** Integraciones/credenciales (BYOK), respaldos y puerto de impresora siguen fuera de la
+  pantalla; ver secciones 4 y 5.
+- **Alto contraste no cubre controles de terceros no mapeados:** `SemiBridge.axaml` solo cubre lo que SIGS usa.
+  Al adoptar un control nuevo de Semi, añadir sus claves finales o quedará con la paleta de Semi.

@@ -384,6 +384,9 @@ Interfaz de escritorio desarrollada en **Avalonia 12.1.4** y **.NET 10** bajo el
 - `ImpresorTicketEscPos`: Generador de comandos directos ESC/POS (corte de papel `\x1D\x56\x00`, pulso de gaveta `\x1B\x70\x00\x19\xFA` y QR bidimensional `GS ( k`).
 - `ImpresorTicketPdf`: Adaptador para exportar la tirilla en formato PDF de 80mm vía QuestPDF.
 - `ValidadorDian`: Implementación oficial del algoritmo Módulo 11 para NITs y texto legal de Habeas Data.
+- `TemaSigs`: Variantes `Claro`/`Oscuro`/`AltoContraste`, ciclo `Siguiente` y aplicación del `ThemeVariant`.
+- `IServicioPreferencias` / `ServicioPreferencias`: persiste el tema en `~/.local/share/SIGS/preferencias.json` con lectura tolerante y escritura atómica.
+- `IServicioTextosLegales` / `ServicioTextosLegales`: lee los textos de `Assets/Legal/` desde `avares://` sin red.
 
 Falsos en `Supermercado.Pruebas/Falsos`: `RepositorioEnMemoria<T>`, `StockEnMemoria<T>`, repositorios específicos, `ParametrosFalsos`, `UnidadDeTrabajoFalsa`, `AuditoriaFalsa`, `HasheadorFalso`, `RelojFijo`, `ClienteTrmFalso`, `EscenarioInventario`.
 

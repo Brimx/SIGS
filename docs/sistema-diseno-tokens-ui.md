@@ -9,17 +9,24 @@ Documento técnico del sistema de diseño visual, arquitectura de tokens en tres
 La interfaz no declara colores, fuentes ni medidas "mágicas" o fijas en las vistas (`.axaml`). Todos los controles consumen tokens mediante `{DynamicResource}` o `{StaticResource}` organizados en tres capas desacopladas en `Supermercado.GUI/Resources/`:
 
 ```
-[ Capa 1: Primitives.axaml ]  -> Valores cromáticos crudos (#HEX) en escalas Slate, Warm, Brand, Alert
+[ Capa 1: Primitives.axaml ]  -> Valores cromáticos crudos (#HEX) en escalas Slate, Warm, Brand, Alert, HC
            │
            ▼
-[ Capa 2: Semantic.axaml ]    -> Pinceles semánticos reactivos al ThemeVariant (Light, Default/Dark, Warm)
+[ Capa 2: Semantic.axaml ]    -> Pinceles semánticos reactivos al ThemeVariant (Light, Dark, AltoContraste)
            │
 [ Capa 2B: Typography.axaml]  -> Familias empaquetadas localmente, escala modular y pesos WCAG 2.2
 [ Capa 2C: Geometry.axaml ]   -> Radios de borde normalizados, espaciados en múltiplos de 4/8 y sombras
            │
            ▼
-[ Capa 3: Controles y Vistas] -> Semi.Avalonia Theme + Estilos locales consumiendo tokens semánticos
+[ Capa 2D: SemiBridge.axaml ] -> Claves finales que consumen los ControlTheme de Semi, mapeadas a Primitives
+           │
+           ▼
+[ Capa 3: Controles y Vistas] -> Semi.Avalonia Theme + Controles.axaml (solo layout y clases propias)
 ```
+
+`SemiBridge.axaml` es la única capa que habla el vocabulario de Semi (`ButtonSolidPrimaryBackground`,
+`ComboBoxSelectorBackground`, `DataGridColumnHeaderBackground`…). Las vistas nunca usan esas claves: usan
+`Theme="{DynamicResource SolidButton}"` + `Classes="Primary|Success|Warning|Danger"`.
 
 ---
 
@@ -42,26 +49,43 @@ La interfaz no declara colores, fuentes ni medidas "mágicas" o fijas en las vis
 
 ### B. Capa 2: Pinceles Semánticos (`Semantic.axaml`)
 
-Configurados mediante `ResourceDictionary.ThemeDictionaries`:
+Configurados mediante `ResourceDictionary.ThemeDictionaries` con tres variantes: `Light`, `Dark` y la clave
+personalizada `{x:Static tema:TemaSigs.AltoContraste}` (hereda de `Dark` para los controles de Semi sin override).
 
-| Token Semántico (`SolidColorBrush`) | Modo Claro / Warm Light | Modo Oscuro (`Default`) | Rol en Interfaz |
+**Regla de dos roles.** Un mismo color no sirve como relleno y como texto: `#22C55E` con blanco encima da 2.28:1.
+Por eso cada familia tiene dos tokens:
+
+| Rol | Tokens | Uso | Requisito |
 |---|---|---|---|
-| `BrushBackground` | `#FAF8F5` (Warm50) | `#0F172A` (Slate900) | Fondo principal de la ventana y vistas. |
-| `BrushSurface` | `#FFFFFF` | `#1E293B` (Slate800) | Tarjetas, contenedores, barras de herramientas. |
-| `BrushSurfaceRaised` | `#FFFFFF` | `#334155` (Slate700) | Modales, diálogos y menús desplegables. |
-| `BrushSurfaceSubtle` | `#F2EFE9` (Warm100) | `#1E293B` (Slate800) | Fondos de subcabeceras y bloques informativos. |
-| `BrushSurfaceHover` | `#E8E4DC` (Warm200) | `#334155` (Slate700) | Hover en filas de grillas y botones secundarios. |
-| `BrushBorderSubtle` | `#D9D3C7` (Warm300) | `#334155` (Slate700) | Líneas divisorias de tablas y marcos tenues. |
-| `BrushBorderStrong` | `#8C8477` (Warm500) | `#64748B` (Slate500) | Bordes de inputs activos con foco. |
-| `BrushTextPrimary` | `#292524` (Warm900) | `#F8FAFC` (Slate50) | Títulos, totales, datos críticos (WCAG AAA ≥ 11:1). |
-| `BrushTextSecondary` | `#57534E` (Warm700) | `#94A3B8` (Slate400) | Etiquetas de campo, subtítulos, metadata (≥ 4.5:1). |
-| `BrushTextMuted` | `#8C8477` (Warm500) | `#64748B` (Slate500) | Atajos de teclado (`F1`–`F5`), textos explicativos. |
-| `BrushTextOnPrimary` | `#FFFFFF` | `#FFFFFF` | Texto sobre botones primarios o fondos de acento. |
-| `BrushPrimary` | `#0369A1` (Brand700) | `#0EA5E9` (Brand500) | Botón principal de cobro, pestañas activas. |
-| `BrushPrimarySubtle` | `#E0F2FE` (Brand100) | `#0C4A6E` (Brand900) | Visor del total a pagar, badges de módulo. |
-| `BrushSuccess` / `Subtle` | `#15803D` / `#F0FDF4` | `#22C55E` / `#052E16` | Botón confirmar pago, devuelta al cliente. |
-| `BrushWarning` / `Subtle` | `#B45309` / `#FFFBEB` | `#F59E0B` / `#451A03` | Botón baja de merma, caja cerrada. |
-| `BrushError` / `Subtle` | `#B91C1C` / `#FEF2F2` | `#EF4444` / `#450A0A` | Faltante en efectivo, botón cerrar sesión. |
+| **Relleno** | `BrushPrimary`, `BrushSuccess`, `BrushWarning`, `BrushError` | Fondo de botones sólidos y badges | ≥ 4.5:1 contra `BrushTextOnPrimary` (`#FFFFFF`) |
+| **Texto** | `BrushPrimaryText`, `BrushSuccessText`, `BrushWarningText`, `BrushErrorText` | Texto e iconos sobre superficie | ≥ 4.5:1 contra `BrushBackground` y `BrushSurface` |
+
+| Token Semántico (`SolidColorBrush`) | Claro / Warm Light | Oscuro / Slate | Alto contraste | Rol en Interfaz |
+|---|---|---|---|---|
+| `BrushBackground` | `#FAF8F5` (Warm50) | `#0F172A` (Slate900) | `#000000` (HcBlack) | Fondo principal de la ventana y vistas. |
+| `BrushSurface` | `#FFFFFF` | `#1E293B` (Slate800) | `ColorHcSurface` | Tarjetas, contenedores, barras de herramientas. |
+| `BrushSurfaceRaised` | `#FFFFFF` | `#334155` (Slate700) | `ColorHcSurfaceRaised` | Modales, diálogos y menús desplegables. |
+| `BrushSurfaceSubtle` | `#F2EFE9` (Warm100) | `#1E293B` (Slate800) | `ColorHcSurface` | Fondos de subcabeceras y bloques informativos. |
+| `BrushSurfaceHover` | `#E8E4DC` (Warm200) | `#334155` (Slate700) | `ColorHcSurfaceRaised` | Hover en filas de grillas y botones secundarios. |
+| `BrushSurfaceSelected` | `ColorBrand100` | `ColorBrand900` | `ColorHcPrimaryPressed` | Fila o tarjeta seleccionada. |
+| `BrushBorderSubtle` | `#D9D3C7` (Warm300) | `#334155` (Slate700) | `ColorHcBorder` | Líneas divisorias de tablas y marcos tenues. |
+| `BrushBorderStrong` | `#6F675B` (Warm600) | `#94A3B8` (Slate400) | `ColorHcBorder` | Bordes de inputs activos con foco. |
+| `BrushFocusRing` | `ColorBrand600` | `ColorBrand300` | `ColorHcWarningText` | Anillo de foco visible en teclado. |
+| `BrushTextPrimary` | `#292524` (Warm900) | `#F8FAFC` (Slate50) | `#FFFFFF` | Títulos, totales, datos críticos. |
+| `BrushTextSecondary` | `#57534E` (Warm700) | `#CBD5E1` (Slate300) | `#FFFFFF` | Etiquetas de campo, subtítulos, metadata. |
+| `BrushTextMuted` | `#6F675B` (Warm600) | `#94A3B8` (Slate400) | `ColorHcTextMuted` | Atajos de teclado (`F1`–`F5`), textos explicativos. |
+| `BrushTextOnPrimary` | `#FFFFFF` | `#FFFFFF` | `#FFFFFF` | Texto sobre rellenos de color. |
+| `BrushPrimary` | `#0369A1` (Brand700) | `#075985` (Brand800) | `ColorHcPrimary` | Relleno del botón principal de cobro. |
+| `BrushPrimaryText` | `#0369A1` (Brand700) | `#7DD3FC` (Brand300) | `ColorHcPrimaryText` | Texto e iconos de acento sobre superficie. |
+| `BrushPrimarySubtle` | `#E0F2FE` (Brand100) | `#0C4A6E` (Brand900) | `#0A2A5E` | Visor del total a pagar, badges de módulo. |
+| `BrushSuccess` / `Text` / `Subtle` | `#15803D` / `#15803D` / `#F0FDF4` | `#15803D` / `#86EFAC` / `#052E16` | `ColorHc*` | Confirmar pago, devuelta al cliente. |
+| `BrushWarning` / `Text` / `Subtle` | `#B45309` / `#B45309` / `#FFFBEB` | `#B45309` / `#FCD34D` / `#451A03` | `ColorHc*` | Baja de merma, caja cerrada. |
+| `BrushError` / `Text` / `Subtle` | `#B91C1C` / `#B91C1C` / `#FEF2F2` | `#B91C1C` / `#FCA5A5` / `#450A0A` | `ColorHc*` | Faltante en efectivo, cerrar sesión. |
+| `BrushOverlayScrim` / `Strong` | `#99020617` / `#B3020617` | igual | `#CC000000` / `#E6000000` | Velo de modales y overlays del POS. |
+| `BrushOnPrimarySubtle` | `#33FFFFFF` | `#33FFFFFF` | `#33FFFFFF` | Separadores sobre relleno de color. |
+| `BrushTicketPaper` / `Border` / `Ink` | `#FAF8F5` / `#D9D3C7` / `#1C1917` | igual | igual | Tirilla impresa: siempre clara, no depende del tema. |
+
+`BrushTextTertiary` se eliminó: era idéntico a `BrushTextSecondary` y solo lo usaba `LoginView`.
 
 ### C. Capa 2B: Geometría y Elevación (`Geometry.axaml`)
 
@@ -98,7 +122,51 @@ Empaquetada localmente en `Assets/Fonts/` para garantizar renderizado idéntico 
 
 ---
 
-## 3. Ergonomía de Hardware y Estados de Pantalla
+## 3. Puente con Semi.Avalonia (`SemiBridge.axaml`)
+
+Semi pinta los estados de sus controles directamente sobre el template
+(`/template/ ContentPresenter#PART_ContentPresenter`). Un `Style` en `Button.Primario:pointerover` nunca gana esa
+batalla: el resultado es el hover gris que motivó este rediseño. La solución es no reescribir estados, sino
+alimentar las claves finales que Semi ya consume.
+
+- **Qué se mapea:** `ButtonSolid*`, `ButtonOutline*`, `ButtonBorderless*`, `TextBox*`, `CheckBox*`, `ComboBox*`,
+  `DataGrid*` (incluido `DataGridColumnHeader*`), `ScrollBar*`, `Flyout`, `MenuFlyout`, `ToolTip`,
+  `HyperlinkButton*` y `DataValidationErrors*`, en las tres variantes.
+- **Qué no funciona:** sobrescribir `SemiColor*`. Semi los resuelve con `{StaticResource}` dentro de sus propios
+  diccionarios, así que un valor en `Application.Resources` llega tarde. El bridge usa claves finales.
+- **Qué no se cubre:** controles que SIGS no usa. Añadir una clave solo cuando aparezca el control.
+- **Vocabulario en las vistas:**
+
+  ```xml
+  <Button Classes="Primary" Theme="{DynamicResource SolidButton}" Content="Cobrar" />
+  <Button Classes="Danger"  Theme="{DynamicResource SolidButton}" Content="Anular" />
+  <Button Theme="{DynamicResource OutlineButton}" Content="Volver" />
+  <Button Classes="Navegacion" Theme="{DynamicResource BorderlessButton}" Content="Inventario" />
+  ```
+
+  `{DynamicResource}`, no `{StaticResource}`: los `ControlTheme` viven en `Styles.Resources` de `SemiTheme` y no
+  son alcanzables con `StaticResource` desde una vista.
+
+`Controles.axaml` conserva solo lo que Semi no aporta: `Button.Navegacion` / `.NavegacionActiva` / `.Icono` /
+`.DestructivoSuave` / `.Tarjeta` (layout y selección), `TextBlock.Titulo/.Etiqueta/.Ayuda/.Seccion/.Cifra` y
+`Border.Tarjeta/.Scrim`. Los estilos de estado que apuntan al `Button` en lugar del template se eliminaron.
+
+## 4. Temas, preferencias y Configuración
+
+- **Ciclo de temas:** `Claro → Oscuro → AltoContraste → Claro` (`TemaSigs.Siguiente`). El botón de tema del shell
+  cicla y persiste; la pantalla de Configuración permite elegir uno directamente.
+- **Persistencia:** `IServicioPreferencias` guarda `{"tema":"Oscuro"}` en
+  `~/.local/share/SIGS/preferencias.json` de forma atómica (`.tmp` + `File.Move`). La lectura es tolerante:
+  archivo ausente, JSON corrupto o clave desconocida → `Claro`.
+- **Arranque:** `App.axaml.cs` aplica el tema guardado antes de crear `MainWindow`, evitando el destello del tema
+  por defecto. `App.axaml` ya no fija `RequestedThemeVariant`.
+- **Configuración:** overlay compartido en `MainWindow.axaml`, accesible desde el login y desde el shell (pie del
+  sidebar y barra compacta de cajero). Secciones: Apariencia, Legal y Acerca de. Visible para todos los roles;
+  no expone configuración de negocio ni credenciales.
+- **Textos legales:** `Assets/Legal/politica-privacidad.txt` y `terminos-servicio.txt`, leídos con
+  `IServicioTextosLegales` desde `avares://`. Son borradores operativos sujetos a revisión jurídica.
+
+## 5. Ergonomía de Hardware y Estados de Pantalla
 
 ### A. Punto de Venta (POS) — Operación de Alta Velocidad
 - **Distribución 70% / 30%:**

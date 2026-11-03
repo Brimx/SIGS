@@ -185,7 +185,8 @@ Esto garantiza atomicidad dentro de un proceso, pero **no** serializa lecturas c
 
 La interfaz de usuario está construida sobre **Avalonia 12.1.4** y **.NET 10** bajo el patrón **MVVM**:
 - **Inyección de Dependencias:** `App.axaml.cs` inicializa el contenedor con `servicios.AgregarLogica()`, registrando `IImpresorTicket` (`ImpresorTicketEscPos` y `ImpresorTicketPdf`) y los ViewModels en ciclo de vida transitorio.
-- **Tokens y Temas:** Modelo en 3 capas (`Primitives.axaml`, `Semantic.axaml`, `Geometry.axaml`, `Typography.axaml`) con soporte para Modo Claro Cálido (*Warm Light* anti-fatiga visual) y Modo Oscuro Slate.
+- **Tokens y Temas:** Modelo en capas (`Primitives.axaml`, `Semantic.axaml`, `Geometry.axaml`, `Typography.axaml` y `SemiBridge.axaml`) con Claro Cálido (*Warm Light* anti-fatiga visual), Oscuro Slate y Alto Contraste. El tema elegido se persiste por máquina con `IServicioPreferencias` y se aplica antes de crear la ventana.
+- **Configuración:** overlay compartido en `MainWindow.axaml` (`ConfiguracionView`) accesible desde login y shell; apariencia, textos legales empaquetados y versión. Ver ADR-028.
 - **Ergonomía POS:** Atajos físicos `F1`–`F5` / `Escape`, auto-enfoque ininterrumpido en el escáner de código de barras (*keyboard wedge*) e integración automática con balanzas EAN-13 GS1 (`20`–`29`).
 - **Detalle completo:** ver [`docs/sistema-diseno-tokens-ui.md`](sistema-diseno-tokens-ui.md).
 

@@ -248,3 +248,19 @@ Un parámetro ausente **no** tiene valor por defecto silencioso: lanza `Parametr
 - Revise los parámetros de nómina al inicio de cada año y los de la DIAN antes de que venza la resolución.
 - Trate los datos del cliente como información personal: no los exporte ni los comparta sin autorización (Ley 1581).
 - Use solo la clave `anon` de Supabase en el cliente; nunca `service_role`.
+
+## 15. Configuración: apariencia, textos legales y Acerca de
+
+Se abre desde el pie de la barra lateral («Configuración»), desde el icono de engranaje de la barra compacta de
+cajero y desde el pie del inicio de sesión. No exige permiso: cualquier rol puede cambiar el tema y leer los
+textos legales. No expone parámetros de negocio ni credenciales.
+
+- **Apariencia:** tres tarjetas — Claro cálido, Oscuro Slate y Alto contraste. Al elegir una se aplica de
+  inmediato y se guarda en la máquina; el próximo arranque abre con ese tema. El botón de sol del shell cicla
+  entre los tres.
+- **Legal:** política de privacidad y términos de servicio empaquetados con la aplicación. Se leen sin conexión.
+  Ambos son **borradores operativos sujetos a revisión jurídica**; no sustituyen la asesoría legal del negocio.
+- **Acerca de:** versión de la aplicación y aviso de que SIGS no es una certificación DIAN.
+
+La preferencia vive en `~/.local/share/SIGS/preferencias.json` (en Windows, la carpeta de datos locales del
+usuario). Borrar ese archivo devuelve la aplicación al tema claro. Si está corrupto, también.
