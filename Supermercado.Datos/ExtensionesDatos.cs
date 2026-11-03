@@ -9,15 +9,30 @@ public static class ExtensionesDatos
 {
     public static IServiceCollection AgregarDatos(
         this IServiceCollection servicios,
-        string rutaBaseDatos)
+        string rutaBaseDatos,
+        string? cadenaConexionPostgres = null)
     {
-        var carpeta = Path.GetDirectoryName(rutaBaseDatos);
-        if (!string.IsNullOrEmpty(carpeta))
-            Directory.CreateDirectory(carpeta);
-
         servicios.AddSingleton(TimeProvider.System);
-        servicios.AddDbContext<SigsDbContext>(
-            opciones => opciones.UseSqlite($"Data Source={rutaBaseDatos}"));
+
+        var postgresEnv = Environment.GetEnvironmentVariable("SIGS_POSTGRES_CONNECTION");
+        var connectionPostgres = !string.IsNullOrWhiteSpace(cadenaConexionPostgres)
+            ? cadenaConexionPostgres
+            : postgresEnv;
+
+        if (!string.IsNullOrWhiteSpace(connectionPostgres))
+        {
+            servicios.AddDbContext<SigsDbContext>(opciones =>
+                opciones.UseNpgsql(connectionPostgres));
+        }
+        else
+        {
+            var carpeta = Path.GetDirectoryName(rutaBaseDatos);
+            if (!string.IsNullOrEmpty(carpeta))
+                Directory.CreateDirectory(carpeta);
+
+            servicios.AddDbContext<SigsDbContext>(opciones =>
+                opciones.UseSqlite($"Data Source={rutaBaseDatos}"));
+        }
 
         servicios.AddScoped(typeof(IRepositorio<>), typeof(Repositorio<>));
         servicios.AddScoped(

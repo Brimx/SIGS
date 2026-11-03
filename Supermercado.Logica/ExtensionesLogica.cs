@@ -27,9 +27,10 @@ public static class ExtensionesLogica
 
     public static IServiceCollection AgregarLogica(
         this IServiceCollection servicios,
-        string rutaBaseDatos)
+        string rutaBaseDatos,
+        string? cadenaConexionPostgres = null)
     {
-        servicios.AgregarDatos(rutaBaseDatos);
+        servicios.AgregarDatos(rutaBaseDatos, cadenaConexionPostgres);
 
         servicios.AddSingleton<ISesionActual, SesionActual>();
         servicios.AddSingleton<IHasheadorClave, HasheadorBCrypt>();
