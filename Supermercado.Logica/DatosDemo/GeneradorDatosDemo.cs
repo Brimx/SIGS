@@ -229,6 +229,14 @@ public class GeneradorDatosDemo(
         var todosRoles = await roles.ObtenerTodosAsync();
         var rolAdmin = todosRoles.First(r => r.Nombre == NombresRol.Admin);
         var rolCajero = todosRoles.First(r => r.Nombre == NombresRol.Cajero);
+        var rolSupervisor = todosRoles.FirstOrDefault(r => r.Nombre == NombresRol.Supervisor) ?? rolAdmin;
+        var rolGerente = todosRoles.FirstOrDefault(r => r.Nombre == NombresRol.Gerente) ?? rolAdmin;
+        var rolBodeguero = todosRoles.FirstOrDefault(r => r.Nombre == NombresRol.Bodeguero) ?? rolAdmin;
+        var rolCompras = todosRoles.FirstOrDefault(r => r.Nombre == NombresRol.Compras) ?? rolAdmin;
+        var rolContador = todosRoles.FirstOrDefault(r => r.Nombre == NombresRol.Contador) ?? rolAdmin;
+        var rolSoporte = todosRoles.FirstOrDefault(r => r.Nombre == NombresRol.Soporte) ?? rolAdmin;
+        var rolAtencion = todosRoles.FirstOrDefault(r => r.Nombre == NombresRol.AtencionCliente) ?? rolAdmin;
+        var rolAnalista = todosRoles.FirstOrDefault(r => r.Nombre == NombresRol.AnalistaDatos) ?? rolAdmin;
 
         var todosCargos = await cargos.ObtenerTodosAsync();
         var cargoAdmin = todosCargos.FirstOrDefault()
@@ -239,7 +247,7 @@ public class GeneradorDatosDemo(
         var empAdmin = new Empleado
         {
             Nombres = "Administrador",
-            Apellidos = "Demo",
+            Apellidos = "Principal",
             Documento = "990001",
             Correo = "admin@sigs.local",
             Rol = rolAdmin,
@@ -258,27 +266,188 @@ public class GeneradorDatosDemo(
             SalarioBase = 1500000,
             Activo = true
         };
+        var empSupervisor = new Empleado
+        {
+            Nombres = "Supervisor",
+            Apellidos = "Cajas",
+            Documento = "990003",
+            Correo = "supervisor@sigs.local",
+            Rol = rolSupervisor,
+            Cargo = cargoAdmin,
+            SalarioBase = 2200000,
+            Activo = true
+        };
+        var empGerente = new Empleado
+        {
+            Nombres = "Gerente",
+            Apellidos = "Operaciones",
+            Documento = "990004",
+            Correo = "gerente@sigs.local",
+            Rol = rolGerente,
+            Cargo = cargoAdmin,
+            SalarioBase = 4000000,
+            Activo = true
+        };
+        var empBodega = new Empleado
+        {
+            Nombres = "Encargado",
+            Apellidos = "Bodega",
+            Documento = "990005",
+            Correo = "bodega@sigs.local",
+            Rol = rolBodeguero,
+            Cargo = cargoAdmin,
+            SalarioBase = 1600000,
+            Activo = true
+        };
+        var empCompras = new Empleado
+        {
+            Nombres = "Analista",
+            Apellidos = "Compras",
+            Documento = "990006",
+            Correo = "compras@sigs.local",
+            Rol = rolCompras,
+            Cargo = cargoAdmin,
+            SalarioBase = 2500000,
+            Activo = true
+        };
+        var empContador = new Empleado
+        {
+            Nombres = "Contador",
+            Apellidos = "Financiero",
+            Documento = "990007",
+            Correo = "contador@sigs.local",
+            Rol = rolContador,
+            Cargo = cargoAdmin,
+            SalarioBase = 3200000,
+            Activo = true
+        };
+        var empSoporte = new Empleado
+        {
+            Nombres = "Soporte",
+            Apellidos = "Tecnico",
+            Documento = "990008",
+            Correo = "soporte@sigs.local",
+            Rol = rolSoporte,
+            Cargo = cargoAdmin,
+            SalarioBase = 2000000,
+            Activo = true
+        };
+        var empAtencion = new Empleado
+        {
+            Nombres = "Atencion",
+            Apellidos = "Cliente",
+            Documento = "990009",
+            Correo = "atencion@sigs.local",
+            Rol = rolAtencion,
+            Cargo = cargoAdmin,
+            SalarioBase = 1600000,
+            Activo = true
+        };
+        var empAnalista = new Empleado
+        {
+            Nombres = "Analista",
+            Apellidos = "Datos",
+            Documento = "990010",
+            Correo = "analista@sigs.local",
+            Rol = rolAnalista,
+            Cargo = cargoAdmin,
+            SalarioBase = 3200000,
+            Activo = true
+        };
+
         await empleados.AgregarAsync(empAdmin);
         await empleados.AgregarAsync(empCajero);
+        await empleados.AgregarAsync(empSupervisor);
+        await empleados.AgregarAsync(empGerente);
+        await empleados.AgregarAsync(empBodega);
+        await empleados.AgregarAsync(empCompras);
+        await empleados.AgregarAsync(empContador);
+        await empleados.AgregarAsync(empSoporte);
+        await empleados.AgregarAsync(empAtencion);
+        await empleados.AgregarAsync(empAnalista);
         await trabajo.GuardarAsync();
 
-        var usrAdmin = new Usuario
+        // Usuarios demo por rol
+        await usuarios.AgregarAsync(new Usuario
         {
-            NombreUsuario = "admin_demo",
+            NombreUsuario = "admin",
             HashClave = hasheador.Hashear("Admin123*"),
+            HashPin = hasheador.Hashear("1111"),
             Empleado = empAdmin,
             EmpleadoId = empAdmin.Id
-        };
-        var usrCajero = new Usuario
+        });
+        await usuarios.AgregarAsync(new Usuario
         {
-            NombreUsuario = "cajero_demo",
+            NombreUsuario = "cajero",
             HashClave = hasheador.Hashear("Cajero123*"),
             HashPin = hasheador.Hashear("1234"),
             Empleado = empCajero,
             EmpleadoId = empCajero.Id
-        };
-        await usuarios.AgregarAsync(usrAdmin);
-        await usuarios.AgregarAsync(usrCajero);
+        });
+        await usuarios.AgregarAsync(new Usuario
+        {
+            NombreUsuario = "supervisor",
+            HashClave = hasheador.Hashear("Super123*"),
+            HashPin = hasheador.Hashear("9988"),
+            Empleado = empSupervisor,
+            EmpleadoId = empSupervisor.Id
+        });
+        await usuarios.AgregarAsync(new Usuario
+        {
+            NombreUsuario = "gerente",
+            HashClave = hasheador.Hashear("Gerente123*"),
+            HashPin = hasheador.Hashear("3344"),
+            Empleado = empGerente,
+            EmpleadoId = empGerente.Id
+        });
+        await usuarios.AgregarAsync(new Usuario
+        {
+            NombreUsuario = "bodega",
+            HashClave = hasheador.Hashear("Bodega123*"),
+            HashPin = hasheador.Hashear("2233"),
+            Empleado = empBodega,
+            EmpleadoId = empBodega.Id
+        });
+        await usuarios.AgregarAsync(new Usuario
+        {
+            NombreUsuario = "compras",
+            HashClave = hasheador.Hashear("Compras123*"),
+            HashPin = hasheador.Hashear("4455"),
+            Empleado = empCompras,
+            EmpleadoId = empCompras.Id
+        });
+        await usuarios.AgregarAsync(new Usuario
+        {
+            NombreUsuario = "contador",
+            HashClave = hasheador.Hashear("Conta123*"),
+            HashPin = hasheador.Hashear("5566"),
+            Empleado = empContador,
+            EmpleadoId = empContador.Id
+        });
+        await usuarios.AgregarAsync(new Usuario
+        {
+            NombreUsuario = "soporte",
+            HashClave = hasheador.Hashear("Soporte123*"),
+            HashPin = hasheador.Hashear("6677"),
+            Empleado = empSoporte,
+            EmpleadoId = empSoporte.Id
+        });
+        await usuarios.AgregarAsync(new Usuario
+        {
+            NombreUsuario = "atencion",
+            HashClave = hasheador.Hashear("Atencion123*"),
+            HashPin = hasheador.Hashear("7788"),
+            Empleado = empAtencion,
+            EmpleadoId = empAtencion.Id
+        });
+        await usuarios.AgregarAsync(new Usuario
+        {
+            NombreUsuario = "analista",
+            HashClave = hasheador.Hashear("Analista123*"),
+            HashPin = hasheador.Hashear("8899"),
+            Empleado = empAnalista,
+            EmpleadoId = empAnalista.Id
+        });
 
         // 6. Turno y ventas históricas
         var turno = TurnoCaja.Abrir(

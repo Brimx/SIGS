@@ -10,4 +10,6 @@ public static class NombresRol
     public const string Compras = "Compras";
     public const string Contador = "Contador";
     public const string Soporte = "Soporte";
+    public const string AtencionCliente = "AtencionCliente";
+    public const string AnalistaDatos = "AnalistaDatos";
 }

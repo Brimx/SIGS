@@ -58,6 +58,16 @@ public static class ValoresIniciales
         {
             Nombre = NombresRol.Soporte,
             Permisos = Permiso.MantenimientoSistema | Permiso.VerAuditoria
+        },
+        new Rol
+        {
+            Nombre = NombresRol.AtencionCliente,
+            Permisos = Permiso.GestionarClientes | Permiso.VerInventario
+        },
+        new Rol
+        {
+            Nombre = NombresRol.AnalistaDatos,
+            Permisos = Permiso.VerReportes | Permiso.VerFinanzas | Permiso.VerAuditoria
         }
     ];
 
@@ -70,7 +80,9 @@ public static class ValoresIniciales
         new Cargo { Nombre = NombresRol.Bodeguero },
         new Cargo { Nombre = NombresRol.Compras },
         new Cargo { Nombre = NombresRol.Contador },
-        new Cargo { Nombre = NombresRol.Soporte }
+        new Cargo { Nombre = NombresRol.Soporte },
+        new Cargo { Nombre = NombresRol.AtencionCliente },
+        new Cargo { Nombre = NombresRol.AnalistaDatos }
     ];
 
     public static IEnumerable<Impuesto> Impuestos() =>
