@@ -5,12 +5,38 @@
 ## 1. Primer arranque
 
 1. Instale el .NET SDK 10.
-2. Clone el repositorio y ejecute `dotnet run --project Supermercado.GUI`.
-3. La base se crea sola en:
-   - Windows: `%LOCALAPPDATA%\SIGS\sigs.db`
-   - Linux: `~/.local/share/SIGS/sigs.db`
-4. La inicialización siembra roles, cargos, impuestos, una caja y los parámetros. Es idempotente: si ya hay datos, no los duplica.
-5. El usuario inicial es `admin`. La clave se pasa a `ServicioInicializacion.InicializarAsync` desde la capa que arranque la aplicación; el usuario queda marcado con cambio de clave obligatorio.
+2. Clone el repositorio y elija el modo de persistencia:
+   - **Modo SQLite local (predeterminado / zero-config):**
+     Ejecute directamente `dotnet run --project Supermercado.GUI`.
+     La base se crea sola en:
+     - Windows: `%LOCALAPPDATA%\SIGS\sigs.db`
+     - Linux: `~/.local/share/SIGS/sigs.db`
+   - **Modo PostgreSQL central (LAN / multi-caja):**
+     Inicie el contenedor de PostgreSQL con `docker compose up -d`.
+     Defina la variable de entorno y ejecute:
+     ```bash
+     export SIGS_POSTGRES_CONNECTION="Host=localhost;Port=5432;Database=sigs;Username=sigs_user;Password=sigs_password;"
+     dotnet run --project Supermercado.GUI
+     ```
+3. La inicialización crea las tablas, los índices únicos de idempotencia y siembra roles, cargos, impuestos, una caja y los parámetros iniciales en el motor seleccionado.
+4. Para cargar un catálogo completo de prueba, inventario, un turno abierto y las cuentas de prueba para los 10 roles, presione el botón **«Cuentas de Prueba y Base Demo (10 Roles)»** en la pantalla inicial de inicio de sesión y luego **«Sembrar Base Demo»**.
+
+### Cuentas y credenciales demo (10 roles)
+
+La pantalla de login cuenta con accesos directos (*chips*) para autocompletar las credenciales de cada rol con un solo clic:
+
+| Rol | Usuario | Contraseña | PIN Caja / Autorización | Nivel / Pantalla principal |
+| :-- | :-- | :-- | :-- | :-- |
+| **Administrador** | `admin` | `Admin123*` | `1111` | Acceso irrestricto (POS + 5 módulos de Back-Office) |
+| **Cajero** | `cajero` | `Cajero123*` | `1234` | Modo POS exclusivo a pantalla completa (sin barra lateral) |
+| **Supervisor** | `supervisor` | `Super123*` | `9988` | POS + PIN de autorización en caja para retiros y anulaciones |
+| **Gerente** | `gerente` | `Gerente123*` | `3344` | Panel Gerencial, Personal, Finanzas y Métricas |
+| **Bodeguero** | `bodega` | `Bodega123*` | `2233` | Inventario FEFO, Mermas y Recepción de Lotes |
+| **Compras** | `compras` | `Compras123*` | `4455` | Compras, Proveedores (NIT Módulo 11) y Reabastecimiento |
+| **Contador** | `contador` | `Conta123*` | `5566` | Contabilidad DIAN, Desglose IVA (0%/5%/19%) y Cierres Z |
+| **Soporte Técnico** | `soporte` | `Soporte123*` | `6677` | Auditoría del sistema, diagnósticos y parámetros técnicos |
+| **Atención al Cliente** | `atencion` | `Atencion123*` | `7788` | Gestión de Clientes, Habeas Data y Fidelización |
+| **Analista de Datos / BI** | `analista` | `Analista123*` | `8899` | Reportes, auditoría y métricas operativas |
 
 ### Cambio obligatorio de clave
 

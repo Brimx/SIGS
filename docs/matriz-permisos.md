@@ -4,26 +4,26 @@ Los permisos son banderas (`[Flags]`) dentro de `Rol`. `ISesionActual.Exigir(per
 
 ## Roles × permisos
 
-| Permiso | Admin | Gerente | Supervisor | Cajero | Bodeguero | Compras | Contador | Soporte |
-| :-- | :--: | :--: | :--: | :--: | :--: | :--: | :--: | :--: |
-| `Vender` | ✅ | | ✅ | ✅ | | | | |
-| `AnularVenta` | ✅ | ✅ | ✅ | | | | | |
-| `AbrirCerrarTurno` | ✅ | | ✅ | ✅ | | | | |
-| `VerInventario` | ✅ | ✅ | ✅ | | ✅ | ✅ | | |
-| `AjustarInventario` | ✅ | | | | ✅ | | | |
-| `Reabastecer` | ✅ | | | | ✅ | ✅ | | |
-| `GestionarProductos` | ✅ | | | | ✅ | ✅ | | |
-| `VerReportes` | ✅ | ✅ | | | | | ✅ | |
-| `VerFinanzas` | ✅ | ✅ | | | | | ✅ | |
-| `GestionarPersonal` | ✅ | ✅ | | | | | | |
-| `GestionarRoles` | ✅ | | | | | | | |
-| `GestionarTarifas` | ✅ | | | | | | | |
-| `VerAuditoria` | ✅ | | | | | | ✅ | ✅ |
-| `GestionarClientes` | ✅ | ✅ | ✅ | ✅ | | | | |
-| `AutorizarOperacionPos` | ✅ | ✅ | ✅ | | | | | |
-| `GestionarCompras` | ✅ | | | | | ✅ | | |
-| `GestionarContabilidad` | ✅ | | | | | | ✅ | |
-| `MantenimientoSistema` | ✅ | | | | | | | ✅ |
+| Permiso | Admin | Gerente | Supervisor | Cajero | Bodeguero | Compras | Contador | Soporte | AtencionCliente | AnalistaDatos |
+| :-- | :--: | :--: | :--: | :--: | :--: | :--: | :--: | :--: | :--: | :--: |
+| `Vender` | ✅ | | ✅ | ✅ | | | | | | |
+| `AnularVenta` | ✅ | ✅ | ✅ | | | | | | | |
+| `AbrirCerrarTurno` | ✅ | | ✅ | ✅ | | | | | | |
+| `VerInventario` | ✅ | ✅ | ✅ | | ✅ | ✅ | | | ✅ | |
+| `AjustarInventario` | ✅ | | | | ✅ | | | | | |
+| `Reabastecer` | ✅ | | | | ✅ | ✅ | | | | |
+| `GestionarProductos` | ✅ | | | | ✅ | ✅ | | | | |
+| `VerReportes` | ✅ | ✅ | | | | | ✅ | | | ✅ |
+| `VerFinanzas` | ✅ | ✅ | | | | | ✅ | | | ✅ |
+| `GestionarPersonal` | ✅ | ✅ | | | | | | | | |
+| `GestionarRoles` | ✅ | | | | | | | | | |
+| `GestionarTarifas` | ✅ | | | | | | | | | |
+| `VerAuditoria` | ✅ | | | | | | ✅ | ✅ | | ✅ |
+| `GestionarClientes` | ✅ | ✅ | ✅ | ✅ | | | | | ✅ | |
+| `AutorizarOperacionPos` | ✅ | ✅ | ✅ | | | | | | | |
+| `GestionarCompras` | ✅ | | | | | ✅ | | | | |
+| `GestionarContabilidad` | ✅ | | | | | | ✅ | | | |
+| `MantenimientoSistema` | ✅ | | | | | | | ✅ | | |
 
 Notas:
 
@@ -35,6 +35,8 @@ Notas:
 - **Compras** gestiona relación con proveedores, órdenes de compra y reabastecimiento.
 - **Contador** audita números, reportes fiscales DIAN, arqueos y comprobantes de nómina.
 - **Soporte** realiza mantenimiento, respaldos y revisión técnica de logs de auditoría.
+- **Atención al Cliente** consulta inventario, gestiona datos de clientes y consentimiento Habeas Data.
+- **Analista de Datos / BI** analiza métricas, informes financieros, reportes de ventas y auditoría operativa.
 
 > **Hallazgo abierto (P0):** un Gerente con `GestionarPersonal` puede crear un empleado con rol Admin, crearle usuario o restablecer la clave del Admin. La autorización debe impedir asignar un rol con más permisos que el del actor y restablecer claves de rango superior. Ver [`pendientes-ui.md`](pendientes-ui.md).
 

@@ -51,13 +51,23 @@ servicios.AddScoped<IServicioVentas, ServicioVentas>();
 
 ```csharp
 servicios.AddSingleton(TimeProvider.System);
-servicios.AddDbContext<SigsDbContext>(
-    opciones => opciones.UseSqlite($"Data Source={rutaBaseDatos}"));
+servicios.AddDbContext<SigsDbContext>(opciones =>
+{
+    var cadenaPostgres = Environment.GetEnvironmentVariable("SIGS_POSTGRES_CONNECTION");
+    if (!string.IsNullOrWhiteSpace(cadenaPostgres))
+    {
+        opciones.UseNpgsql(cadenaPostgres);
+    }
+    else
+    {
+        opciones.UseSqlite($"Data Source={rutaBaseDatos}");
+    }
+});
 servicios.AddScoped(typeof(IRepositorio<>), typeof(Repositorio<>));
 servicios.AddScoped<IUnidadDeTrabajo, UnidadDeTrabajo>();
 ```
 
-`UseSqlite` es el **único punto** que decide el proveedor. Cambiar a PostgreSQL implica cambiar este archivo, añadir el paquete Npgsql y crear migraciones; la lógica no se toca.
+`ExtensionesDatos` opera como un **proveedor dual**: si la variable de entorno `SIGS_POSTGRES_CONNECTION` (o configuración equivalente) está definida, conecta a PostgreSQL mediante Npgsql. En su defecto, utiliza SQLite local en la carpeta de datos de usuario sin configuración previa. La lógica y los ViewModels permanecen desacoplados de esta selección.
 
 ## Flujos principales
 
@@ -215,11 +225,14 @@ Bodega ─┘        fuente de verdad                         respaldo / consult
 - **Supabase / Neon** recibe una copia de una sola vía vía patrón Outbox (`EventoOutbox` + `ClienteSincronizacionSupabase`). **Nunca** se sincroniza de vuelta.
 - Si se cae el servidor local, se cae la operación: se mitiga con UPS, respaldo y un equipo de respaldo. No se resuelve con sincronización bidireccional.
 
-Esta arquitectura está **documentada como objetivo de producción, no implementada**. El código sigue con SQLite.
+Esta arquitectura cuenta con **soporte dual implementado**:
+- **PostgreSQL 17** activo mediante `Npgsql.EntityFrameworkCore.PostgreSQL` 10.0.3 cuando se configura `SIGS_POSTGRES_CONNECTION` (orquestable con `docker-compose.yml` en la raíz).
+- **SQLite** como respaldo zero-config para estaciones aisladas o desarrollo.
+- `InicializadorBaseDatos.CrearYSembrarAsync()` se ejecuta al inicio de la aplicación en ambos motores para garantizar la creación de tablas e índices únicos de idempotencia.
 
-### Concurrencia multi-terminal (deuda técnica)
+### Concurrencia multi-terminal (deuda técnica en red LAN)
 
-Con varias cajas escribiendo, los patrones actuales `leer → validar → escribir` tienen carreras:
+Con varias cajas escribiendo simultáneamente sobre el PostgreSQL central, los patrones actuales `leer → validar → escribir` pueden tener carreras si dos cajas operan sobre la misma unidad:
 
 | Operación | Riesgo | Mitigación planificada |
 | :-- | :-- | :-- |
@@ -228,22 +241,10 @@ Con varias cajas escribiendo, los patrones actuales `leer → validar → escrib
 | Abrir turno | Dos cajeros abren la misma caja | Bloquear la `Caja` o índice único parcial `(CajaId) WHERE Estado = Abierto` |
 | Cerrar turno | Entran ventas mientras se calcula el esperado | Bloquear el turno durante el cierre |
 
-Además se prevé:
-
+Siguientes pasos en concurrencia:
 - `UseXminAsConcurrencyToken()` en `StockLote`, `Venta` y `TurnoCaja` (Npgsql).
-- Reintentos acotados ante `40001` o `DbUpdateConcurrencyException`, con una `ConflictoConcurrenciaException` clara al agotarse.
-- Pruebas de integración contra PostgreSQL, opcionales y saltadas si no hay servidor.
-
-Nada de esto está implementado en esta entrega. Ver ADR-010 en [`decisiones.md`](decisiones.md).
-
-### Camino de migración
-
-1. Añadir `Npgsql.EntityFrameworkCore.PostgreSQL`.
-2. Cambiar `UseSqlite` por `UseNpgsql` en `ExtensionesDatos`.
-3. Generar migraciones EF; `InicializadorBaseDatos` ya usa `MigrateAsync` cuando existen.
-4. Mapear `DateTime` a `timestamptz`, `DateOnly` a `date` y el dinero a `bigint`.
-5. Añadir tokens de concurrencia y transacciones con bloqueo.
-6. Configurar la réplica de una vía hacia Supabase.
+- Reintentos acotados ante `40001` o `DbUpdateConcurrencyException`, con `ConflictoConcurrenciaException`.
+- Réplica Outbox asíncrona hacia Supabase vía `ClienteSincronizacionSupabase`.
 
 ## Decisiones relacionadas
 

@@ -372,3 +372,19 @@
     - `ImpresorTicketPdf`: exportación vectorial en 80mm vía QuestPDF (`IGeneradorTicket`).
 - **Consecuencias:** interfaz visualmente pulida, sin dependencias del sistema operativo, con contraste WCAG 2.2 AA/AAA,
   fidelidad del 100% contra la tirilla de Tiendas Ara y la Resolución DIAN 000165 de 2023.
+
+## ADR-027: Proveedor dual de persistencia (PostgreSQL 17 / SQLite) y cobertura de 10 roles POS
+
+- **Contexto:**
+  - Los supermercados en Colombia y retail operan típicamente con múltiples terminales en red LAN (cajas de venta rápida, básculas fruver, terminales de recibo en bodega y estaciones de gerencia/contabilidad). Un archivo SQLite local no permite concurrencia multi-equipo en red LAN sin riesgo de bloqueo y corrupción.
+  - Al mismo tiempo, el sistema debe ser portátil, auto-contenido y ejecutable de inmediato en estaciones de desarrollo o cajas aisladas sin requerir obligatoriamente un motor de base de datos externo instalado.
+  - La operación de un supermercado requiere una matriz de acceso RBAC que cubra la totalidad de los 10 roles canónicos del sector comercial (Admin, Gerente, Supervisor, Cajero, Bodeguero, Compras, Contador, Soporte, Atención al Cliente y Analista de Datos), ocultando la complejidad visual tras la autenticación.
+- **Decisión:**
+  - **Proveedor Dual en `Supermercado.Datos`:** Integrar `Npgsql.EntityFrameworkCore.PostgreSQL` (10.0.3) junto al proveedor SQLite existente.
+    - Si la variable de entorno `SIGS_POSTGRES_CONNECTION` (o configuración explícita) está provista, `SigsDbContext` se inicializa con `opciones.UseNpgsql(...)`.
+    - Si no está provista, se inicializa automáticamente con `opciones.UseSqlite(...)` apuntando a `~/.local/share/SIGS/sigs.db`.
+  - **Orquestación Local:** Incluir `docker-compose.yml` en la raíz del repositorio con la imagen oficial `postgres:17-alpine`, base de datos `sigs`, usuario `sigs_user` y puerto `5432`.
+  - **Inicialización Automática:** En `App.axaml.cs`, invocar `IInicializadorBaseDatos.CrearYSembrarAsync()` al arrancar para asegurar esquema, tablas, índices únicos de idempotencia y semillas mínimas sin importar el motor activo.
+  - **10 Roles Canónicos:** Modelar en `NombresRol`, `ValoresIniciales` y la matriz de permisos los 10 roles clave con sus 18 permisos atómicos.
+  - **Semilla y Login Demo:** Incorporar en `GeneradorDatosDemo` y en la vista de inicio de sesión (`LoginView` / `LoginViewModel`) la siembra automática y acceso rápido a credenciales de prueba para los 10 roles con un solo clic.
+- **Consecuencias:** soporte nativo tanto para entornos de producción LAN multi-terminal con PostgreSQL como para estaciones individuales o desarrollo zero-config con SQLite. El código de la capa lógica y de presentación no tiene acoplamiento con el motor de persistencia subyacente.
