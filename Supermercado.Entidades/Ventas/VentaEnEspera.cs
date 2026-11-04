@@ -11,7 +11,6 @@ public class VentaEnEspera : EntidadBase
     public Empleado? Empleado { get; set; }
     public string IdentificadorCliente { get; set; } = string.Empty;
     public int? ClienteId { get; set; }
-    public int PuntosARedimir { get; set; }
     public string LineasJson { get; set; } = string.Empty;
     public long TotalEstimado { get; set; }
     public string? Nota { get; set; }

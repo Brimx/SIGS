@@ -13,23 +13,14 @@ public class Venta : EntidadBase
     public string MotivoAnulacion { get; set; } = string.Empty;
     public int? ClienteId { get; set; }
     public Cliente? Cliente { get; set; }
-    public int PuntosGanados { get; set; }
-    public int PuntosRedimidos { get; set; }
     public string? ClaveIdempotencia { get; set; }
 
-    // Campos legales de adquirente (Ley 1581 / Habeas Data y DIAN)
+    // Campos de adquirente (Ley 1581 / Habeas Data)
     public const string DocumentoConsumidorFinal = "222222222222";
     public const string NombreConsumidorFinal = "CONSUMIDOR FINAL";
     public string DocumentoAdquirente { get; set; } = DocumentoConsumidorFinal;
     public string NombreAdquirente { get; set; } = NombreConsumidorFinal;
 
-    // Campos DIAN (Resolución 000165 de 2023 - Documento Equivalente POS)
-    public string? Cude { get; set; }
-    public string? CadenaQr { get; set; }
-    public string? PrefijoDian { get; set; }
-    public long ConsecutivoDian { get; set; }
-    public DateTime? FechaValidacionDian { get; set; }
-    public string? XmlUbl { get; set; }
     public List<DetalleVenta> Detalles { get; set; } = [];
     public List<Pago> Pagos { get; set; } = [];
 

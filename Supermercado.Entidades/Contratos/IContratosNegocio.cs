@@ -2,7 +2,6 @@ using Supermercado.Entidades.Clientes;
 using Supermercado.Entidades.Dashboards;
 using Supermercado.Entidades.Finanzas;
 using Supermercado.Entidades.Productos;
-using Supermercado.Entidades.Sincronizacion;
 
 namespace Supermercado.Entidades.Contratos;
 
@@ -25,9 +24,4 @@ public interface IGastoRepositorio : IRepositorio<Gasto>
 public interface IConfiguracionWidgetRepositorio : IRepositorio<ConfiguracionWidget>
 {
     Task<IReadOnlyList<ConfiguracionWidget>> ObtenerPorEmpleadoAsync(int empleadoId);
-}
-
-public interface IEventoOutboxRepositorio : IRepositorio<EventoOutbox>
-{
-    Task<IReadOnlyList<EventoOutbox>> ObtenerPendientesAsync(int limite = 50);
 }
