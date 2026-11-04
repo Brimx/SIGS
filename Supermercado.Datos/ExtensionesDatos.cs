@@ -9,30 +9,16 @@ public static class ExtensionesDatos
 {
     public static IServiceCollection AgregarDatos(
         this IServiceCollection servicios,
-        string rutaBaseDatos,
-        string? cadenaConexionPostgres = null)
+        string rutaBaseDatos)
     {
         servicios.AddSingleton(TimeProvider.System);
 
-        var postgresEnv = Environment.GetEnvironmentVariable("SIGS_POSTGRES_CONNECTION");
-        var connectionPostgres = !string.IsNullOrWhiteSpace(cadenaConexionPostgres)
-            ? cadenaConexionPostgres
-            : postgresEnv;
+        var carpeta = Path.GetDirectoryName(rutaBaseDatos);
+        if (!string.IsNullOrEmpty(carpeta))
+            Directory.CreateDirectory(carpeta);
 
-        if (!string.IsNullOrWhiteSpace(connectionPostgres))
-        {
-            servicios.AddDbContext<SigsDbContext>(opciones =>
-                opciones.UseNpgsql(connectionPostgres));
-        }
-        else
-        {
-            var carpeta = Path.GetDirectoryName(rutaBaseDatos);
-            if (!string.IsNullOrEmpty(carpeta))
-                Directory.CreateDirectory(carpeta);
-
-            servicios.AddDbContext<SigsDbContext>(opciones =>
-                opciones.UseSqlite($"Data Source={rutaBaseDatos}"));
-        }
+        servicios.AddDbContext<SigsDbContext>(opciones =>
+            opciones.UseSqlite($"Data Source={rutaBaseDatos}"));
 
         servicios.AddScoped(typeof(IRepositorio<>), typeof(Repositorio<>));
         servicios.AddScoped(
@@ -47,7 +33,6 @@ public static class ExtensionesDatos
             ReabastecimientoRepositorio>();
         servicios.AddScoped<IVentaRepositorio, VentaRepositorio>();
         servicios.AddScoped<IClienteRepositorio, ClienteRepositorio>();
-        servicios.AddScoped<IEventoOutboxRepositorio, EventoOutboxRepositorio>();
         servicios.AddScoped<ITurnoCajaRepositorio, TurnoCajaRepositorio>();
         servicios.AddScoped<IUsuarioRepositorio, UsuarioRepositorio>();
         servicios.AddScoped<IRolRepositorio, RolRepositorio>();

@@ -4,7 +4,6 @@ using Supermercado.Entidades.Contratos;
 using Supermercado.Entidades.Dashboards;
 using Supermercado.Entidades.Finanzas;
 using Supermercado.Entidades.Productos;
-using Supermercado.Entidades.Sincronizacion;
 
 namespace Supermercado.Datos.Repositorios;
 
@@ -40,16 +39,5 @@ public class ConfiguracionWidgetRepositorio(SigsDbContext db)
         => await Db.Widgets
             .Where(c => c.EmpleadoId == empleadoId)
             .OrderBy(c => c.Posicion)
-            .ToListAsync();
-}
-
-public class EventoOutboxRepositorio(SigsDbContext db)
-    : Repositorio<EventoOutbox>(db), IEventoOutboxRepositorio
-{
-    public async Task<IReadOnlyList<EventoOutbox>> ObtenerPendientesAsync(int limite = 50)
-        => await Db.EventosOutbox
-            .Where(e => !e.Procesado)
-            .OrderBy(e => e.Id)
-            .Take(limite)
             .ToListAsync();
 }

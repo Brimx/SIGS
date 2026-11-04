@@ -21,14 +21,8 @@ public static class ValoresIniciales
             Permisos = Permiso.VerReportes | Permiso.VerFinanzas
                 | Permiso.GestionarPersonal | Permiso.VerInventario
                 | Permiso.AnularVenta | Permiso.GestionarClientes
-                | Permiso.AutorizarOperacionPos
-        },
-        new Rol
-        {
-            Nombre = NombresRol.Supervisor,
-            Permisos = Permiso.Vender | Permiso.AnularVenta
-                | Permiso.AbrirCerrarTurno | Permiso.AutorizarOperacionPos
-                | Permiso.VerInventario | Permiso.GestionarClientes
+                | Permiso.AutorizarOperacionPos | Permiso.GestionarCompras
+                | Permiso.GestionarContabilidad | Permiso.VerAuditoria
         },
         new Rol
         {
@@ -41,33 +35,7 @@ public static class ValoresIniciales
             Nombre = NombresRol.Bodeguero,
             Permisos = Permiso.VerInventario | Permiso.AjustarInventario
                 | Permiso.Reabastecer | Permiso.GestionarProductos
-        },
-        new Rol
-        {
-            Nombre = NombresRol.Compras,
-            Permisos = Permiso.VerInventario | Permiso.Reabastecer
-                | Permiso.GestionarProductos | Permiso.GestionarCompras
-        },
-        new Rol
-        {
-            Nombre = NombresRol.Contador,
-            Permisos = Permiso.VerFinanzas | Permiso.VerReportes
-                | Permiso.GestionarContabilidad | Permiso.VerAuditoria
-        },
-        new Rol
-        {
-            Nombre = NombresRol.Soporte,
-            Permisos = Permiso.MantenimientoSistema | Permiso.VerAuditoria
-        },
-        new Rol
-        {
-            Nombre = NombresRol.AtencionCliente,
-            Permisos = Permiso.GestionarClientes | Permiso.VerInventario
-        },
-        new Rol
-        {
-            Nombre = NombresRol.AnalistaDatos,
-            Permisos = Permiso.VerReportes | Permiso.VerFinanzas | Permiso.VerAuditoria
+                | Permiso.GestionarCompras
         }
     ];
 
@@ -75,14 +43,8 @@ public static class ValoresIniciales
     [
         new Cargo { Nombre = NombresRol.Admin },
         new Cargo { Nombre = NombresRol.Gerente },
-        new Cargo { Nombre = NombresRol.Supervisor },
         new Cargo { Nombre = NombresRol.Cajero },
-        new Cargo { Nombre = NombresRol.Bodeguero },
-        new Cargo { Nombre = NombresRol.Compras },
-        new Cargo { Nombre = NombresRol.Contador },
-        new Cargo { Nombre = NombresRol.Soporte },
-        new Cargo { Nombre = NombresRol.AtencionCliente },
-        new Cargo { Nombre = NombresRol.AnalistaDatos }
+        new Cargo { Nombre = NombresRol.Bodeguero }
     ];
 
     public static IEnumerable<Impuesto> Impuestos() =>
@@ -121,40 +83,14 @@ public static class ValoresIniciales
             "Reintentos de una API externa antes de usar el respaldo"),
         Nuevo(ClavesParametro.TrmHabilitada, "1",
             "Consultar la TRM en línea (1 sí, 0 no). Sin internet usa la última"),
-                Nuevo(ClavesParametro.ResponsableIva, "1",
+        Nuevo(ClavesParametro.ResponsableIva, "1",
             "Empresa responsable de IVA (1 sí, 0 régimen no responsable / simple sin IVA descontable)"),
-        Nuevo(ClavesParametro.DianHabilitado, "1",
-            "Habilitar emisión de Documento Equivalente Electrónico POS DIAN (1 sí, 0 no)"),
-        Nuevo(ClavesParametro.DianResolucionNumero, "18764102352817",
-            "Número de resolución de autorización de numeración DIAN"),
-        Nuevo(ClavesParametro.DianResolucionFecha, "2024-01-15",
-            "Fecha de expedición de la resolución DIAN (yyyy-MM-dd)"),
-        Nuevo(ClavesParametro.DianResolucionVigenciaHasta, "2026-12-31",
-            "Fecha de vencimiento de la resolución DIAN (yyyy-MM-dd)"),
-        Nuevo(ClavesParametro.DianPrefijo, "POS",
-            "Prefijo de facturación autorizado por la DIAN"),
-        Nuevo(ClavesParametro.DianRangoDesde, "1",
-            "Rango inicial de numeración autorizado"),
-        Nuevo(ClavesParametro.DianRangoHasta, "500000",
-            "Rango final de numeración autorizado"),
-        Nuevo(ClavesParametro.DianClaveTecnica, "fc8eac422eba16e22ffd8c6f94b3f40a6e38162c",
-            "Clave técnica asignada por la DIAN para generación del CUDE"),
-        Nuevo(ClavesParametro.DianSiguienteConsecutivo, "1",
-            "Siguiente consecutivo formal a emitir"),
-        Nuevo(ClavesParametro.DianTipoAmbiente, "2",
-            "Ambiente DIAN: 1 Producción, 2 Pruebas/Habilitación"),
-        Nuevo(ClavesParametro.SupabaseUrl, "",
-            "URL del proyecto Supabase (ej: https://xyz.supabase.co)"),
-        Nuevo(ClavesParametro.SupabaseKey, "",
-            "API Key (anon o service_role) del proyecto Supabase"),
         Nuevo(ClavesParametro.TrmToken, "",
             "App Token de datos.gov.co para consultas ilimitadas de TRM"),
         Nuevo(ClavesParametro.ResendToken, "",
             "API Key de Resend para envío de recibos y alertas por correo"),
         Nuevo(ClavesParametro.ResendRemitente, "recibos@supermercado.local",
             "Dirección remitente autorizada en Resend"),
-        Nuevo(ClavesParametro.SupabaseHabilitado, "1",
-            "Sincronizar eventos con Supabase/Neon remoto (1 sí, 0 no)"),
         Nuevo(ClavesParametro.CodigoBarrasHabilitado, "1",
             "Consultar el catálogo externo de códigos de barras (1 sí, 0 no)"),
         Nuevo(ClavesParametro.TrmUltimaCentavos, "0",
@@ -169,10 +105,6 @@ public static class ValoresIniciales
             "Dirección del negocio que aparece en el ticket"),
         Nuevo(ClavesParametro.NegocioTelefono, "COMPLETAR",
             "Teléfono del negocio que aparece en el ticket"),
-        Nuevo(ClavesParametro.PesosPorPunto, "1000",
-            "Pesos de compra por cada punto ganado (0 desactiva la acumulación)"),
-        Nuevo(ClavesParametro.ValorPuntoPesos, "10",
-            "Valor en pesos de un punto al redimir (0 desactiva la redención)"),
         Nuevo(ClavesParametro.CarpetaRespaldos,
             RutasDatos.CarpetaRespaldosPorDefecto(),
             "Carpeta donde se guardan las copias de respaldo de la base")

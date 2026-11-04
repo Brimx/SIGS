@@ -1,6 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 using Supermercado.Entidades.Clientes;
-using Supermercado.Entidades.Sincronizacion;
 using Supermercado.Entidades.Configuracion;
 using Supermercado.Entidades.Dashboards;
 using Supermercado.Entidades.Finanzas;
@@ -31,7 +30,6 @@ public static class ConfiguracionModelo
         modelo.Entity<PagoEfectivo>();
         modelo.Entity<PagoTarjeta>();
         modelo.Entity<PagoTransferencia>();
-        modelo.Entity<PagoPuntos>();
         modelo.Entity<Impuesto>();
         modelo.Entity<Iva>();
         modelo.Entity<Retencion>();
@@ -50,7 +48,6 @@ public static class ConfiguracionModelo
         modelo.Entity<Cliente>().HasIndex(c => c.Documento).IsUnique();
         modelo.Entity<Venta>()
             .HasIndex(v => v.ClaveIdempotencia).IsUnique();
-        modelo.Entity<EventoOutbox>().HasIndex(e => new { e.Procesado, e.Id });
         modelo.Entity<Usuario>().HasIndex(u => u.NombreUsuario).IsUnique();
         modelo.Entity<Rol>().HasIndex(r => r.Nombre).IsUnique();
         modelo.Entity<Parametro>().HasIndex(p => p.Clave).IsUnique();

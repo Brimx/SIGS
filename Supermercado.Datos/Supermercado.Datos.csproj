@@ -10,11 +10,6 @@
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.13" />
-    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <EmbeddedResource Include="..\docs\postgresql-schema.sql" Link="Recursos\postgresql-schema.sql" />
   </ItemGroup>
 
   <PropertyGroup>
