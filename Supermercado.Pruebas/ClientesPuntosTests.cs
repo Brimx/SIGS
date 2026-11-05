@@ -1,5 +1,4 @@
 using Supermercado.Entidades.Clientes;
-using Supermercado.Entidades.Configuracion;
 using Supermercado.Entidades.Excepciones;
 using Supermercado.Entidades.Finanzas;
 using Supermercado.Entidades.Productos;
@@ -41,15 +40,12 @@ public class ClientesPuntosTests
             Inventario.AgregarEstante(1, 50, 20, 10);
             Turnos.Datos.Add(TurnoCaja.Abrir(
                 1, 1, 0, EscenarioInventario.Ahora.UtcDateTime));
-            Parametros.Valores[ClavesParametro.PesosPorPunto] = "1000";
-            Parametros.Valores[ClavesParametro.ValorPuntoPesos] = "10";
 
             Cliente = new Cliente
             {
                 Id = 7,
                 Documento = "1020304050",
-                Nombres = "Lucía",
-                PuntosAcumulados = 100
+                Nombres = "Lucía"
             };
             Clientes.Datos.Add(Cliente);
 
@@ -63,143 +59,42 @@ public class ClientesPuntosTests
         }
 
         public SolicitudVenta Solicitud(
-            int cantidad, long efectivo, int? clienteId = 7, int puntos = 0)
+            int cantidad, long efectivo, int? clienteId = 7)
             => new(
                 [new LineaVenta("123", cantidad)],
                 [new PagoEfectivo { Monto = efectivo }],
-                clienteId,
-                puntos);
+                clienteId);
     }
 
     [Fact]
-    public async Task Venta_ConCliente_AcumulaUnPuntoPorCadaMilPesos()
+    public async Task Venta_ConCliente_VinculaClienteId()
     {
         var e = new Escenario();
 
         var venta = await e.Servicio.RegistrarVentaAsync(e.Solicitud(3, 30000));
 
-        Assert.Equal(30, venta.PuntosGanados);
-        Assert.Equal(130, e.Cliente.PuntosAcumulados);
         Assert.Equal(7, venta.ClienteId);
     }
 
     [Fact]
-    public async Task Venta_SinCliente_NoTocaPuntos()
+    public async Task Venta_SinCliente_DejaClienteIdEnNulo()
     {
         var e = new Escenario();
 
         var venta = await e.Servicio.RegistrarVentaAsync(
             e.Solicitud(3, 30000, clienteId: null));
 
-        Assert.Equal(0, venta.PuntosGanados);
         Assert.Null(venta.ClienteId);
-        Assert.Equal(100, e.Cliente.PuntosAcumulados);
     }
 
     [Fact]
-    public async Task Redencion_PagaParteDeLaVentaYNoGanaSobreEsaParte()
-    {
-        var e = new Escenario();
-
-        // 50 puntos × $10 = $500 de $30.000; el resto en efectivo.
-        var venta = await e.Servicio.RegistrarVentaAsync(
-            e.Solicitud(3, 29500, puntos: 50));
-
-        Assert.Contains(venta.Pagos, p => p is PagoPuntos { Puntos: 50, Monto: 500 });
-        Assert.Equal(50, venta.PuntosRedimidos);
-        Assert.Equal(29, venta.PuntosGanados);
-        Assert.Equal(100 - 50 + 29, e.Cliente.PuntosAcumulados);
-    }
-
-    [Fact]
-    public async Task Redencion_MayorAlSaldo_SeRechazaSinTocarNada()
-    {
-        var e = new Escenario();
-
-        await Assert.ThrowsAsync<VentaInvalidaException>(
-            () => e.Servicio.RegistrarVentaAsync(
-                e.Solicitud(3, 0, puntos: 101)));
-
-        Assert.Equal(100, e.Cliente.PuntosAcumulados);
-        Assert.Equal(0, e.Trabajo.Guardados);
-    }
-
-    [Fact]
-    public async Task Redencion_QueSuperaElTotal_SeRechaza()
-    {
-        var e = new Escenario();
-        e.Cliente.PuntosAcumulados = 5000;
-
-        await Assert.ThrowsAsync<VentaInvalidaException>(
-            () => e.Servicio.RegistrarVentaAsync(
-                e.Solicitud(1, 0, puntos: 2000)));
-    }
-
-    [Fact]
-    public async Task Redencion_SinCliente_SeRechaza()
-    {
-        var e = new Escenario();
-
-        await Assert.ThrowsAsync<VentaInvalidaException>(
-            () => e.Servicio.RegistrarVentaAsync(
-                e.Solicitud(1, 10000, clienteId: null, puntos: 10)));
-    }
-
-    [Fact]
-    public async Task VentaRechazada_NoDejaPuntosModificadosEnMemoria()
-    {
-        var e = new Escenario();
-
-        // Efectivo insuficiente: Cerrar() falla después de preparar puntos.
-        await Assert.ThrowsAsync<VentaInvalidaException>(
-            () => e.Servicio.RegistrarVentaAsync(
-                e.Solicitud(3, 1000, puntos: 50)));
-
-        Assert.Equal(100, e.Cliente.PuntosAcumulados);
-    }
-
-    [Fact]
-    public async Task ClienteInactivo_NoPuedeComprarConPuntos()
+    public async Task ClienteInactivo_NoPuedeComprar()
     {
         var e = new Escenario();
         e.Cliente.Activo = false;
 
         await Assert.ThrowsAsync<VentaInvalidaException>(
             () => e.Servicio.RegistrarVentaAsync(e.Solicitud(1, 10000)));
-    }
-
-    [Fact]
-    public async Task AcumulacionDesactivada_ConPesosPorPuntoEnCero()
-    {
-        var e = new Escenario();
-        e.Parametros.Valores[ClavesParametro.PesosPorPunto] = "0";
-
-        var venta = await e.Servicio.RegistrarVentaAsync(e.Solicitud(3, 30000));
-
-        Assert.Equal(0, venta.PuntosGanados);
-        Assert.Equal(100, e.Cliente.PuntosAcumulados);
-    }
-
-    [Fact]
-    public async Task Anulacion_QuitaLoGanadoYDevuelveLoRedimido()
-    {
-        var e = new Escenario();
-        var venta = await e.Servicio.RegistrarVentaAsync(
-            e.Solicitud(3, 29500, puntos: 50));
-
-        await e.Servicio.AnularVentaAsync(venta.Id, "error de caja");
-
-        Assert.Equal(100, e.Cliente.PuntosAcumulados);
-    }
-
-    [Fact]
-    public void RevertirVenta_NuncaDejaElSaldoNegativo()
-    {
-        var cliente = new Cliente { PuntosAcumulados = 5 };
-
-        cliente.RevertirVenta(ganados: 30, redimidos: 0);
-
-        Assert.Equal(0, cliente.PuntosAcumulados);
     }
 
     [Fact]

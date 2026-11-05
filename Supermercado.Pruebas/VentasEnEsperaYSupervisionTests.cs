@@ -232,7 +232,6 @@ public class VentasEnEsperaYSupervisionTests
             cajaId: 1,
             lineas: lineas,
             clienteId: null,
-            puntosARedimir: 0,
             identificadorCliente: "Cliente Canasta Roja",
             totalEstimado: 45000,
             nota: "Fue a traer más dinero");

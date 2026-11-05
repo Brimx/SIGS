@@ -129,15 +129,9 @@ public class NuevosModulosGuiTests
     [Theory]
     [InlineData("admin", "admin", "Admin123*", "1111")]
     [InlineData("cajero", "cajero", "Cajero123*", "1234")]
-    [InlineData("supervisor", "supervisor", "Super123*", "9988")]
     [InlineData("gerente", "gerente", "Gerente123*", "3344")]
     [InlineData("bodega", "bodega", "Bodega123*", "2233")]
-    [InlineData("compras", "compras", "Compras123*", "4455")]
-    [InlineData("contador", "contador", "Conta123*", "5566")]
-    [InlineData("soporte", "soporte", "Soporte123*", "6677")]
-    [InlineData("atencion", "atencion", "Atencion123*", "7788")]
-    [InlineData("analista", "analista", "Analista123*", "8899")]
-    public void LoginViewModel_SeleccionarCredencialDemo_Carga10RolesCorrectamente(
+    public void LoginViewModel_SeleccionarCredencialDemo_Carga4RolesCorrectamente(
         string rolKey, string usuarioEsperado, string claveEsperada, string pinEsperado)
     {
         var loginVm = new LoginViewModel();

@@ -2,8 +2,8 @@ using Supermercado.Entidades.Finanzas;
 using Supermercado.Entidades.Productos;
 using Supermercado.Entidades.Ventas;
 using Supermercado.GUI.Servicios.Impresion;
-using Supermercado.GUI.Servicios.Validacion;
 using Supermercado.GUI.ViewModels;
+using Supermercado.Logica.Comunes;
 using Supermercado.Logica.Seguridad;
 
 namespace Supermercado.Pruebas.GUI;
@@ -20,13 +20,13 @@ public class PlantillaYRegulacionGuiTests
     }
 
     [Fact]
-    public void ValidadorDian_CalculaDigitoVerificacionModulo11Correctamente()
+    public void Validador_CalculaDigitoVerificacionModulo11Correctamente()
     {
-        // NIT real de Jerónimo Martins Colombia S.A.S. en tirilla Ara: 900480569-1
-        var dv = ValidadorDian.CalcularDigitoVerificacion("900480569");
+        // NIT real de Jerónimo Martins Colombia S.A.S.: 900480569-1
+        var dv = Validador.CalcularDigitoVerificacionNit("900480569");
         Assert.Equal(1, dv);
-        Assert.True(ValidadorDian.ValidarNitCompleto("900480569-1"));
-        Assert.False(ValidadorDian.ValidarNitCompleto("900480569-9"));
+        Assert.True(Validador.ValidarNitConDv("900480569-1"));
+        Assert.False(Validador.ValidarNitConDv("900480569-9"));
     }
 
     [Fact]
@@ -51,11 +51,7 @@ public class PlantillaYRegulacionGuiTests
         var venta = new Venta
         {
             Id = 55,
-            Fecha = new DateTime(2026, 11, 2, 18, 52, 24, DateTimeKind.Utc),
-            PrefijoDian = "709B",
-            ConsecutivoDian = 169477,
-            Cude = new string('d', 96),
-            CadenaQr = "https://catalogo-vpfe.dian.gov.co/document/searchqr?documentkey=test"
+            Fecha = new DateTime(2026, 11, 2, 18, 52, 24, DateTimeKind.Utc)
         };
 
         var prod19 = new ProductoUnitario
@@ -84,12 +80,11 @@ public class PlantillaYRegulacionGuiTests
         var tirilla = await impresor.FormatearTirillaTextoAsync(venta);
         var bytesEscPos = await impresor.GenerarComandosEscPosAsync(venta);
 
-        Assert.Contains("FACTURA ELECTRONICA DE VENTA N:", tirilla);
-        Assert.Contains("709B169477", tirilla);
+        Assert.Contains("TICKET DE VENTA POS N:", tirilla);
+        Assert.Contains("POS-55", tirilla);
         Assert.Contains("J:IVA 19%", tirilla);
         Assert.Contains("C:IVA 0%", tirilla);
         Assert.Contains("0,185 KG", tirilla);
-        Assert.Contains("CUFE/CUDE:", tirilla);
 
         // Verificar cabecera ESC @ (0x1B 0x40) y comando de corte GS V 0 (0x1D 0x56 0x00)
         Assert.Equal(0x1B, bytesEscPos[0]);
@@ -189,11 +184,5 @@ public class PlantillaYRegulacionGuiTests
         Assert.Equal("C", PlantillaTicketPos.ObtenerCodigoTarifa(0));
         Assert.Equal("M", PlantillaTicketPos.ObtenerCodigoTarifa(500));
         Assert.Equal("J", PlantillaTicketPos.ObtenerCodigoTarifa(1900));
-    }
-
-    [Fact]
-    public void ValidadorDian_FormatearNitConDv_AgregaGuionYDigito()
-    {
-        Assert.Equal("900480569-1", ValidadorDian.FormatearNitConDv("900.480.569"));
     }
 }

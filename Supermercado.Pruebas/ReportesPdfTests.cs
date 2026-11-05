@@ -150,7 +150,7 @@ public class ReportesPdfTests
                 new TurnoCaja(), new ResultadoArqueo(0, 0, 0, true)));
     }
     [Fact]
-    public async Task GeneradorTicket_ConClienteYPuntos_GeneraPdfCorrecto()
+    public async Task GeneradorTicket_ConCliente_GeneraPdfCorrecto()
     {
         var parametros = new ParametrosFalsos();
         parametros.Valores[ClavesParametro.NegocioNombre] = "Supermercado SIGS";
@@ -164,8 +164,7 @@ public class ReportesPdfTests
             Id = 5,
             Documento = "1020304050",
             Nombres = "Lucía",
-            Apellidos = "Martínez",
-            PuntosAcumulados = 350
+            Apellidos = "Martínez"
         };
 
         var venta = new Venta
@@ -174,9 +173,7 @@ public class ReportesPdfTests
             Fecha = DateTime.UtcNow,
             TurnoCajaId = 2,
             ClienteId = 5,
-            Cliente = cliente,
-            PuntosGanados = 20,
-            PuntosRedimidos = 50
+            Cliente = cliente
         };
         venta.Detalles.Add(new DetalleVenta
         {
@@ -186,8 +183,7 @@ public class ReportesPdfTests
             Subtotal = 20000,
             Iva = 3193
         });
-        venta.AgregarPago(new PagoPuntos { Puntos = 50, Monto = 500 });
-        venta.AgregarPago(new PagoEfectivo { Monto = 19500 });
+        venta.AgregarPago(new PagoEfectivo { Monto = 20000 });
         venta.Cerrar();
 
         var pdf = await generador.GenerarPdfAsync(venta);

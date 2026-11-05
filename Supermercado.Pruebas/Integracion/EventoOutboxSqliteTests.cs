@@ -1,41 +1,12 @@
 using Microsoft.EntityFrameworkCore;
 using Supermercado.Datos.Repositorios;
 using Supermercado.Entidades.Personal;
-using Supermercado.Entidades.Sincronizacion;
 using Supermercado.Entidades.Ventas;
 
 namespace Supermercado.Pruebas.Integracion;
 
 public class EventoOutboxSqliteTests
 {
-    [Fact]
-    public async Task EventoOutbox_SePersisteYSeConsultaPendiente()
-    {
-        using var contexto = new ContextoPruebasSqlite();
-        var repo = new EventoOutboxRepositorio(contexto.Db);
-
-        var evento = EventoOutbox.Crear(
-            "VentaCompletada", "101", """{"Total": 15000}""");
-        await repo.AgregarAsync(evento);
-        await contexto.CrearUnidadDeTrabajo().GuardarAsync();
-
-        contexto.Db.ChangeTracker.Clear();
-
-        var pendientes = await repo.ObtenerPendientesAsync(10);
-        var leido = Assert.Single(pendientes);
-
-        Assert.Equal("VentaCompletada", leido.TipoEvento);
-        Assert.Equal("101", leido.EntidadId);
-        Assert.False(leido.Procesado);
-
-        leido.MarcarProcesado(DateTime.UtcNow);
-        await contexto.CrearUnidadDeTrabajo().GuardarAsync();
-
-        contexto.Db.ChangeTracker.Clear();
-        var pendientesDespues = await repo.ObtenerPendientesAsync(10);
-        Assert.Empty(pendientesDespues);
-    }
-
     [Fact]
     public async Task Venta_ConClaveIdempotencia_SeGuardaYRecupera()
     {

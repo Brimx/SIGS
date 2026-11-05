@@ -59,7 +59,8 @@ public class FlujoPuntaAPuntaSqliteTests
 
         await auth.IniciarSesionAsync("cajero", "Cajero123*");
         await auth.IniciarSesionAsync("admin", "Admin123*");
-        await auth.IniciarSesionAsync("supervisor", "Super123*");
+        await auth.IniciarSesionAsync("gerente", "Gerente123*");
+        await auth.IniciarSesionAsync("bodega", "Bodega123*");
     }
 
     [Fact]

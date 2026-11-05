@@ -1,15 +1,11 @@
-using System.Xml.Linq;
 using Supermercado.Entidades.Clientes;
 using Supermercado.Entidades.Configuracion;
-using Supermercado.Entidades.Excepciones;
 using Supermercado.Entidades.Finanzas;
 using Supermercado.Entidades.Productos;
 using Supermercado.Entidades.Seguridad;
 using Supermercado.Entidades.Ventas;
 using Supermercado.Logica.Comunes;
-using Supermercado.Logica.Dian;
 using Supermercado.Logica.Productos;
-using Supermercado.Logica.Servicios;
 using Supermercado.Logica.Ventas;
 using Supermercado.Pruebas.Falsos;
 using Xunit;
@@ -18,24 +14,7 @@ namespace Supermercado.Pruebas;
 
 public class DianYBalanzasTests
 {
-    private static void ConfigurarParametrosDianValidos(ParametrosFalsos parametros)
-    {
-        parametros.Valores[ClavesParametro.DianHabilitado] = "1";
-        parametros.Valores[ClavesParametro.DianResolucionNumero] = "18764000001";
-        parametros.Valores[ClavesParametro.DianResolucionFecha] = "2026-01-01";
-        parametros.Valores[ClavesParametro.DianResolucionVigenciaHasta] = "2026-12-31";
-        parametros.Valores[ClavesParametro.DianPrefijo] = "SETP";
-        parametros.Valores[ClavesParametro.DianRangoDesde] = "1";
-        parametros.Valores[ClavesParametro.DianRangoHasta] = "10000";
-        parametros.Valores[ClavesParametro.DianSiguienteConsecutivo] = "100";
-        parametros.Valores[ClavesParametro.DianClaveTecnica] = "fc8eac422eba16e122d5aa92a14da838ecb12300";
-        parametros.Valores[ClavesParametro.DianTipoAmbiente] = "2";
-        parametros.Valores[ClavesParametro.NegocioNit] = "900123456";
-        parametros.Valores[ClavesParametro.NegocioNombre] = "Supermercado SIGS";
-        parametros.Valores[ClavesParametro.NegocioDireccion] = "Calle 10 # 20-30";
-    }
-
-    #region 1. Módulo 11 DIAN (NIT)
+    #region 1. Módulo 11 (NIT)
 
     [Theory]
     [InlineData("800197268", 4)] // DIAN
@@ -154,192 +133,7 @@ public class DianYBalanzasTests
 
     #endregion
 
-    #region 4. CUDE SHA-384 y QR DIAN
-
-    [Fact]
-    public void GeneradorCudeDian_GeneraSha384De96CaracteresHexYQrValido()
-    {
-        var fecha = new DateTime(2026, 11, 2, 14, 30, 0, DateTimeKind.Utc);
-        var cude = GeneradorCudeDian.CalcularCude(
-            numDoc: "SETP990000001",
-            fechaUtc: fecha,
-            subtotal: 40500,
-            totalIva: 9500,
-            total: 50000,
-            nitEmisor: "900123456",
-            numAdquirente: "222222222222",
-            claveTecnica: "fc8eac422eba16e122d5aa92a14da838ecb12300",
-            tipoAmbiente: "2");
-
-        Assert.NotNull(cude);
-        Assert.Equal(96, cude.Length); // SHA-384 = 384 bits = 48 bytes = 96 hex chars
-        Assert.True(cude.All(c => (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f')));
-
-        var qr = GeneradorCudeDian.GenerarCadenaQr(cude);
-
-        Assert.StartsWith("https://catalogo-vpfe.dian.gov.co/document/searchqr?documentkey=", qr);
-        Assert.Contains(cude, qr);
-    }
-
-    #endregion
-
-    #region 5. Generación XML UBL 2.1
-
-    [Fact]
-    public void GeneradorUblDian_GeneraXmlUbl21Valido()
-    {
-        var venta = new Venta
-        {
-            Id = 10,
-            PrefijoDian = "POS",
-            ConsecutivoDian = 101,
-            Cude = "abc123cude96caractereshexadecimalesparaefectosdeprueba1234567890abcdef1234567890abcdef12345678",
-            CadenaQr = "https://catalogo-vpfe.dian.gov.co/document/searchqr?documentkey=abc123cude",
-            FechaValidacionDian = new DateTime(2026, 11, 2, 12, 0, 0, DateTimeKind.Utc),
-            DocumentoAdquirente = "222222222222",
-            NombreAdquirente = "CONSUMIDOR FINAL"
-        };
-
-        var arroz = new ProductoUnitario
-        {
-            Id = 1,
-            CodigoBarras = "7701",
-            Nombre = "Arroz Diana 1kg",
-            PrecioVenta = 5000,
-            Impuesto = new Iva { PuntosBasicos = 0 }
-        };
-        venta.AgregarProducto(arroz, 2);
-
-        var xmlString = GeneradorUblDian.GenerarXml(
-            venta,
-            resolucionNumero: "18764000001",
-            fechaResolucion: "2026-01-01",
-            vigenciaHasta: "2026-12-31",
-            nitEmisor: "900123456",
-            nombreEmisor: "Supermercado El Ahorro S.A.S.",
-            direccionEmisor: "Carrera 7 # 12-34");
-
-        Assert.NotNull(xmlString);
-        var doc = XDocument.Parse(xmlString);
-        Assert.Equal("Invoice", doc.Root?.Name.LocalName);
-
-        // Namespaces UBL 2.1
-        XNamespace cbc = "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2";
-        XNamespace cac = "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2";
-
-        var idElem = doc.Root?.Element(cbc + "ID");
-        Assert.Equal("POS101", idElem?.Value);
-
-        var uuidElem = doc.Root?.Element(cbc + "UUID");
-        Assert.Equal(venta.Cude, uuidElem?.Value);
-
-        var lineas = doc.Root?.Elements(cac + "InvoiceLine");
-        Assert.Single(lineas!);
-    }
-
-    #endregion
-
-    #region 6. Servicio DIAN (Control de Resoluciones y Rangos)
-
-    [Fact]
-    public async Task ServicioDian_ConsultarEstadoResolucion_DetectaVigenciaYRangos()
-    {
-        var parametros = new ParametrosFalsos();
-        ConfiguracionDian(parametros);
-        parametros.Valores[ClavesParametro.DianSiguienteConsecutivo] = "1500";
-
-        var ahora = new DateTimeOffset(2026, 11, 2, 10, 0, 0, TimeSpan.Zero);
-        var reloj = new RelojFijo(ahora);
-
-        var servicio = new ServicioDian(parametros, reloj);
-        var estado = await servicio.ConsultarEstadoResolucionAsync();
-
-        Assert.True(estado.EsValida);
-        Assert.False(estado.EstaVencidaPorFecha);
-        Assert.False(estado.EstaAgotadaPorFolios);
-        Assert.Equal(8501, estado.FoliosRestantes);
-        Assert.True(estado.DiasRestantes > 30);
-        Assert.Null(estado.Alerta);
-    }
-
-    [Fact]
-    public async Task ServicioDian_ResolucionVencidaPorFecha_LanzaValidacionException()
-    {
-        var parametros = new ParametrosFalsos();
-        ConfiguracionDian(parametros);
-        parametros.Valores[ClavesParametro.DianResolucionVigenciaHasta] = "2026-12-31"; // Vencida
-        parametros.Valores[ClavesParametro.DianSiguienteConsecutivo] = "50";
-
-        // Simular fecha posterior a vigencia
-        var ahora = new DateTimeOffset(2027, 2, 1, 10, 0, 0, TimeSpan.Zero);
-        var reloj = new RelojFijo(ahora);
-
-        var servicio = new ServicioDian(parametros, reloj);
-        var venta = new Venta();
-
-        var ex = await Assert.ThrowsAsync<ValidacionException>(() => servicio.EmitirDocumentoPosAsync(venta));
-        Assert.Contains("venci", ex.Message, StringComparison.OrdinalIgnoreCase);
-    }
-
-    [Fact]
-    public async Task ServicioDian_FoliosAgotados_LanzaValidacionException()
-    {
-        var parametros = new ParametrosFalsos();
-        ConfiguracionDian(parametros);
-        parametros.Valores[ClavesParametro.DianRangoDesde] = "1";
-        parametros.Valores[ClavesParametro.DianRangoHasta] = "500";
-        parametros.Valores[ClavesParametro.DianSiguienteConsecutivo] = "501"; // Agotado
-
-        var ahora = new DateTimeOffset(2026, 11, 2, 10, 0, 0, TimeSpan.Zero);
-        var reloj = new RelojFijo(ahora);
-
-        var servicio = new ServicioDian(parametros, reloj);
-        var venta = new Venta();
-
-        var ex = await Assert.ThrowsAsync<ValidacionException>(() => servicio.EmitirDocumentoPosAsync(venta));
-        Assert.Contains("agot", ex.Message, StringComparison.OrdinalIgnoreCase);
-    }
-
-    [Fact]
-    public async Task ServicioDian_AlertaPreventiva_CuandoQuedanPocosFolios()
-    {
-        var parametros = new ParametrosFalsos();
-        ConfiguracionDian(parametros);
-        parametros.Valores[ClavesParametro.DianRangoDesde] = "1";
-        parametros.Valores[ClavesParametro.DianRangoHasta] = "1000";
-        parametros.Valores[ClavesParametro.DianSiguienteConsecutivo] = "950"; // Quedan 51 folios
-
-        var ahora = new DateTimeOffset(2026, 11, 2, 10, 0, 0, TimeSpan.Zero);
-        var reloj = new RelojFijo(ahora);
-
-        var servicio = new ServicioDian(parametros, reloj);
-        var estado = await servicio.ConsultarEstadoResolucionAsync();
-
-        Assert.True(estado.EsValida);
-        Assert.NotNull(estado.Alerta);
-        Assert.Contains("51 folios", estado.Alerta);
-    }
-
-    private static void ConfiguracionDian(ParametrosFalsos parametros)
-    {
-        parametros.Valores[ClavesParametro.DianHabilitado] = "1";
-        parametros.Valores[ClavesParametro.DianResolucionNumero] = "18764000001";
-        parametros.Valores[ClavesParametro.DianResolucionFecha] = "2026-01-01";
-        parametros.Valores[ClavesParametro.DianResolucionVigenciaHasta] = "2026-12-31";
-        parametros.Valores[ClavesParametro.DianPrefijo] = "SETP";
-        parametros.Valores[ClavesParametro.DianRangoDesde] = "1";
-        parametros.Valores[ClavesParametro.DianRangoHasta] = "10000";
-        parametros.Valores[ClavesParametro.DianSiguienteConsecutivo] = "100";
-        parametros.Valores[ClavesParametro.DianClaveTecnica] = "fc8eac422eba16e122d5aa92a14da838ecb12300";
-        parametros.Valores[ClavesParametro.DianTipoAmbiente] = "2";
-        parametros.Valores[ClavesParametro.NegocioNit] = "900123456";
-        parametros.Valores[ClavesParametro.NegocioNombre] = "Supermercado SIGS";
-        parametros.Valores[ClavesParametro.NegocioDireccion] = "Calle 10 # 20-30";
-    }
-
-    #endregion
-
-    #region 7. Integración ServicioVentas (Habeas Data, Régimen Tributario, Balanzas)
+    #region 4. Integración ServicioVentas (Habeas Data, Régimen Tributario, Balanzas)
 
     private class EscenarioIntegracion
     {
@@ -348,26 +142,18 @@ public class DianYBalanzasTests
         public VentasEnMemoria Ventas { get; } = new();
         public TurnosEnMemoria Turnos { get; } = new();
         public ClientesEnMemoria Clientes { get; } = new();
-        public EventosOutboxEnMemoria Outbox { get; } = new();
         public ParametrosFalsos Parametros { get; } = new();
         public AuditoriaFalsa Auditoria { get; } = new();
         public UnidadDeTrabajoFalsa Trabajo { get; } = new();
         public ServicioVentas Servicio { get; }
-        public ServicioDian ServicioDian { get; }
         public RelojFijo Reloj { get; } = new(EscenarioInventario.Ahora);
 
         public EscenarioIntegracion()
         {
             Turnos.Datos.Add(TurnoCaja.Abrir(1, 1, 0, EscenarioInventario.Ahora.UtcDateTime));
-            ConfiguracionDian(Parametros);
-            Parametros.Valores[ClavesParametro.PesosPorPunto] = "1000";
-            Parametros.Valores[ClavesParametro.ValorPuntoPesos] = "10";
             Parametros.Valores[ClavesParametro.ResponsableIva] = "1"; // Por defecto responsable
-            Parametros.Valores[ClavesParametro.DianHabilitado] = "0"; // Deshabilitado para pruebas no-DIAN
 
             var sesion = Sesiones.Con(Permiso.Vender | Permiso.AnularVenta | Permiso.GestionarClientes);
-
-            ServicioDian = new ServicioDian(Parametros, Reloj);
 
             Servicio = new ServicioVentas(
                 Productos,
@@ -379,9 +165,7 @@ public class DianYBalanzasTests
                 Auditoria,
                 sesion,
                 Trabajo,
-                Reloj,
-                Outbox,
-                ServicioDian);
+                Reloj);
         }
     }
 
@@ -514,44 +298,6 @@ public class DianYBalanzasTests
         var detalle = venta.Detalles[0];
         Assert.Equal(500, detalle.Cantidad); // Cantidad en gramos
         Assert.Equal(2000L, detalle.Subtotal); // 500g * $4.000/1000 = $2.000
-    }
-
-    [Fact]
-    public async Task ServicioVentas_ConDianHabilitado_EmiteDocumentoElectronicoPos()
-    {
-        var e = new EscenarioIntegracion();
-        e.Parametros.Valores[ClavesParametro.DianHabilitado] = "1";
-        e.Parametros.Valores[ClavesParametro.DianSiguienteConsecutivo] = "100";
-
-        var producto = new ProductoUnitario
-        {
-            Id = 1,
-            CodigoBarras = "7701",
-            PrecioVenta = 10000,
-            Impuesto = new Iva { PuntosBasicos = 1900 }
-        };
-        e.Productos.Datos.Add(producto);
-        e.Inventario.AgregarEstante(1, 10, 10, 5);
-
-        var solicitud = new SolicitudVenta(
-            [new LineaVenta("7701", 1)],
-            [new PagoEfectivo { Monto = 10000 }]);
-
-        var venta = await e.Servicio.RegistrarVentaAsync(solicitud);
-
-        // Debe haber emitido campos DIAN
-        Assert.NotNull(venta.Cude);
-        Assert.Equal(96, venta.Cude.Length);
-        Assert.NotNull(venta.CadenaQr);
-        Assert.StartsWith("https://catalogo-vpfe.dian.gov.co/document/searchqr?documentkey=", venta.CadenaQr);
-        Assert.Equal("SETP", venta.PrefijoDian);
-        Assert.Equal(100L, venta.ConsecutivoDian);
-        Assert.NotNull(venta.FechaValidacionDian);
-        Assert.NotNull(venta.XmlUbl);
-        Assert.Contains("<Invoice", venta.XmlUbl);
-
-        // Consecutivo debió avanzar a 101 en parámetros
-        Assert.Equal("101", e.Parametros.Valores[ClavesParametro.DianSiguienteConsecutivo]);
     }
 
     #endregion

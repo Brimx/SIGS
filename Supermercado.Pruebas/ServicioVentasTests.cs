@@ -168,22 +168,6 @@ public class ServicioVentasTests
     }
 
     [Fact]
-    public async Task PagoPuntosFabricado_SinRedencionSolicitada_SeRechaza()
-    {
-        var e = new Escenario(Permiso.Vender);
-        var solicitud = new SolicitudVenta(
-            [new LineaVenta("123", 1)],
-            [new PagoPuntos { Puntos = 1, Monto = 11900 }]);
-
-        await Assert.ThrowsAsync<VentaInvalidaException>(
-            () => e.Servicio.RegistrarVentaAsync(solicitud));
-
-        Assert.Empty(e.Ventas.Datos);
-        Assert.Equal(10, e.Fila.Cantidad);
-        Assert.Equal(0, e.Trabajo.Guardados);
-    }
-
-    [Fact]
     public async Task AnularDosVeces_SoloDevuelveElStockUnaVez()
     {
         var e = new Escenario(Permiso.Vender | Permiso.AnularVenta);

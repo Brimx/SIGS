@@ -90,10 +90,7 @@ public class PosViewModelTests
             var v = new Venta
             {
                 Id = 101,
-                Fecha = DateTime.UtcNow,
-                PrefijoDian = "709B",
-                ConsecutivoDian = 169478,
-                Cude = new string('a', 96)
+                Fecha = DateTime.UtcNow
             };
             return Task.FromResult(v);
         }

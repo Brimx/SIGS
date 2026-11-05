@@ -1,5 +1,4 @@
 using Supermercado.Entidades.Clientes;
-using Supermercado.Entidades.Sincronizacion;
 using Supermercado.Entidades.Contratos;
 using Supermercado.Entidades.Dashboards;
 using Supermercado.Entidades.Inventario;
@@ -109,12 +108,4 @@ public class ClientesEnMemoria
 {
     public Task<Cliente?> ObtenerPorDocumentoAsync(string documento)
         => Task.FromResult(Datos.FirstOrDefault(c => c.Documento == documento));
-}
-
-public class EventosOutboxEnMemoria
-    : RepositorioEnMemoria<EventoOutbox>, IEventoOutboxRepositorio
-{
-    public Task<IReadOnlyList<EventoOutbox>> ObtenerPendientesAsync(int limite = 50)
-        => Task.FromResult<IReadOnlyList<EventoOutbox>>(
-            Datos.Where(e => !e.Procesado).OrderBy(e => e.Id).Take(limite).ToList());
 }
