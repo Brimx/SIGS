@@ -204,45 +204,16 @@ public partial class LoginViewModel : ViewModelBase
                 Clave = "Cajero123*";
                 PinAcceso = "1234";
                 break;
-            case "supervisor":
-                NombreUsuario = "supervisor";
-                Clave = "Super123*";
-                PinAcceso = "9988";
-                break;
             case "gerente":
                 NombreUsuario = "gerente";
                 Clave = "Gerente123*";
                 PinAcceso = "3344";
                 break;
             case "bodega":
+            case "bodeguero":
                 NombreUsuario = "bodega";
                 Clave = "Bodega123*";
                 PinAcceso = "2233";
-                break;
-            case "compras":
-                NombreUsuario = "compras";
-                Clave = "Compras123*";
-                PinAcceso = "4455";
-                break;
-            case "contador":
-                NombreUsuario = "contador";
-                Clave = "Conta123*";
-                PinAcceso = "5566";
-                break;
-            case "soporte":
-                NombreUsuario = "soporte";
-                Clave = "Soporte123*";
-                PinAcceso = "6677";
-                break;
-            case "atencion":
-                NombreUsuario = "atencion";
-                Clave = "Atencion123*";
-                PinAcceso = "7788";
-                break;
-            case "analista":
-                NombreUsuario = "analista";
-                Clave = "Analista123*";
-                PinAcceso = "8899";
                 break;
             default:
                 NombreUsuario = "cajero";
@@ -274,46 +245,13 @@ public partial class LoginViewModel : ViewModelBase
             await generador.GenerarAsync();
 
             TieneExito = true;
-            MensajeExito = "Base de datos demo sembrada con 10 roles, catálogo, productos, clientes y turno POS.";
+            MensajeExito = "Base de datos demo sembrada con los 4 roles, catálogo, productos, clientes y turno POS.";
             SeleccionarCredencialDemo("cajero");
         }
         catch (Exception ex)
         {
             TieneError = true;
             MensajeError = $"No se pudo sembrar datos demo: {ex.Message}";
-        }
-        finally
-        {
-            Cargando = false;
-        }
-    }
-
-    [RelayCommand]
-    private async Task CargarBasePostgresDemoAsync()
-    {
-        if (Cargando || _scopeFactory is null)
-            return;
-
-        Cargando = true;
-        TieneError = false;
-        TieneExito = false;
-        MensajeError = string.Empty;
-        MensajeExito = string.Empty;
-
-        try
-        {
-            using var scope = _scopeFactory.CreateScope();
-            var inicializador = scope.ServiceProvider.GetRequiredService<IInicializadorBaseDatos>();
-            await inicializador.CargarScriptPostgresAsync();
-
-            TieneExito = true;
-            MensajeExito = "Base de datos PostgreSQL ejecutada e inicializada con éxito (13 categorías, catálogo hipermercado, 10 roles y ventas DIAN).";
-            SeleccionarCredencialDemo("cajero");
-        }
-        catch (Exception ex)
-        {
-            TieneError = true;
-            MensajeError = $"Error al ejecutar script en PostgreSQL: {ex.Message}";
         }
         finally
         {

@@ -6,7 +6,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Supermercado.Entidades.Seguridad;
 using Supermercado.Entidades.Ventas;
 using Supermercado.Logica.Comunes;
-using Supermercado.Logica.Dian;
 using Supermercado.Logica.Seguridad;
 using Supermercado.Logica.Ventas;
 
@@ -17,7 +16,6 @@ public partial class CajaTurnoViewModel : ViewModelBase
     private static readonly CultureInfo CulturaCo = new("es-CO");
 
     private readonly IServicioCaja? _servicioCaja;
-    private readonly IServicioDian? _servicioDian;
     private readonly IServicioAutenticacion? _servicioAutenticacion;
     private readonly ITraductorExcepciones? _traductor;
     private readonly IServiceScopeFactory? _scopeFactory;
@@ -67,9 +65,6 @@ public partial class CajaTurnoViewModel : ViewModelBase
     public partial ResultadoArqueo? UltimoArqueo { get; set; }
 
     [ObservableProperty]
-    public partial EstadoResolucionDian? EstadoDian { get; set; }
-
-    [ObservableProperty]
     public partial string MensajeEstado { get; set; } = string.Empty;
 
     [ObservableProperty]
@@ -89,12 +84,10 @@ public partial class CajaTurnoViewModel : ViewModelBase
 
     public CajaTurnoViewModel(
         IServicioCaja servicioCaja,
-        IServicioDian? servicioDian = null,
         ITraductorExcepciones? traductor = null,
         IServicioAutenticacion? servicioAutenticacion = null)
     {
         _servicioCaja = servicioCaja;
-        _servicioDian = servicioDian;
         _traductor = traductor;
         _servicioAutenticacion = servicioAutenticacion;
     }
@@ -105,7 +98,6 @@ public partial class CajaTurnoViewModel : ViewModelBase
         using var scope = _scopeFactory?.CreateScope();
         var servicios = scope?.ServiceProvider;
         var servicioCaja = _servicioCaja ?? servicios?.GetService<IServicioCaja>();
-        var servicioDian = _servicioDian ?? servicios?.GetService<IServicioDian>();
         if (servicioCaja is null)
             return;
 
@@ -130,11 +122,6 @@ public partial class CajaTurnoViewModel : ViewModelBase
                 RetirosTurnoActual.Clear();
                 FechaAperturaTexto = "Sin turno activo";
                 MensajeEstado = "La caja se encuentra cerrada. Debe realizar la apertura con base inicial.";
-            }
-
-            if (servicioDian is not null)
-            {
-                EstadoDian = await servicioDian.ConsultarEstadoResolucionAsync();
             }
 
             OnPropertyChanged(nameof(EfectivoInicialFormateado));

@@ -39,10 +39,10 @@ public partial class ShellViewModel : ViewModelBase
     public partial string ModuloActivo { get; set; } = "POS";
 
     [ObservableProperty]
-    public partial string TituloModulo { get; set; } = "Punto de Venta (POS Electrónico DIAN)";
+    public partial string TituloModulo { get; set; } = "Punto de Venta (POS)";
 
     [ObservableProperty]
-    public partial string SubtituloModulo { get; set; } = "Facturación de alta velocidad · Resolución DIAN 000165 de 2023";
+    public partial string SubtituloModulo { get; set; } = "Registro de ventas, balanzas EAN-13 y pagos mixtos";
 
     [ObservableProperty]
     public partial string NombreUsuarioActivo { get; set; } = "Sin sesión";
@@ -214,8 +214,8 @@ public partial class ShellViewModel : ViewModelBase
         switch (modulo)
         {
             case "POS":
-                TituloModulo = "Punto de Venta (POS Electrónico DIAN)";
-                SubtituloModulo = "Facturación de alta velocidad · Resolución DIAN 000165 de 2023";
+                TituloModulo = "Punto de Venta (POS)";
+                SubtituloModulo = "Registro de ventas, balanzas EAN-13 y pagos mixtos";
                 PaginaActual = PosVm;
                 await PosVm.InicializarEstadoCajaAsync();
                 break;
@@ -229,21 +229,21 @@ public partial class ShellViewModel : ViewModelBase
 
             case "Turno":
                 TituloModulo = "Control de Turno y Arqueo de Caja";
-                SubtituloModulo = "Apertura con base inicial, retiros parciales, Cierre Z y numeración DIAN";
+                SubtituloModulo = "Apertura con base inicial, retiros parciales y Cierre Z";
                 PaginaActual = CajaTurnoVm;
                 await CajaTurnoVm.VerificarEstadoCajaAsync();
                 break;
 
             case "Clientes":
                 TituloModulo = "Clientes y Cumplimiento Habeas Data";
-                SubtituloModulo = "Registro de adquirentes DIAN, validación NIT (Módulo 11) y Ley 1581 de 2012";
+                SubtituloModulo = "Registro de clientes, validación NIT (Módulo 11) y Ley 1581 de 2012";
                 RegistroClienteVm.ConfigurarModo(ModoRegistroUsuario.ClientePos);
                 PaginaActual = RegistroClienteVm;
                 break;
 
             case "Personal":
                 TituloModulo = "Administración de Personal y Roles RBAC";
-                SubtituloModulo = "Empleados, cargos, credenciales de usuario y matriz de 18 permisos";
+                SubtituloModulo = "Empleados, cargos, credenciales de usuario y permisos por rol";
                 PaginaActual = PersonalRolesVm;
                 await PersonalRolesVm.CargarDatosAsync();
                 break;
@@ -256,7 +256,7 @@ public partial class ShellViewModel : ViewModelBase
                 break;
 
             case "Contabilidad":
-                TituloModulo = "Contabilidad y Exportación Fiscal DIAN";
+                TituloModulo = "Finanzas y Reportes de IVA";
                 SubtituloModulo = "Discriminación de IVA (0%, 5%, 19%), gastos operativos, cierres Z y reportes CSV/PDF";
                 PaginaActual = ContabilidadDianVm;
                 await ContabilidadDianVm.ActualizarConsolidadoFiscalAsync();

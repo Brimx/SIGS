@@ -94,7 +94,7 @@ public partial class ContabilidadDianViewModel : ViewModelBase
     public partial string UltimaRutaExportada { get; set; } = string.Empty;
 
     [ObservableProperty]
-    public partial string MensajeEstado { get; set; } = "Reporte fiscal DIAN, discriminación de tarifas IVA (0%, 5%, 19%) y exportación contable.";
+    public partial string MensajeEstado { get; set; } = "Reporte de IVA discriminado por tarifas (0%, 5%, 19%), gastos y exportación contable.";
 
     [ObservableProperty]
     public partial bool TieneError { get; set; }

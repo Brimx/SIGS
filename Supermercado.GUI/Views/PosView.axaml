@@ -70,9 +70,9 @@
                             </Grid>
                         </StackPanel>
 
-                        <!-- Búsqueda de Adquirente DIAN / Cliente -->
+                        <!-- Búsqueda de Cliente -->
                         <StackPanel Grid.Column="2" Spacing="4">
-                            <TextBlock Text="Adquirente DIAN (CC / NIT)"
+                            <TextBlock Text="Cliente (CC / NIT)"
                                        FontWeight="{StaticResource FontWeightSemiBold}"
                                        FontSize="{StaticResource FontSizeCaption}"
                                        Foreground="{DynamicResource BrushTextSecondary}" />
@@ -248,7 +248,7 @@
                         </StackPanel>
                     </Border>
 
-                    <!-- DESGLOSE TRIBUTARIO DIAN (TARIFAS C: 0%, M: 5%, J: 19%) -->
+                    <!-- DESGLOSE TRIBUTARIO DE IVA (TARIFAS C: 0%, M: 5%, J: 19%) -->
                     <Border Grid.Row="2"
                             Background="{DynamicResource BrushSurfaceSubtle}"
                             BorderBrush="{DynamicResource BrushBorderSubtle}"
@@ -256,7 +256,7 @@
                             CornerRadius="{StaticResource RadiusMedium}"
                             Padding="12,10">
                         <StackPanel Spacing="6">
-                            <TextBlock Text="DISCRIMINACIÓN IVA (RES. DIAN 000165)"
+                            <TextBlock Text="DISCRIMINACIÓN DE IVA (0% · 5% · 19%)"
                                        FontFamily="{StaticResource FontFamilyStackSans}"
                                        FontSize="{StaticResource FontSizeCaption}"
                                        FontWeight="{StaticResource FontWeightBold}"
@@ -412,7 +412,7 @@
                     <StackPanel Spacing="14">
                         <StackPanel Orientation="Horizontal" Spacing="10">
                             <LucideIcon Kind="Wallet" Size="22" Foreground="{DynamicResource BrushPrimaryText}" />
-                            <TextBlock Text="Finalizar Venta · Pagos Mixtos y Emisión DIAN"
+                            <TextBlock Text="Finalizar Venta · Pagos Mixtos"
                                        FontFamily="{StaticResource FontFamilyStackSans}"
                                        FontSize="{StaticResource FontSizeTitle}"
                                        FontWeight="{StaticResource FontWeightBold}" />
@@ -806,7 +806,7 @@
                             <NumericUpDown Value="{Binding VentaIdParaAnularInput}" Minimum="1" FormatString="0" FontFamily="{StaticResource FontFamilyPlexCondensed}" />
                         </StackPanel>
                         <StackPanel Spacing="4">
-                            <TextBlock Text="Motivo de Anulación (Auditoría DIAN)" FontSize="{StaticResource FontSizeCaption}" FontWeight="{StaticResource FontWeightSemiBold}" />
+                            <TextBlock Text="Motivo de Anulación (Auditoría)" FontSize="{StaticResource FontSizeCaption}" FontWeight="{StaticResource FontWeightSemiBold}" />
                             <TextBox Text="{Binding MotivoAnulacionInput}" />
                         </StackPanel>
                     </StackPanel>

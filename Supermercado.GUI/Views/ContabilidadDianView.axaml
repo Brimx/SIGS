@@ -16,11 +16,11 @@
                 Padding="16,12">
             <Grid ColumnDefinitions="*,16,Auto,8,110,12,Auto,8,Auto,8,Auto">
                 <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
-                    <TextBlock Text="Contabilidad, Consolidado de IVA DIAN y Arqueos Z"
+                    <TextBlock Text="Finanzas, Consolidado de IVA y Arqueos Z"
                                FontFamily="{StaticResource FontFamilyStackSans}"
                                FontSize="{StaticResource FontSizeSubtitle}"
                                FontWeight="{StaticResource FontWeightBold}" />
-                    <TextBlock Text="Liquidación discriminada por tarifas (0%, 5%, 19%), registro de gastos y exportación para declaración tributaria."
+                    <TextBlock Text="Liquidación discriminada por tarifas (0%, 5%, 19%), registro de gastos y exportación contable."
                                FontSize="{StaticResource FontSizeCaption}"
                                Foreground="{DynamicResource BrushTextSecondary}" />
                 </StackPanel>
@@ -76,7 +76,7 @@
 
             <Border Grid.Column="2" Background="{DynamicResource BrushSurface}" BorderBrush="{DynamicResource BrushBorderSubtle}" BorderThickness="1" CornerRadius="{StaticResource RadiusLarge}" Padding="16">
                 <StackPanel Spacing="4">
-                    <TextBlock Text="TOTAL IVA GENERADO (DIAN)" FontFamily="{StaticResource FontFamilyStackSans}" FontSize="{StaticResource FontSizeCaption}" FontWeight="{StaticResource FontWeightBold}" Foreground="{DynamicResource BrushTextSecondary}" />
+                    <TextBlock Text="TOTAL IVA GENERADO" FontFamily="{StaticResource FontFamilyStackSans}" FontSize="{StaticResource FontSizeCaption}" FontWeight="{StaticResource FontWeightBold}" Foreground="{DynamicResource BrushTextSecondary}" />
                     <TextBlock Text="{Binding IvaTotalGeneradoFormateado}" FontFamily="{StaticResource FontFamilyPlexCondensed}" FontSize="{StaticResource FontSizeHeadline}" FontWeight="{StaticResource FontWeightBold}" Foreground="{DynamicResource BrushWarningText}" />
                 </StackPanel>
             </Border>

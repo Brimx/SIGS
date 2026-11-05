@@ -54,9 +54,9 @@
                              FontFamily="{StaticResource FontFamilyPlexCondensed}" />
                 </StackPanel>
 
-                <!-- Dígito de Verificación DIAN (Módulo 11) -->
+                <!-- Dígito de Verificación NIT (Módulo 11) -->
                 <StackPanel Grid.Row="0" Grid.Column="4" Spacing="4" IsVisible="{Binding EsNit}">
-                    <TextBlock Text="DV (DIAN)"
+                    <TextBlock Text="DV (NIT)"
                                FontWeight="{StaticResource FontWeightSemiBold}"
                                FontSize="{StaticResource FontSizeBody}"
                                Foreground="{DynamicResource BrushPrimaryText}" />
@@ -99,7 +99,7 @@
                 </StackPanel>
 
                 <StackPanel Grid.Row="4" Grid.Column="2" Grid.ColumnSpan="3" Spacing="4">
-                    <TextBlock Text="Correo Electrónico (Envío Factura XML/PDF)"
+                    <TextBlock Text="Correo Electrónico (Envío Comprobante PDF)"
                                FontWeight="{StaticResource FontWeightMedium}"
                                FontSize="{StaticResource FontSizeBody}"
                                Foreground="{DynamicResource BrushTextSecondary}" />

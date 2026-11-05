@@ -38,7 +38,7 @@
                                    FontSize="{StaticResource FontSizeSubtitle}"
                                    FontWeight="{StaticResource FontWeightBold}"
                                    Foreground="{DynamicResource BrushTextPrimary}" />
-                        <TextBlock Text="DIAN POS · v1.0"
+                        <TextBlock Text="POS &amp; Gestión · v1.0"
                                    FontFamily="{StaticResource FontFamilyPlexCondensed}"
                                    FontSize="{StaticResource FontSizeCaption}"
                                    Foreground="{DynamicResource BrushTextSecondary}" />
@@ -152,7 +152,7 @@
                                 Padding="12,0" Classes="Navegacion" Theme="{DynamicResource BorderlessButton}">
                             <StackPanel Orientation="Horizontal" Spacing="10">
                                 <LucideIcon Kind="FileSpreadsheet" Size="18" Foreground="{DynamicResource BrushPrimaryText}" />
-                                <TextBlock Text="Contabilidad Fiscal DIAN" FontWeight="{StaticResource FontWeightSemiBold}" />
+                                <TextBlock Text="Finanzas e IVA" FontWeight="{StaticResource FontWeightSemiBold}" />
                             </StackPanel>
                         </Button>
 
@@ -286,7 +286,7 @@
                             Padding="12,4">
                         <StackPanel Orientation="Horizontal" Spacing="6">
                             <LucideIcon Kind="ShieldCheck" Size="14" Foreground="{DynamicResource BrushSuccessText}" />
-                            <TextBlock Text="SQLite ACID + DIAN Sandbox Activo"
+                            <TextBlock Text="SQLite ACID Local Activo"
                                        FontFamily="{StaticResource FontFamilyPlexCondensed}"
                                        FontSize="{StaticResource FontSizeCaption}"
                                        FontWeight="{StaticResource FontWeightBold}"

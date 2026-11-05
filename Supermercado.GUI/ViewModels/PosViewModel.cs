@@ -326,7 +326,7 @@ public partial class PosViewModel : ViewModelBase
     public string EtiquetaAdquirente => ClienteActual is null
         ? "CONSUMIDOR FINAL (222222222222)"
         : ClienteActual.AutorizaTratamientoDatos
-            ? $"{ClienteActual.NombreCompleto} ({ClienteActual.Documento}) · {ClienteActual.PuntosAcumulados} pts"
+            ? $"{ClienteActual.NombreCompleto} ({ClienteActual.Documento})"
             : $"{ClienteActual.NombreCompleto} [Sin Habeas Data -> 222222222222]";
 
     public IReadOnlyList<string> MetodosPagoDisponibles { get; } = ["Efectivo", "Tarjeta", "Transferencia"];
@@ -701,7 +701,6 @@ public partial class PosViewModel : ViewModelBase
                 Lineas: lineas,
                 Pagos: listaPagos,
                 ClienteId: ClienteActual?.Id,
-                PuntosARedimir: 0,
                 ClaveIdempotencia: _claveIdempotenciaCobro ??= Guid.NewGuid().ToString("N"));
 
             var ventaRegistrada = await servicioVentas.RegistrarVentaAsync(solicitud);
@@ -732,7 +731,7 @@ public partial class PosViewModel : ViewModelBase
                 }
             }
 
-            MensajeEstado = $"Venta #{ventaRegistrada.PrefijoDian}{ventaRegistrada.ConsecutivoDian} completada. Cambio: $ {cambio.ToString("N0", CulturaCo)}.";
+            MensajeEstado = $"Venta #{ventaRegistrada.Id} completada. Cambio: $ {cambio.ToString("N0", CulturaCo)}.";
         }
         catch (Exception ex)
         {
@@ -773,7 +772,6 @@ public partial class PosViewModel : ViewModelBase
                 CajaActivaId,
                 lineas,
                 ClienteActual?.Id,
-                0,
                 identificador,
                 TotalPesos,
                 string.IsNullOrWhiteSpace(NotaVentaEnEsperaInput) ? "En espera" : NotaVentaEnEsperaInput.Trim());

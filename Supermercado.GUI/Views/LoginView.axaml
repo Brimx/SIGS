@@ -35,7 +35,7 @@
                                FontSize="{StaticResource FontSizeHeadline}"
                                FontWeight="{StaticResource FontWeightBold}"
                                Foreground="{DynamicResource BrushTextPrimary}" />
-                    <TextBlock Text="Sistema Integral de Gestión de Supermercado · DIAN POS"
+                    <TextBlock Text="Sistema Integrado de Gestión para Supermercados"
                                HorizontalAlignment="Center"
                                FontSize="{StaticResource FontSizeBody}"
                                Foreground="{DynamicResource BrushTextSecondary}" />
@@ -186,7 +186,7 @@
 
                     <Separator Background="{DynamicResource BrushBorderSubtle}" Height="1" Margin="0,4" />
 
-                    <!-- Asistencia Demo y Selección Rápida de 10 Roles -->
+                    <!-- Asistencia Demo y Selección Rápida de 4 Roles -->
                     <StackPanel Spacing="8">
                         <Button Command="{Binding AlternarPanelDemoCommand}"
                                 HorizontalAlignment="Stretch"
@@ -197,7 +197,7 @@
                                 CornerRadius="{StaticResource RadiusSmall}">
                             <StackPanel Orientation="Horizontal" Spacing="6">
                                 <LucideIcon Kind="Sparkles" Size="14" Foreground="{DynamicResource BrushPrimaryText}" />
-                                <TextBlock Text="Cuentas de Prueba y Base Demo (10 Roles)"
+                                <TextBlock Text="Cuentas de Prueba y Base Demo (4 Roles)"
                                            FontSize="{StaticResource FontSizeCaption}"
                                            FontWeight="{StaticResource FontWeightMedium}"
                                            Foreground="{DynamicResource BrushTextSecondary}" />
@@ -219,21 +219,7 @@
                                         Foreground="{DynamicResource BrushPrimaryText}">
                                     <StackPanel Orientation="Horizontal" Spacing="6">
                                         <LucideIcon Kind="Database" Size="16" />
-                                        <TextBlock Text="Sembrar Base Demo (10 Roles + Catálogo + Turno)"
-                                                   FontWeight="{StaticResource FontWeightSemiBold}"
-                                                   FontSize="{StaticResource FontSizeBody}" />
-                                    </StackPanel>
-                                </Button>
-
-                                <Button Command="{Binding CargarBasePostgresDemoCommand}"
-                                        HorizontalAlignment="Stretch"
-                                        HorizontalContentAlignment="Center"
-                                        MinHeight="36"
-                                        Background="{DynamicResource BrushSurfaceSubtle}"
-                                        Foreground="{DynamicResource BrushTextPrimary}">
-                                    <StackPanel Orientation="Horizontal" Spacing="6">
-                                        <LucideIcon Kind="Server" Size="16" />
-                                        <TextBlock Text="Cargar y Ejecutar Script Demo PostgreSQL"
+                                        <TextBlock Text="Sembrar Base Demo (4 Roles + Catálogo + Turno)"
                                                    FontWeight="{StaticResource FontWeightSemiBold}"
                                                    FontSize="{StaticResource FontSizeBody}" />
                                     </StackPanel>
@@ -247,32 +233,14 @@
                                     <Button Command="{Binding SeleccionarCredencialDemoCommand}" CommandParameter="admin" Margin="2" Padding="6,3" CornerRadius="4">
                                         <TextBlock Text="Admin (1111)" FontSize="{StaticResource FontSizeCaption}" />
                                     </Button>
-                                    <Button Command="{Binding SeleccionarCredencialDemoCommand}" CommandParameter="cajero" Margin="2" Padding="6,3" CornerRadius="4">
-                                        <TextBlock Text="Cajero (1234)" FontSize="{StaticResource FontSizeCaption}" />
-                                    </Button>
-                                    <Button Command="{Binding SeleccionarCredencialDemoCommand}" CommandParameter="supervisor" Margin="2" Padding="6,3" CornerRadius="4">
-                                        <TextBlock Text="Supervisor (9988)" FontSize="{StaticResource FontSizeCaption}" />
-                                    </Button>
                                     <Button Command="{Binding SeleccionarCredencialDemoCommand}" CommandParameter="gerente" Margin="2" Padding="6,3" CornerRadius="4">
                                         <TextBlock Text="Gerente (3344)" FontSize="{StaticResource FontSizeCaption}" />
                                     </Button>
+                                    <Button Command="{Binding SeleccionarCredencialDemoCommand}" CommandParameter="cajero" Margin="2" Padding="6,3" CornerRadius="4">
+                                        <TextBlock Text="Cajero (1234)" FontSize="{StaticResource FontSizeCaption}" />
+                                    </Button>
                                     <Button Command="{Binding SeleccionarCredencialDemoCommand}" CommandParameter="bodega" Margin="2" Padding="6,3" CornerRadius="4">
                                         <TextBlock Text="Bodeguero (2233)" FontSize="{StaticResource FontSizeCaption}" />
-                                    </Button>
-                                    <Button Command="{Binding SeleccionarCredencialDemoCommand}" CommandParameter="compras" Margin="2" Padding="6,3" CornerRadius="4">
-                                        <TextBlock Text="Compras (4455)" FontSize="{StaticResource FontSizeCaption}" />
-                                    </Button>
-                                    <Button Command="{Binding SeleccionarCredencialDemoCommand}" CommandParameter="contador" Margin="2" Padding="6,3" CornerRadius="4">
-                                        <TextBlock Text="Contador (5566)" FontSize="{StaticResource FontSizeCaption}" />
-                                    </Button>
-                                    <Button Command="{Binding SeleccionarCredencialDemoCommand}" CommandParameter="soporte" Margin="2" Padding="6,3" CornerRadius="4">
-                                        <TextBlock Text="Soporte (6677)" FontSize="{StaticResource FontSizeCaption}" />
-                                    </Button>
-                                    <Button Command="{Binding SeleccionarCredencialDemoCommand}" CommandParameter="atencion" Margin="2" Padding="6,3" CornerRadius="4">
-                                        <TextBlock Text="Atención (7788)" FontSize="{StaticResource FontSizeCaption}" />
-                                    </Button>
-                                    <Button Command="{Binding SeleccionarCredencialDemoCommand}" CommandParameter="analista" Margin="2" Padding="6,3" CornerRadius="4">
-                                        <TextBlock Text="Analista (8899)" FontSize="{StaticResource FontSizeCaption}" />
                                     </Button>
                                 </WrapPanel>
                             </StackPanel>

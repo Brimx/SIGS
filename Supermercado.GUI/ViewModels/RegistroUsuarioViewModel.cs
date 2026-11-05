@@ -5,7 +5,6 @@ using Supermercado.Entidades.Clientes;
 using Supermercado.Logica.Clientes;
 using Supermercado.Logica.Comunes;
 using Supermercado.Logica.Seguridad;
-using Supermercado.GUI.Servicios.Validacion;
 
 namespace Supermercado.GUI.ViewModels;
 
@@ -18,16 +17,21 @@ public enum ModoRegistroUsuario
 
 public partial class RegistroUsuarioViewModel : ViewModelBase
 {
+    public const string TextoLegalHabeasDataPorDefecto =
+        "Autorizo de manera libre, previa, expresa e informada el tratamiento de mis datos personales " +
+        "conforme a la Ley Estatutaria 1581 de 2012 y el Decreto 1377 de 2013, para fines de emisión de " +
+        "comprobantes de venta, envío de soporte digital y gestión comercial.";
+
     private readonly IServiceScopeFactory? _scopeFactory;
 
     [ObservableProperty]
     public partial ModoRegistroUsuario Modo { get; set; } = ModoRegistroUsuario.ClientePos;
 
     [ObservableProperty]
-    public partial string TituloFormulario { get; set; } = "Registro de Cliente (POS / Fidelización)";
+    public partial string TituloFormulario { get; set; } = "Registro de Cliente POS";
 
     [ObservableProperty]
-    public partial string SubtituloFormulario { get; set; } = "Datos para facturación electrónica DIAN y acumulación de puntos";
+    public partial string SubtituloFormulario { get; set; } = "Datos del cliente y consentimiento Habeas Data (Ley 1581 de 2012)";
 
     [ObservableProperty]
     public partial string TipoDocumento { get; set; } = "CC";
@@ -79,11 +83,11 @@ public partial class RegistroUsuarioViewModel : ViewModelBase
 
     public IReadOnlyList<string> TiposDocumentoDisponibles { get; } = ["CC", "NIT", "CE", "PP"];
 
-    public string TextoLegalHabeasData => ValidadorDian.TextoLegalHabeasData;
+    public string TextoLegalHabeasData => TextoLegalHabeasDataPorDefecto;
 
     public string AvisoHabeasData => AutorizaHabeasData
-        ? "Facturación nominativa habilitada y acumulación de puntos activa."
-        : "Sin autorización Ley 1581: Se facturará bajo CONSUMIDOR FINAL (222222222222).";
+        ? "Identificación nominativa habilitada en el comprobante de venta."
+        : "Sin autorización Ley 1581: Se registrará bajo CONSUMIDOR FINAL (222222222222).";
 
     public event Action<Cliente?>? ClienteRegistrado;
     public event Action? OnboardingCompletado;
@@ -111,7 +115,7 @@ public partial class RegistroUsuarioViewModel : ViewModelBase
                 break;
             case ModoRegistroUsuario.ClientePos:
                 TituloFormulario = "Registro de Cliente y Habeas Data";
-                SubtituloFormulario = "Facturación Electrónica DIAN y Programa de Puntos (Ley 1581 de 2012)";
+                SubtituloFormulario = "Identificación del adquirente y cumplimiento de Ley 1581 de 2012";
                 break;
             case ModoRegistroUsuario.EmpleadoPersonal:
                 TituloFormulario = "Registro de Personal Operativo";
@@ -144,7 +148,7 @@ public partial class RegistroUsuarioViewModel : ViewModelBase
             return;
         }
 
-        var dv = ValidadorDian.CalcularDigitoVerificacion(Documento);
+        var dv = Validador.CalcularDigitoVerificacionNit(Documento);
         DigitoVerificacion = dv >= 0 ? dv.ToString() : string.Empty;
     }
 

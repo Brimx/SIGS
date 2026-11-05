@@ -8,8 +8,7 @@ using Supermercado.Logica.Seguridad;
 namespace Supermercado.GUI.Servicios.Impresion;
 
 /// <summary>
-/// Generador de tirilla de facturación electrónica POS de 80mm (48 columnas)
-/// calibrada contra el estándar comercial de Tiendas Ara y la Resolución DIAN 000165 de 2023.
+/// Generador de tirilla de venta POS de 80mm (48 columnas).
 /// </summary>
 public static class PlantillaTicketPos
 {
@@ -33,31 +32,18 @@ public static class PlantillaTicketPos
         var direccionTienda = await ObtenerSeguroAsync(parametros, ClavesParametro.NegocioDireccion, "CL 18 BIS 1 #36-04");
         var telefonoTienda = await ObtenerSeguroAsync(parametros, ClavesParametro.NegocioTelefono, "3009124523");
 
-        var resNumero = await ObtenerSeguroAsync(parametros, ClavesParametro.DianResolucionNumero, "18764102352817");
-        var resFecha = await ObtenerSeguroAsync(parametros, ClavesParametro.DianResolucionFecha, "2025-12-01");
-        var resVigencia = await ObtenerSeguroAsync(parametros, ClavesParametro.DianResolucionVigenciaHasta, "2027-06-01");
-        var prefijo = !string.IsNullOrWhiteSpace(venta.PrefijoDian)
-            ? venta.PrefijoDian
-            : await ObtenerSeguroAsync(parametros, ClavesParametro.DianPrefijo, "709B");
-        var rangoDesde = await ObtenerSeguroAsync(parametros, ClavesParametro.DianRangoDesde, "169477");
-        var rangoHasta = await ObtenerSeguroAsync(parametros, ClavesParametro.DianRangoHasta, "999999");
-
-        var consecutivo = venta.ConsecutivoDian > 0 ? venta.ConsecutivoDian : venta.Id;
-        var numFactura = $"{prefijo}{consecutivo}";
+        var numTicket = $"POS-{venta.Id}";
         var fechaGen = venta.Fecha.ToLocalTime();
-        var fechaVal = (venta.FechaValidacionDian ?? venta.Fecha.AddSeconds(3)).ToLocalTime();
 
         var sb = new StringBuilder();
 
-        // 1. Cabecera comercial y calidades tributarias (estilo Tiendas Ara)
+        // 1. Cabecera comercial
         sb.AppendLine(Centrar($"{nombreTienda.ToUpperInvariant()}  NIT {nitTienda}"));
-        sb.AppendLine(Centrar("GRAN CONTRIBUYENTE RES. 000200/24 AGENTE RETENEDOR"));
-        sb.AppendLine(Centrar($"DE IVA AUTOR.DE RENTA RES.000492/2014 TEL {telefonoTienda}"));
+        sb.AppendLine(Centrar($"DIRECCION: {direccionTienda}  TEL {telefonoTienda}"));
         sb.AppendLine(Separador('-'));
 
-        sb.AppendLine(AlinearExtremos("FACTURA ELECTRONICA DE VENTA N:", numFactura));
-        sb.AppendLine($"GENERACION: {fechaGen:yyyy-MM-dd HH:mm:ss}");
-        sb.AppendLine($"VALIDACION DIAN: {fechaVal:yyyy-MM-dd HH:mm:ss}");
+        sb.AppendLine(AlinearExtremos("TICKET DE VENTA POS N:", numTicket));
+        sb.AppendLine($"FECHA: {fechaGen:yyyy-MM-dd HH:mm:ss}");
 
         var clienteNombre = !string.IsNullOrWhiteSpace(venta.NombreAdquirente)
             ? venta.NombreAdquirente
@@ -103,7 +89,7 @@ public static class PlantillaTicketPos
         sb.AppendLine(Separador('-'));
 
         // 3. Totales y medios de pago
-        sb.AppendLine(AlinearExtremos("TOTALES: *RECARGOS: 0  DESCUENTOS: -0", $"FACTURA: {FormatearMonto(venta.Total)}"));
+        sb.AppendLine(AlinearExtremos("TOTALES: *RECARGOS: 0  DESCUENTOS: -0", $"TOTAL: {FormatearMonto(venta.Total)}"));
         foreach (var pago in venta.Pagos)
         {
             sb.AppendLine(AlinearExtremos($"MEDIO/PAGO: {pago.Metodo}:", FormatearMonto(pago.Monto)));
@@ -125,30 +111,6 @@ public static class PlantillaTicketPos
         AgregarFilaImpuesto(sb, venta, 0, "C:IVA 0%");
 
         sb.AppendLine(AlinearExtremos("TOTAL IMPUESTOS:", FormatearMonto(venta.TotalIva)));
-        sb.AppendLine(Separador('-'));
-
-        // 5. TrackID, Resolución DIAN, CUFE/CUDE y QR
-        var trackId = $"477448{fechaGen:yyyyMMddHHmm}{consecutivo:D10}";
-        sb.AppendLine($"Su TrackID es: {trackId}");
-        sb.AppendLine($"SIGS-POS Resolucion#{resNumero} de {resFecha}");
-        sb.AppendLine($"vigencia hasta {resVigencia} Habilita {prefijo} Rango {rangoDesde} a {rangoHasta}");
-
-        var cude = !string.IsNullOrWhiteSpace(venta.Cude)
-            ? venta.Cude
-            : GenerarCudeRespaldo(numFactura, fechaGen, venta.Total);
-
-        sb.AppendLine($"CUFE/CUDE: {cude}");
-        var qrUrl = !string.IsNullOrWhiteSpace(venta.CadenaQr)
-            ? venta.CadenaQr
-            : $"https://catalogo-vpfe.dian.gov.co/document/searchqr?documentkey={cude}";
-        sb.AppendLine($"QR DIAN: {qrUrl}");
-
-        if (venta.Cliente is not null || venta.PuntosGanados > 0 || venta.PuntosRedimidos > 0)
-        {
-            sb.AppendLine(Separador('-'));
-            sb.AppendLine($"PUNTOS GANADOS: +{venta.PuntosGanados}  REDIMIDOS: -{venta.PuntosRedimidos}");
-        }
-
         sb.AppendLine(Separador('='));
         sb.AppendLine(Centrar("¡GRACIAS POR SU COMPRA!"));
 
@@ -205,12 +167,5 @@ public static class PlantillaTicketPos
         {
             return porDefecto;
         }
-    }
-
-    private static string GenerarCudeRespaldo(string numFactura, DateTime fecha, long total)
-    {
-        var semilla = $"{numFactura}|{fecha:yyyyMMddHHmmss}|{total}|SIGS-DIAN";
-        var bytes = System.Security.Cryptography.SHA384.HashData(Encoding.UTF8.GetBytes(semilla));
-        return Convert.ToHexStringLower(bytes);
     }
 }
