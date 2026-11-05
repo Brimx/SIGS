@@ -1,4 +1,3 @@
-using Supermercado.Logica.Dian;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Supermercado.Datos;
@@ -27,10 +26,9 @@ public static class ExtensionesLogica
 
     public static IServiceCollection AgregarLogica(
         this IServiceCollection servicios,
-        string rutaBaseDatos,
-        string? cadenaConexionPostgres = null)
+        string rutaBaseDatos)
     {
-        servicios.AgregarDatos(rutaBaseDatos, cadenaConexionPostgres);
+        servicios.AgregarDatos(rutaBaseDatos);
 
         servicios.AddSingleton<ISesionActual, SesionActual>();
         servicios.AddSingleton<IHasheadorClave, HasheadorBCrypt>();
@@ -101,8 +99,6 @@ public static class ExtensionesLogica
 
         // Respaldo, traducción de errores y registro a archivo
         servicios.AddScoped<IServicioRespaldo, ServicioRespaldo>();
-        servicios.AddScoped<IServicioDian, ServicioDian>();
-        servicios.AddScoped<IServicioSincronizacionRemota, ClienteSincronizacionSupabase>();
         servicios.AddSingleton<ILoggerProvider>(
             sp => new ProveedorLogArchivo(
                 RutasDatos.ArchivoLogPorDefecto(),

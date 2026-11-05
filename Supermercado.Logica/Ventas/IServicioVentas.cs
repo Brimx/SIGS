@@ -16,7 +16,6 @@ public interface IServicioVentasEnEspera
         int cajaId,
         IReadOnlyList<LineaVenta> lineas,
         int? clienteId,
-        int puntosARedimir,
         string identificadorCliente,
         long totalEstimado,
         string? nota = null);

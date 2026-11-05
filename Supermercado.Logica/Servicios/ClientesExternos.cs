@@ -21,9 +21,6 @@ public class OpcionesApisExternas
     public string? CodigoBarrasBaseUrl { get; init; }
     public string? VerificadorCorreoUrl { get; init; }
     public string? VerificadorCorreoToken { get; init; }
-    public string? SupabaseUrl { get; init; }
-    public string? SupabaseKey { get; init; }
-    public string? SupabaseTabla { get; init; } = "eventos_outbox";
 
     public static OpcionesApisExternas DesdeEntorno()
     {
@@ -43,10 +40,7 @@ public class OpcionesApisExternas
             VerificadorCorreoUrl = todas
                 ? Valor("SIGS_EMAIL_VERIFIER_URL")
                 : null,
-            VerificadorCorreoToken = Valor("SIGS_EMAIL_VERIFIER_TOKEN"),
-            SupabaseUrl = Valor("SIGS_SUPABASE_URL"),
-            SupabaseKey = Valor("SIGS_SUPABASE_KEY"),
-            SupabaseTabla = Valor("SIGS_SUPABASE_TABLA") ?? "eventos_outbox"
+            VerificadorCorreoToken = Valor("SIGS_EMAIL_VERIFIER_TOKEN")
         };
     }
 

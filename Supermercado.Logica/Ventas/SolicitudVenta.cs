@@ -8,5 +8,4 @@ public record SolicitudVenta(
     IReadOnlyList<LineaVenta> Lineas,
     IReadOnlyList<Pago> Pagos,
     int? ClienteId = null,
-    int PuntosARedimir = 0,
     string? ClaveIdempotencia = null);
