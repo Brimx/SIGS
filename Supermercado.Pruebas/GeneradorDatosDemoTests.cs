@@ -1,4 +1,4 @@
-using Supermercado.Datos.Semilla;
+using Supermercado.Datos;
 using Supermercado.Entidades.Finanzas;
 using Supermercado.Entidades.Inventario;
 using Supermercado.Entidades.Personal;

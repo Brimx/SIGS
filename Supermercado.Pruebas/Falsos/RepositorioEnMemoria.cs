@@ -9,6 +9,9 @@ public class RepositorioEnMemoria<T> : IRepositorio<T> where T : EntidadBase
 
     public List<T> Datos { get; } = [];
 
+    /// <summary>Cuántas veces se pidió marcar una entidad como modificada.</summary>
+    public int Actualizaciones { get; private set; }
+
     public Task<T?> ObtenerPorIdAsync(int id)
         => Task.FromResult(Datos.FirstOrDefault(e => e.Id == id));
 
@@ -26,6 +29,8 @@ public class RepositorioEnMemoria<T> : IRepositorio<T> where T : EntidadBase
 
     public void Actualizar(T entidad)
     {
+        Actualizaciones++;
+
         if (!Datos.Any(e => e.Id == entidad.Id))
             throw new InvalidOperationException(
                 $"La entidad {typeof(T).Name} con Id {entidad.Id} no existe.");

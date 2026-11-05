@@ -6,6 +6,8 @@
              FontFamily="{StaticResource FontFamilyPlex}">
 
     <Grid RowDefinitions="Auto,16,*" Margin="16">
+
+        <!-- BARRA DE ACCIONES -->
         <Border Grid.Row="0"
                 Background="{DynamicResource BrushSurface}"
                 BorderBrush="{DynamicResource BrushBorderSubtle}"
@@ -13,56 +15,290 @@
                 CornerRadius="{StaticResource RadiusMedium}"
                 Padding="16,12">
             <Grid ColumnDefinitions="*,Auto">
-                <TextBlock Grid.Column="0"
-                           Text="{Binding MensajeEstado}"
-                           VerticalAlignment="Center"
-                           FontWeight="{StaticResource FontWeightMedium}" />
-                <Button Grid.Column="1"
-                        Command="{Binding ActualizarDashboardCommand}"
-                        Classes="Primary" Theme="{DynamicResource SolidButton}">
-                    <StackPanel Orientation="Horizontal" Spacing="6">
-                        <LucideIcon Kind="RefreshCw" Size="16" />
-                        <TextBlock Text="Refrescar Indicadores" FontWeight="{StaticResource FontWeightSemiBold}" />
-                    </StackPanel>
-                </Button>
+                <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding MensajeEstado}"
+                               TextWrapping="Wrap"
+                               FontWeight="{StaticResource FontWeightMedium}" />
+                    <TextBlock Classes="Ayuda"
+                               IsVisible="{Binding EnEdicion}"
+                               Text="El panel se guarda por usuario: agregar, quitar, reordenar, renombrar y tamaño." />
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                    <Button Click="OnImportar"
+                            IsVisible="{Binding EnEdicion}"
+                            Theme="{DynamicResource OutlineButton}"
+                            ToolTip.Tip="Cargar una disposición exportada">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <LucideIcon Kind="Upload" Size="16" />
+                            <TextBlock Text="Importar" />
+                        </StackPanel>
+                    </Button>
+                    <Button Click="OnExportar"
+                            Theme="{DynamicResource OutlineButton}"
+                            ToolTip.Tip="Guardar la disposición del panel en un archivo">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <LucideIcon Kind="Download" Size="16" />
+                            <TextBlock Text="Exportar" />
+                        </StackPanel>
+                    </Button>
+                    <Button Command="{Binding RestablecerCommand}"
+                            IsVisible="{Binding EnEdicion}"
+                            Theme="{DynamicResource OutlineButton}"
+                            ToolTip.Tip="Volver a la disposición por defecto del rol">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <LucideIcon Kind="RotateCcw" Size="16" />
+                            <TextBlock Text="Restablecer" />
+                        </StackPanel>
+                    </Button>
+                    <Button Command="{Binding AlternarEdicionCommand}"
+                            Theme="{DynamicResource OutlineButton}">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <LucideIcon Kind="Settings2" Size="16" IsVisible="{Binding !EnEdicion}" />
+                            <LucideIcon Kind="Check" Size="16" IsVisible="{Binding EnEdicion}" />
+                            <TextBlock Text="{Binding EtiquetaModoEdicion}" />
+                        </StackPanel>
+                    </Button>
+                    <Button Command="{Binding ActualizarDashboardCommand}"
+                            Classes="Primary" Theme="{DynamicResource SolidButton}">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <LucideIcon Kind="RefreshCw" Size="16" />
+                            <TextBlock Text="Refrescar Indicadores" FontWeight="{StaticResource FontWeightSemiBold}" />
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
             </Grid>
         </Border>
 
-        <ScrollViewer Grid.Row="2">
-            <ItemsControl ItemsSource="{Binding Tarjetas}">
-                <ItemsControl.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <WrapPanel Orientation="Horizontal" />
-                    </ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate x:DataType="vm:WidgetCardViewModel">
-                        <Border Background="{DynamicResource BrushSurface}"
-                                BorderBrush="{DynamicResource BrushBorderSubtle}"
-                                BorderThickness="1"
-                                CornerRadius="{StaticResource RadiusLarge}"
-                                Width="280"
-                                Margin="0,0,16,16"
-                                Padding="20">
-                            <StackPanel Spacing="10">
-                                <TextBlock Text="{Binding Titulo}"
-                                           FontFamily="{StaticResource FontFamilyStackSans}"
-                                           FontSize="{StaticResource FontSizeBody}"
-                                           FontWeight="{StaticResource FontWeightSemiBold}"
-                                           Foreground="{DynamicResource BrushTextSecondary}" />
-                                <TextBlock Text="{Binding ValorPrincipal}"
-                                           FontFamily="{StaticResource FontFamilyPlexCondensed}"
-                                           FontSize="{StaticResource FontSizeHeadline}"
-                                           FontWeight="{StaticResource FontWeightBold}"
-                                           Foreground="{DynamicResource BrushPrimaryText}" />
-                                <TextBlock Text="{Binding Subtitulo}"
-                                           FontSize="{StaticResource FontSizeCaption}"
-                                           Foreground="{DynamicResource BrushTextMuted}" />
-                            </StackPanel>
-                        </Border>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
-        </ScrollViewer>
+        <Grid Grid.Row="2" ColumnDefinitions="*,Auto">
+
+            <!-- PANEL DE WIDGETS -->
+            <ScrollViewer Grid.Column="0">
+                <StackPanel>
+                    <Border IsVisible="{Binding SinWidgets}"
+                            Background="{DynamicResource BrushSurface}"
+                            BorderBrush="{DynamicResource BrushBorderSubtle}"
+                            BorderThickness="1"
+                            CornerRadius="{StaticResource RadiusLarge}"
+                            Padding="24"
+                            MaxWidth="560"
+                            HorizontalAlignment="Left">
+                        <StackPanel Spacing="6">
+                            <TextBlock Classes="Seccion" Text="Panel sin widgets" />
+                            <TextBlock Classes="Ayuda"
+                                       TextWrapping="Wrap"
+                                       Text="Usa «Personalizar» para agregar los indicadores que necesitas. La disposición queda guardada para tu usuario." />
+                        </StackPanel>
+                    </Border>
+
+                    <ItemsControl ItemsSource="{Binding Tarjetas}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel Orientation="Horizontal" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="vm:WidgetCardViewModel">
+                                <Border Background="{DynamicResource BrushSurface}"
+                                        BorderBrush="{DynamicResource BrushBorderSubtle}"
+                                        BorderThickness="1"
+                                        CornerRadius="{StaticResource RadiusLarge}"
+                                        Width="{Binding Ancho}"
+                                        Height="{Binding Alto}"
+                                        Margin="0,0,16,16"
+                                        Padding="16"
+                                        DragDrop.AllowDrop="True"
+                                        DragDrop.DragOver="OnTarjetaOver"
+                                        DragDrop.Drop="OnTarjetaDrop"
+                                        PointerPressed="OnTarjetaPressed">
+                                    <Grid RowDefinitions="Auto,*,Auto">
+
+                                        <!-- Cabecera -->
+                                        <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
+                                            <StackPanel Grid.Column="0" Spacing="2">
+                                                <TextBlock Text="{Binding Titulo}"
+                                                           FontFamily="{StaticResource FontFamilyStackSans}"
+                                                           FontSize="{StaticResource FontSizeBody}"
+                                                           FontWeight="{StaticResource FontWeightSemiBold}"
+                                                           Foreground="{DynamicResource BrushTextSecondary}"
+                                                           TextTrimming="CharacterEllipsis" />
+                                                <TextBlock Text="{Binding Subtitulo}"
+                                                           FontSize="{StaticResource FontSizeCaption}"
+                                                           Foreground="{DynamicResource BrushTextMuted}"
+                                                           TextTrimming="CharacterEllipsis" />
+                                            </StackPanel>
+
+                                            <StackPanel Grid.Column="1"
+                                                        Orientation="Horizontal"
+                                                        Spacing="2"
+                                                        IsVisible="{Binding $parent[UserControl].((vm:DashboardViewModel)DataContext).EnEdicion}">
+                                                <Button Classes="Icono"
+                                                        Theme="{DynamicResource BorderlessButton}"
+                                                        ToolTip.Tip="Mover a la izquierda"
+                                                        Command="{Binding $parent[UserControl].((vm:DashboardViewModel)DataContext).MoverIzquierdaCommand}"
+                                                        CommandParameter="{Binding}">
+                                                    <LucideIcon Kind="ChevronLeft" Size="16" />
+                                                </Button>
+                                                <Button Classes="Icono"
+                                                        Theme="{DynamicResource BorderlessButton}"
+                                                        ToolTip.Tip="Mover a la derecha"
+                                                        Command="{Binding $parent[UserControl].((vm:DashboardViewModel)DataContext).MoverDerechaCommand}"
+                                                        CommandParameter="{Binding}">
+                                                    <LucideIcon Kind="ChevronRight" Size="16" />
+                                                </Button>
+                                                <Button Classes="Icono"
+                                                        Theme="{DynamicResource BorderlessButton}"
+                                                        ToolTip.Tip="Cambiar tamaño"
+                                                        Command="{Binding $parent[UserControl].((vm:DashboardViewModel)DataContext).CambiarTamanoCommand}"
+                                                        CommandParameter="{Binding}">
+                                                    <LucideIcon Kind="Scaling" Size="16" />
+                                                </Button>
+                                                <Button Classes="Icono DestructivoSuave"
+                                                        Theme="{DynamicResource BorderlessButton}"
+                                                        ToolTip.Tip="Quitar del panel"
+                                                        Command="{Binding $parent[UserControl].((vm:DashboardViewModel)DataContext).QuitarWidgetCommand}"
+                                                        CommandParameter="{Binding}">
+                                                    <LucideIcon Kind="X" Size="16" />
+                                                </Button>
+                                            </StackPanel>
+                                        </Grid>
+
+                                        <!-- Contenido -->
+                                        <ScrollViewer Grid.Row="1" Margin="0,10,0,0" VerticalScrollBarVisibility="Auto">
+                                            <StackPanel>
+                                                <TextBlock Text="{Binding ValorPrincipal}"
+                                                           IsVisible="{Binding !TieneVariasFilas}"
+                                                           FontFamily="{StaticResource FontFamilyPlexCondensed}"
+                                                           FontSize="{StaticResource FontSizeHeadline}"
+                                                           FontWeight="{StaticResource FontWeightBold}"
+                                                           Foreground="{DynamicResource BrushPrimaryText}" />
+
+                                                <ItemsControl ItemsSource="{Binding Filas}"
+                                                              IsVisible="{Binding TieneVariasFilas}">
+                                                    <ItemsControl.ItemTemplate>
+                                                        <DataTemplate x:DataType="vm:FilaDatoViewModel">
+                                                            <Grid ColumnDefinitions="*,Auto"
+                                                                  RowDefinitions="Auto,Auto"
+                                                                  Margin="0,0,0,8">
+                                                                <TextBlock Grid.Row="0" Grid.Column="0"
+                                                                           Text="{Binding Etiqueta}"
+                                                                           FontSize="{StaticResource FontSizeCaption}"
+                                                                           Foreground="{DynamicResource BrushTextSecondary}"
+                                                                           TextTrimming="CharacterEllipsis" />
+                                                                <TextBlock Grid.Row="0" Grid.Column="1"
+                                                                           Text="{Binding Valor}"
+                                                                           Margin="8,0,0,0"
+                                                                           FontFamily="{StaticResource FontFamilyPlexCondensed}"
+                                                                           FontSize="{StaticResource FontSizeCaption}"
+                                                                           FontWeight="{StaticResource FontWeightSemiBold}" />
+                                                                <ProgressBar Grid.Row="1" Grid.ColumnSpan="2"
+                                                                             Minimum="0" Maximum="1"
+                                                                             Value="{Binding Fraccion}"
+                                                                             Height="6"
+                                                                             Margin="0,4,0,0" />
+                                                            </Grid>
+                                                        </DataTemplate>
+                                                    </ItemsControl.ItemTemplate>
+                                                </ItemsControl>
+                                            </StackPanel>
+                                        </ScrollViewer>
+
+                                        <!-- Pie de edición -->
+                                        <Grid Grid.Row="2"
+                                              ColumnDefinitions="*,Auto"
+                                              Margin="0,8,0,0"
+                                              IsVisible="{Binding $parent[UserControl].((vm:DashboardViewModel)DataContext).EnEdicion}">
+                                            <TextBox Grid.Column="0"
+                                                     Text="{Binding TituloEditable, Mode=TwoWay}"
+                                                     PlaceholderText="Título propio"
+                                                     FontSize="{StaticResource FontSizeCaption}"
+                                                     KeyDown="OnTituloTecla"
+                                                     LostFocus="OnTituloPerdido" />
+                                            <Button Grid.Column="1"
+                                                    Classes="Icono"
+                                                    Margin="6,0,0,0"
+                                                    Theme="{DynamicResource BorderlessButton}"
+                                                    ToolTip.Tip="Guardar título"
+                                                    Click="OnRenombrar">
+                                                <LucideIcon Kind="Check" Size="16" />
+                                            </Button>
+                                        </Grid>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- CATÁLOGO DE WIDGETS -->
+            <Border Grid.Column="1"
+                    Width="300"
+                    Margin="16,0,0,0"
+                    IsVisible="{Binding EnEdicion}"
+                    Background="{DynamicResource BrushSurface}"
+                    BorderBrush="{DynamicResource BrushBorderSubtle}"
+                    BorderThickness="1"
+                    CornerRadius="{StaticResource RadiusLarge}"
+                    Padding="16">
+                <Grid RowDefinitions="Auto,*,Auto">
+                    <StackPanel Grid.Row="0" Spacing="2">
+                        <TextBlock Classes="Etiqueta" Text="Widgets disponibles" />
+                        <TextBlock Classes="Ayuda"
+                                   TextWrapping="Wrap"
+                                   Text="Solo aparecen los que tu rol puede ver." />
+                    </StackPanel>
+
+                    <ScrollViewer Grid.Row="1" Margin="0,12,0,0">
+                        <ItemsControl ItemsSource="{Binding Catalogo}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="vm:GrupoCatalogoViewModel">
+                                    <StackPanel Margin="0,0,0,14">
+                                        <TextBlock Classes="Etiqueta" Text="{Binding Nombre}" />
+
+                                        <ItemsControl ItemsSource="{Binding Widgets}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate x:DataType="vm:WidgetCatalogoViewModel">
+                                                    <Grid ColumnDefinitions="*,Auto" Margin="0,4,0,0">
+                                                        <TextBlock Grid.Column="0"
+                                                                   Text="{Binding Titulo}"
+                                                                   VerticalAlignment="Center"
+                                                                   TextTrimming="CharacterEllipsis" />
+                                                        <Button Grid.Column="1"
+                                                                Classes="Icono"
+                                                                Theme="{DynamicResource BorderlessButton}"
+                                                                ToolTip.Tip="Agregar al panel"
+                                                                IsVisible="{Binding DisponibleParaAgregar}"
+                                                                Command="{Binding $parent[UserControl].((vm:DashboardViewModel)DataContext).AgregarWidgetCommand}"
+                                                                CommandParameter="{Binding}">
+                                                            <LucideIcon Kind="Plus" Size="16" />
+                                                        </Button>
+                                                        <Button Grid.Column="1"
+                                                                Classes="Icono"
+                                                                Theme="{DynamicResource BorderlessButton}"
+                                                                ToolTip.Tip="Quitar del panel"
+                                                                IsVisible="{Binding EnPanel}"
+                                                                Command="{Binding $parent[UserControl].((vm:DashboardViewModel)DataContext).QuitarPorIdCommand}"
+                                                                CommandParameter="{Binding Id}">
+                                                            <LucideIcon Kind="Minus" Size="16" />
+                                                        </Button>
+                                                    </Grid>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+
+                    <TextBlock Grid.Row="2"
+                               Classes="Ayuda"
+                               Margin="0,12,0,0"
+                               TextWrapping="Wrap"
+                               Text="El tamaño y el título de cada tarjeta se cambian desde la propia tarjeta." />
+                </Grid>
+            </Border>
+        </Grid>
     </Grid>
 </UserControl>

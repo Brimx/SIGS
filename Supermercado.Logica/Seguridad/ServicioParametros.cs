@@ -6,6 +6,56 @@ using Supermercado.Entidades.Seguridad;
 
 namespace Supermercado.Logica.Seguridad;
 
+public interface IServicioParametros
+{
+    Task<string> ObtenerTextoAsync(string clave);
+    Task<int> ObtenerEnteroAsync(string clave);
+    Task<long> ObtenerLongAsync(string clave);
+    // Cambio administrativo: exige permiso y deja auditoría.
+    Task GuardarAsync(string clave, string valor);
+
+    // Respaldo interno (semilla, TRM): sin permiso ni auditoría, atómico.
+    Task GuardarRespaldoAsync(IReadOnlyDictionary<string, string> valores);
+}
+
+public static class ExtensionesParametros
+{
+    // Interruptor: «0», «false» o «no» apagan; cualquier otro valor enciende.
+    // Si el parámetro no existe (base anterior a la clave) vale `porDefecto`.
+    public static async Task<bool> ObtenerBoolAsync(
+        this IServicioParametros parametros,
+        string clave,
+        bool porDefecto = true)
+    {
+        try
+        {
+            var texto = (await parametros.ObtenerTextoAsync(clave))
+                .Trim().ToLowerInvariant();
+            return texto is not ("0" or "false" or "no");
+        }
+        catch (ParametroFaltanteException)
+        {
+            return porDefecto;
+        }
+    }
+
+    public static async Task<string?> ObtenerTextoOpcionalAsync(
+        this IServicioParametros parametros,
+        string clave,
+        string? porDefecto = null)
+    {
+        try
+        {
+            var texto = await parametros.ObtenerTextoAsync(clave);
+            return string.IsNullOrWhiteSpace(texto) ? porDefecto : texto.Trim();
+        }
+        catch (ParametroFaltanteException)
+        {
+            return porDefecto;
+        }
+    }
+}
+
 public class ServicioParametros(
     IParametroRepositorio parametros,
     IServicioAuditoria auditoria,

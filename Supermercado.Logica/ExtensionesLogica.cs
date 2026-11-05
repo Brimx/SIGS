@@ -36,36 +36,45 @@ public static class ExtensionesLogica
         servicios.AddSingleton<IHasheadorClave, HasheadorBCrypt>();
         servicios.AddScoped<IEstrategiaSalida, SalidaFefo>();
 
-        servicios.AddScoped<IServicioAuditoria, ServicioAuditoria>();
-        servicios.AddScoped<IServicioConsultaAuditoria,
-            ServicioConsultaAuditoria>();
+        // Servicios de dominio consolidados (8 módulos de negocio)
+        servicios.AddScoped<ServicioAuditoria>();
+        servicios.AddScoped<IServicioAuditoria>(sp => sp.GetRequiredService<ServicioAuditoria>());
+        servicios.AddScoped<IServicioConsultaAuditoria>(sp => sp.GetRequiredService<ServicioAuditoria>());
+
         servicios.AddScoped<IServicioParametros, ServicioParametros>();
         servicios.AddScoped<IServicioAutenticacion, ServicioAutenticacion>();
-        servicios.AddScoped<IServicioUsuarios, ServicioUsuarios>();
         servicios.AddScoped<IServicioInicializacion, ServicioInicializacion>();
-        servicios.AddScoped<IServicioProductos, ServicioProductos>();
-        servicios.AddScoped<IServicioBusquedaProductos,
-            ServicioBusquedaProductos>();
-        servicios.AddScoped<IServicioMantenimientoProductos,
-            ServicioMantenimientoProductos>();
-        servicios.AddScoped<IServicioCatalogos, ServicioCatalogos>();
-        servicios.AddScoped<IServicioInventario, ServicioInventario>();
-        servicios.AddScoped<IServicioConsultaInventario,
-            ServicioConsultaInventario>();
-        servicios.AddScoped<IServicioMermas, ServicioMermas>();
-        servicios.AddScoped<IServicioAlertasInventario,
-            ServicioAlertasInventario>();
-        servicios.AddScoped<IServicioReabastecimiento,
-            ServicioReabastecimiento>();
+
+        servicios.AddScoped<ServicioPersonal>();
+        servicios.AddScoped<IServicioPersonal>(sp => sp.GetRequiredService<ServicioPersonal>());
+        servicios.AddScoped<IServicioEmpleados>(sp => sp.GetRequiredService<ServicioPersonal>());
+        servicios.AddScoped<IServicioEstructura>(sp => sp.GetRequiredService<ServicioPersonal>());
+        servicios.AddScoped<IServicioUsuarios>(sp => sp.GetRequiredService<ServicioPersonal>());
+
+        servicios.AddScoped<ServicioProductos>();
+        servicios.AddScoped<IServicioProductos>(sp => sp.GetRequiredService<ServicioProductos>());
+        servicios.AddScoped<IServicioBusquedaProductos>(sp => sp.GetRequiredService<ServicioProductos>());
+        servicios.AddScoped<IServicioMantenimientoProductos>(sp => sp.GetRequiredService<ServicioProductos>());
+        servicios.AddScoped<IServicioCatalogos>(sp => sp.GetRequiredService<ServicioProductos>());
+
+        servicios.AddScoped<ServicioInventario>();
+        servicios.AddScoped<IServicioInventario>(sp => sp.GetRequiredService<ServicioInventario>());
+        servicios.AddScoped<IServicioConsultaInventario>(sp => sp.GetRequiredService<ServicioInventario>());
+        servicios.AddScoped<IServicioMermas>(sp => sp.GetRequiredService<ServicioInventario>());
+        servicios.AddScoped<IServicioAlertasInventario>(sp => sp.GetRequiredService<ServicioInventario>());
+        servicios.AddScoped<IServicioReabastecimiento>(sp => sp.GetRequiredService<ServicioInventario>());
+
         servicios.AddScoped<IServicioCaja, ServicioCaja>();
-        servicios.AddScoped<IServicioVentas, ServicioVentas>();
-        servicios.AddScoped<IServicioVentasEnEspera, ServicioVentasEnEspera>();
+        servicios.AddScoped<ServicioVentas>();
+        servicios.AddScoped<IServicioVentas>(sp => sp.GetRequiredService<ServicioVentas>());
+        servicios.AddScoped<IServicioVentasEnEspera>(sp => sp.GetRequiredService<ServicioVentas>());
+
+        servicios.AddScoped<ServicioFinanzas>();
+        servicios.AddScoped<IServicioFinanzas>(sp => sp.GetRequiredService<ServicioFinanzas>());
+        servicios.AddScoped<IServicioImpuestos>(sp => sp.GetRequiredService<ServicioFinanzas>());
+        servicios.AddScoped<IServicioNomina>(sp => sp.GetRequiredService<ServicioFinanzas>());
+
         servicios.AddScoped<IServicioClientes, ServicioClientes>();
-        servicios.AddScoped<IServicioEmpleados, ServicioEmpleados>();
-        servicios.AddScoped<IServicioEstructura, ServicioEstructura>();
-        servicios.AddScoped<IServicioImpuestos, ServicioImpuestos>();
-        servicios.AddScoped<IServicioFinanzas, ServicioFinanzas>();
-        servicios.AddScoped<IServicioNomina, ServicioNomina>();
         servicios.AddScoped<IServicioDashboard, ServicioDashboard>();
         servicios.AddScoped<IServicioTrm, ServicioTrm>();
         servicios.AddScoped<IGeneradorDatosDemo, GeneradorDatosDemo>();

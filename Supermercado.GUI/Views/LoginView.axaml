@@ -225,6 +225,20 @@
                                     </StackPanel>
                                 </Button>
 
+                                <Button Command="{Binding CargarBasePostgresDemoCommand}"
+                                        HorizontalAlignment="Stretch"
+                                        HorizontalContentAlignment="Center"
+                                        MinHeight="36"
+                                        Background="{DynamicResource BrushSurfaceSubtle}"
+                                        Foreground="{DynamicResource BrushTextPrimary}">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <LucideIcon Kind="Server" Size="16" />
+                                        <TextBlock Text="Cargar y Ejecutar Script Demo PostgreSQL"
+                                                   FontWeight="{StaticResource FontWeightSemiBold}"
+                                                   FontSize="{StaticResource FontSizeBody}" />
+                                    </StackPanel>
+                                </Button>
+
                                 <TextBlock Text="Selecciona un rol para autocompletar credenciales:"
                                            FontSize="{StaticResource FontSizeCaption}"
                                            Foreground="{DynamicResource BrushTextSecondary}" />

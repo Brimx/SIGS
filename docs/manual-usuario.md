@@ -13,6 +13,12 @@
      - Linux: `~/.local/share/SIGS/sigs.db`
    - **Modo PostgreSQL central (LAN / multi-caja):**
      Inicie el contenedor de PostgreSQL con `docker compose up -d`.
+     Para crear las tablas exactas y cargar la semilla demo completa (catálogo retail con precios reales de Éxito/Olímpica, inventario FEFO, 10 empleados con credenciales y ventas DIAN), aplique el script canónico:
+     ```bash
+     docker compose exec -T postgres psql -U sigs_user -d sigs < docs/postgresql-schema.sql
+     # O directamente con el cliente psql:
+     psql -h localhost -U sigs_user -d sigs -f docs/postgresql-schema.sql
+     ```
      Defina la variable de entorno y ejecute:
      ```bash
      export SIGS_POSTGRES_CONNECTION="Host=localhost;Port=5432;Database=sigs;Username=sigs_user;Password=sigs_password;"

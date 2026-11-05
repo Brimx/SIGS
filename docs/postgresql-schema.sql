@@ -1,498 +1,1100 @@
+﻿-- ============================================================================
+-- SIGS — Esquema DDL Canónico y Base de Datos Demo para PostgreSQL 17+
 -- ============================================================================
--- SIGS — Esquema DDL Canónico de Producción para PostgreSQL 17+
--- ============================================================================
--- Convenciones aplicadas:
---   1. Formato limpio: cada columna, restricción y clave en su propia línea indentada.
---   2. Integridad referencial: ON DELETE RESTRICT en todas las FK para prevenir efectos dominó.
---   3. Identificadores de transacción: tipo nativo UUID (gen_random_uuid()).
---   4. Tipos semánticos:
---        - Fechas/horas operativas: TIMESTAMPTZ
---        - Fechas calendario:       DATE
---        - Dinero (COP sin float):  BIGINT
---        - Teléfonos y NITs:        VARCHAR(20) / VARCHAR(30)
---        - Porcentajes (pb):        INTEGER (100 pb = 1 %)
+-- Propósito:
+--   1. Crear las tablas exactas que lee y manipula el programa SIGS (EF Core 10 / Npgsql).
+--   2. Proveer una base de datos demo completa, realista y matemáticamente coherente:
+--        - 28 Parámetros del sistema (DIAN, TRM, Fidelización, Salarios, Integraciones).
+--        - 10 Cargos y 10 Roles con la matriz de 18 permisos (RBAC adaptativo).
+--        - 10 Empleados con nombres, edades, documentos CC y correos corporativos.
+--        - 10 Usuarios demo con credenciales por rol y hashes BCrypt verificados.
+--        - 3 Cajas operativas de atención al público.
+--        - 5 Clientes con Habeas Data (Ley 1581 de 2012) y saldo de fidelización.
+--        - 12 Proveedores colombianos con NIT y Dígito de Verificación (Módulo 11 DIAN).
+--        - 13 Categorías completas de hipermercado / retail (Abarrotes, Fruver, Lácteos, Carnes,
+--             Panadería, Bebidas, Aseo, Cuidado Personal, Tecnología, Electrodomésticos,
+--             Muebles, Papelería y Libros, Ferretería).
+--        - 3 Impuestos oficiales de Colombia (IVA 0 %, IVA 5 %, IVA 19 % / Ley del Libro).
+--        - 62 Productos con precios investigados en cadenas comerciales (Éxito y Olímpica).
+--        - 63 Lotes con control FEFO, fechas de vencimiento y costos unitarios.
+--        - Stock inicial distribuido coherentemente entre estante y bodega.
+--        - Trazabilidad total: movimientos de ingreso, traslados, ventas y devoluciones.
+--        - Operación POS real: turno cerrado con arqueo cuadrado y turno abierto activo.
+--        - Retiro de efectivo a caja fuerte autorizado por supervisor con PIN.
+--        - Facturación electrónica DIAN: CUDE SHA-384, QR VPFE, prefijo POS y pagos mixtos.
+--        - Gastos operativos y nóminas liquidadas según normativa laboral colombiana.
+--        - Registros de auditoría y widgets de panel de control.
+--        - Vistas de conveniencia en minúsculas para inspección rápida con psql.
+--        - Sincronización automática de secuencias (pg_get_serial_sequence).
 -- ============================================================================
 
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
--- ----------------------------------------------------------------------------
--- 1. Seguridad, Personal y Estructura Organizacional
--- ----------------------------------------------------------------------------
-
-CREATE TABLE IF NOT EXISTS cargos (
-    id SERIAL PRIMARY KEY,
-    nombre VARCHAR(80) NOT NULL UNIQUE,
-    fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
-CREATE TABLE IF NOT EXISTS roles (
-    id SERIAL PRIMARY KEY,
-    nombre VARCHAR(80) NOT NULL UNIQUE,
-    permisos BIGINT NOT NULL DEFAULT 0,
-    fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
-CREATE TABLE IF NOT EXISTS empleados (
-    id SERIAL PRIMARY KEY,
-    documento VARCHAR(30) NOT NULL UNIQUE,
-    nombres VARCHAR(100) NOT NULL,
-    apellidos VARCHAR(100) NOT NULL,
-    correo VARCHAR(150) NOT NULL,
-    correo_verificado BOOLEAN NOT NULL DEFAULT FALSE,
-    activo BOOLEAN NOT NULL DEFAULT TRUE,
-    fecha_ingreso DATE NOT NULL,
-    salario_base BIGINT NOT NULL CHECK (salario_base >= 0),
-    cargo_id INT NOT NULL,
-    rol_id INT NOT NULL,
-    fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT fk_empleados_cargo
-        FOREIGN KEY (cargo_id)
-        REFERENCES cargos (id)
-        ON DELETE RESTRICT,
-    CONSTRAINT fk_empleados_rol
-        FOREIGN KEY (rol_id)
-        REFERENCES roles (id)
-        ON DELETE RESTRICT
-);
-
-CREATE TABLE IF NOT EXISTS usuarios (
-    id SERIAL PRIMARY KEY,
-    nombre_usuario VARCHAR(50) NOT NULL UNIQUE,
-    hash_clave VARCHAR(255) NOT NULL,
-    hash_pin VARCHAR(255) NULL,
-    debe_cambiar_clave BOOLEAN NOT NULL DEFAULT FALSE,
-    bloqueado BOOLEAN NOT NULL DEFAULT FALSE,
-    intentos_fallidos INT NOT NULL DEFAULT 0,
-    empleado_id INT NOT NULL UNIQUE,
-    fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT fk_usuarios_empleado
-        FOREIGN KEY (empleado_id)
-        REFERENCES empleados (id)
-        ON DELETE RESTRICT
-);
-
-CREATE TABLE IF NOT EXISTS intentos_acceso (
-    id SERIAL PRIMARY KEY,
-    nombre_usuario VARCHAR(50) NOT NULL,
-    exitoso BOOLEAN NOT NULL,
-    fecha TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    ip_origen VARCHAR(45) NULL,
-    fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
+BEGIN;
 
 -- ----------------------------------------------------------------------------
--- 2. Clientes y Fidelización (Ley 1581 Habeas Data)
+-- 1. Tablas Canónicas del Dominio (Lectura EF Core / SIGS)
 -- ----------------------------------------------------------------------------
 
-CREATE TABLE IF NOT EXISTS clientes (
-    id SERIAL PRIMARY KEY,
-    documento VARCHAR(30) NOT NULL UNIQUE,
-    nombres VARCHAR(100) NOT NULL,
-    apellidos VARCHAR(100) NOT NULL,
-    telefono VARCHAR(20) NULL,
-    correo VARCHAR(150) NULL,
-    activo BOOLEAN NOT NULL DEFAULT TRUE,
-    puntos_acumulados INT NOT NULL DEFAULT 0 CHECK (puntos_acumulados >= 0),
-    autoriza_tratamiento_datos BOOLEAN NOT NULL DEFAULT FALSE,
-    fecha_autorizacion TIMESTAMPTZ NULL,
-    terminal_autorizacion VARCHAR(50) NULL,
-    fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT NOW()
+CREATE TABLE IF NOT EXISTS "Cargos" (
+    "Id" integer GENERATED BY DEFAULT AS IDENTITY,
+    "Nombre" text NOT NULL,
+    "FechaCreacion" timestamp with time zone NOT NULL DEFAULT NOW(),
+    CONSTRAINT "PK_Cargos" PRIMARY KEY ("Id")
 );
 
--- ----------------------------------------------------------------------------
--- 3. Catálogo, Impuestos e Inventario FEFO
--- ----------------------------------------------------------------------------
-
-CREATE TABLE IF NOT EXISTS categorias (
-    id SERIAL PRIMARY KEY,
-    nombre VARCHAR(100) NOT NULL UNIQUE,
-    fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT NOW()
+CREATE TABLE IF NOT EXISTS "Roles" (
+    "Id" integer GENERATED BY DEFAULT AS IDENTITY,
+    "Nombre" text NOT NULL,
+    "Permisos" bigint NOT NULL,
+    "FechaCreacion" timestamp with time zone NOT NULL DEFAULT NOW(),
+    CONSTRAINT "PK_Roles" PRIMARY KEY ("Id")
 );
 
-CREATE TABLE IF NOT EXISTS proveedores (
-    id SERIAL PRIMARY KEY,
-    nit VARCHAR(30) NOT NULL UNIQUE,
-    nombre VARCHAR(150) NOT NULL,
-    telefono VARCHAR(20) NULL,
-    correo VARCHAR(150) NULL,
-    fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT NOW()
+CREATE TABLE IF NOT EXISTS "Empleados" (
+    "Id" integer GENERATED BY DEFAULT AS IDENTITY,
+    "Documento" text NOT NULL,
+    "Nombres" text NOT NULL,
+    "Apellidos" text NOT NULL,
+    "Correo" text NOT NULL,
+    "CorreoVerificado" boolean NOT NULL DEFAULT TRUE,
+    "Activo" boolean NOT NULL DEFAULT TRUE,
+    "FechaIngreso" date NOT NULL,
+    "SalarioBase" bigint NOT NULL,
+    "CargoId" integer NOT NULL,
+    "RolId" integer NOT NULL,
+    "FechaCreacion" timestamp with time zone NOT NULL DEFAULT NOW(),
+    CONSTRAINT "PK_Empleados" PRIMARY KEY ("Id"),
+    CONSTRAINT "FK_Empleados_Cargos_CargoId" FOREIGN KEY ("CargoId") REFERENCES "Cargos" ("Id") ON DELETE RESTRICT,
+    CONSTRAINT "FK_Empleados_Roles_RolId" FOREIGN KEY ("RolId") REFERENCES "Roles" ("Id") ON DELETE RESTRICT
 );
 
-CREATE TABLE IF NOT EXISTS impuestos (
-    id SERIAL PRIMARY KEY,
-    nombre VARCHAR(80) NOT NULL,
-    puntos_basicos INT NOT NULL CHECK (puntos_basicos >= 0),
-    discriminator VARCHAR(50) NOT NULL,
-    fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT NOW()
+CREATE TABLE IF NOT EXISTS "Usuarios" (
+    "Id" integer GENERATED BY DEFAULT AS IDENTITY,
+    "NombreUsuario" text NOT NULL,
+    "HashClave" text NOT NULL,
+    "HashPin" text,
+    "DebeCambiarClave" boolean NOT NULL DEFAULT FALSE,
+    "Bloqueado" boolean NOT NULL DEFAULT FALSE,
+    "IntentosFallidos" integer NOT NULL DEFAULT 0,
+    "EmpleadoId" integer NOT NULL,
+    "FechaCreacion" timestamp with time zone NOT NULL DEFAULT NOW(),
+    CONSTRAINT "PK_Usuarios" PRIMARY KEY ("Id"),
+    CONSTRAINT "FK_Usuarios_Empleados_EmpleadoId" FOREIGN KEY ("EmpleadoId") REFERENCES "Empleados" ("Id") ON DELETE RESTRICT
 );
 
-CREATE TABLE IF NOT EXISTS productos (
-    id SERIAL PRIMARY KEY,
-    codigo_barras VARCHAR(50) NOT NULL UNIQUE,
-    nombre VARCHAR(150) NOT NULL,
-    precio_venta BIGINT NOT NULL CHECK (precio_venta >= 0),
-    stock_minimo_estante INT NOT NULL DEFAULT 0 CHECK (stock_minimo_estante >= 0),
-    activo BOOLEAN NOT NULL DEFAULT TRUE,
-    categoria_id INT NOT NULL,
-    proveedor_id INT NOT NULL,
-    impuesto_id INT NOT NULL,
-    discriminator VARCHAR(50) NOT NULL,
-    fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT fk_productos_categoria
-        FOREIGN KEY (categoria_id)
-        REFERENCES categorias (id)
-        ON DELETE RESTRICT,
-    CONSTRAINT fk_productos_proveedor
-        FOREIGN KEY (proveedor_id)
-        REFERENCES proveedores (id)
-        ON DELETE RESTRICT,
-    CONSTRAINT fk_productos_impuesto
-        FOREIGN KEY (impuesto_id)
-        REFERENCES impuestos (id)
-        ON DELETE RESTRICT
+CREATE TABLE IF NOT EXISTS "Intentos" (
+    "Id" integer GENERATED BY DEFAULT AS IDENTITY,
+    "NombreUsuario" text NOT NULL,
+    "Fecha" timestamp with time zone NOT NULL,
+    "Exitoso" boolean NOT NULL,
+    "UsoPin" boolean NOT NULL,
+    "FechaCreacion" timestamp with time zone NOT NULL DEFAULT NOW(),
+    CONSTRAINT "PK_Intentos" PRIMARY KEY ("Id")
 );
 
-CREATE TABLE IF NOT EXISTS lotes (
-    id SERIAL PRIMARY KEY,
-    producto_id INT NOT NULL,
-    numero_lote VARCHAR(50) NOT NULL,
-    fecha_ingreso DATE NOT NULL,
-    fecha_vencimiento DATE NOT NULL,
-    cantidad_ingresada INT NOT NULL CHECK (cantidad_ingresada >= 0),
-    costo_unitario BIGINT NOT NULL CHECK (costo_unitario >= 0),
-    fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT uq_lotes_producto_numero
-        UNIQUE (producto_id, numero_lote),
-    CONSTRAINT fk_lotes_producto
-        FOREIGN KEY (producto_id)
-        REFERENCES productos (id)
-        ON DELETE RESTRICT
+CREATE TABLE IF NOT EXISTS "Clientes" (
+    "Id" integer GENERATED BY DEFAULT AS IDENTITY,
+    "Documento" text NOT NULL,
+    "Nombres" text NOT NULL,
+    "Apellidos" text NOT NULL,
+    "Telefono" text NOT NULL,
+    "Correo" text NOT NULL,
+    "Activo" boolean NOT NULL DEFAULT TRUE,
+    "PuntosAcumulados" integer NOT NULL DEFAULT 0,
+    "AutorizaTratamientoDatos" boolean NOT NULL DEFAULT FALSE,
+    "FechaAutorizacion" timestamp with time zone,
+    "TerminalAutorizacion" text,
+    "FechaCreacion" timestamp with time zone NOT NULL DEFAULT NOW(),
+    CONSTRAINT "PK_Clientes" PRIMARY KEY ("Id")
 );
 
-CREATE TABLE IF NOT EXISTS stock_estante (
-    id SERIAL PRIMARY KEY,
-    producto_id INT NOT NULL,
-    lote_id INT NOT NULL UNIQUE,
-    cantidad INT NOT NULL DEFAULT 0 CHECK (cantidad >= 0),
-    fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT fk_stock_estante_producto
-        FOREIGN KEY (producto_id)
-        REFERENCES productos (id)
-        ON DELETE RESTRICT,
-    CONSTRAINT fk_stock_estante_lote
-        FOREIGN KEY (lote_id)
-        REFERENCES lotes (id)
-        ON DELETE RESTRICT
+CREATE TABLE IF NOT EXISTS "Categorias" (
+    "Id" integer GENERATED BY DEFAULT AS IDENTITY,
+    "Nombre" text NOT NULL,
+    "FechaCreacion" timestamp with time zone NOT NULL DEFAULT NOW(),
+    CONSTRAINT "PK_Categorias" PRIMARY KEY ("Id")
 );
 
-CREATE TABLE IF NOT EXISTS stock_bodega (
-    id SERIAL PRIMARY KEY,
-    producto_id INT NOT NULL,
-    lote_id INT NOT NULL UNIQUE,
-    cantidad INT NOT NULL DEFAULT 0 CHECK (cantidad >= 0),
-    fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT fk_stock_bodega_producto
-        FOREIGN KEY (producto_id)
-        REFERENCES productos (id)
-        ON DELETE RESTRICT,
-    CONSTRAINT fk_stock_bodega_lote
-        FOREIGN KEY (lote_id)
-        REFERENCES lotes (id)
-        ON DELETE RESTRICT
+CREATE TABLE IF NOT EXISTS "Proveedores" (
+    "Id" integer GENERATED BY DEFAULT AS IDENTITY,
+    "Nombre" text NOT NULL,
+    "Nit" text NOT NULL,
+    "Telefono" text NOT NULL,
+    "Correo" text NOT NULL,
+    "FechaCreacion" timestamp with time zone NOT NULL DEFAULT NOW(),
+    CONSTRAINT "PK_Proveedores" PRIMARY KEY ("Id")
 );
 
--- ----------------------------------------------------------------------------
--- 4. Operación de Caja y Turnos POS
--- ----------------------------------------------------------------------------
-
-CREATE TABLE IF NOT EXISTS cajas (
-    id SERIAL PRIMARY KEY,
-    nombre VARCHAR(50) NOT NULL UNIQUE,
-    activa BOOLEAN NOT NULL DEFAULT TRUE,
-    fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT NOW()
+CREATE TABLE IF NOT EXISTS "Impuestos" (
+    "Id" integer GENERATED BY DEFAULT AS IDENTITY,
+    "Nombre" text NOT NULL,
+    "PuntosBasicos" integer NOT NULL,
+    "Activo" boolean NOT NULL DEFAULT TRUE,
+    "Discriminator" character varying(13) NOT NULL,
+    "BaseMinima" bigint,
+    "FechaCreacion" timestamp with time zone NOT NULL DEFAULT NOW(),
+    CONSTRAINT "PK_Impuestos" PRIMARY KEY ("Id")
 );
 
-CREATE TABLE IF NOT EXISTS turnos_caja (
-    id SERIAL PRIMARY KEY,
-    caja_id INT NOT NULL,
-    empleado_id INT NOT NULL,
-    fecha_apertura TIMESTAMPTZ NOT NULL,
-    fecha_cierre TIMESTAMPTZ NULL,
-    efectivo_inicial BIGINT NOT NULL CHECK (efectivo_inicial >= 0),
-    efectivo_esperado BIGINT NOT NULL DEFAULT 0,
-    efectivo_contado BIGINT NOT NULL DEFAULT 0,
-    estado SMALLINT NOT NULL DEFAULT 1,
-    fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT fk_turnos_caja_caja
-        FOREIGN KEY (caja_id)
-        REFERENCES cajas (id)
-        ON DELETE RESTRICT,
-    CONSTRAINT fk_turnos_caja_empleado
-        FOREIGN KEY (empleado_id)
-        REFERENCES empleados (id)
-        ON DELETE RESTRICT
+CREATE TABLE IF NOT EXISTS "Productos" (
+    "Id" integer GENERATED BY DEFAULT AS IDENTITY,
+    "Nombre" text NOT NULL,
+    "CodigoBarras" text NOT NULL,
+    "PrecioVenta" bigint NOT NULL,
+    "StockMinimoEstante" integer NOT NULL DEFAULT 0,
+    "Activo" boolean NOT NULL DEFAULT TRUE,
+    "CategoriaId" integer NOT NULL,
+    "ProveedorId" integer NOT NULL,
+    "ImpuestoId" integer NOT NULL,
+    "Discriminator" character varying(21) NOT NULL,
+    "FechaCreacion" timestamp with time zone NOT NULL DEFAULT NOW(),
+    CONSTRAINT "PK_Productos" PRIMARY KEY ("Id"),
+    CONSTRAINT "FK_Productos_Categorias_CategoriaId" FOREIGN KEY ("CategoriaId") REFERENCES "Categorias" ("Id") ON DELETE RESTRICT,
+    CONSTRAINT "FK_Productos_Impuestos_ImpuestoId" FOREIGN KEY ("ImpuestoId") REFERENCES "Impuestos" ("Id") ON DELETE RESTRICT,
+    CONSTRAINT "FK_Productos_Proveedores_ProveedorId" FOREIGN KEY ("ProveedorId") REFERENCES "Proveedores" ("Id") ON DELETE RESTRICT
 );
 
-CREATE TABLE IF NOT EXISTS retiros_caja (
-    id SERIAL PRIMARY KEY,
-    turno_caja_id INT NOT NULL,
-    monto BIGINT NOT NULL CHECK (monto > 0),
-    motivo VARCHAR(200) NOT NULL,
-    autorizado_por_empleado_id INT NOT NULL,
-    fecha TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT fk_retiros_caja_turno
-        FOREIGN KEY (turno_caja_id)
-        REFERENCES turnos_caja (id)
-        ON DELETE RESTRICT,
-    CONSTRAINT fk_retiros_caja_autorizador
-        FOREIGN KEY (autorizado_por_empleado_id)
-        REFERENCES empleados (id)
-        ON DELETE RESTRICT
+CREATE TABLE IF NOT EXISTS "Lotes" (
+    "Id" integer GENERATED BY DEFAULT AS IDENTITY,
+    "ProductoId" integer NOT NULL,
+    "NumeroLote" text NOT NULL,
+    "FechaIngreso" date NOT NULL,
+    "FechaVencimiento" date NOT NULL,
+    "CantidadIngresada" integer NOT NULL,
+    "CostoUnitario" bigint NOT NULL,
+    "FechaCreacion" timestamp with time zone NOT NULL DEFAULT NOW(),
+    CONSTRAINT "PK_Lotes" PRIMARY KEY ("Id"),
+    CONSTRAINT "FK_Lotes_Productos_ProductoId" FOREIGN KEY ("ProductoId") REFERENCES "Productos" ("Id") ON DELETE RESTRICT
 );
 
--- ----------------------------------------------------------------------------
--- 5. Ventas, Pagos Mixtos y POS Electrónico DIAN
--- ----------------------------------------------------------------------------
-
-CREATE TABLE IF NOT EXISTS ventas (
-    id SERIAL PRIMARY KEY,
-    clave_idempotencia UUID NOT NULL UNIQUE DEFAULT gen_random_uuid(),
-    fecha TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    turno_caja_id INT NOT NULL,
-    cliente_id INT NULL,
-    total BIGINT NOT NULL CHECK (total >= 0),
-    total_iva BIGINT NOT NULL DEFAULT 0 CHECK (total_iva >= 0),
-    estado SMALLINT NOT NULL DEFAULT 1,
-    motivo_anulacion VARCHAR(250) NULL,
-    puntos_ganados INT NOT NULL DEFAULT 0 CHECK (puntos_ganados >= 0),
-    puntos_redimidos INT NOT NULL DEFAULT 0 CHECK (puntos_redimidos >= 0),
-    documento_adquirente VARCHAR(30) NOT NULL DEFAULT '222222222222',
-    nombre_adquirente VARCHAR(150) NOT NULL DEFAULT 'CONSUMIDOR FINAL',
-    cude VARCHAR(120) NULL,
-    cadena_qr TEXT NULL,
-    prefijo_dian VARCHAR(10) NULL,
-    consecutivo_dian BIGINT NULL,
-    fecha_validacion_dian TIMESTAMPTZ NULL,
-    xml_ubl TEXT NULL,
-    fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT fk_ventas_turno
-        FOREIGN KEY (turno_caja_id)
-        REFERENCES turnos_caja (id)
-        ON DELETE RESTRICT,
-    CONSTRAINT fk_ventas_cliente
-        FOREIGN KEY (cliente_id)
-        REFERENCES clientes (id)
-        ON DELETE RESTRICT
+CREATE TABLE IF NOT EXISTS "StockEstante" (
+    "Id" integer GENERATED BY DEFAULT AS IDENTITY,
+    "FechaCreacion" timestamp with time zone NOT NULL DEFAULT NOW(),
+    "ProductoId" integer NOT NULL,
+    "LoteId" integer NOT NULL,
+    "Cantidad" integer NOT NULL DEFAULT 0,
+    CONSTRAINT "PK_StockEstante" PRIMARY KEY ("Id"),
+    CONSTRAINT "FK_StockEstante_Lotes_LoteId" FOREIGN KEY ("LoteId") REFERENCES "Lotes" ("Id") ON DELETE RESTRICT
 );
 
-CREATE TABLE IF NOT EXISTS detalles_venta (
-    id SERIAL PRIMARY KEY,
-    venta_id INT NOT NULL,
-    producto_id INT NOT NULL,
-    cantidad INT NOT NULL CHECK (cantidad > 0),
-    precio_unitario BIGINT NOT NULL CHECK (precio_unitario >= 0),
-    subtotal BIGINT NOT NULL CHECK (subtotal >= 0),
-    puntos_basicos_iva INT NOT NULL DEFAULT 0 CHECK (puntos_basicos_iva >= 0),
-    iva BIGINT NOT NULL DEFAULT 0 CHECK (iva >= 0),
-    fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT fk_detalles_venta_venta
-        FOREIGN KEY (venta_id)
-        REFERENCES ventas (id)
-        ON DELETE RESTRICT,
-    CONSTRAINT fk_detalles_venta_producto
-        FOREIGN KEY (producto_id)
-        REFERENCES productos (id)
-        ON DELETE RESTRICT
+CREATE TABLE IF NOT EXISTS "StockBodega" (
+    "Id" integer GENERATED BY DEFAULT AS IDENTITY,
+    "FechaCreacion" timestamp with time zone NOT NULL DEFAULT NOW(),
+    "ProductoId" integer NOT NULL,
+    "LoteId" integer NOT NULL,
+    "Cantidad" integer NOT NULL DEFAULT 0,
+    CONSTRAINT "PK_StockBodega" PRIMARY KEY ("Id"),
+    CONSTRAINT "FK_StockBodega_Lotes_LoteId" FOREIGN KEY ("LoteId") REFERENCES "Lotes" ("Id") ON DELETE RESTRICT
 );
 
-CREATE TABLE IF NOT EXISTS pagos (
-    id SERIAL PRIMARY KEY,
-    venta_id INT NOT NULL,
-    monto BIGINT NOT NULL CHECK (monto > 0),
-    discriminator VARCHAR(50) NOT NULL,
-    ultimos_digitos VARCHAR(4) NULL,
-    referencia VARCHAR(100) NULL,
-    puntos INT NULL CHECK (puntos IS NULL OR puntos >= 0),
-    fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT fk_pagos_venta
-        FOREIGN KEY (venta_id)
-        REFERENCES ventas (id)
-        ON DELETE RESTRICT
+CREATE TABLE IF NOT EXISTS "Cajas" (
+    "Id" integer GENERATED BY DEFAULT AS IDENTITY,
+    "Nombre" text NOT NULL,
+    "Activa" boolean NOT NULL DEFAULT TRUE,
+    "FechaCreacion" timestamp with time zone NOT NULL DEFAULT NOW(),
+    CONSTRAINT "PK_Cajas" PRIMARY KEY ("Id")
 );
 
-CREATE TABLE IF NOT EXISTS ventas_en_espera (
-    id SERIAL PRIMARY KEY,
-    identificador UUID NOT NULL UNIQUE DEFAULT gen_random_uuid(),
-    turno_caja_id INT NOT NULL,
-    cajero_id INT NOT NULL,
-    nombre_cliente_temporal VARCHAR(100) NOT NULL DEFAULT 'Cliente en espera',
-    canasta_json TEXT NOT NULL,
-    total_estimado BIGINT NOT NULL DEFAULT 0 CHECK (total_estimado >= 0),
-    fecha_pausa TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    recuperada BOOLEAN NOT NULL DEFAULT FALSE,
-    fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT fk_ventas_en_espera_turno
-        FOREIGN KEY (turno_caja_id)
-        REFERENCES turnos_caja (id)
-        ON DELETE RESTRICT,
-    CONSTRAINT fk_ventas_en_espera_cajero
-        FOREIGN KEY (cajero_id)
-        REFERENCES empleados (id)
-        ON DELETE RESTRICT
+CREATE TABLE IF NOT EXISTS "Turnos" (
+    "Id" integer GENERATED BY DEFAULT AS IDENTITY,
+    "CajaId" integer NOT NULL,
+    "EmpleadoId" integer NOT NULL,
+    "FechaApertura" timestamp with time zone NOT NULL,
+    "FechaCierre" timestamp with time zone,
+    "EfectivoInicial" bigint NOT NULL,
+    "EfectivoEsperado" bigint,
+    "EfectivoContado" bigint,
+    "Estado" integer NOT NULL,
+    "FechaCreacion" timestamp with time zone NOT NULL DEFAULT NOW(),
+    CONSTRAINT "PK_Turnos" PRIMARY KEY ("Id"),
+    CONSTRAINT "FK_Turnos_Cajas_CajaId" FOREIGN KEY ("CajaId") REFERENCES "Cajas" ("Id") ON DELETE RESTRICT,
+    CONSTRAINT "FK_Turnos_Empleados_EmpleadoId" FOREIGN KEY ("EmpleadoId") REFERENCES "Empleados" ("Id") ON DELETE RESTRICT
 );
 
--- ----------------------------------------------------------------------------
--- 6. Trazabilidad: Movimientos, Mermas y Reabastecimiento
--- ----------------------------------------------------------------------------
-
-CREATE TABLE IF NOT EXISTS movimientos_inventario (
-    id SERIAL PRIMARY KEY,
-    producto_id INT NOT NULL,
-    lote_id INT NOT NULL,
-    venta_id INT NULL,
-    tipo SMALLINT NOT NULL,
-    cantidad INT NOT NULL,
-    motivo VARCHAR(200) NOT NULL,
-    fecha TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT fk_movimientos_producto
-        FOREIGN KEY (producto_id)
-        REFERENCES productos (id)
-        ON DELETE RESTRICT,
-    CONSTRAINT fk_movimientos_lote
-        FOREIGN KEY (lote_id)
-        REFERENCES lotes (id)
-        ON DELETE RESTRICT,
-    CONSTRAINT fk_movimientos_venta
-        FOREIGN KEY (venta_id)
-        REFERENCES ventas (id)
-        ON DELETE RESTRICT
+CREATE TABLE IF NOT EXISTS "RetirosCaja" (
+    "Id" integer GENERATED BY DEFAULT AS IDENTITY,
+    "TurnoCajaId" integer NOT NULL,
+    "Monto" bigint NOT NULL,
+    "Motivo" text NOT NULL,
+    "EmpleadoAutorizaId" integer NOT NULL,
+    "Fecha" timestamp with time zone NOT NULL,
+    "FechaCreacion" timestamp with time zone NOT NULL DEFAULT NOW(),
+    CONSTRAINT "PK_RetirosCaja" PRIMARY KEY ("Id"),
+    CONSTRAINT "FK_RetirosCaja_Empleados_EmpleadoAutorizaId" FOREIGN KEY ("EmpleadoAutorizaId") REFERENCES "Empleados" ("Id") ON DELETE RESTRICT,
+    CONSTRAINT "FK_RetirosCaja_Turnos_TurnoCajaId" FOREIGN KEY ("TurnoCajaId") REFERENCES "Turnos" ("Id") ON DELETE RESTRICT
 );
 
-CREATE TABLE IF NOT EXISTS mermas (
-    id SERIAL PRIMARY KEY,
-    producto_id INT NOT NULL,
-    lote_id INT NOT NULL,
-    cantidad INT NOT NULL CHECK (cantidad > 0),
-    motivo VARCHAR(250) NOT NULL,
-    fecha TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT fk_mermas_producto
-        FOREIGN KEY (producto_id)
-        REFERENCES productos (id)
-        ON DELETE RESTRICT,
-    CONSTRAINT fk_mermas_lote
-        FOREIGN KEY (lote_id)
-        REFERENCES lotes (id)
-        ON DELETE RESTRICT
+CREATE TABLE IF NOT EXISTS "Ventas" (
+    "Id" integer GENERATED BY DEFAULT AS IDENTITY,
+    "Fecha" timestamp with time zone NOT NULL,
+    "TurnoCajaId" integer NOT NULL,
+    "Estado" integer NOT NULL,
+    "MotivoAnulacion" text NOT NULL DEFAULT '',
+    "ClienteId" integer,
+    "PuntosGanados" integer NOT NULL DEFAULT 0,
+    "PuntosRedimidos" integer NOT NULL DEFAULT 0,
+    "ClaveIdempotencia" text,
+    "DocumentoAdquirente" text NOT NULL DEFAULT '222222222222',
+    "NombreAdquirente" text NOT NULL DEFAULT 'CONSUMIDOR FINAL',
+    "Cude" text,
+    "CadenaQr" text,
+    "PrefijoDian" text,
+    "ConsecutivoDian" bigint NOT NULL DEFAULT 0,
+    "FechaValidacionDian" timestamp with time zone,
+    "XmlUbl" text,
+    "FechaCreacion" timestamp with time zone NOT NULL DEFAULT NOW(),
+    CONSTRAINT "PK_Ventas" PRIMARY KEY ("Id"),
+    CONSTRAINT "FK_Ventas_Clientes_ClienteId" FOREIGN KEY ("ClienteId") REFERENCES "Clientes" ("Id") ON DELETE RESTRICT
 );
 
-CREATE TABLE IF NOT EXISTS reabastecimientos (
-    id SERIAL PRIMARY KEY,
-    producto_id INT NOT NULL,
-    cantidad_solicitada INT NOT NULL CHECK (cantidad_solicitada > 0),
-    estado SMALLINT NOT NULL DEFAULT 1,
-    fecha_solicitud TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    fecha_atencion TIMESTAMPTZ NULL,
-    fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT fk_reabastecimientos_producto
-        FOREIGN KEY (producto_id)
-        REFERENCES productos (id)
-        ON DELETE RESTRICT
+CREATE TABLE IF NOT EXISTS "DetalleVenta" (
+    "Id" integer GENERATED BY DEFAULT AS IDENTITY,
+    "VentaId" integer NOT NULL,
+    "ProductoId" integer NOT NULL,
+    "Cantidad" integer NOT NULL,
+    "PrecioUnitario" bigint NOT NULL,
+    "Subtotal" bigint NOT NULL,
+    "PuntosBasicosIva" integer NOT NULL DEFAULT 0,
+    "Iva" bigint NOT NULL DEFAULT 0,
+    "FechaCreacion" timestamp with time zone NOT NULL DEFAULT NOW(),
+    CONSTRAINT "PK_DetalleVenta" PRIMARY KEY ("Id"),
+    CONSTRAINT "FK_DetalleVenta_Productos_ProductoId" FOREIGN KEY ("ProductoId") REFERENCES "Productos" ("Id") ON DELETE RESTRICT,
+    CONSTRAINT "FK_DetalleVenta_Ventas_VentaId" FOREIGN KEY ("VentaId") REFERENCES "Ventas" ("Id") ON DELETE RESTRICT
+);
+
+CREATE TABLE IF NOT EXISTS "Pago" (
+    "Id" integer GENERATED BY DEFAULT AS IDENTITY,
+    "VentaId" integer NOT NULL,
+    "Monto" bigint NOT NULL,
+    "Discriminator" character varying(21) NOT NULL,
+    "Puntos" integer,
+    "UltimosDigitos" text,
+    "Referencia" text,
+    "FechaCreacion" timestamp with time zone NOT NULL DEFAULT NOW(),
+    CONSTRAINT "PK_Pago" PRIMARY KEY ("Id"),
+    CONSTRAINT "FK_Pago_Ventas_VentaId" FOREIGN KEY ("VentaId") REFERENCES "Ventas" ("Id") ON DELETE RESTRICT
+);
+
+CREATE TABLE IF NOT EXISTS "VentasEnEspera" (
+    "Id" integer GENERATED BY DEFAULT AS IDENTITY,
+    "CajaId" integer NOT NULL,
+    "EmpleadoId" integer NOT NULL,
+    "IdentificadorCliente" text NOT NULL,
+    "ClienteId" integer,
+    "PuntosARedimir" integer NOT NULL DEFAULT 0,
+    "LineasJson" text NOT NULL,
+    "TotalEstimado" bigint NOT NULL DEFAULT 0,
+    "Nota" text,
+    "Recuperada" boolean NOT NULL DEFAULT FALSE,
+    "FechaCreacion" timestamp with time zone NOT NULL DEFAULT NOW(),
+    CONSTRAINT "PK_VentasEnEspera" PRIMARY KEY ("Id"),
+    CONSTRAINT "FK_VentasEnEspera_Cajas_CajaId" FOREIGN KEY ("CajaId") REFERENCES "Cajas" ("Id") ON DELETE RESTRICT,
+    CONSTRAINT "FK_VentasEnEspera_Empleados_EmpleadoId" FOREIGN KEY ("EmpleadoId") REFERENCES "Empleados" ("Id") ON DELETE RESTRICT
+);
+
+CREATE TABLE IF NOT EXISTS "Movimientos" (
+    "Id" integer GENERATED BY DEFAULT AS IDENTITY,
+    "ProductoId" integer NOT NULL,
+    "LoteId" integer NOT NULL,
+    "VentaId" integer,
+    "Tipo" integer NOT NULL,
+    "Cantidad" integer NOT NULL,
+    "Fecha" timestamp with time zone NOT NULL,
+    "Motivo" text NOT NULL,
+    "FechaCreacion" timestamp with time zone NOT NULL DEFAULT NOW(),
+    CONSTRAINT "PK_Movimientos" PRIMARY KEY ("Id"),
+    CONSTRAINT "FK_Movimientos_Lotes_LoteId" FOREIGN KEY ("LoteId") REFERENCES "Lotes" ("Id") ON DELETE RESTRICT,
+    CONSTRAINT "FK_Movimientos_Ventas_VentaId" FOREIGN KEY ("VentaId") REFERENCES "Ventas" ("Id") ON DELETE RESTRICT
+);
+
+CREATE TABLE IF NOT EXISTS "Mermas" (
+    "Id" integer GENERATED BY DEFAULT AS IDENTITY,
+    "ProductoId" integer NOT NULL,
+    "LoteId" integer NOT NULL,
+    "Cantidad" integer NOT NULL,
+    "Motivo" text NOT NULL,
+    "Fecha" timestamp with time zone NOT NULL,
+    "FechaCreacion" timestamp with time zone NOT NULL DEFAULT NOW(),
+    CONSTRAINT "PK_Mermas" PRIMARY KEY ("Id")
+);
+
+CREATE TABLE IF NOT EXISTS "Reabastecimientos" (
+    "Id" integer GENERATED BY DEFAULT AS IDENTITY,
+    "ProductoId" integer NOT NULL,
+    "CantidadSolicitada" integer NOT NULL,
+    "Estado" integer NOT NULL DEFAULT 0,
+    "FechaSolicitud" timestamp with time zone NOT NULL,
+    "FechaAtencion" timestamp with time zone,
+    "FechaCreacion" timestamp with time zone NOT NULL DEFAULT NOW(),
+    CONSTRAINT "PK_Reabastecimientos" PRIMARY KEY ("Id")
+);
+
+CREATE TABLE IF NOT EXISTS "Gastos" (
+    "Id" integer GENERATED BY DEFAULT AS IDENTITY,
+    "Descripcion" text NOT NULL,
+    "Monto" bigint NOT NULL,
+    "Fecha" timestamp with time zone NOT NULL,
+    "RegistradoPorEmpleadoId" integer NOT NULL,
+    "FechaCreacion" timestamp with time zone NOT NULL DEFAULT NOW(),
+    CONSTRAINT "PK_Gastos" PRIMARY KEY ("Id")
+);
+
+CREATE TABLE IF NOT EXISTS "Nominas" (
+    "Id" integer GENERATED BY DEFAULT AS IDENTITY,
+    "EmpleadoId" integer NOT NULL,
+    "Anio" integer NOT NULL,
+    "Mes" integer NOT NULL,
+    "SalarioBase" bigint NOT NULL,
+    "AuxilioTransporte" bigint NOT NULL,
+    "DeduccionSalud" bigint NOT NULL,
+    "DeduccionPension" bigint NOT NULL,
+    "Neto" bigint NOT NULL,
+    "FechaCalculo" timestamp with time zone NOT NULL,
+    "FechaCreacion" timestamp with time zone NOT NULL DEFAULT NOW(),
+    CONSTRAINT "PK_Nominas" PRIMARY KEY ("Id")
+);
+
+CREATE TABLE IF NOT EXISTS "Auditoria" (
+    "Id" integer GENERATED BY DEFAULT AS IDENTITY,
+    "Fecha" timestamp with time zone NOT NULL,
+    "EmpleadoId" integer,
+    "Accion" integer NOT NULL,
+    "Entidad" text NOT NULL,
+    "EntidadId" integer,
+    "Detalle" text NOT NULL,
+    "FechaCreacion" timestamp with time zone NOT NULL DEFAULT NOW(),
+    CONSTRAINT "PK_Auditoria" PRIMARY KEY ("Id")
+);
+
+CREATE TABLE IF NOT EXISTS "Widgets" (
+    "Id" integer GENERATED BY DEFAULT AS IDENTITY,
+    "EmpleadoId" integer NOT NULL,
+    "WidgetId" text NOT NULL,
+    "Posicion" integer NOT NULL,
+    "Visible" boolean NOT NULL,
+    "FechaCreacion" timestamp with time zone NOT NULL DEFAULT NOW(),
+    CONSTRAINT "PK_Widgets" PRIMARY KEY ("Id")
+);
+
+CREATE TABLE IF NOT EXISTS "Parametros" (
+    "Id" integer GENERATED BY DEFAULT AS IDENTITY,
+    "Clave" text NOT NULL,
+    "Valor" text NOT NULL,
+    "Descripcion" text NOT NULL,
+    "FechaCreacion" timestamp with time zone NOT NULL DEFAULT NOW(),
+    CONSTRAINT "PK_Parametros" PRIMARY KEY ("Id")
+);
+
+CREATE TABLE IF NOT EXISTS "EventosOutbox" (
+    "Id" integer GENERATED BY DEFAULT AS IDENTITY,
+    "TipoEvento" text NOT NULL,
+    "EntidadId" text NOT NULL,
+    "PayloadJson" text NOT NULL,
+    "Procesado" boolean NOT NULL DEFAULT FALSE,
+    "FechaProcesado" timestamp with time zone,
+    "Reintentos" integer NOT NULL DEFAULT 0,
+    "UltimoError" text,
+    "FechaCreacion" timestamp with time zone NOT NULL DEFAULT NOW(),
+    CONSTRAINT "PK_EventosOutbox" PRIMARY KEY ("Id")
 );
 
 -- ----------------------------------------------------------------------------
--- 7. Finanzas, Nómina, Auditoría y Configuración
+-- 2. Índices de Búsqueda y Unicidad Canónicos
 -- ----------------------------------------------------------------------------
 
-CREATE TABLE IF NOT EXISTS gastos (
-    id SERIAL PRIMARY KEY,
-    monto BIGINT NOT NULL CHECK (monto > 0),
-    descripcion VARCHAR(250) NOT NULL,
-    categoria VARCHAR(80) NOT NULL,
-    fecha TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    registrado_por_empleado_id INT NOT NULL,
-    fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT fk_gastos_empleado
-        FOREIGN KEY (registrado_por_empleado_id)
-        REFERENCES empleados (id)
-        ON DELETE RESTRICT
-);
-
-CREATE TABLE IF NOT EXISTS nominas (
-    id SERIAL PRIMARY KEY,
-    empleado_id INT NOT NULL,
-    periodo_inicio DATE NOT NULL,
-    periodo_fin DATE NOT NULL,
-    dias_trabajados INT NOT NULL CHECK (dias_trabajados >= 0),
-    salario_base BIGINT NOT NULL CHECK (salario_base >= 0),
-    auxilio_transporte BIGINT NOT NULL DEFAULT 0 CHECK (auxilio_transporte >= 0),
-    horas_extras BIGINT NOT NULL DEFAULT 0 CHECK (horas_extras >= 0),
-    deduccion_salud BIGINT NOT NULL DEFAULT 0 CHECK (deduccion_salud >= 0),
-    deduccion_pension BIGINT NOT NULL DEFAULT 0 CHECK (deduccion_pension >= 0),
-    total_devengado BIGINT NOT NULL CHECK (total_devengado >= 0),
-    total_deducciones BIGINT NOT NULL CHECK (total_deducciones >= 0),
-    neto_pagado BIGINT NOT NULL CHECK (neto_pagado >= 0),
-    fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT fk_nominas_empleado
-        FOREIGN KEY (empleado_id)
-        REFERENCES empleados (id)
-        ON DELETE RESTRICT
-);
-
-CREATE TABLE IF NOT EXISTS registro_auditoria (
-    id SERIAL PRIMARY KEY,
-    empleado_id INT NOT NULL,
-    modulo VARCHAR(80) NOT NULL,
-    accion VARCHAR(100) NOT NULL,
-    detalle TEXT NOT NULL,
-    fecha TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT fk_auditoria_empleado
-        FOREIGN KEY (empleado_id)
-        REFERENCES empleados (id)
-        ON DELETE RESTRICT
-);
-
-CREATE TABLE IF NOT EXISTS parametros (
-    id SERIAL PRIMARY KEY,
-    clave VARCHAR(100) NOT NULL UNIQUE,
-    valor TEXT NOT NULL,
-    descripcion VARCHAR(250) NULL,
-    fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
-CREATE TABLE IF NOT EXISTS configuracion_widgets (
-    id SERIAL PRIMARY KEY,
-    empleado_id INT NOT NULL,
-    widget_id VARCHAR(80) NOT NULL,
-    posicion INT NOT NULL DEFAULT 0,
-    visible BOOLEAN NOT NULL DEFAULT TRUE,
-    fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT uq_widgets_empleado_widget
-        UNIQUE (empleado_id, widget_id),
-    CONSTRAINT fk_widgets_empleado
-        FOREIGN KEY (empleado_id)
-        REFERENCES empleados (id)
-        ON DELETE RESTRICT
-);
+CREATE UNIQUE INDEX IF NOT EXISTS "IX_Clientes_Documento" ON "Clientes" ("Documento");
+CREATE INDEX IF NOT EXISTS "IX_DetalleVenta_ProductoId" ON "DetalleVenta" ("ProductoId");
+CREATE INDEX IF NOT EXISTS "IX_DetalleVenta_VentaId" ON "DetalleVenta" ("VentaId");
+CREATE INDEX IF NOT EXISTS "IX_Empleados_CargoId" ON "Empleados" ("CargoId");
+CREATE UNIQUE INDEX IF NOT EXISTS "IX_Empleados_Documento" ON "Empleados" ("Documento");
+CREATE INDEX IF NOT EXISTS "IX_Empleados_RolId" ON "Empleados" ("RolId");
+CREATE INDEX IF NOT EXISTS "IX_EventosOutbox_Procesado_Id" ON "EventosOutbox" ("Procesado", "Id");
+CREATE UNIQUE INDEX IF NOT EXISTS "IX_Lotes_ProductoId_NumeroLote" ON "Lotes" ("ProductoId", "NumeroLote");
+CREATE INDEX IF NOT EXISTS "IX_Movimientos_LoteId" ON "Movimientos" ("LoteId");
+CREATE INDEX IF NOT EXISTS "IX_Movimientos_VentaId" ON "Movimientos" ("VentaId");
+CREATE INDEX IF NOT EXISTS "IX_Pago_VentaId" ON "Pago" ("VentaId");
+CREATE UNIQUE INDEX IF NOT EXISTS "IX_Parametros_Clave" ON "Parametros" ("Clave");
+CREATE INDEX IF NOT EXISTS "IX_Productos_CategoriaId" ON "Productos" ("CategoriaId");
+CREATE UNIQUE INDEX IF NOT EXISTS "IX_Productos_CodigoBarras" ON "Productos" ("CodigoBarras");
+CREATE INDEX IF NOT EXISTS "IX_Productos_ImpuestoId" ON "Productos" ("ImpuestoId");
+CREATE INDEX IF NOT EXISTS "IX_Productos_ProveedorId" ON "Productos" ("ProveedorId");
+CREATE INDEX IF NOT EXISTS "IX_RetirosCaja_EmpleadoAutorizaId" ON "RetirosCaja" ("EmpleadoAutorizaId");
+CREATE INDEX IF NOT EXISTS "IX_RetirosCaja_TurnoCajaId" ON "RetirosCaja" ("TurnoCajaId");
+CREATE UNIQUE INDEX IF NOT EXISTS "IX_Roles_Nombre" ON "Roles" ("Nombre");
+CREATE UNIQUE INDEX IF NOT EXISTS "IX_StockBodega_LoteId" ON "StockBodega" ("LoteId");
+CREATE UNIQUE INDEX IF NOT EXISTS "IX_StockEstante_LoteId" ON "StockEstante" ("LoteId");
+CREATE INDEX IF NOT EXISTS "IX_Turnos_CajaId" ON "Turnos" ("CajaId");
+CREATE INDEX IF NOT EXISTS "IX_Turnos_EmpleadoId" ON "Turnos" ("EmpleadoId");
+CREATE UNIQUE INDEX IF NOT EXISTS "IX_Usuarios_EmpleadoId" ON "Usuarios" ("EmpleadoId");
+CREATE UNIQUE INDEX IF NOT EXISTS "IX_Usuarios_NombreUsuario" ON "Usuarios" ("NombreUsuario");
+CREATE UNIQUE INDEX IF NOT EXISTS "IX_Ventas_ClaveIdempotencia" ON "Ventas" ("ClaveIdempotencia");
+CREATE INDEX IF NOT EXISTS "IX_Ventas_ClienteId" ON "Ventas" ("ClienteId");
+CREATE INDEX IF NOT EXISTS "IX_VentasEnEspera_CajaId" ON "VentasEnEspera" ("CajaId");
+CREATE INDEX IF NOT EXISTS "IX_VentasEnEspera_EmpleadoId" ON "VentasEnEspera" ("EmpleadoId");
+CREATE UNIQUE INDEX IF NOT EXISTS "IX_Widgets_EmpleadoId_WidgetId" ON "Widgets" ("EmpleadoId", "WidgetId");
 
 -- ----------------------------------------------------------------------------
--- 8. Patrón Outbox para Réplica Externa Asíncrona (Supabase / Neon)
+-- 3. Vistas en Minúsculas (Conveniencia para Consultas Directas / psql)
 -- ----------------------------------------------------------------------------
 
-CREATE TABLE IF NOT EXISTS eventos_outbox (
-    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    identificador UUID NOT NULL UNIQUE DEFAULT gen_random_uuid(),
-    tipo_evento VARCHAR(80) NOT NULL,
-    entidad_id VARCHAR(50) NOT NULL,
-    payload JSONB NOT NULL,
-    procesado BOOLEAN NOT NULL DEFAULT FALSE,
-    fecha_procesado TIMESTAMPTZ NULL,
-    creado_en TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
+CREATE OR REPLACE VIEW cargos AS SELECT * FROM "Cargos";
+CREATE OR REPLACE VIEW roles AS SELECT * FROM "Roles";
+CREATE OR REPLACE VIEW empleados AS SELECT * FROM "Empleados";
+CREATE OR REPLACE VIEW usuarios AS SELECT * FROM "Usuarios";
+CREATE OR REPLACE VIEW clientes AS SELECT * FROM "Clientes";
+CREATE OR REPLACE VIEW categorias AS SELECT * FROM "Categorias";
+CREATE OR REPLACE VIEW proveedores AS SELECT * FROM "Proveedores";
+CREATE OR REPLACE VIEW impuestos AS SELECT * FROM "Impuestos";
+CREATE OR REPLACE VIEW productos AS SELECT * FROM "Productos";
+CREATE OR REPLACE VIEW lotes AS SELECT * FROM "Lotes";
+CREATE OR REPLACE VIEW stock_estante AS SELECT * FROM "StockEstante";
+CREATE OR REPLACE VIEW stock_bodega AS SELECT * FROM "StockBodega";
+CREATE OR REPLACE VIEW cajas AS SELECT * FROM "Cajas";
+CREATE OR REPLACE VIEW turnos AS SELECT * FROM "Turnos";
+CREATE OR REPLACE VIEW retiros_caja AS SELECT * FROM "RetirosCaja";
+CREATE OR REPLACE VIEW ventas AS SELECT * FROM "Ventas";
+CREATE OR REPLACE VIEW detalles_venta AS SELECT * FROM "DetalleVenta";
+CREATE OR REPLACE VIEW pagos AS SELECT * FROM "Pago";
+CREATE OR REPLACE VIEW movimientos AS SELECT * FROM "Movimientos";
+CREATE OR REPLACE VIEW mermas AS SELECT * FROM "Mermas";
+CREATE OR REPLACE VIEW reabastecimientos AS SELECT * FROM "Reabastecimientos";
+CREATE OR REPLACE VIEW gastos AS SELECT * FROM "Gastos";
+CREATE OR REPLACE VIEW nominas AS SELECT * FROM "Nominas";
+CREATE OR REPLACE VIEW auditoria AS SELECT * FROM "Auditoria";
+CREATE OR REPLACE VIEW parametros AS SELECT * FROM "Parametros";
+CREATE OR REPLACE VIEW widgets AS SELECT * FROM "Widgets";
+CREATE OR REPLACE VIEW eventos_outbox AS SELECT * FROM "EventosOutbox";
 
-CREATE INDEX IF NOT EXISTS idx_eventos_outbox_pendientes
-    ON eventos_outbox (procesado, id);
+-- ============================================================================
+-- 4. Semilla de Datos Demo Coherente y Realista (Hipermercado)
+-- ============================================================================
+
+-- 4.1 Parámetros Generales, Tributarios, Nómina y DIAN
+INSERT INTO "Parametros" ("Id", "Clave", "Valor", "Descripcion") VALUES
+(1, 'seguridad.max_intentos_fallidos', '5', 'Intentos fallidos antes de bloquear la cuenta'),
+(2, 'inventario.dias_alerta_vencimiento', '15', 'Días de anticipación para alertar vencimientos'),
+(3, 'caja.tolerancia_arqueo', '0', 'Diferencia de arqueo aceptada, en pesos'),
+(4, 'nomina.salario_minimo', '1423500', 'Salario mínimo mensual legal vigente en Colombia (COP)'),
+(5, 'nomina.auxilio_transporte', '200000', 'Auxilio de transporte mensual legal vigente (COP)'),
+(6, 'nomina.tope_auxilio_smmlv', '2', 'Veces el salario mínimo hasta donde aplica auxilio de transporte'),
+(7, 'nomina.salud_puntos_basicos', '400', 'Aporte de salud del empleado (400 = 4 %)'),
+(8, 'nomina.pension_puntos_basicos', '400', 'Aporte de pensión del empleado (400 = 4 %)'),
+(9, 'integraciones.timeout_segundos', '10', 'Tiempo máximo de espera de APIs externas'),
+(10, 'integraciones.reintentos', '2', 'Reintentos de conexión antes de usar contingencia offline'),
+(11, 'integraciones.trm_habilitada', '1', 'Consulta automática de TRM oficial del Banco de la República'),
+(12, 'tributario.responsable_iva', '1', 'Empresa responsable de IVA (Régimen Común DIAN)'),
+(13, 'dian.habilitado', '1', 'Habilitar emisión de Documento Equivalente POS Electrónico DIAN'),
+(14, 'dian.resolucion_numero', '18764102352817', 'Número de resolución oficial de facturación DIAN'),
+(15, 'dian.resolucion_fecha', '2024-01-15', 'Fecha de expedición de la resolución DIAN'),
+(16, 'dian.resolucion_vigencia_hasta', '2026-12-31', 'Fecha de vencimiento de la resolución DIAN'),
+(17, 'dian.prefijo', 'POS', 'Prefijo de facturación autorizado'),
+(18, 'dian.rango_desde', '1', 'Rango inicial de numeración autorizado'),
+(19, 'dian.rango_hasta', '500000', 'Rango final de numeración autorizado'),
+(20, 'dian.clave_tecnica', 'fc8eac422eba16e22ffd8c6f94b3f40a6e38162c', 'Clave técnica para generación del CUDE'),
+(21, 'dian.siguiente_consecutivo', '1004', 'Siguiente consecutivo de factura electrónica a emitir'),
+(22, 'dian.tipo_ambiente', '2', 'Ambiente DIAN: 1 Producción, 2 Pruebas/Habilitación'),
+(23, 'integraciones.supabase_url', 'https://demo-sigs.supabase.co', 'URL del proyecto Supabase réplica'),
+(24, 'integraciones.supabase_key', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.demo-key', 'API Key de réplica asíncrona'),
+(25, 'integraciones.trm_token', '', 'Token opcional datos.gov.co'),
+(26, 'integraciones.resend_token', '', 'API Key de Resend para recibos por correo'),
+(27, 'integraciones.resend_remitente', 'facturacion@superahorro.com.co', 'Remitente autorizado de correo'),
+(28, 'integraciones.supabase_habilitado', '0', 'Sincronizar eventos con Supabase (1 sí, 0 no)'),
+(29, 'integraciones.codigo_barras_habilitado', '1', 'Consultar catálogo externo GS1 / OpenFoodFacts'),
+(30, 'integraciones.trm_ultima_centavos', '415050', 'Última TRM liquidada (COP 4.150,50 por USD)'),
+(31, 'integraciones.trm_ultima_fecha', '2026-11-03', 'Fecha de la última TRM'),
+(32, 'negocio.nombre', 'Hipermercado El Ahorro Familiar S.A.S.', 'Nombre institucional del comercio'),
+(33, 'negocio.nit', '901234567-8', 'NIT comercial con dígito de verificación'),
+(34, 'negocio.direccion', 'Carrera 43A # 18 Sur - 125, Medellín, Colombia', 'Dirección física principal'),
+(35, 'negocio.telefono', '6044445566', 'Teléfono de contacto comercial'),
+(36, 'fidelizacion.pesos_por_punto', '1000', 'Pesos de compra por cada punto ganado'),
+(37, 'fidelizacion.valor_punto_pesos', '10', 'Valor en pesos de un punto al redimir'),
+(38, 'respaldos.carpeta', '/var/backups/sigs', 'Directorio de almacenamiento de respaldos')
+ON CONFLICT ("Id") DO NOTHING;
+
+-- 4.2 Cargos Organizacionales
+INSERT INTO "Cargos" ("Id", "Nombre") VALUES
+(1, 'Administrador General'),
+(2, 'Gerente de Operaciones'),
+(3, 'Supervisor de Turno POS'),
+(4, 'Cajero Principal'),
+(5, 'Encargado de Bodega e Inventarios'),
+(6, 'Analista de Compras y Proveedores'),
+(7, 'Contador General'),
+(8, 'Soporte Técnico e Infraestructura'),
+(9, 'Atención al Cliente y Devoluciones'),
+(10, 'Analista de Inteligencia de Datos')
+ON CONFLICT ("Id") DO NOTHING;
+
+-- 4.3 Roles y Matriz de Permisos (RBAC Adaptativo)
+INSERT INTO "Roles" ("Id", "Nombre", "Permisos") VALUES
+(1, 'Admin', 262143),
+(2, 'Gerente', 25482),
+(3, 'Supervisor', 24591),
+(4, 'Cajero', 8197),
+(5, 'Bodeguero', 120),
+(6, 'Compras', 32872),
+(7, 'Contador', 70016),
+(8, 'Soporte', 135168),
+(9, 'AtencionCliente', 8200),
+(10, 'AnalistaDatos', 4480)
+ON CONFLICT ("Id") DO NOTHING;
+
+-- 4.4 Empleados (Perfiles Coherentes: Edades, Cédulas Colombianas, Salarios COP)
+INSERT INTO "Empleados" ("Id", "Documento", "Nombres", "Apellidos", "Correo", "CorreoVerificado", "Activo", "FechaIngreso", "SalarioBase", "CargoId", "RolId") VALUES
+(1, '71234567', 'Carlos Andrés', 'Mendoza Restrepo', 'carlos.mendoza@superahorro.com.co', true, true, '2020-01-15', 4800000, 1, 1),
+(2, '1017123456', 'Valentina', 'Gómez Jaramillo', 'valentina.gomez@superahorro.com.co', true, true, '2021-03-01', 3900000, 2, 2),
+(3, '79845123', 'Jorge Enrique', 'Ramos Beltrán', 'jorge.ramos@superahorro.com.co', true, true, '2022-05-10', 2400000, 3, 3),
+(4, '1020456789', 'Diana Marcela', 'Osorio Quintero', 'diana.osorio@superahorro.com.co', true, true, '2023-02-15', 1650000, 4, 4),
+(5, '1037567890', 'Mateo', 'Henao Zuluaga', 'mateo.henao@superahorro.com.co', true, true, '2022-09-01', 1750000, 5, 5),
+(6, '1015345678', 'Laura Sofía', 'Vargas Morales', 'laura.vargas@superahorro.com.co', true, true, '2022-01-20', 2700000, 6, 6),
+(7, '70543219', 'Hernán Darío', 'Pineda Castro', 'hernan.pineda@superahorro.com.co', true, true, '2021-08-15', 3600000, 7, 7),
+(8, '1036432109', 'Camilo Andrés', 'Cardona Ruiz', 'camilo.cardona@superahorro.com.co', true, true, '2023-06-01', 2100000, 8, 8),
+(9, '1019876543', 'Mariana', 'Castaño Londoño', 'mariana.castano@superahorro.com.co', true, true, '2024-01-10', 1600000, 9, 9),
+(10, '1022134567', 'Felipe', 'Rojas Delgado', 'felipe.rojas@superahorro.com.co', true, true, '2023-09-15', 3400000, 10, 10)
+ON CONFLICT ("Id") DO NOTHING;
+
+-- 4.5 Usuarios Demo con Credenciales por Rol (Hashes BCrypt Verificados)
+INSERT INTO "Usuarios" ("Id", "NombreUsuario", "HashClave", "HashPin", "DebeCambiarClave", "Bloqueado", "IntentosFallidos", "EmpleadoId") VALUES
+(1, 'admin', '$2a$11$Rr7QUudFtHt0vP30UCAPfu67Ap5zjYaZxFF/MBgPFAVcYcppLhwUi', '$2a$11$26IioMeDrgk9YpchDFlqeebXzfP0o3YrpFRNEHlnOZ132lzQM4EO6', false, false, 0, 1),
+(2, 'gerente', '$2a$11$BjVGNClkNtbEJInJw9F4guDuEeO7sc0FPerXKJUH8opZQ.vNb8N.m', '$2a$11$FlUWmneDjgyOGQHI43T.Ee..vpj8rf5TlUq9QneC.bG5utpkemJI2', false, false, 0, 2),
+(3, 'supervisor', '$2a$11$3H.EfwSJEsg6.ox2ecT93OSCxf9LS6zhu4tTza8RvvNiRjNkE/JaK', '$2a$11$l4B.s6aHWogPEQXZ/WmdKOecjXnarUDmq7yKaw8VIMIojYi9hQBpO', false, false, 0, 3),
+(4, 'cajero', '$2a$11$8f5fM044PbfhhQc8X7vVEeVyGp5zu0bVTlIYo1riaFNC1BNTiqZxG', '$2a$11$Ung79.XPIlGFAjhGGbAHfOILXkNSNsnU0KVruL1TamWUDEh12DEOS', false, false, 0, 4),
+(5, 'bodega', '$2a$11$GTMaZQeRSwhjf6JNtboIEutW3Etaps5i05/VhlZVF2QN3vSl/WZue', '$2a$11$t0VQevxUgTux0/mJrzoPhObeyNDibbkFClpNxQTFMZRa3WXZQg0Ru', false, false, 0, 5),
+(6, 'compras', '$2a$11$c9GvpRIowmwSIgWL6sIFQuqXFANDy31V6kbVj/iC.C9NtK7UFP1yi', '$2a$11$56ppOlJrtWso30.gbPEDTOknSIn9FJVgW1koPsOmhMyni3XDbcB4O', false, false, 0, 6),
+(7, 'contador', '$2a$11$muhFVRM.2iWBBJfRyb8WGeppVpfoeHnalsjV34Ut12ShmwLt6cmtO', '$2a$11$10RHLCtFipLlQbjrQaoQceVN7S/m.x7bE4.AoTkQ1WQaizcK4esqq', false, false, 0, 7),
+(8, 'soporte', '$2a$11$0MGsEtjYddbdSx3HHIosBex6C6S10LjbdtFHG4NlF4ffKTjm86FY6', '$2a$11$e7oGymdRbrO5DBCCnDQFBulNDIy97NAMrY7j70NzFfq9B36rzw0Oa', false, false, 0, 8),
+(9, 'atencion', '$2a$11$THqiyUkIdHrk3G4qynqHJ.UkqaFXQ7K1cQlegulriU7.bsdSZMQ6C', '$2a$11$vUxzrkIs5lfcPTZMEsKBZec/qcEikG3WgWR26xujnvMIFHL1AwRPq', false, false, 0, 9),
+(10, 'analista', '$2a$11$wjUn7tKKnNWCXKUVTjI.KuFPm5UG9Z1GU6YTb43rlf5Y9OF0fzHBW', '$2a$11$./9brzNI2QIv7FY81g0w9uJi7jpIIVtaKU29pdkxGDt7OYrW9OMom', false, false, 0, 10)
+ON CONFLICT ("Id") DO NOTHING;
+
+-- 4.6 Cajas Registradoras
+INSERT INTO "Cajas" ("Id", "Nombre", "Activa") VALUES
+(1, 'Caja 01 - Principal', true),
+(2, 'Caja 02 - Pasillo Central', true),
+(3, 'Caja 03 - Rápida (Menos de 10 art.)', true)
+ON CONFLICT ("Id") DO NOTHING;
+
+-- 4.7 Clientes y Programa de Fidelización (Ley 1581 Habeas Data)
+INSERT INTO "Clientes" ("Id", "Documento", "Nombres", "Apellidos", "Telefono", "Correo", "Activo", "PuntosAcumulados", "AutorizaTratamientoDatos", "FechaAutorizacion", "TerminalAutorizacion") VALUES
+(1, '71345678', 'Juan Carlos', 'Pérez Gómez', '3001234567', 'juan.perez@gmail.com', true, 480, true, NOW() - INTERVAL '30 days', 'POS-01'),
+(2, '1017234567', 'María Camila', 'Gómez Ortiz', '3119876543', 'camila.gomez@hotmail.com', true, 1056, true, NOW() - INTERVAL '45 days', 'POS-01'),
+(3, '98765432', 'Andrés Felipe', 'Morales Soto', '3154567890', 'afelipe.morales@outlook.com', true, 820, true, NOW() - INTERVAL '20 days', 'POS-02'),
+(4, '43987654', 'Sandra Milena', 'Valencia Ríos', '3206543210', 'sandra.valencia@yahoo.com', true, 2150, true, NOW() - INTERVAL '60 days', 'POS-01'),
+(5, '1020345678', 'Carlos Mario', 'Duarte Correa', '3012345678', 'cduarte@gmail.com', true, 0, false, NULL, NULL)
+ON CONFLICT ("Id") DO NOTHING;
+
+-- 4.8 13 Categorías de Hipermercado
+INSERT INTO "Categorias" ("Id", "Nombre") VALUES
+(1, 'Abarrotes y Despensa'),
+(2, 'Lácteos y Huevos'),
+(3, 'Carnes y Aves'),
+(4, 'Frutas y Verduras (Fruver)'),
+(5, 'Panadería y Café'),
+(6, 'Bebidas y Snacks'),
+(7, 'Aseo del Hogar'),
+(8, 'Cuidado Personal'),
+(9, 'Tecnología y Electrónica'),
+(10, 'Electrodomésticos y Cocina'),
+(11, 'Hogar y Muebles'),
+(12, 'Papelería y Libros'),
+(13, 'Ferretería y Herramientas')
+ON CONFLICT ("Id") DO NOTHING;
+
+-- 4.9 12 Proveedores Principales (NITs y DVs Reales Validados por Módulo 11)
+INSERT INTO "Proveedores" ("Id", "Nombre", "Nit", "Telefono", "Correo") VALUES
+(1, 'Diana Corporación S.A.S.', '890900161-9', '6013345566', 'pedidos@diana.com.co'),
+(2, 'Alquería S.A.', '860007870-3', '6014456677', 'ventas@alqueria.com.co'),
+(3, 'Colombina S.A.', '890300188-2', '6028899000', 'contacto@colombina.com'),
+(4, 'Postobón S.A.', '890903939-5', '6042655555', 'distribucion@postobon.com.co'),
+(5, 'Avícola Santa Reyes S.A.S.', '860032607-8', '6017890123', 'pedidos@santareyes.com.co'),
+(6, 'Unilever Andina Colombia', '860002161-7', '6015551234', 'servicio.cliente@unilever.com'),
+(7, 'Colgate-Palmolive Colombia', '860001007-6', '6024443322', 'contacto@colgate.com.co'),
+(8, 'Agropecuaria Fruver del Valle', '900543210-5', '3104567890', 'despachos@fruvervalle.co'),
+(9, 'Samsung Electronics Colombia S.A.', '830027951-8', '6016001234', 'corporativo@samsung.com.co'),
+(10, 'Groupe SEB Colombia S.A. (Imusa)', '890900050-1', '6043705000', 'contacto@imusa.com.co'),
+(11, 'Carvajal Educación S.A.S. (Norma)', '890300058-3', '6026618000', 'servicio@carvajal.com'),
+(12, 'Stanley Black & Decker Colombia S.A.S.', '860003507-6', '6015461200', 'ventas@stanleyblackanddecker.com')
+ON CONFLICT ("Id") DO NOTHING;
+
+-- 4.10 Impuestos Oficiales (DIAN)
+INSERT INTO "Impuestos" ("Id", "Nombre", "PuntosBasicos", "Activo", "Discriminator") VALUES
+(1, 'IVA 0 % (Exento/Excluido/Libros)', 0, true, 'Iva'),
+(2, 'IVA 5 % (Tarifa Reducida)', 500, true, 'Iva'),
+(3, 'IVA 19 % (Tarifa General)', 1900, true, 'Iva')
+ON CONFLICT ("Id") DO NOTHING;
+
+-- 4.11 Catálogo de 62 Productos (Alimentos, Frescos, Tecnología, Hogar, Libros y Ferretería)
+INSERT INTO "Productos" ("Id", "Nombre", "CodigoBarras", "PrecioVenta", "StockMinimoEstante", "Activo", "CategoriaId", "ProveedorId", "ImpuestoId", "Discriminator") VALUES
+-- Abarrotes y Despensa (Cat 1)
+(1, 'Arroz Diana Blanco Premium 1kg', '7701001000115', 5800, 20, true, 1, 1, 1, 'ProductoUnitario'),
+(2, 'Aceite Premier Girasol 900ml', '7701001000221', 11500, 15, true, 1, 1, 3, 'ProductoUnitario'),
+(3, 'Frijol Bola Roja Diana 500g', '7701001000337', 6200, 15, true, 1, 1, 1, 'ProductoUnitario'),
+(4, 'Lenteja Seleccionada Diana 500g', '7701001000443', 4900, 15, true, 1, 1, 1, 'ProductoUnitario'),
+(5, 'Azúcar Blanco Incauca 1000g', '7701001000559', 4800, 25, true, 1, 3, 2, 'ProductoUnitario'),
+(6, 'Sal Refisal Marina 1000g', '7701001000665', 2300, 30, true, 1, 1, 1, 'ProductoUnitario'),
+(7, 'Espagueti Doria Clásico 500g', '7701001000771', 3950, 20, true, 1, 3, 2, 'ProductoUnitario'),
+(8, 'Atún Van Camp''s Lomitos en Aceite 160g', '7701001000887', 8400, 20, true, 1, 3, 3, 'ProductoUnitario'),
+
+-- Lácteos y Huevos (Cat 2)
+(9, 'Leche Entera Alquería 1L', '7702001000112', 6900, 30, true, 2, 2, 1, 'ProductoUnitario'),
+(10, 'Leche Deslactosada Alquería 1L', '7702001000228', 7200, 25, true, 2, 2, 1, 'ProductoUnitario'),
+(11, 'Huevos Santa Reyes AA x30 unidades', '7702001000334', 19500, 15, true, 2, 5, 1, 'ProductoUnitario'),
+(12, 'Mantequilla Colanta con Sal 250g', '7702001000440', 7800, 10, true, 2, 2, 3, 'ProductoUnitario'),
+(13, 'Queso Campesino Fresco (kg)', '20890', 32000, 8000, true, 2, 2, 1, 'ProductoPesado'),
+
+-- Carnes y Aves (Cat 3 - Precio por Kilogramo, Stock en Gramos)
+(14, 'Pechuga de Pollo Fresca sin Piel (kg)', '20110', 21500, 15000, true, 3, 5, 1, 'ProductoPesado'),
+(15, 'Carne Molida Especial de Res (kg)', '20220', 34500, 10000, true, 3, 8, 1, 'ProductoPesado'),
+(16, 'Lomo de Cerdo Fresco Porcionado (kg)', '20330', 26000, 10000, true, 3, 8, 1, 'ProductoPesado'),
+
+-- Frutas y Verduras (Cat 4 - Fruver Pesado por Kilogramo)
+(17, 'Tomate Chonto Seleccionado (kg)', '20440', 3800, 10000, true, 4, 8, 1, 'ProductoPesado'),
+(18, 'Cebolla Cabezona Blanca (kg)', '20550', 3400, 10000, true, 4, 8, 1, 'ProductoPesado'),
+(19, 'Papa Pastusa Seleccionada (kg)', '20660', 3900, 20000, true, 4, 8, 1, 'ProductoPesado'),
+(20, 'Plátano Verde Hartón (kg)', '20770', 4200, 12000, true, 4, 8, 1, 'ProductoPesado'),
+(21, 'Papaya Maradol (kg)', '20880', 3200, 10000, true, 4, 8, 1, 'ProductoPesado'),
+(22, 'Manzana Roja Importada (kg)', '21140', 9800, 8000, true, 4, 8, 1, 'ProductoPesado'),
+
+-- Panadería y Café (Cat 5)
+(23, 'Pan Blanco Tajado Bimbo Familiar 600g', '7703001000119', 8900, 15, true, 5, 3, 1, 'ProductoUnitario'),
+(24, 'Café Molido Sello Rojo Tradicional 425g', '7703001000225', 16500, 20, true, 5, 3, 2, 'ProductoUnitario'),
+(25, 'Galletas Saltín Noel Tradicional Taco x3', '7703001000331', 5400, 25, true, 5, 3, 3, 'ProductoUnitario'),
+(26, 'Chocolate Corona Tradicional 500g', '7703001000447', 7600, 15, true, 5, 3, 2, 'ProductoUnitario'),
+
+-- Bebidas y Snacks (Cat 6)
+(27, 'Gaseosa Postobón Manzana 1.5L', '7704001000116', 4600, 25, true, 6, 4, 3, 'ProductoUnitario'),
+(28, 'Gaseosa Coca-Cola Original 1.5L', '7704001000222', 6500, 25, true, 6, 4, 3, 'ProductoUnitario'),
+(29, 'Jugo Hit Mora Botella 1L', '7704001000338', 4200, 20, true, 6, 4, 3, 'ProductoUnitario'),
+(30, 'Agua Mineral Cristal sin gas 1.5L', '7704001000444', 2800, 30, true, 6, 4, 3, 'ProductoUnitario'),
+(31, 'Papas Fritas Margarita Natural 110g', '7704001000550', 4900, 20, true, 6, 4, 3, 'ProductoUnitario'),
+
+-- Aseo del Hogar (Cat 7)
+(32, 'Detergente Líquido Ariel Poder y Cuidado 2L', '7705001000113', 26900, 10, true, 7, 6, 3, 'ProductoUnitario'),
+(33, 'Jabón en Barra Rey Azul 300g', '7705001000229', 3700, 40, true, 7, 6, 3, 'ProductoUnitario'),
+(34, 'Blanqueador Clorox Original 1000ml', '7705001000335', 5500, 20, true, 7, 6, 3, 'ProductoUnitario'),
+(35, 'Lavaloza en Crema Axion Limón 450g', '7705001000441', 5200, 25, true, 7, 7, 3, 'ProductoUnitario'),
+
+-- Cuidado Personal (Cat 8)
+(36, 'Papel Higiénico Familia Acolchomax x12 rollos', '7706001000110', 22900, 15, true, 8, 6, 3, 'ProductoUnitario'),
+(37, 'Crema Dental Colgate Triple Acción 150ml', '7706001000226', 12500, 20, true, 8, 7, 3, 'ProductoUnitario'),
+(38, 'Jabón de Tocador Protex Antibacterial x3', '7706001000332', 10900, 20, true, 8, 7, 3, 'ProductoUnitario'),
+(39, 'Champú Head & Shoulders Limpieza Renovadora 375ml', '7706001000448', 24500, 12, true, 8, 6, 3, 'ProductoUnitario'),
+
+-- Tecnología y Electrónica (Cat 9)
+(40, 'Smart TV Samsung 50" Crystal 4K UHD CU7000', '7707001000117', 1499000, 3, true, 9, 9, 3, 'ProductoUnitario'),
+(41, 'Celular Xiaomi Redmi Note 13 256GB 8GB RAM', '7707001000223', 849000, 4, true, 9, 9, 3, 'ProductoUnitario'),
+(42, 'Portátil Lenovo IdeaPad 15.6" Core i5 8GB 512GB SSD', '7707001000339', 2199000, 2, true, 9, 9, 3, 'ProductoUnitario'),
+(43, 'Impresora Multifuncional Epson EcoTank L3250 Wi-Fi', '7707001000445', 899000, 3, true, 9, 9, 3, 'ProductoUnitario'),
+(44, 'Auriculares Inalámbricos Xiaomi Redmi Buds 4 Active', '7707001000551', 89000, 8, true, 9, 9, 3, 'ProductoUnitario'),
+
+-- Electrodomésticos y Cocina (Cat 10)
+(45, 'Freidora de Aire Digital Oster 4L DiamondForce', '7707002000114', 229000, 5, true, 10, 10, 3, 'ProductoUnitario'),
+(46, 'Licuadora Oster Reversible 2V Vaso Vidrio Boroclass', '7707002000220', 189000, 6, true, 10, 10, 3, 'ProductoUnitario'),
+(47, 'Cafetera Eléctrica Black+Decker 12 Tazas Filtro Permanente', '7707002000336', 119000, 5, true, 10, 12, 3, 'ProductoUnitario'),
+(48, 'Batería de Cocina Imusa Talent Antiadherente x5 Piezas', '7707002000442', 219000, 4, true, 10, 10, 3, 'ProductoUnitario'),
+(49, 'Olla a Presión Imusa Securyplus Control 4.5 Litros', '7707002000558', 159000, 6, true, 10, 10, 3, 'ProductoUnitario'),
+
+-- Hogar y Muebles (Cat 11)
+(50, 'Escritorio para Computador Estudio 100cm Roble', '7707003000111', 249000, 2, true, 11, 10, 3, 'ProductoUnitario'),
+(51, 'Silla de Oficina Ergonómica con Brazos y Malla Transpirable', '7707003000227', 199000, 3, true, 11, 10, 3, 'ProductoUnitario'),
+(52, 'Juego de Sábanas Microfibra Cama Doble 4 Piezas Suave', '7707003000333', 69000, 8, true, 11, 10, 3, 'ProductoUnitario'),
+(53, 'Almohada Ortopédica Memory Foam con Gel Refrigerante', '7707003000449', 49000, 10, true, 11, 10, 3, 'ProductoUnitario'),
+
+-- Papelería y Libros (Cat 12 - Libros exentos de IVA Ley 98/1993)
+(54, 'Resma de Papel Fotocopia Reprograf Carta 75g 500 Hojas', '7707004000118', 17500, 20, true, 12, 11, 3, 'ProductoUnitario'),
+(55, 'Cuaderno Cuadriculado Jean Book Norma 100 Hojas Cosido', '7707004000224', 14900, 30, true, 12, 11, 3, 'ProductoUnitario'),
+(56, 'Caja de Bolígrafos Kilométrico Paper Mate Negro x12', '7707004000330', 12900, 15, true, 12, 11, 3, 'ProductoUnitario'),
+(57, 'Libro "Cien años de soledad" - Gabriel García Márquez (Ed. Rústica)', '7707004000446', 55000, 6, true, 12, 11, 1, 'ProductoUnitario'),
+(58, 'Libro "Hábitos atómicos" - James Clear (Ed. Urano)', '7707004000552', 59000, 6, true, 12, 11, 1, 'ProductoUnitario'),
+
+-- Ferretería y Herramientas (Cat 13)
+(59, 'Taladro Percutor Black+Decker 550W 3/8" Mandril con Llave', '7707005000115', 129000, 4, true, 13, 12, 3, 'ProductoUnitario'),
+(60, 'Caja de Herramientas Plástica 16" con Bandeja Organizadora', '7707005000221', 39000, 8, true, 13, 12, 3, 'ProductoUnitario'),
+(61, 'Pack Bombillos LED Philips 9W Luz Blanca E27 x4 Unidades', '7707005000337', 28900, 15, true, 13, 12, 3, 'ProductoUnitario'),
+(62, 'Cinta Métrica Profesional 5 metros Stanley con Freno', '7707005000443', 18500, 12, true, 13, 12, 3, 'ProductoUnitario')
+ON CONFLICT ("Id") DO NOTHING;
+
+-- 4.12 Lotes e Inventario FEFO
+INSERT INTO "Lotes" ("Id", "ProductoId", "NumeroLote", "FechaIngreso", "FechaVencimiento", "CantidadIngresada", "CostoUnitario") VALUES
+-- Abarrotes
+(1, 1, 'L-ARR-2026A', CURRENT_DATE - INTERVAL '15 days', CURRENT_DATE + INTERVAL '180 days', 100, 4200),
+(2, 2, 'L-ACE-2026A', CURRENT_DATE - INTERVAL '20 days', CURRENT_DATE + INTERVAL '240 days', 50, 8500),
+(3, 3, 'L-FRI-2026A', CURRENT_DATE - INTERVAL '10 days', CURRENT_DATE + INTERVAL '210 days', 60, 4500),
+(4, 4, 'L-LEN-2026A', CURRENT_DATE - INTERVAL '12 days', CURRENT_DATE + INTERVAL '210 days', 60, 3600),
+(5, 5, 'L-AZU-2026A', CURRENT_DATE - INTERVAL '18 days', CURRENT_DATE + INTERVAL '300 days', 80, 3500),
+(6, 6, 'L-SAL-2026A', CURRENT_DATE - INTERVAL '25 days', CURRENT_DATE + INTERVAL '365 days', 100, 1600),
+(7, 7, 'L-PAS-2026A', CURRENT_DATE - INTERVAL '14 days', CURRENT_DATE + INTERVAL '270 days', 70, 2800),
+(8, 8, 'L-ATU-2026A', CURRENT_DATE - INTERVAL '30 days', CURRENT_DATE + INTERVAL '540 days', 80, 6200),
+
+-- Lácteos
+(9, 9, 'L-LEC-2026A', CURRENT_DATE - INTERVAL '3 days', CURRENT_DATE + INTERVAL '28 days', 80, 5200),
+(10, 9, 'L-LEC-ALERTA', CURRENT_DATE - INTERVAL '22 days', CURRENT_DATE + INTERVAL '6 days', 20, 5200),
+(11, 10, 'L-LDES-2026A', CURRENT_DATE - INTERVAL '4 days', CURRENT_DATE + INTERVAL '30 days', 60, 5500),
+(12, 11, 'L-HUEV-2026A', CURRENT_DATE - INTERVAL '2 days', CURRENT_DATE + INTERVAL '25 days', 40, 15500),
+(13, 12, 'L-MAN-2026A', CURRENT_DATE - INTERVAL '8 days', CURRENT_DATE + INTERVAL '60 days', 35, 5800),
+(14, 13, 'L-QUE-2026A', CURRENT_DATE - INTERVAL '2 days', CURRENT_DATE + INTERVAL '18 days', 30000, 24000),
+
+-- Carnes (Cantidades en gramos)
+(15, 14, 'L-PEC-2026A', CURRENT_DATE - INTERVAL '1 days', CURRENT_DATE + INTERVAL '12 days', 50000, 16500),
+(16, 15, 'L-RES-2026A', CURRENT_DATE - INTERVAL '1 days', CURRENT_DATE + INTERVAL '10 days', 40000, 26500),
+(17, 16, 'L-CER-2026A', CURRENT_DATE - INTERVAL '2 days', CURRENT_DATE + INTERVAL '14 days', 35000, 19800),
+
+-- Fruver (Cantidades en gramos)
+(18, 17, 'L-TOM-2026A', CURRENT_DATE - INTERVAL '1 days', CURRENT_DATE + INTERVAL '8 days', 60000, 2600),
+(19, 18, 'L-CEB-2026A', CURRENT_DATE - INTERVAL '2 days', CURRENT_DATE + INTERVAL '15 days', 50000, 2300),
+(20, 19, 'L-PAP-2026A', CURRENT_DATE - INTERVAL '3 days', CURRENT_DATE + INTERVAL '20 days', 100000, 2700),
+(21, 20, 'L-PLA-2026A', CURRENT_DATE - INTERVAL '1 days', CURRENT_DATE + INTERVAL '9 days', 50000, 2900),
+(22, 21, 'L-PAPAY-2026A', CURRENT_DATE - INTERVAL '1 days', CURRENT_DATE + INTERVAL '7 days', 40000, 2100),
+(23, 22, 'L-MANZ-2026A', CURRENT_DATE - INTERVAL '4 days', CURRENT_DATE + INTERVAL '22 days', 35000, 7200),
+
+-- Panadería y Café
+(24, 23, 'L-PAN-2026A', CURRENT_DATE - INTERVAL '1 days', CURRENT_DATE + INTERVAL '14 days', 40, 6800),
+(25, 24, 'L-CAF-2026A', CURRENT_DATE - INTERVAL '15 days', CURRENT_DATE + INTERVAL '180 days', 60, 12500),
+(26, 25, 'L-SAL-2026A', CURRENT_DATE - INTERVAL '10 days', CURRENT_DATE + INTERVAL '120 days', 70, 3900),
+(27, 26, 'L-CHO-2026A', CURRENT_DATE - INTERVAL '12 days', CURRENT_DATE + INTERVAL '240 days', 50, 5600),
+
+-- Bebidas y Snacks
+(28, 27, 'L-POS-2026A', CURRENT_DATE - INTERVAL '8 days', CURRENT_DATE + INTERVAL '150 days', 80, 3200),
+(29, 28, 'L-COC-2026A', CURRENT_DATE - INTERVAL '5 days', CURRENT_DATE + INTERVAL '150 days', 80, 4800),
+(30, 29, 'L-HIT-2026A', CURRENT_DATE - INTERVAL '6 days', CURRENT_DATE + INTERVAL '120 days', 60, 3000),
+(31, 30, 'L-AGU-2026A', CURRENT_DATE - INTERVAL '10 days', CURRENT_DATE + INTERVAL '300 days', 100, 1800),
+(32, 31, 'L-MARG-2026A', CURRENT_DATE - INTERVAL '7 days', CURRENT_DATE + INTERVAL '90 days', 60, 3500),
+
+-- Aseo
+(33, 32, 'L-ARI-2026A', CURRENT_DATE - INTERVAL '15 days', CURRENT_DATE + INTERVAL '540 days', 40, 19800),
+(34, 33, 'L-REY-2026A', CURRENT_DATE - INTERVAL '20 days', CURRENT_DATE + INTERVAL '720 days', 120, 2600),
+(35, 34, 'L-CLO-2026A', CURRENT_DATE - INTERVAL '18 days', CURRENT_DATE + INTERVAL '360 days', 60, 3900),
+(36, 35, 'L-AXI-2026A', CURRENT_DATE - INTERVAL '16 days', CURRENT_DATE + INTERVAL '360 days', 70, 3700),
+
+-- Cuidado Personal
+(37, 36, 'L-FAM-2026A', CURRENT_DATE - INTERVAL '14 days', CURRENT_DATE + INTERVAL '720 days', 50, 16800),
+(38, 37, 'L-COLG-2026A', CURRENT_DATE - INTERVAL '12 days', CURRENT_DATE + INTERVAL '540 days', 60, 9100),
+(39, 38, 'L-PROT-2026A', CURRENT_DATE - INTERVAL '15 days', CURRENT_DATE + INTERVAL '540 days', 60, 7800),
+(40, 39, 'L-HEAD-2026A', CURRENT_DATE - INTERVAL '10 days', CURRENT_DATE + INTERVAL '540 days', 35, 17900),
+
+-- Lotes de Tecnología y Electrónica (Cat 9)
+(41, 40, 'L-TV50-2026A', CURRENT_DATE - INTERVAL '10 days', CURRENT_DATE + INTERVAL '1000 days', 10, 1150000),
+(42, 41, 'L-CEL-2026A', CURRENT_DATE - INTERVAL '8 days', CURRENT_DATE + INTERVAL '1000 days', 15, 660000),
+(43, 42, 'L-LAP-2026A', CURRENT_DATE - INTERVAL '12 days', CURRENT_DATE + INTERVAL '1000 days', 8, 1720000),
+(44, 43, 'L-IMP-2026A', CURRENT_DATE - INTERVAL '15 days', CURRENT_DATE + INTERVAL '1000 days', 10, 690000),
+(45, 44, 'L-AUD-2026A', CURRENT_DATE - INTERVAL '5 days', CURRENT_DATE + INTERVAL '1000 days', 25, 62000),
+
+-- Lotes de Electrodomésticos y Cocina (Cat 10)
+(46, 45, 'L-AIR-2026A', CURRENT_DATE - INTERVAL '14 days', CURRENT_DATE + INTERVAL '1000 days', 15, 165000),
+(47, 46, 'L-LIC-2026A', CURRENT_DATE - INTERVAL '12 days', CURRENT_DATE + INTERVAL '1000 days', 20, 138000),
+(48, 47, 'L-CAF-2026A', CURRENT_DATE - INTERVAL '10 days', CURRENT_DATE + INTERVAL '1000 days', 18, 85000),
+(49, 48, 'L-BAT-2026A', CURRENT_DATE - INTERVAL '16 days', CURRENT_DATE + INTERVAL '1000 days', 12, 155000),
+(50, 49, 'L-OLL-2026A', CURRENT_DATE - INTERVAL '18 days', CURRENT_DATE + INTERVAL '1000 days', 20, 115000),
+
+-- Lotes de Hogar y Muebles (Cat 11)
+(51, 50, 'L-ESC-2026A', CURRENT_DATE - INTERVAL '20 days', CURRENT_DATE + INTERVAL '1000 days', 8, 175000),
+(52, 51, 'L-SIL-2026A', CURRENT_DATE - INTERVAL '15 days', CURRENT_DATE + INTERVAL '1000 days', 10, 139000),
+(53, 52, 'L-SAB-2026A', CURRENT_DATE - INTERVAL '10 days', CURRENT_DATE + INTERVAL '1000 days', 25, 48000),
+(54, 53, 'L-ALM-2026A', CURRENT_DATE - INTERVAL '8 days', CURRENT_DATE + INTERVAL '1000 days', 30, 32000),
+
+-- Lotes de Papelería y Libros (Cat 12)
+(55, 54, 'L-RESM-2026A', CURRENT_DATE - INTERVAL '12 days', CURRENT_DATE + INTERVAL '1000 days', 60, 12500),
+(56, 55, 'L-CUAD-2026A', CURRENT_DATE - INTERVAL '15 days', CURRENT_DATE + INTERVAL '1000 days', 80, 10200),
+(57, 56, 'L-BOL-2026A', CURRENT_DATE - INTERVAL '20 days', CURRENT_DATE + INTERVAL '1000 days', 50, 8900),
+(58, 57, 'L-LIB1-2026A', CURRENT_DATE - INTERVAL '25 days', CURRENT_DATE + INTERVAL '1000 days', 20, 38000),
+(59, 58, 'L-LIB2-2026A', CURRENT_DATE - INTERVAL '25 days', CURRENT_DATE + INTERVAL '1000 days', 20, 41000),
+
+-- Lotes de Ferretería y Herramientas (Cat 13)
+(60, 59, 'L-TAL-2026A', CURRENT_DATE - INTERVAL '18 days', CURRENT_DATE + INTERVAL '1000 days', 15, 92000),
+(61, 60, 'L-CAJH-2026A', CURRENT_DATE - INTERVAL '16 days', CURRENT_DATE + INTERVAL '1000 days', 25, 26000),
+(62, 61, 'L-BOMB-2026A', CURRENT_DATE - INTERVAL '10 days', CURRENT_DATE + INTERVAL '1000 days', 50, 19500),
+(63, 62, 'L-CINT-2026A', CURRENT_DATE - INTERVAL '12 days', CURRENT_DATE + INTERVAL '1000 days', 40, 12200)
+ON CONFLICT ("Id") DO NOTHING;
+
+-- 4.13 Stock en Estante y Bodega
+INSERT INTO "StockEstante" ("Id", "ProductoId", "LoteId", "Cantidad") VALUES
+(1, 1, 1, 38),
+(2, 2, 2, 19),
+(3, 3, 3, 25),
+(4, 4, 4, 25),
+(5, 5, 5, 35),
+(6, 6, 6, 40),
+(7, 7, 7, 30),
+(8, 8, 8, 30),
+(9, 9, 9, 39),
+(10, 9, 10, 20),
+(11, 10, 11, 25),
+(12, 11, 12, 14),
+(13, 12, 13, 15),
+(14, 13, 14, 9650),
+(15, 14, 15, 20000),
+(16, 15, 16, 15000),
+(17, 16, 17, 15000),
+(18, 17, 18, 19500),
+(19, 18, 19, 20000),
+(20, 19, 20, 40000),
+(21, 20, 21, 20000),
+(22, 21, 22, 15000),
+(23, 22, 23, 15000),
+(24, 23, 24, 19),
+(25, 24, 25, 29),
+(26, 25, 26, 35),
+(27, 26, 27, 25),
+(28, 27, 28, 38),
+(29, 28, 29, 40),
+(30, 29, 30, 30),
+(31, 30, 31, 40),
+(32, 31, 32, 28),
+(33, 32, 33, 20),
+(34, 33, 34, 50),
+(35, 34, 35, 30),
+(36, 35, 36, 35),
+(37, 36, 37, 25),
+(38, 37, 38, 30),
+(39, 38, 39, 30),
+(40, 39, 40, 18),
+-- Stock Estante Nuevas Categorías (Exhibición)
+(41, 40, 41, 3),   -- Smart TV 50": 3 en sala
+(42, 41, 42, 5),   -- Celular Xiaomi: 5 en vitrina
+(43, 42, 43, 3),   -- Portátil Lenovo: 3 en vitrina
+(44, 43, 44, 4),   -- Impresora Epson: 4 en exhibición
+(45, 44, 45, 10),  -- Auriculares: 10 en gancho
+(46, 45, 46, 5),   -- Freidora Oster: 5 en góndola
+(47, 46, 47, 8),   -- Licuadora Oster: 8 en góndola
+(48, 47, 48, 6),   -- Cafetera B&D: 6 en góndola
+(49, 48, 49, 4),   -- Batería Imusa: 4 en exhibición
+(50, 49, 50, 6),   -- Olla a Presión: 6 en estante
+(51, 50, 51, 2),   -- Escritorio: 2 en showroom
+(52, 51, 52, 3),   -- Silla oficina: 3 en showroom
+(53, 52, 53, 10),  -- Sábanas: 10 en estante
+(54, 53, 54, 12),  -- Almohadas: 12 en estante
+(55, 54, 55, 25),  -- Resmas: 25 en estante papelería
+(56, 55, 56, 35),  -- Cuadernos: 35 en estante
+(57, 56, 57, 20),  -- Bolígrafos: 20 en estante
+(58, 57, 58, 8),   -- Cien años de soledad: 8 en estante libros
+(59, 58, 59, 8),   -- Hábitos atómicos: 8 en estante libros
+(60, 59, 60, 5),   -- Taladro: 5 en vitrina ferretería
+(61, 60, 61, 10),  -- Caja herramientas: 10 en exhibición
+(62, 61, 62, 20),  -- Bombillos LED: 20 en estante
+(63, 62, 63, 15)   -- Cinta métrica: 15 en gancho
+ON CONFLICT ("Id") DO NOTHING;
+
+INSERT INTO "StockBodega" ("Id", "ProductoId", "LoteId", "Cantidad") VALUES
+(1, 1, 1, 60),
+(2, 2, 2, 30),
+(3, 3, 3, 35),
+(4, 4, 4, 35),
+(5, 5, 5, 45),
+(6, 6, 6, 60),
+(7, 7, 7, 40),
+(8, 8, 8, 50),
+(9, 9, 9, 40),
+(10, 9, 10, 0),
+(11, 10, 11, 35),
+(12, 11, 12, 25),
+(13, 12, 13, 20),
+(14, 13, 14, 20000),
+(15, 14, 15, 30000),
+(16, 15, 16, 25000),
+(17, 16, 17, 20000),
+(18, 17, 18, 40000),
+(19, 18, 19, 30000),
+(20, 19, 20, 60000),
+(21, 20, 21, 30000),
+(22, 21, 22, 25000),
+(23, 22, 23, 20000),
+(24, 23, 24, 20),
+(25, 24, 25, 30),
+(26, 25, 26, 35),
+(27, 26, 27, 25),
+(28, 27, 28, 40),
+(29, 28, 29, 40),
+(30, 29, 30, 30),
+(31, 30, 31, 60),
+(32, 31, 32, 30),
+(33, 32, 33, 20),
+(34, 33, 34, 70),
+(35, 34, 35, 30),
+(36, 35, 36, 35),
+(37, 36, 37, 25),
+(38, 37, 38, 30),
+(39, 38, 39, 30),
+(40, 39, 40, 17),
+-- Stock Bodega Nuevas Categorías (Respaldo)
+(41, 40, 41, 7),   -- Smart TV 50": 7 en bodega
+(42, 41, 42, 10),  -- Celular: 10 en bodega
+(43, 42, 43, 5),   -- Portátiles: 5 en bodega
+(44, 43, 44, 6),   -- Impresoras: 6 en bodega
+(45, 44, 45, 15),  -- Auriculares: 15 en bodega
+(46, 45, 46, 10),  -- Freidoras: 10 en bodega
+(47, 46, 47, 12),  -- Licuadoras: 12 en bodega
+(48, 47, 48, 12),  -- Cafeteras: 12 en bodega
+(49, 48, 49, 8),   -- Baterías Imusa: 8 en bodega
+(50, 49, 50, 14),  -- Ollas presión: 14 en bodega
+(51, 50, 51, 6),   -- Escritorios: 6 en cajas bodega
+(52, 51, 52, 7),   -- Sillas: 7 en cajas bodega
+(53, 52, 53, 15),  -- Sábanas: 15 en bodega
+(54, 53, 54, 18),  -- Almohadas: 18 en bodega
+(55, 54, 55, 35),  -- Resmas: 35 en bodega
+(56, 55, 56, 45),  -- Cuadernos: 45 en bodega
+(57, 56, 57, 30),  -- Bolígrafos: 30 en bodega
+(58, 57, 58, 12),  -- Cien años de soledad: 12 en bodega
+(59, 58, 59, 12),  -- Hábitos atómicos: 12 en bodega
+(60, 59, 60, 10),  -- Taladros: 10 en bodega
+(61, 60, 61, 15),  -- Cajas herramientas: 15 en bodega
+(62, 61, 62, 30),  -- Bombillos: 30 en bodega
+(63, 62, 63, 25)   -- Cintas: 25 en bodega
+ON CONFLICT ("Id") DO NOTHING;
+
+-- 4.14 Movimientos de Inventario Iniciales
+INSERT INTO "Movimientos" ("Id", "ProductoId", "LoteId", "VentaId", "Tipo", "Cantidad", "Fecha", "Motivo") VALUES
+(1, 1, 1, NULL, 0, 100, CURRENT_TIMESTAMP - INTERVAL '15 days', 'Ingreso inicial por factura de compra F-88192'),
+(2, 2, 2, NULL, 0, 50, CURRENT_TIMESTAMP - INTERVAL '20 days', 'Ingreso inicial por factura de compra F-88192'),
+(3, 9, 9, NULL, 0, 80, CURRENT_TIMESTAMP - INTERVAL '3 days', 'Recepción de pedido lácteos Alquería R-102'),
+(4, 11, 12, NULL, 0, 40, CURRENT_TIMESTAMP - INTERVAL '2 days', 'Ingreso cubetas de huevos Santa Reyes'),
+(5, 13, 14, NULL, 0, 30000, CURRENT_TIMESTAMP - INTERVAL '2 days', 'Ingreso queso campesino fresco Colanta'),
+(6, 17, 18, NULL, 0, 60000, CURRENT_TIMESTAMP - INTERVAL '1 days', 'Despacho matutino Fruver del Valle'),
+(7, 1, 1, NULL, 1, 40, CURRENT_TIMESTAMP - INTERVAL '14 days', 'Surtido inicial góndola de abarrotes'),
+(8, 2, 2, NULL, 1, 20, CURRENT_TIMESTAMP - INTERVAL '19 days', 'Surtido lineal de aceites'),
+(9, 9, 9, NULL, 1, 40, CURRENT_TIMESTAMP - INTERVAL '3 days', 'Traslado a nevera de lácteos'),
+(10, 11, 12, NULL, 1, 15, CURRENT_TIMESTAMP - INTERVAL '2 days', 'Traslado a estante de panadería/huevos'),
+(11, 13, 14, NULL, 1, 10000, CURRENT_TIMESTAMP - INTERVAL '2 days', 'Traslado a vitrina refrigerada de quesos'),
+(12, 17, 18, NULL, 1, 20000, CURRENT_TIMESTAMP - INTERVAL '1 days', 'Exhibición canastilla de tomate chonto'),
+(13, 40, 41, NULL, 0, 10, CURRENT_TIMESTAMP - INTERVAL '10 days', 'Ingreso lote televisores Samsung F-551'),
+(14, 40, 41, NULL, 1, 3, CURRENT_TIMESTAMP - INTERVAL '9 days', 'Traslado de 3 televisores a sala de exhibición'),
+(15, 57, 58, NULL, 0, 20, CURRENT_TIMESTAMP - INTERVAL '25 days', 'Ingreso libros literatura Carvajal F-9921'),
+(16, 57, 58, NULL, 1, 8, CURRENT_TIMESTAMP - INTERVAL '24 days', 'Exhibición estante de libros recomendados')
+ON CONFLICT ("Id") DO NOTHING;
+
+-- 4.15 Turnos de Caja
+INSERT INTO "Turnos" ("Id", "CajaId", "EmpleadoId", "FechaApertura", "FechaCierre", "EfectivoInicial", "EfectivoEsperado", "EfectivoContado", "Estado") VALUES
+(1, 1, 4, CURRENT_TIMESTAMP - INTERVAL '1 days 8 hours', CURRENT_TIMESTAMP - INTERVAL '1 days', 150000, 395900, 395900, 1),
+(2, 1, 4, CURRENT_TIMESTAMP - INTERVAL '4 hours', NULL, 150000, 150000, 0, 0)
+ON CONFLICT ("Id") DO NOTHING;
+
+-- 4.16 Retiros Parciales a Caja Fuerte
+INSERT INTO "RetirosCaja" ("Id", "TurnoCajaId", "Monto", "Motivo", "EmpleadoAutorizaId", "Fecha") VALUES
+(1, 1, 300000, 'Consignación parcial a caja fuerte por exceso de efectivo en gaveta', 3, CURRENT_TIMESTAMP - INTERVAL '1 days 3 hours')
+ON CONFLICT ("Id") DO NOTHING;
+
+-- 4.17 Ventas Históricas y Facturación Electrónica DIAN
+INSERT INTO "Ventas" ("Id", "Fecha", "TurnoCajaId", "Estado", "MotivoAnulacion", "ClienteId", "PuntosGanados", "PuntosRedimidos", "ClaveIdempotencia", "DocumentoAdquirente", "NombreAdquirente", "Cude", "CadenaQr", "PrefijoDian", "ConsecutivoDian", "FechaValidacionDian", "XmlUbl") VALUES
+(1, CURRENT_TIMESTAMP - INTERVAL '1 days 6 hours', 1, 1, '', 1, 31, 0, 'c8a2f1b4-1234-4567-89ab-cdef01234567', '71345678', 'Juan Carlos Pérez Gómez', 'e4b3c9a18472f8d390a1c3b57e92d4f6a8b0c2d4e6f80123456789abcdef0123456789abcdef0123456789abcdef', 'NumFac=POS1001&FecFac=2026-11-02&ValFac=30064&ValIva=1836&ValOtro=0&ValTolFac=31900&NitAdq=71345678&CUDE=e4b3c9a18472f8d390a1c3b57e92d4f6a8b0c2d4e6f80123456789abcdef0123456789abcdef0123456789abcdef', 'POS', 1001, CURRENT_TIMESTAMP - INTERVAL '1 days 6 hours', '<Invoice xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2">...</Invoice>'),
+(2, CURRENT_TIMESTAMP - INTERVAL '1 days 2 hours', 1, 1, '', 2, 56, 200, 'f1d3e5a7-9876-4321-ba98-fedcba987654', '1017234567', 'María Camila Gómez Ortiz', 'a7b8c9d0e1f2031425364758697a8b9c0d1e2f3a4b5c6d7e8f90123456789abcdef0123456789abcdef0123456789abcdef', 'NumFac=POS1002&FecFac=2026-11-02&ValFac=55314&ValIva=786&ValOtro=0&ValTolFac=56100&NitAdq=1017234567&CUDE=a7b8c9d0e1f2031425364758697a8b9c0d1e2f3a4b5c6d7e8f90123456789abcdef0123456789abcdef0123456789abcdef', 'POS', 1002, CURRENT_TIMESTAMP - INTERVAL '1 days 2 hours', '<Invoice xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2">...</Invoice>'),
+(3, CURRENT_TIMESTAMP - INTERVAL '2 hours', 2, 1, '', NULL, 0, 0, 'b2c3d4e5-5555-4444-3333-222211110000', '222222222222', 'CONSUMIDOR FINAL', '3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f90123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef', 'NumFac=POS1003&FecFac=2026-11-03&ValFac=15966&ValIva=3034&ValOtro=0&ValTolFac=19000&NitAdq=222222222222&CUDE=3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f90123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef', 'POS', 1003, CURRENT_TIMESTAMP - INTERVAL '2 hours', '<Invoice xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2">...</Invoice>'),
+(4, CURRENT_TIMESTAMP - INTERVAL '1 hours', 2, 2, 'Empaque averiado en caja registradora; cliente solicita cambio y reintegro', 4, 0, 0, 'd9e8f7a6-1111-2222-3333-444455556666', '43987654', 'Sandra Milena Valencia Ríos', NULL, NULL, NULL, 0, NULL, NULL)
+ON CONFLICT ("Id") DO NOTHING;
+
+-- 4.18 Detalles de Líneas de Venta con Desglose Tributario Exacto
+INSERT INTO "DetalleVenta" ("Id", "VentaId", "ProductoId", "Cantidad", "PrecioUnitario", "Subtotal", "PuntosBasicosIva", "Iva") VALUES
+(1, 1, 1, 2, 5800, 11600, 0, 0),
+(2, 1, 2, 1, 11500, 11500, 1900, 1836),
+(3, 1, 9, 1, 6900, 6900, 0, 0),
+(4, 1, 17, 500, 3800, 1900, 0, 0),
+(5, 2, 11, 1, 19500, 19500, 0, 0),
+(6, 2, 23, 1, 8900, 8900, 0, 0),
+(7, 2, 24, 1, 16500, 16500, 500, 786),
+(8, 2, 13, 350, 32000, 11200, 0, 0),
+(9, 3, 27, 2, 4600, 9200, 1900, 1469),
+(10, 3, 31, 2, 4900, 9800, 1900, 1565),
+(11, 4, 32, 1, 26900, 26900, 1900, 4295)
+ON CONFLICT ("Id") DO NOTHING;
+
+-- 4.19 Pagos Aplicados
+INSERT INTO "Pago" ("Id", "VentaId", "Monto", "Discriminator", "Puntos", "UltimosDigitos", "Referencia") VALUES
+(1, 1, 31900, 'PagoTarjeta', NULL, '4512', 'AUTH-892144'),
+(2, 2, 2000, 'PagoPuntos', 200, NULL, NULL),
+(3, 2, 60000, 'PagoEfectivo', NULL, NULL, NULL),
+(4, 3, 19000, 'PagoTransferencia', NULL, NULL, 'TRANSF-NEQUI-M77218'),
+(5, 4, 30000, 'PagoEfectivo', NULL, NULL, NULL)
+ON CONFLICT ("Id") DO NOTHING;
+
+-- 4.20 Movimientos de Inventario por Ventas y Devoluciones
+INSERT INTO "Movimientos" ("Id", "ProductoId", "LoteId", "VentaId", "Tipo", "Cantidad", "Fecha", "Motivo") VALUES
+(17, 1, 1, 1, 2, 2, CURRENT_TIMESTAMP - INTERVAL '1 days 6 hours', 'Venta registrada POS-1001'),
+(18, 2, 2, 1, 2, 1, CURRENT_TIMESTAMP - INTERVAL '1 days 6 hours', 'Venta registrada POS-1001'),
+(19, 9, 9, 1, 2, 1, CURRENT_TIMESTAMP - INTERVAL '1 days 6 hours', 'Venta registrada POS-1001'),
+(20, 17, 18, 1, 2, 500, CURRENT_TIMESTAMP - INTERVAL '1 days 6 hours', 'Venta pesada registrada POS-1001'),
+(21, 11, 12, 2, 2, 1, CURRENT_TIMESTAMP - INTERVAL '1 days 2 hours', 'Venta registrada POS-1002'),
+(22, 23, 24, 2, 2, 1, CURRENT_TIMESTAMP - INTERVAL '1 days 2 hours', 'Venta registrada POS-1002'),
+(23, 24, 25, 2, 2, 1, CURRENT_TIMESTAMP - INTERVAL '1 days 2 hours', 'Venta registrada POS-1002'),
+(24, 13, 14, 2, 2, 350, CURRENT_TIMESTAMP - INTERVAL '1 days 2 hours', 'Venta pesada registrada POS-1002'),
+(25, 27, 28, 3, 2, 2, CURRENT_TIMESTAMP - INTERVAL '2 hours', 'Venta registrada POS-1003'),
+(26, 31, 32, 3, 2, 2, CURRENT_TIMESTAMP - INTERVAL '2 hours', 'Venta registrada POS-1003'),
+(27, 32, 33, 4, 2, 1, CURRENT_TIMESTAMP - INTERVAL '1 hours', 'Venta registrada en caja'),
+(28, 32, 33, 4, 3, 1, CURRENT_TIMESTAMP - INTERVAL '50 minutes', 'Reingreso a estante por anulación de venta autorizada')
+ON CONFLICT ("Id") DO NOTHING;
+
+-- 4.21 Mermas Operativas Identificadas
+INSERT INTO "Mermas" ("Id", "ProductoId", "LoteId", "Cantidad", "Motivo", "Fecha") VALUES
+(1, 17, 18, 500, 'Merma por maduración excesiva en góndola de exhibición', CURRENT_TIMESTAMP - INTERVAL '3 days'),
+(2, 21, 22, 1000, 'Golpe físico durante descargue de canastillas', CURRENT_TIMESTAMP - INTERVAL '2 days')
+ON CONFLICT ("Id") DO NOTHING;
+
+-- 4.22 Gastos Operativos del Período
+INSERT INTO "Gastos" ("Id", "Descripcion", "Monto", "Fecha", "RegistradoPorEmpleadoId") VALUES
+(1, 'Canon de arrendamiento local comercial - Sede Principal', 3200000, CURRENT_TIMESTAMP - INTERVAL '5 days', 1),
+(2, 'Factura servicios públicos de energía eléctrica (EPM)', 450000, CURRENT_TIMESTAMP - INTERVAL '3 days', 1),
+(3, 'Compra de insumos operativos: rollos térmicos de 80mm y bolsas biodegradables', 185000, CURRENT_TIMESTAMP - INTERVAL '2 days', 2),
+(4, 'Mantenimiento preventivo y calibración de balanzas electrónicas', 150000, CURRENT_TIMESTAMP - INTERVAL '1 days', 2)
+ON CONFLICT ("Id") DO NOTHING;
+
+-- 4.23 Nóminas Liquidadas
+INSERT INTO "Nominas" ("Id", "EmpleadoId", "Anio", "Mes", "SalarioBase", "AuxilioTransporte", "DeduccionSalud", "DeduccionPension", "Neto", "FechaCalculo") VALUES
+(1, 4, 2026, 10, 1650000, 200000, 66000, 66000, 1718000, CURRENT_TIMESTAMP - INTERVAL '3 days'),
+(2, 5, 2026, 10, 1750000, 200000, 70000, 70000, 1810000, CURRENT_TIMESTAMP - INTERVAL '3 days')
+ON CONFLICT ("Id") DO NOTHING;
+
+-- 4.24 Registro de Auditoría
+INSERT INTO "Auditoria" ("Id", "Fecha", "EmpleadoId", "Accion", "Entidad", "EntidadId", "Detalle") VALUES
+(1, CURRENT_TIMESTAMP - INTERVAL '1 days 8 hours', 4, 0, 'Usuario', 4, 'Inicio de sesión exitoso en estación POS-01'),
+(2, CURRENT_TIMESTAMP - INTERVAL '1 days 8 hours', 4, 2, 'TurnoCaja', 1, 'Apertura de turno en Caja 01 con base inicial de $150.000'),
+(3, CURRENT_TIMESTAMP - INTERVAL '1 days 3 hours', 3, 5, 'RetiroCaja', 1, 'Supervisor Jorge Ramos autorizó retiro parcial de $300.000 a caja fuerte con PIN'),
+(4, CURRENT_TIMESTAMP - INTERVAL '1 days', 4, 3, 'TurnoCaja', 1, 'Cierre de turno en Caja 01. Arqueo ciego cuadrado sin novedades'),
+(5, CURRENT_TIMESTAMP - INTERVAL '4 hours', 4, 0, 'Usuario', 4, 'Inicio de sesión exitoso en estación POS-01'),
+(6, CURRENT_TIMESTAMP - INTERVAL '50 minutes', 3, 5, 'Venta', 4, 'Supervisor Jorge Ramos autorizó anulación de venta #4 por avería física')
+ON CONFLICT ("Id") DO NOTHING;
+
+-- 4.25 Widgets del Panel de Control
+INSERT INTO "Widgets" ("Id", "EmpleadoId", "WidgetId", "Posicion", "Visible") VALUES
+(1, 1, 'ventas_del_dia', 1, true),
+(2, 1, 'margen_por_categoria', 2, true),
+(3, 1, 'productos_stock_bajo', 3, true),
+(4, 1, 'alertas_vencimiento', 4, true),
+(5, 2, 'ventas_del_dia', 1, true),
+(6, 2, 'margen_por_categoria', 2, true),
+(7, 2, 'productos_stock_bajo', 3, true),
+(8, 4, 'ventas_del_dia', 1, true)
+ON CONFLICT ("Id") DO NOTHING;
+
+-- ============================================================================
+-- 5. Sincronización Automática de Secuencias Numéricas
+-- ============================================================================
+
+SELECT setval(pg_get_serial_sequence('"Cargos"', 'Id'), COALESCE(MAX("Id"), 1)) FROM "Cargos";
+SELECT setval(pg_get_serial_sequence('"Roles"', 'Id'), COALESCE(MAX("Id"), 1)) FROM "Roles";
+SELECT setval(pg_get_serial_sequence('"Empleados"', 'Id'), COALESCE(MAX("Id"), 1)) FROM "Empleados";
+SELECT setval(pg_get_serial_sequence('"Usuarios"', 'Id'), COALESCE(MAX("Id"), 1)) FROM "Usuarios";
+SELECT setval(pg_get_serial_sequence('"Clientes"', 'Id'), COALESCE(MAX("Id"), 1)) FROM "Clientes";
+SELECT setval(pg_get_serial_sequence('"Categorias"', 'Id'), COALESCE(MAX("Id"), 1)) FROM "Categorias";
+SELECT setval(pg_get_serial_sequence('"Proveedores"', 'Id'), COALESCE(MAX("Id"), 1)) FROM "Proveedores";
+SELECT setval(pg_get_serial_sequence('"Impuestos"', 'Id'), COALESCE(MAX("Id"), 1)) FROM "Impuestos";
+SELECT setval(pg_get_serial_sequence('"Productos"', 'Id'), COALESCE(MAX("Id"), 1)) FROM "Productos";
+SELECT setval(pg_get_serial_sequence('"Lotes"', 'Id'), COALESCE(MAX("Id"), 1)) FROM "Lotes";
+SELECT setval(pg_get_serial_sequence('"StockEstante"', 'Id'), COALESCE(MAX("Id"), 1)) FROM "StockEstante";
+SELECT setval(pg_get_serial_sequence('"StockBodega"', 'Id'), COALESCE(MAX("Id"), 1)) FROM "StockBodega";
+SELECT setval(pg_get_serial_sequence('"Cajas"', 'Id'), COALESCE(MAX("Id"), 1)) FROM "Cajas";
+SELECT setval(pg_get_serial_sequence('"Turnos"', 'Id'), COALESCE(MAX("Id"), 1)) FROM "Turnos";
+SELECT setval(pg_get_serial_sequence('"RetirosCaja"', 'Id'), COALESCE(MAX("Id"), 1)) FROM "RetirosCaja";
+SELECT setval(pg_get_serial_sequence('"Ventas"', 'Id'), COALESCE(MAX("Id"), 1)) FROM "Ventas";
+SELECT setval(pg_get_serial_sequence('"DetalleVenta"', 'Id'), COALESCE(MAX("Id"), 1)) FROM "DetalleVenta";
+SELECT setval(pg_get_serial_sequence('"Pago"', 'Id'), COALESCE(MAX("Id"), 1)) FROM "Pago";
+SELECT setval(pg_get_serial_sequence('"VentasEnEspera"', 'Id'), COALESCE(MAX("Id"), 1)) FROM "VentasEnEspera";
+SELECT setval(pg_get_serial_sequence('"Movimientos"', 'Id'), COALESCE(MAX("Id"), 1)) FROM "Movimientos";
+SELECT setval(pg_get_serial_sequence('"Mermas"', 'Id'), COALESCE(MAX("Id"), 1)) FROM "Mermas";
+SELECT setval(pg_get_serial_sequence('"Reabastecimientos"', 'Id'), COALESCE(MAX("Id"), 1)) FROM "Reabastecimientos";
+SELECT setval(pg_get_serial_sequence('"Gastos"', 'Id'), COALESCE(MAX("Id"), 1)) FROM "Gastos";
+SELECT setval(pg_get_serial_sequence('"Nominas"', 'Id'), COALESCE(MAX("Id"), 1)) FROM "Nominas";
+SELECT setval(pg_get_serial_sequence('"Auditoria"', 'Id'), COALESCE(MAX("Id"), 1)) FROM "Auditoria";
+SELECT setval(pg_get_serial_sequence('"Intentos"', 'Id'), COALESCE(MAX("Id"), 1)) FROM "Intentos";
+SELECT setval(pg_get_serial_sequence('"Widgets"', 'Id'), COALESCE(MAX("Id"), 1)) FROM "Widgets";
+SELECT setval(pg_get_serial_sequence('"Parametros"', 'Id'), COALESCE(MAX("Id"), 1)) FROM "Parametros";
+SELECT setval(pg_get_serial_sequence('"EventosOutbox"', 'Id'), COALESCE(MAX("Id"), 1)) FROM "EventosOutbox";
+
+COMMIT;

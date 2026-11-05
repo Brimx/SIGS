@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using Supermercado.Datos.Configuraciones;
 using Supermercado.Entidades.Base;
 using Supermercado.Entidades.Clientes;
 using Supermercado.Entidades.Sincronizacion;

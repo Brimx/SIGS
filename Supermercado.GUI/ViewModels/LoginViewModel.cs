@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.DependencyInjection;
+using Supermercado.Entidades.Contratos;
 using Supermercado.Entidades.Excepciones;
 using Supermercado.Logica.Comunes;
 using Supermercado.Logica.DatosDemo;
@@ -280,6 +281,39 @@ public partial class LoginViewModel : ViewModelBase
         {
             TieneError = true;
             MensajeError = $"No se pudo sembrar datos demo: {ex.Message}";
+        }
+        finally
+        {
+            Cargando = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task CargarBasePostgresDemoAsync()
+    {
+        if (Cargando || _scopeFactory is null)
+            return;
+
+        Cargando = true;
+        TieneError = false;
+        TieneExito = false;
+        MensajeError = string.Empty;
+        MensajeExito = string.Empty;
+
+        try
+        {
+            using var scope = _scopeFactory.CreateScope();
+            var inicializador = scope.ServiceProvider.GetRequiredService<IInicializadorBaseDatos>();
+            await inicializador.CargarScriptPostgresAsync();
+
+            TieneExito = true;
+            MensajeExito = "Base de datos PostgreSQL ejecutada e inicializada con éxito (13 categorías, catálogo hipermercado, 10 roles y ventas DIAN).";
+            SeleccionarCredencialDemo("cajero");
+        }
+        catch (Exception ex)
+        {
+            TieneError = true;
+            MensajeError = $"Error al ejecutar script en PostgreSQL: {ex.Message}";
         }
         finally
         {
