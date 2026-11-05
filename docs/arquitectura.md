@@ -39,12 +39,52 @@ Reglas de dependencia:
 `Supermercado.Logica/ExtensionesLogica.cs`:
 
 ```csharp
-servicios.AgregarDatos(rutaBaseDatos);          // DbContext + repositorios
+servicios.AgregarDatos(rutaBaseDatos, cadenaConexionPostgres); // DbContext + repositorios
 servicios.AddSingleton<ISesionActual, SesionActual>();
 servicios.AddSingleton<IHasheadorClave, HasheadorBCrypt>();
 servicios.AddScoped<IEstrategiaSalida, SalidaFefo>();
-servicios.AddScoped<IServicioVentas, ServicioVentas>();
-// ... resto de servicios y widgets
+
+// 8 servicios de dominio consolidados con reenvío de contratos especializados:
+servicios.AddScoped<ServicioAuditoria>();
+servicios.AddScoped<IServicioAuditoria>(sp => sp.GetRequiredService<ServicioAuditoria>());
+servicios.AddScoped<IServicioConsultaAuditoria>(sp => sp.GetRequiredService<ServicioAuditoria>());
+
+servicios.AddScoped<IServicioParametros, ServicioParametros>();
+servicios.AddScoped<IServicioAutenticacion, ServicioAutenticacion>();
+servicios.AddScoped<IServicioInicializacion, ServicioInicializacion>();
+
+servicios.AddScoped<ServicioPersonal>();
+servicios.AddScoped<IServicioPersonal>(sp => sp.GetRequiredService<ServicioPersonal>());
+servicios.AddScoped<IServicioEmpleados>(sp => sp.GetRequiredService<ServicioPersonal>());
+servicios.AddScoped<IServicioEstructura>(sp => sp.GetRequiredService<ServicioPersonal>());
+servicios.AddScoped<IServicioUsuarios>(sp => sp.GetRequiredService<ServicioPersonal>());
+
+servicios.AddScoped<ServicioProductos>();
+servicios.AddScoped<IServicioProductos>(sp => sp.GetRequiredService<ServicioProductos>());
+servicios.AddScoped<IServicioBusquedaProductos>(sp => sp.GetRequiredService<ServicioProductos>());
+servicios.AddScoped<IServicioMantenimientoProductos>(sp => sp.GetRequiredService<ServicioProductos>());
+servicios.AddScoped<IServicioCatalogos>(sp => sp.GetRequiredService<ServicioProductos>());
+
+servicios.AddScoped<ServicioInventario>();
+servicios.AddScoped<IServicioInventario>(sp => sp.GetRequiredService<ServicioInventario>());
+servicios.AddScoped<IServicioConsultaInventario>(sp => sp.GetRequiredService<ServicioInventario>());
+servicios.AddScoped<IServicioMermas>(sp => sp.GetRequiredService<ServicioInventario>());
+servicios.AddScoped<IServicioAlertasInventario>(sp => sp.GetRequiredService<ServicioInventario>());
+servicios.AddScoped<IServicioReabastecimiento>(sp => sp.GetRequiredService<ServicioInventario>());
+
+servicios.AddScoped<IServicioCaja, ServicioCaja>();
+servicios.AddScoped<ServicioVentas>();
+servicios.AddScoped<IServicioVentas>(sp => sp.GetRequiredService<ServicioVentas>());
+servicios.AddScoped<IServicioVentasEnEspera>(sp => sp.GetRequiredService<ServicioVentas>());
+
+servicios.AddScoped<ServicioFinanzas>();
+servicios.AddScoped<IServicioFinanzas>(sp => sp.GetRequiredService<ServicioFinanzas>());
+servicios.AddScoped<IServicioImpuestos>(sp => sp.GetRequiredService<ServicioFinanzas>());
+servicios.AddScoped<IServicioNomina>(sp => sp.GetRequiredService<ServicioFinanzas>());
+
+servicios.AddScoped<IServicioClientes, ServicioClientes>();
+servicios.AddScoped<IServicioDashboard, ServicioDashboard>();
+// ... clientes externos, reportes QuestPDF, logs y widgets en Widgets.cs
 ```
 
 `Supermercado.Datos/ExtensionesDatos.cs`:
@@ -53,18 +93,44 @@ servicios.AddScoped<IServicioVentas, ServicioVentas>();
 servicios.AddSingleton(TimeProvider.System);
 servicios.AddDbContext<SigsDbContext>(opciones =>
 {
-    var cadenaPostgres = Environment.GetEnvironmentVariable("SIGS_POSTGRES_CONNECTION");
-    if (!string.IsNullOrWhiteSpace(cadenaPostgres))
+    var postgresEnv = Environment.GetEnvironmentVariable("SIGS_POSTGRES_CONNECTION");
+    var connectionPostgres = !string.IsNullOrWhiteSpace(cadenaConexionPostgres)
+        ? cadenaConexionPostgres
+        : postgresEnv;
+
+    if (!string.IsNullOrWhiteSpace(connectionPostgres))
     {
-        opciones.UseNpgsql(cadenaPostgres);
+        opciones.UseNpgsql(connectionPostgres);
     }
     else
     {
+        var carpeta = Path.GetDirectoryName(rutaBaseDatos);
+        if (!string.IsNullOrEmpty(carpeta))
+            Directory.CreateDirectory(carpeta);
+
         opciones.UseSqlite($"Data Source={rutaBaseDatos}");
     }
 });
+
+// Repositorios genéricos y específicos agrupados por dominio
 servicios.AddScoped(typeof(IRepositorio<>), typeof(Repositorio<>));
+servicios.AddScoped(typeof(IStockRepositorio<>), typeof(StockRepositorio<>));
 servicios.AddScoped<IUnidadDeTrabajo, UnidadDeTrabajo>();
+servicios.AddScoped<IInicializadorBaseDatos, InicializadorBaseDatos>();
+
+servicios.AddScoped<IProductoRepositorio, ProductoRepositorio>();
+servicios.AddScoped<ILoteRepositorio, LoteRepositorio>();
+servicios.AddScoped<IMovimientoRepositorio, MovimientoRepositorio>();
+servicios.AddScoped<IReabastecimientoRepositorio, ReabastecimientoRepositorio>();
+servicios.AddScoped<IVentaRepositorio, VentaRepositorio>();
+servicios.AddScoped<IClienteRepositorio, ClienteRepositorio>();
+servicios.AddScoped<IEventoOutboxRepositorio, EventoOutboxRepositorio>();
+servicios.AddScoped<ITurnoCajaRepositorio, TurnoCajaRepositorio>();
+servicios.AddScoped<IUsuarioRepositorio, UsuarioRepositorio>();
+servicios.AddScoped<IRolRepositorio, RolRepositorio>();
+servicios.AddScoped<IParametroRepositorio, ParametroRepositorio>();
+servicios.AddScoped<IGastoRepositorio, GastoRepositorio>();
+servicios.AddScoped<IConfiguracionWidgetRepositorio, ConfiguracionWidgetRepositorio>();
 ```
 
 `ExtensionesDatos` opera como un **proveedor dual**: si la variable de entorno `SIGS_POSTGRES_CONNECTION` (o configuración equivalente) está definida, conecta a PostgreSQL mediante Npgsql. En su defecto, utiliza SQLite local en la carpeta de datos de usuario sin configuración previa. La lógica y los ViewModels permanecen desacoplados de esta selección.
@@ -130,15 +196,15 @@ La tolerancia se lee de `caja.tolerancia_arqueo`.
 ### Reabastecimiento
 
 ```text
-ServicioReabastecimiento.GenerarSolicitudesAsync
+ServicioInventario.GenerarSolicitudesAsync (vía IServicioReabastecimiento)
  ├─ Exigir(Reabastecer)
  ├─ alertas.ObtenerBajoMinimoAsync
  ├─ crea Reabastecimiento(Pendiente) si no existe uno pendiente
  └─ guarda
 
-ServicioReabastecimiento.AtenderAsync(id)
+ServicioInventario.AtenderAsync(id)
  ├─ solicitud.Atender(ahora)
- ├─ inventario.TrasladarAEstanteAsync(producto, cantidad)
+ ├─ TrasladarAEstanteAsync(producto, cantidad)
  └─ guarda
 ```
 
@@ -147,7 +213,7 @@ ServicioReabastecimiento.AtenderAsync(id)
 ### Nómina
 
 ```text
-ServicioNomina.CalcularAsync(empleadoId, anio, mes)
+ServicioFinanzas.CalcularAsync(empleadoId, anio, mes) (vía IServicioNomina)
  ├─ Exigir(GestionarPersonal)
  ├─ valida mes, año y duplicado del periodo
  ├─ lee parámetros de nómina de Parametro
@@ -176,7 +242,7 @@ Esto garantiza atomicidad dentro de un proceso, pero **no** serializa lecturas c
 
 - `SesionActual` es singleton y guarda el `Usuario` autenticado.
 - `Exigir(permiso)` falla si no hay sesión, si el empleado está inactivo (y cierra la sesión), si hay cambio de clave pendiente o si falta el permiso.
-- El hash y el PIN usan BCrypt con salt.
+- El hash y el PIN usan BCrypt con salt (`HasheadorBCrypt`).
 - El bloqueo cuenta intentos fallidos, incluido el caso de empleado inactivo con usuario existente.
 - La auditoría se escribe en la misma unidad de trabajo que la acción.
 - **Hallazgos abiertos:** la validación de `PagoPuntos`, la escalada de privilegios vía `GestionarPersonal` y la revocación de sesión están documentadas en [`pendientes-ui.md`](pendientes-ui.md). No se consideran cerradas para producción.
@@ -184,7 +250,8 @@ Esto garantiza atomicidad dentro de un proceso, pero **no** serializa lecturas c
 ## Interfaz Gráfica (`Supermercado.GUI`)
 
 La interfaz de usuario está construida sobre **Avalonia 12.1.4** y **.NET 10** bajo el patrón **MVVM**:
-- **Inyección de Dependencias:** `App.axaml.cs` inicializa el contenedor con `servicios.AgregarLogica()`, registrando `IImpresorTicket` (`ImpresorTicketEscPos` y `ImpresorTicketPdf`) y los ViewModels en ciclo de vida transitorio.
+- **Inyección de Dependencias:** `App.axaml.cs` inicializa el contenedor con `servicios.AgregarLogica()`, registrando `IImpresorTicket` (`ImpresorTicketEscPos` e `ImpresorTicketPdf`) y los 11 ViewModels en ciclo de vida transitorio para navegación y back-office.
+- **Servicios de Presentación Consolidados:** Agrupados en 4 módulos en `Supermercado.GUI/Servicios/`: `ConfiguracionYTema.cs` (temas y preferencias), `ImpresionTicket.cs` (impresión térmica ESC/POS y PDF), `PlantillaTicketPos.cs` (tirilla continua de 80mm calibrada) y `ValidadorDian.cs` (Módulo 11 NIT y textos de Habeas Data).
 - **Tokens y Temas:** Modelo en capas (`Primitives.axaml`, `Semantic.axaml`, `Geometry.axaml`, `Typography.axaml` y `SemiBridge.axaml`) con Claro Cálido (*Warm Light* anti-fatiga visual), Oscuro Slate y Alto Contraste. El tema elegido se persiste por máquina con `IServicioPreferencias` y se aplica antes de crear la ventana.
 - **Configuración:** overlay compartido en `MainWindow.axaml` (`ConfiguracionView`) accesible desde login y shell; apariencia, textos legales empaquetados y versión. Ver ADR-028.
 - **Ergonomía POS:** Atajos físicos `F1`–`F5` / `Escape`, auto-enfoque ininterrumpido en el escáner de código de barras (*keyboard wedge*) e integración automática con balanzas EAN-13 GS1 (`20`–`29`).
@@ -192,16 +259,20 @@ La interfaz de usuario está construida sobre **Avalonia 12.1.4** y **.NET 10** 
 
 ## Dashboards
 
-`IWidget` define `Id`, `Titulo`, `Tamano`, `FrecuenciaActualizacion`, `PermisoRequerido` y `ObtenerDatosAsync`. `ServicioDashboard` filtra por permiso, guarda la disposición por empleado y mantiene posiciones únicas (`Max + 1` al agregar, `0..n-1` al reordenar).
+`IWidget` define `Id`, `Titulo`, `Tamano`, `FrecuenciaActualizacion`, `PermisoRequerido` y `ObtenerDatosAsync`. `ServicioDashboard` filtra por permiso, guarda la disposición por empleado y mantiene posiciones únicas (`Max + 1` al agregar, `0..n-1` al reordenar). Las 9 implementaciones de tarjetas de métricas residen en `Supermercado.Logica/Dashboards/Widgets.cs`.
 
-## Integraciones externas
+## Integraciones externas y soporte
 
-| Interfaz | Implementación por defecto | Reemplazo previsto |
-| :-- | :-- | :-- |
-| `ITrmClient` | `ClienteTrmDatosGov` (activo por defecto; `ClienteTrmNoConfigurado` si se apaga) | Otra fuente de TRM |
-| `IConsultaCodigoBarras` | `ClienteCodigoBarrasOff` (activo por defecto; `ConsultaCodigoBarrasNula` si se apaga) | Otro catálogo de productos |
-| `IVerificadorCorreo` | `VerificadorCorreoNulo`; `ClienteVerificadorCorreoHttp` solo con `SIGS_EMAIL_VERIFIER_URL` | Motor abierto pendiente de elegir |
-| `IGeneradorTicket` | `GeneradorTicketQuestPdf` (registrado en DI; `GeneradorTicketNulo` queda para pruebas o despliegues sin PDF) | QuestPDF |
+Los clientes externos e infraestructura de soporte se organizan en módulos consolidados en `Supermercado.Logica/Servicios/` y `Supermercado.Logica/Reportes/`:
+
+| Interfaz | Implementación por defecto | Módulo fuente | Reemplazo previsto |
+| :-- | :-- | :-- | :-- |
+| `ITrmClient` | `ClienteTrmDatosGov` (activo por defecto; `ClienteTrmNoConfigurado` si se apaga) | `ClientesExternos.cs` | Otra fuente de TRM |
+| `IConsultaCodigoBarras` | `ClienteCodigoBarrasOff` (activo por defecto; `ConsultaCodigoBarrasNula` si se apaga) | `ClientesExternos.cs` | Otro catálogo de productos |
+| `IVerificadorCorreo` | `VerificadorCorreoNulo`; `ClienteVerificadorCorreoHttp` solo con `SIGS_EMAIL_VERIFIER_URL` | `ClientesExternos.cs` | Motor abierto pendiente de elegir |
+| `IServicioRespaldo` | `ServicioRespaldo` (copia atómica en caliente de SQLite vía `VACUUM INTO`) | `ServiciosSoporte.cs` | Almacenamiento en nube / NAS |
+| `IGeneradorTicket` | `GeneradorTicketQuestPdf` (registrado en DI; `GeneradorTicketNulo` para pruebas) | `GeneradorTickets.cs` | QuestPDF |
+| `IServicioReportes` | `ServicioReportesQuestPdf` | `ServicioReportes.cs` | Generador alternativo de PDFs |
 
 Apagado y URLs: ver ADR-019. `ServicioTrm` aplica timeout, reintentos con espera progresiva (200 ms, 400 ms, … hasta 2 s) y guarda el respaldo en una sola operación atómica.
 
