@@ -13,7 +13,7 @@ Punto de venta, inventario dual estante/bodega, caja con arqueo, personal, finan
 
 [![Estado](https://img.shields.io/badge/estado-en%20desarrollo-orange?style=flat-square)](#estado-del-proyecto)
 [![Build](https://img.shields.io/github/actions/workflow/status/Brimx/SIGS/ci.yml?style=flat-square&label=build)](https://github.com/Brimx/SIGS/actions)
-[![Pruebas](https://img.shields.io/badge/pruebas-325%20passing-brightgreen?style=flat-square)](#pruebas)
+[![Pruebas](https://img.shields.io/badge/pruebas-355%20passing-brightgreen?style=flat-square)](#pruebas)
 [![Licencia](https://img.shields.io/github/license/Brimx/SIGS?style=flat-square&label=licencia)](LICENSE)
 [![Último commit](https://img.shields.io/github/last-commit/Brimx/SIGS?style=flat-square&label=%C3%BAltimo%20commit)](https://github.com/Brimx/SIGS/commits)
 
@@ -47,14 +47,13 @@ El proyecto prioriza tres cosas:
 | **Personal** | Empleados con cargo, rol, salario y estado; creación de usuario y desactivación con cierre de sesión. |
 | **Productos** | Productos unitarios y pesados, categorías, proveedores, lotes, consulta externa por código de barras y códigos de balanza GS1. |
 | **Inventario** | Stock separado en estante y bodega, salida FEFO, traslados, ingresos, mermas, alertas y reabastecimiento. |
-| **POS** | Turnos por caja, ventas con pagos mixtos (efectivo, tarjeta, transferencia y puntos), cambio y anulación con reembolso. |
-| **Clientes** | Registro con documento único, programa de puntos (acumular/redimir) y autorización de tratamiento de datos. |
+| **POS** | Turnos por caja, ventas con pagos mixtos (efectivo, tarjeta, transferencia), cambio, espera y anulación con reembolso. |
+| **Clientes** | Registro con documento único, validación de NIT (Módulo 11) y autorización de tratamiento de datos (Ley 1581). |
 | **Caja** | Arqueo con efectivo esperado, diferencia y tolerancia configurable; el cierre descuenta las ventas anuladas. |
 | **Finanzas** | IVA y retenciones parametrizables, gastos, resumen de ingresos/egresos/margen y nómina básica idempotente. |
-| **Dashboards** | Nueve widgets filtrados por permiso, disposición por empleado, agregar, quitar y reordenar sin duplicar posiciones. |
-| **Reportes** | Ticket POS en PDF con QuestPDF, desprendible de nómina y reporte de ventas. |
-| **DIAN** | Generación local de Documento Equivalente POS: CUDE, XML UBL 2.1 y cadena QR. **En progreso; no transmite a la DIAN.** |
-| **Integraciones** | TRM y código de barras activos por defecto y apagables; patrón Outbox para replicar ventas a Supabase/Neon. |
+| **Dashboards** | Nueve widgets filtrados por permiso, gráficos de barras verticales nativos, disposición por usuario, exportar/importar y reordenar. |
+| **Reportes** | Ticket POS (PDF con QuestPDF y ESC/POS 80mm), desprendible de nómina y reporte de ventas. |
+| **Integraciones** | TRM y consulta por código de barras (Open Food Facts) activos por defecto, apagables y con respaldo offline. |
 
 ## Stack
 
@@ -84,11 +83,28 @@ Supermercado.GUI ──► Supermercado.Logica ──► Supermercado.Datos ─�
 
 Detalle completo en [`docs/arquitectura.md`](docs/arquitectura.md) y decisiones en [`docs/decisiones.md`](docs/decisiones.md).
 
-### Base de datos: hoy y objetivo
+### Base de datos: hoy y alcance de `main`
 
-- **Hoy:** SQLite, un archivo por equipo. Sirve para desarrollo y para una sola terminal. El patrón Outbox (`EventosOutbox`) ya registra ventas y anulaciones en la misma transacción local, pero **no hay proceso programado** que las despache.
-- **Objetivo de producción:** PostgreSQL local en la red del supermercado como fuente de verdad, con Supabase/Neon como réplica de una sola vía para respaldo y consulta remota. El esquema receptor está en [`docs/supabase-schema.sql`](docs/supabase-schema.sql); **no está desplegado**.
-- **Concurrencia multi-terminal:** deuda técnica conocida. La mitigación planificada (tokens `xmin`, transacciones con bloqueo y reintentos acotados) está documentada en [`docs/decisiones.md`](docs/decisiones.md) y [`docs/despliegue.md`](docs/despliegue.md).
+- **Hoy (`main`):** SQLite local embebido, un archivo por equipo, alineado al alcance de la propuesta académica.
+- **Versión extendida:** la variante con PostgreSQL dual, réplica Outbox hacia Supabase, motor DIAN UBL 2.1 y fidelización por puntos se conserva respaldada en la rama `completo`.
+- **Concurrencia multi-terminal:** deuda técnica conocida para despliegues con varias cajas; documentada en [`docs/decisiones.md`](docs/decisiones.md) y [`docs/despliegue.md`](docs/despliegue.md).
+
+## Paradigmas, SOLID, GRASP y diseño UI
+
+- **Arquitectura y patrones:** 4 capas con Inversión de Dependencias + **MVVM** en GUI; **Repository + Unit of Work** (`Supermercado.Entidades/Contratos/`), **Strategy** (`IEstrategiaSalida` → `Supermercado.Logica/Inventario/SalidaFefo.cs:5`) y **Null Object** (`Supermercado.Logica/ExtensionesLogica.cs:82-84`).
+- **Paradigmas:**
+  - **POO:** jerarquías polimórficas con invariantes en `Producto`/`ProductoPesado` (`Supermercado.Entidades/Productos/Producto.cs:6`, `ProductoPesado.cs:6-14`), `Pago` y `Impuesto`.
+  - **Funcional / Declarativo:** `record` inmutables (`SolicitudVenta.cs:5-7`, `IWidget.cs:31-36`) y transformaciones LINQ (`Venta.cs:27-35`).
+  - **Reactivo / Eventos:** `[ObservableProperty]` y `[RelayCommand]` (`ShellViewModel.cs:27-39`, `DashboardViewModel.cs:157-202`).
+  - **Asíncrono (`async`/`await`):** acceso a SQLite, APIs y refresco de interfaz sin bloquear el hilo de UI.
+- **SOLID:**
+  - **S:** responsabilidades aisladas (`Validador`, `SalidaFefo`, `ParserCodigoBalanza`, vistas sin lógica).
+  - **O:** extensibilidad por `IWidget` (`ExtensionesLogica.cs:86-94`) y subclases de `Impuesto`/`Pago`.
+  - **L:** `Venta.AgregarProducto` (`Venta.cs:37-42`) y `TotalPagado` (`Venta.cs:29`) operan sobre abstracciones base sin condicionales de tipo.
+  - **I:** interfaces segregadas por consumidor (`ExtensionesLogica.cs:38-74`, `IContratosInventario.cs:6-29`).
+  - **D:** `Logica` depende de contratos en `Entidades`, y `GUI` de contratos en `Logica`.
+- **GRASP:** *Information Expert* (`Venta.cs:27-35`, `ProductoPesado.cs:12-13`), *Creator* (`Venta.cs:41`), *Controller* (`ServicioVentas`, `PosViewModel`), *Pure Fabrication* (`SalidaFefo`, `HasheadorBCrypt`, `Validador`), *Protected Variations* (`ITrmClient`, `IConsultaCodigoBarras`, `IImpresorTicket`) y *Polymorphism*.
+- **UI (Avalonia 12 + Semi.Avalonia):** bindings compilados (`x:DataType`), `ViewLocator` (`Supermercado.GUI/App.axaml:9-11`), tokens de diseño en 5 diccionarios (`Primitives`, `Geometry`, `Typography`, `Semantic`, `SemiBridge` en `App.axaml:13-22`), scopes aislados por operación vía `IServiceScopeFactory` (`App.axaml.cs:88-98`) y gráficos de barras verticales nativos en `DashboardView.axaml:176-209`.
 
 ## Requisitos
 
@@ -107,6 +123,12 @@ dotnet build Supermercado.slnx
 dotnet run --project Supermercado.GUI
 ```
 
+Para cargar la base de datos con catálogo, productos, lotes, turnos, ventas y los 4 usuarios de demostración:
+
+```bash
+dotnet run --project Supermercado.GUI -- --demo
+```
+
 La base de datos se crea sola en la carpeta de datos del usuario:
 
 - Windows: `%LOCALAPPDATA%\SIGS\sigs.db`
@@ -120,7 +142,7 @@ En el primer arranque se siembran roles, cargos, impuestos, una caja y los pará
 dotnet test Supermercado.Pruebas/Supermercado.Pruebas.csproj
 ```
 
-Estado actual: **329 pruebas en verde**. Cubren impuestos, dinero, ventas, FEFO, arqueo, nómina, autenticación, permisos, sesión, parámetros, TRM, clientes/puntos, GUI, validaciones de formulario, PDF e integración con SQLite. Ver [`docs/plan-pruebas.md`](docs/plan-pruebas.md).
+Estado actual: **355 pruebas en verde**. Cubren impuestos, dinero, ventas, FEFO, arqueo, nómina, autenticación, permisos, sesión, parámetros, TRM, clientes, GUI (incluidos gráficos de dashboard), validaciones de formulario, PDF e integración con SQLite. Ver [`docs/plan-pruebas.md`](docs/plan-pruebas.md).
 
 ## Estructura del repositorio
 
@@ -160,27 +182,21 @@ Detalle y valores iniciales en [`docs/diccionario-datos.md`](docs/diccionario-da
 | Bloque | Estado |
 | :-- | :-- |
 | Dominio y reglas de negocio | Completo |
-| Persistencia SQLite + semilla | Completo |
+| Persistencia SQLite + semilla | Completo (modo `--demo` disponible) |
 | Seguridad, permisos y auditoría | Implementado con hallazgos abiertos (ver [`docs/pendientes-ui.md`](docs/pendientes-ui.md)) |
-| Pruebas | Completo (325) |
+| Pruebas | Completo (355) |
 | Documentación | Completo |
-| GUI Avalonia | Shell inicial; pantallas pendientes |
-| PDF con QuestPDF | Implementado (ticket, nómina y reporte de ventas) |
-| Clientes y puntos | Implementado en lógica; GUI pendiente |
-| DIAN (Documento Equivalente POS) | **En progreso**: CUDE, UBL y QR locales; sin transmisión ni certificación |
-| PostgreSQL local + Supabase | Objetivo documentado; Outbox implementado, despliegue pendiente |
+| GUI Avalonia | Completo (POS, Turno, Clientes, Inventario, Compras, Personal, Contabilidad, Dashboard con gráficos nativos, Configuración) |
+| PDF con QuestPDF y ESC/POS | Implementado (ticket, nómina y reporte de ventas) |
 | Concurrencia multi-terminal | Deuda técnica documentada |
 
 Requisito por requisito en [`docs/requisitos-trazabilidad.md`](docs/requisitos-trazabilidad.md). Los pendientes que la GUI debe cubrir están en [`docs/pendientes-ui.md`](docs/pendientes-ui.md).
 
 ## Hoja de ruta
 
-1. Pantallas Avalonia de login, POS, clientes, inventario y caja.
-2. Cierre del circuito DIAN: transmisión, firma, habilitación y contingencia.
-3. Migraciones EF incrementales y proveedor PostgreSQL.
-4. Concurrencia optimista y transacciones con bloqueo para varias cajas.
-5. Proceso programado de Outbox y despliegue del esquema Supabase/Neon.
-6. Verificación de correo con un proveedor real (Reacher u homólogo).
+1. Migraciones EF incrementales y endurecimiento de concurrencia/secretos para entornos multi-terminal (ver [`docs/pendientes-ui.md`](docs/pendientes-ui.md)).
+2. Verificación de correo con un proveedor real (Reacher u homólogo).
+3. Funcionalidades empresariales (DIAN UBL 2.1, Outbox/Supabase, PostgreSQL dual y puntos) disponibles en la rama `completo`.
 
 ## Documentación
 
@@ -199,7 +215,6 @@ Requisito por requisito en [`docs/requisitos-trazabilidad.md`](docs/requisitos-t
 | [Despliegue](docs/despliegue.md) | Desarrollo con SQLite y producción con PostgreSQL |
 | [Decisiones](docs/decisiones.md) | ADR del proyecto |
 | [Pendientes UI](docs/pendientes-ui.md) | Handoff backend → interfaz y contrato de integración |
-| [Esquema Supabase](docs/supabase-schema.sql) | Tabla Outbox, RLS y vistas para la réplica |
 | [Actualización de la propuesta](docs/actualizacion-propuesta.md) | Texto listo para el documento y las slides |
 
 ## Contribuir

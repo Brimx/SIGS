@@ -10,6 +10,7 @@ using Supermercado.GUI.Servicios.Tema;
 using Supermercado.GUI.ViewModels;
 using Supermercado.GUI.Views;
 using Supermercado.Logica;
+using Supermercado.Logica.DatosDemo;
 
 namespace Supermercado.GUI;
 
@@ -44,6 +45,19 @@ public partial class App : Application
 
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
+            if (desktop.Args?.Contains("--demo", StringComparer.OrdinalIgnoreCase) == true)
+            {
+                try
+                {
+                    var demo = _appScope.ServiceProvider.GetRequiredService<IGeneradorDatosDemo>();
+                    demo.GenerarAsync().GetAwaiter().GetResult();
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[SIGS DEMO] Advertencia al sembrar demo: {ex.Message}");
+                }
+            }
+
             // El tema se aplica antes de crear la ventana para evitar el destello del tema por defecto.
             var preferencias = _appScope.ServiceProvider.GetRequiredService<IServicioPreferencias>();
             TemaSigs.Aplicar(preferencias.LeerTema());

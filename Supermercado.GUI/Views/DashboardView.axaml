@@ -164,44 +164,58 @@
                                         </Grid>
 
                                         <!-- Contenido -->
-                                        <ScrollViewer Grid.Row="1" Margin="0,10,0,0" VerticalScrollBarVisibility="Auto">
-                                            <StackPanel>
-                                                <TextBlock Text="{Binding ValorPrincipal}"
-                                                           IsVisible="{Binding !TieneVariasFilas}"
-                                                           FontFamily="{StaticResource FontFamilyPlexCondensed}"
-                                                           FontSize="{StaticResource FontSizeHeadline}"
-                                                           FontWeight="{StaticResource FontWeightBold}"
-                                                           Foreground="{DynamicResource BrushPrimaryText}" />
+                                        <Grid Grid.Row="1" Margin="0,10,0,0">
+                                            <TextBlock Text="{Binding ValorPrincipal}"
+                                                       IsVisible="{Binding !TieneVariasFilas}"
+                                                       VerticalAlignment="Center"
+                                                       FontFamily="{StaticResource FontFamilyPlexCondensed}"
+                                                       FontSize="{StaticResource FontSizeHeadline}"
+                                                       FontWeight="{StaticResource FontWeightBold}"
+                                                       Foreground="{DynamicResource BrushPrimaryText}" />
 
-                                                <ItemsControl ItemsSource="{Binding Filas}"
-                                                              IsVisible="{Binding TieneVariasFilas}">
+                                            <Border IsVisible="{Binding TieneGrafico}"
+                                                    BorderBrush="{DynamicResource BrushBorderSubtle}"
+                                                    BorderThickness="0,0,0,1"
+                                                    Padding="4,4,4,0">
+                                                <ItemsControl ItemsSource="{Binding Filas}">
+                                                    <ItemsControl.ItemsPanel>
+                                                        <ItemsPanelTemplate>
+                                                            <UniformGrid Rows="1" />
+                                                        </ItemsPanelTemplate>
+                                                    </ItemsControl.ItemsPanel>
                                                     <ItemsControl.ItemTemplate>
                                                         <DataTemplate x:DataType="vm:FilaDatoViewModel">
-                                                            <Grid ColumnDefinitions="*,Auto"
-                                                                  RowDefinitions="Auto,Auto"
-                                                                  Margin="0,0,0,8">
-                                                                <TextBlock Grid.Row="0" Grid.Column="0"
-                                                                           Text="{Binding Etiqueta}"
-                                                                           FontSize="{StaticResource FontSizeCaption}"
+                                                            <Grid RowDefinitions="*,Auto"
+                                                                  Margin="3,0"
+                                                                  ToolTip.Tip="{Binding ResumenTooltip}">
+                                                                <StackPanel Grid.Row="0"
+                                                                            VerticalAlignment="Bottom"
+                                                                            Spacing="2">
+                                                                    <TextBlock Text="{Binding Valor}"
+                                                                               HorizontalAlignment="Center"
+                                                                               FontFamily="{StaticResource FontFamilyPlexCondensed}"
+                                                                               FontSize="10"
+                                                                               Foreground="{DynamicResource BrushTextMuted}"
+                                                                               TextTrimming="CharacterEllipsis" />
+                                                                    <Border Width="22"
+                                                                            Height="{Binding AlturaBarra}"
+                                                                            HorizontalAlignment="Center"
+                                                                            CornerRadius="4,4,0,0"
+                                                                            Background="{DynamicResource BrushPrimary}" />
+                                                                </StackPanel>
+                                                                <TextBlock Grid.Row="1"
+                                                                           Text="{Binding EtiquetaCorta}"
+                                                                           HorizontalAlignment="Center"
+                                                                           Margin="0,4,0,2"
+                                                                           FontSize="10"
                                                                            Foreground="{DynamicResource BrushTextSecondary}"
                                                                            TextTrimming="CharacterEllipsis" />
-                                                                <TextBlock Grid.Row="0" Grid.Column="1"
-                                                                           Text="{Binding Valor}"
-                                                                           Margin="8,0,0,0"
-                                                                           FontFamily="{StaticResource FontFamilyPlexCondensed}"
-                                                                           FontSize="{StaticResource FontSizeCaption}"
-                                                                           FontWeight="{StaticResource FontWeightSemiBold}" />
-                                                                <ProgressBar Grid.Row="1" Grid.ColumnSpan="2"
-                                                                             Minimum="0" Maximum="1"
-                                                                             Value="{Binding Fraccion}"
-                                                                             Height="6"
-                                                                             Margin="0,4,0,0" />
                                                             </Grid>
                                                         </DataTemplate>
                                                     </ItemsControl.ItemTemplate>
                                                 </ItemsControl>
-                                            </StackPanel>
-                                        </ScrollViewer>
+                                            </Border>
+                                        </Grid>
 
                                         <!-- Pie de edición -->
                                         <Grid Grid.Row="2"

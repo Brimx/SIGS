@@ -117,4 +117,68 @@ public class DashboardGuiTests
         item.EnPanel = false;
         Assert.True(item.DisponibleParaAgregar);
     }
+
+    [Fact]
+    public void Tarjeta_VariosPuntos_CalculaAlturasYEtiquetasDeGrafico()
+    {
+        var item = new WidgetEnPanel(
+            new WidgetFalso("ventas.por_categoria", "Ventas por categoría"),
+            TamanoWidget.Grande,
+            "Ventas por categoría");
+
+        var tarjeta = WidgetCardViewModel.Desde(
+            item,
+            new DatoWidget(
+            [
+                new PuntoDato("Lácteos", 450_000, FormatoDato.Moneda),
+                new PuntoDato("Granos", 225_000, FormatoDato.Moneda),
+                new PuntoDato("Aseo y Limpieza", 0, FormatoDato.Moneda)
+            ]));
+
+        Assert.True(tarjeta.TieneGrafico);
+        Assert.Equal(3, tarjeta.Filas.Count);
+        Assert.Equal(170.0, tarjeta.Filas[0].AlturaBarra);
+        Assert.Equal(85.0, tarjeta.Filas[1].AlturaBarra);
+        Assert.Equal(4.0, tarjeta.Filas[2].AlturaBarra);
+        Assert.Equal("Lácteos", tarjeta.Filas[0].EtiquetaCorta);
+        Assert.EndsWith("…", tarjeta.Filas[2].EtiquetaCorta);
+        Assert.Contains("Lácteos:", tarjeta.Filas[0].ResumenTooltip);
+    }
+
+    [Fact]
+    public void Tarjeta_UnPunto_NoActivaGrafico()
+    {
+        var item = new WidgetEnPanel(
+            new WidgetFalso("ventas.del_dia", "Ventas del día"),
+            TamanoWidget.Pequeno,
+            "Ventas del día");
+
+        var tarjeta = WidgetCardViewModel.Desde(
+            item,
+            new DatoWidget([new PuntoDato("Hoy", 120_000, FormatoDato.Moneda)]));
+
+        Assert.False(tarjeta.TieneGrafico);
+        Assert.Empty(tarjeta.Filas);
+    }
+
+    [Fact]
+    public void Tarjeta_Mediana_EscalaAlturaParaTamanoMediano()
+    {
+        var item = new WidgetEnPanel(
+            new WidgetFalso("ventas.metodos_pago", "Métodos de pago"),
+            TamanoWidget.Mediano,
+            "Métodos de pago");
+
+        var tarjeta = WidgetCardViewModel.Desde(
+            item,
+            new DatoWidget(
+            [
+                new PuntoDato("Efectivo", 500_000, FormatoDato.Moneda),
+                new PuntoDato("Tarjeta", 250_000, FormatoDato.Moneda)
+            ]));
+
+        Assert.True(tarjeta.TieneGrafico);
+        Assert.Equal(86.0, tarjeta.Filas[0].AlturaBarra);
+        Assert.Equal(43.0, tarjeta.Filas[1].AlturaBarra);
+    }
 }

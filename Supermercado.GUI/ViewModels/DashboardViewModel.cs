@@ -11,14 +11,19 @@ using Supermercado.Logica.Dashboards;
 
 namespace Supermercado.GUI.ViewModels;
 
-/// <summary>Un punto de dato con su barra proporcional.</summary>
+/// <summary>Un punto de dato con su barra proporcional para gráfico vertical.</summary>
 public sealed class FilaDatoViewModel
 {
     public string Etiqueta { get; init; } = string.Empty;
+    public string EtiquetaCorta { get; init; } = string.Empty;
     public string Valor { get; init; } = string.Empty;
+    public string ResumenTooltip => $"{Etiqueta}: {Valor}";
 
-    /// <summary>Ancho relativo de la barra: 0 a 1 frente al punto mayor.</summary>
+    /// <summary>Proporción relativa de la barra: 0 a 1 frente al punto mayor.</summary>
     public double Fraccion { get; init; }
+
+    /// <summary>Altura en píxeles de la barra vertical dentro del área del gráfico.</summary>
+    public double AlturaBarra { get; init; }
 }
 
 public sealed partial class WidgetCardViewModel : ObservableObject
@@ -48,6 +53,8 @@ public sealed partial class WidgetCardViewModel : ObservableObject
     public partial TamanoWidget Tamano { get; set; } = TamanoWidget.Mediano;
 
     public bool TieneVariasFilas => Filas.Count > 0;
+
+    public bool TieneGrafico => Filas.Count > 0;
 
     public bool EsGrande => Tamano == TamanoWidget.Grande;
 
@@ -99,12 +106,7 @@ public sealed partial class WidgetCardViewModel : ObservableObject
                 : primero?.Etiqueta ?? "Sin datos disponibles",
             ValorPrincipal = puntos.Count > 1 ? string.Empty : Formatear(primero),
             Filas = puntos.Count > 1
-                ? puntos.Select(p => new FilaDatoViewModel
-                {
-                    Etiqueta = p.Etiqueta,
-                    Valor = Formatear(p),
-                    Fraccion = mayor == 0 ? 0 : (double)Math.Abs(p.Valor) / mayor
-                }).ToList()
+                ? ConstruirFilasGrafico(puntos, mayor, item.Tamano)
                 : [],
             Tamano = item.Tamano
         };
@@ -112,6 +114,29 @@ public sealed partial class WidgetCardViewModel : ObservableObject
         tarjeta.AplicarTitulo(item.Titulo);
         return tarjeta;
     }
+
+    private static IReadOnlyList<FilaDatoViewModel> ConstruirFilasGrafico(
+        IReadOnlyList<PuntoDato> puntos,
+        long mayor,
+        TamanoWidget tamano)
+    {
+        var alturaMaxima = tamano == TamanoWidget.Grande ? 170.0 : 86.0;
+        return puntos.Select(p =>
+        {
+            var fraccion = mayor == 0 ? 0 : (double)Math.Abs(p.Valor) / mayor;
+            return new FilaDatoViewModel
+            {
+                Etiqueta = p.Etiqueta,
+                EtiquetaCorta = AcortarEtiqueta(p.Etiqueta),
+                Valor = Formatear(p),
+                Fraccion = fraccion,
+                AlturaBarra = Math.Max(4, Math.Round(fraccion * alturaMaxima, 1))
+            };
+        }).ToList();
+    }
+
+    private static string AcortarEtiqueta(string etiqueta)
+        => etiqueta.Length <= 10 ? etiqueta : string.Concat(etiqueta.AsSpan(0, 9), "…");
 
     private static string Formatear(PuntoDato? punto) => punto is null
         ? "Sin datos"
