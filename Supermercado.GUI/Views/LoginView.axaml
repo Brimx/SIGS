@@ -6,10 +6,19 @@
              Background="{DynamicResource BrushBackground}"
              FontFamily="{StaticResource FontFamilyPlex}">
 
-    <Grid ColumnDefinitions="*,480,*">
-        <Border Grid.Column="1"
-                VerticalAlignment="Center"
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <ScrollViewer Grid.Column="1"
+                      MaxWidth="512"
+                      VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled">
+        <Border VerticalAlignment="Center"
                 Margin="16"
+                MaxWidth="480"
                 Background="{DynamicResource BrushSurface}"
                 BorderBrush="{DynamicResource BrushBorderSubtle}"
                 BorderThickness="1"
@@ -181,7 +190,8 @@
                             Padding="8,4">
                         <TextBlock Text="Alternar ingreso con Contraseña / Teclado PIN Táctil"
                                    FontSize="{StaticResource FontSizeCaption}"
-                                   Foreground="{DynamicResource BrushTextSecondary}" />
+                                   Foreground="{DynamicResource BrushTextSecondary}"
+                                   TextWrapping="Wrap" />
                     </Button>
 
                     <Separator Background="{DynamicResource BrushBorderSubtle}" Height="1" Margin="0,4" />
@@ -221,7 +231,9 @@
                                         <LucideIcon Kind="Database" Size="16" />
                                         <TextBlock Text="Sembrar Base Demo (4 Roles + Catálogo + Turno)"
                                                    FontWeight="{StaticResource FontWeightSemiBold}"
-                                                   FontSize="{StaticResource FontSizeBody}" />
+                                                   FontSize="{StaticResource FontSizeBody}"
+                                                   TextWrapping="Wrap"
+                                                   ToolTip.Tip="Sembrar Base Demo (4 Roles + Catálogo + Turno)" />
                                     </StackPanel>
                                 </Button>
 
@@ -229,7 +241,7 @@
                                            FontSize="{StaticResource FontSizeCaption}"
                                            Foreground="{DynamicResource BrushTextSecondary}" />
 
-                                <WrapPanel Orientation="Horizontal">
+                                <UniformGrid Columns="2">
                                     <Button Command="{Binding SeleccionarCredencialDemoCommand}" CommandParameter="admin" Margin="2" Padding="6,3" CornerRadius="4">
                                         <TextBlock Text="Admin (1111)" FontSize="{StaticResource FontSizeCaption}" />
                                     </Button>
@@ -242,7 +254,7 @@
                                     <Button Command="{Binding SeleccionarCredencialDemoCommand}" CommandParameter="bodega" Margin="2" Padding="6,3" CornerRadius="4">
                                         <TextBlock Text="Bodeguero (2233)" FontSize="{StaticResource FontSizeCaption}" />
                                     </Button>
-                                </WrapPanel>
+                                </UniformGrid>
                             </StackPanel>
                         </Border>
                     </StackPanel>
@@ -262,5 +274,6 @@
 
             </StackPanel>
         </Border>
+        </ScrollViewer>
     </Grid>
 </UserControl>
