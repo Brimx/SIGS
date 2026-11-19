@@ -61,6 +61,18 @@ public sealed class ClienteGeminiHttp(
         }
     }
 
+    private static string MensajeError(HttpStatusCode estado)
+        => estado switch
+        {
+            HttpStatusCode.TooManyRequests =>
+                "Gemini alcanzó el límite de cuota. Intenta más tarde o usa /stock, /ventas, /caja o /resumen.",
+            HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden =>
+                "Gemini rechazó la clave o no tiene cuota disponible. Los comandos /stock, /ventas, /caja y /resumen siguen disponibles.",
+            _ when (int)estado is >= 400 and < 500 =>
+                "Gemini rechazó la solicitud por configuración o formato. Avisa al administrador. Los comandos /stock, /ventas, /caja y /resumen siguen disponibles.",
+            _ => "Gemini no está disponible temporalmente. Los comandos /stock, /ventas, /caja y /resumen siguen disponibles."
+        };
+
     private async Task RegistrarErrorAsync(
         HttpResponseMessage respuesta,
         CancellationToken cancelacion)
@@ -203,22 +215,15 @@ public sealed class ClienteGeminiHttp(
 
         using var respuesta = await EnviarGeminiAsync(uri, cuerpo, cancelacion);
         if (!respuesta.IsSuccessStatusCode)
-            await RegistrarErrorAsync(respuesta, cancelacion);
-        if (respuesta.StatusCode == HttpStatusCode.TooManyRequests)
-            throw new GeminiNoDisponibleException("Gemini alcanzó el límite de cuota. Intenta más tarde o usa /stock, /ventas, /caja o /resumen.");
-        if (!respuesta.IsSuccessStatusCode)
         {
-            var estado = (int)respuesta.StatusCode;
-            var detalle = estado is 401 or 403
-                ? "Gemini rechazó la clave o no tiene cuota disponible."
-                : "Gemini no está disponible temporalmente.";
-            throw new GeminiNoDisponibleException($"{detalle} Los comandos fijos siguen disponibles.");
+            await RegistrarErrorAsync(respuesta, cancelacion);
+            throw new GeminiNoDisponibleException(MensajeError(respuesta.StatusCode));
         }
 
         await using var flujo = await respuesta.Content.ReadAsStreamAsync(cancelacion);
-
         using var json = await JsonDocument.ParseAsync(flujo, cancellationToken: cancelacion);
         if (!json.RootElement.TryGetProperty("candidates", out var candidatos)
+
             || candidatos.GetArrayLength() == 0)
             return null;
 

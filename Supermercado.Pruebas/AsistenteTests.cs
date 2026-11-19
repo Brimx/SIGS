@@ -91,6 +91,56 @@ public sealed class AsistenteTests
         Assert.Contains("/stock", error.Message);
     }
 
+    [Theory]
+    [InlineData(HttpStatusCode.BadRequest)]
+    [InlineData(HttpStatusCode.NotFound)]
+    public async Task ClienteGemini_ErrorDeConfiguracionDaMensajeEspecifico(
+        HttpStatusCode codigo)
+    {
+        var cliente = new ClienteGeminiHttp(
+            new HttpClient(new HandlerFalso("{}", codigo)),
+            "clave-prueba",
+            "gemini-prueba");
+
+        var error = await Assert.ThrowsAsync<GeminiNoDisponibleException>(
+            () => cliente.ElegirHerramientaAsync("consulta natural"));
+
+        Assert.Contains("configuración", error.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("/stock", error.Message);
+    }
+
+    [Theory]
+    [InlineData(HttpStatusCode.Unauthorized)]
+    [InlineData(HttpStatusCode.Forbidden)]
+    public async Task ClienteGemini_ClaveRechazadaDaMensajeEspecifico(
+        HttpStatusCode codigo)
+    {
+        var cliente = new ClienteGeminiHttp(
+            new HttpClient(new HandlerFalso("{}", codigo)),
+            "clave-prueba",
+            "gemini-prueba");
+
+        var error = await Assert.ThrowsAsync<GeminiNoDisponibleException>(
+            () => cliente.ElegirHerramientaAsync("consulta natural"));
+
+        Assert.Contains("clave", error.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task ClienteGemini_ErrorTemporalDaMensajeUsable()
+    {
+        var cliente = new ClienteGeminiHttp(
+            new HttpClient(new HandlerFalso("{}", HttpStatusCode.InternalServerError)),
+            "clave-prueba",
+            "gemini-prueba");
+
+        var error = await Assert.ThrowsAsync<GeminiNoDisponibleException>(
+            () => cliente.ElegirHerramientaAsync("consulta natural"));
+
+        Assert.Contains("temporalmente", error.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("/stock", error.Message);
+    }
+
     [Fact]
     public async Task ClienteGemini_RegistraErrorSinExponerClaveNiDatosSensibles()
     {
