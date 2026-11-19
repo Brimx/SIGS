@@ -14,84 +14,91 @@
                 BorderThickness="1"
                 CornerRadius="{StaticResource RadiusMedium}"
                 Padding="16,12">
-            <Grid ColumnDefinitions="*,16,Auto,8,110,12,Auto,8,Auto,8,Auto">
-                <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
-                    <TextBlock Text="Finanzas, Consolidado de IVA y Arqueos Z"
+            <StackPanel Spacing="12">
+                <StackPanel Spacing="2">
+                    <TextBlock Text="Finanzas, IVA y Arqueos Z"
                                FontFamily="{StaticResource FontFamilyStackSans}"
                                FontSize="{StaticResource FontSizeSubtitle}"
-                               FontWeight="{StaticResource FontWeightBold}" />
-                    <TextBlock Text="Liquidación discriminada por tarifas (0%, 5%, 19%), registro de gastos y exportación contable."
+                               FontWeight="{StaticResource FontWeightBold}"
+                               TextTrimming="CharacterEllipsis"
+                               ToolTip.Tip="Finanzas, Consolidado de IVA y Arqueos Z" />
+                    <TextBlock Text="Liquidación por tarifas (0%, 5%, 19%), gastos y exportación contable."
                                FontSize="{StaticResource FontSizeCaption}"
-                               Foreground="{DynamicResource BrushTextSecondary}" />
+                               Foreground="{DynamicResource BrushTextSecondary}"
+                               TextWrapping="Wrap" />
                 </StackPanel>
 
-                <TextBlock Grid.Column="2" Text="Días a consultar:" VerticalAlignment="Center" FontSize="{StaticResource FontSizeCaption}" Foreground="{DynamicResource BrushTextSecondary}" />
-                <NumericUpDown Grid.Column="4"
-                               Value="{Binding DiasRangoConsulta}"
-                               Minimum="1"
-                               Maximum="365"
-                               FormatString="0"
-                               FontFamily="{StaticResource FontFamilyPlexCondensed}"
-                               MinHeight="38" />
-
-                <Button Grid.Column="6"
-                        Command="{Binding ActualizarConsolidadoFiscalCommand}"
-                        MinHeight="38">
-                    <StackPanel Orientation="Horizontal" Spacing="6">
-                        <LucideIcon Kind="RefreshCw" Size="16" />
-                        <TextBlock Text="Calcular" FontWeight="{StaticResource FontWeightSemiBold}" />
-                    </StackPanel>
-                </Button>
-
-                <Button Grid.Column="8"
-                        Command="{Binding ExportarCsvContableCommand}"
-                        Classes="Success" Theme="{DynamicResource SolidButton}"
-                        MinHeight="38">
-                    <StackPanel Orientation="Horizontal" Spacing="6">
-                        <LucideIcon Kind="FileSpreadsheet" Size="16" />
-                        <TextBlock Text="Exportar CSV / Excel" FontWeight="{StaticResource FontWeightBold}" />
-                    </StackPanel>
-                </Button>
-
-                <Button Grid.Column="10"
-                        Command="{Binding ExportarPdfVentasDianCommand}"
-                        Classes="Primary" Theme="{DynamicResource SolidButton}"
-                        MinHeight="38">
-                    <StackPanel Orientation="Horizontal" Spacing="6">
-                        <LucideIcon Kind="FileText" Size="16" />
-                        <TextBlock Text="Exportar PDF" FontWeight="{StaticResource FontWeightBold}" />
-                    </StackPanel>
-                </Button>
-            </Grid>
+                <WrapPanel>
+                    <TextBlock Text="Días:"
+                               Margin="0,0,8,8"
+                               VerticalAlignment="Center"
+                               FontSize="{StaticResource FontSizeCaption}"
+                               Foreground="{DynamicResource BrushTextSecondary}" />
+                    <NumericUpDown Width="110"
+                                   Margin="0,0,8,8"
+                                   Value="{Binding DiasRangoConsulta}"
+                                   Minimum="1"
+                                   Maximum="365"
+                                   FormatString="0"
+                                   FontFamily="{StaticResource FontFamilyPlexCondensed}"
+                                   MinHeight="{StaticResource SizeTouchTarget}" />
+                    <Button Margin="0,0,8,8"
+                            Command="{Binding ActualizarConsolidadoFiscalCommand}"
+                            MinHeight="{StaticResource SizeTouchTarget}">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <LucideIcon Kind="RefreshCw" Size="16" />
+                            <TextBlock Text="Calcular" FontWeight="{StaticResource FontWeightSemiBold}" />
+                        </StackPanel>
+                    </Button>
+                    <Button Margin="0,0,8,8"
+                            Command="{Binding ExportarCsvContableCommand}"
+                            Classes="Success" Theme="{DynamicResource SolidButton}"
+                            MinHeight="{StaticResource SizeTouchTarget}">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <LucideIcon Kind="FileSpreadsheet" Size="16" />
+                            <TextBlock Text="Exportar CSV / Excel" FontWeight="{StaticResource FontWeightBold}" TextWrapping="Wrap" />
+                        </StackPanel>
+                    </Button>
+                    <Button Margin="0,0,8,8"
+                            Command="{Binding ExportarPdfVentasDianCommand}"
+                            Classes="Primary" Theme="{DynamicResource SolidButton}"
+                            MinHeight="{StaticResource SizeTouchTarget}">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <LucideIcon Kind="FileText" Size="16" />
+                            <TextBlock Text="Exportar PDF" FontWeight="{StaticResource FontWeightBold}" />
+                        </StackPanel>
+                    </Button>
+                </WrapPanel>
+            </StackPanel>
         </Border>
 
         <!-- Tarjetas KPI de Resumen Financiero del Periodo -->
-        <Grid Grid.Row="2" ColumnDefinitions="*,14,*,14,*,14,*">
-            <Border Grid.Column="0" Background="{DynamicResource BrushSurface}" BorderBrush="{DynamicResource BrushBorderSubtle}" BorderThickness="1" CornerRadius="{StaticResource RadiusLarge}" Padding="16">
+        <Grid Grid.Row="2" RowDefinitions="Auto,12,Auto" ColumnDefinitions="*,12,*">
+            <Border Grid.Row="0" Grid.Column="0" Background="{DynamicResource BrushSurface}" BorderBrush="{DynamicResource BrushBorderSubtle}" BorderThickness="1" CornerRadius="{StaticResource RadiusLarge}" Padding="16">
                 <StackPanel Spacing="4">
                     <TextBlock Text="INGRESOS BRUTOS VENTAS" FontFamily="{StaticResource FontFamilyStackSans}" FontSize="{StaticResource FontSizeCaption}" FontWeight="{StaticResource FontWeightBold}" Foreground="{DynamicResource BrushTextSecondary}" />
-                    <TextBlock Text="{Binding IngresosTotalesFormateado}" FontFamily="{StaticResource FontFamilyPlexCondensed}" FontSize="{StaticResource FontSizeHeadline}" FontWeight="{StaticResource FontWeightBold}" Foreground="{DynamicResource BrushPrimaryText}" />
+                    <TextBlock Text="{Binding IngresosTotalesFormateado}" FontFamily="{StaticResource FontFamilyPlexCondensed}" FontSize="{StaticResource FontSizeHeadline}" FontWeight="{StaticResource FontWeightBold}" Foreground="{DynamicResource BrushPrimaryText}" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding IngresosTotalesFormateado}" />
                 </StackPanel>
             </Border>
 
-            <Border Grid.Column="2" Background="{DynamicResource BrushSurface}" BorderBrush="{DynamicResource BrushBorderSubtle}" BorderThickness="1" CornerRadius="{StaticResource RadiusLarge}" Padding="16">
+            <Border Grid.Row="0" Grid.Column="2" Background="{DynamicResource BrushSurface}" BorderBrush="{DynamicResource BrushBorderSubtle}" BorderThickness="1" CornerRadius="{StaticResource RadiusLarge}" Padding="16">
                 <StackPanel Spacing="4">
                     <TextBlock Text="TOTAL IVA GENERADO" FontFamily="{StaticResource FontFamilyStackSans}" FontSize="{StaticResource FontSizeCaption}" FontWeight="{StaticResource FontWeightBold}" Foreground="{DynamicResource BrushTextSecondary}" />
-                    <TextBlock Text="{Binding IvaTotalGeneradoFormateado}" FontFamily="{StaticResource FontFamilyPlexCondensed}" FontSize="{StaticResource FontSizeHeadline}" FontWeight="{StaticResource FontWeightBold}" Foreground="{DynamicResource BrushWarningText}" />
+                    <TextBlock Text="{Binding IvaTotalGeneradoFormateado}" FontFamily="{StaticResource FontFamilyPlexCondensed}" FontSize="{StaticResource FontSizeHeadline}" FontWeight="{StaticResource FontWeightBold}" Foreground="{DynamicResource BrushWarningText}" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding IvaTotalGeneradoFormateado}" />
                 </StackPanel>
             </Border>
 
-            <Border Grid.Column="4" Background="{DynamicResource BrushSurface}" BorderBrush="{DynamicResource BrushBorderSubtle}" BorderThickness="1" CornerRadius="{StaticResource RadiusLarge}" Padding="16">
+            <Border Grid.Row="2" Grid.Column="0" Background="{DynamicResource BrushSurface}" BorderBrush="{DynamicResource BrushBorderSubtle}" BorderThickness="1" CornerRadius="{StaticResource RadiusLarge}" Padding="16">
                 <StackPanel Spacing="4">
                     <TextBlock Text="GASTOS OPERATIVOS" FontFamily="{StaticResource FontFamilyStackSans}" FontSize="{StaticResource FontSizeCaption}" FontWeight="{StaticResource FontWeightBold}" Foreground="{DynamicResource BrushTextSecondary}" />
-                    <TextBlock Text="{Binding EgresosTotalesFormateado}" FontFamily="{StaticResource FontFamilyPlexCondensed}" FontSize="{StaticResource FontSizeHeadline}" FontWeight="{StaticResource FontWeightBold}" Foreground="{DynamicResource BrushErrorText}" />
+                    <TextBlock Text="{Binding EgresosTotalesFormateado}" FontFamily="{StaticResource FontFamilyPlexCondensed}" FontSize="{StaticResource FontSizeHeadline}" FontWeight="{StaticResource FontWeightBold}" Foreground="{DynamicResource BrushErrorText}" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding EgresosTotalesFormateado}" />
                 </StackPanel>
             </Border>
 
-            <Border Grid.Column="6" Background="{DynamicResource BrushSurface}" BorderBrush="{DynamicResource BrushBorderSubtle}" BorderThickness="1" CornerRadius="{StaticResource RadiusLarge}" Padding="16">
+            <Border Grid.Row="2" Grid.Column="2" Background="{DynamicResource BrushSurface}" BorderBrush="{DynamicResource BrushBorderSubtle}" BorderThickness="1" CornerRadius="{StaticResource RadiusLarge}" Padding="16">
                 <StackPanel Spacing="4">
                     <TextBlock Text="MARGEN NETO OPERATIVO" FontFamily="{StaticResource FontFamilyStackSans}" FontSize="{StaticResource FontSizeCaption}" FontWeight="{StaticResource FontWeightBold}" Foreground="{DynamicResource BrushTextSecondary}" />
-                    <TextBlock Text="{Binding MargenOperativoFormateado}" FontFamily="{StaticResource FontFamilyPlexCondensed}" FontSize="{StaticResource FontSizeHeadline}" FontWeight="{StaticResource FontWeightBold}" Foreground="{DynamicResource BrushSuccessText}" />
+                    <TextBlock Text="{Binding MargenOperativoFormateado}" FontFamily="{StaticResource FontFamilyPlexCondensed}" FontSize="{StaticResource FontSizeHeadline}" FontWeight="{StaticResource FontWeightBold}" Foreground="{DynamicResource BrushSuccessText}" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding MargenOperativoFormateado}" />
                 </StackPanel>
             </Border>
         </Grid>
@@ -109,11 +116,13 @@
                         ClipToBounds="True">
                     <Grid RowDefinitions="Auto,*">
                         <Border Grid.Row="0" Background="{DynamicResource BrushSurfaceSubtle}" Padding="14,10" BorderBrush="{DynamicResource BrushBorderSubtle}" BorderThickness="0,0,0,1">
-                            <TextBlock Text="DISCRIMINACIÓN FISCAL POR TARIFA DE IVA (0% · 5% · 19%)"
+                            <TextBlock Text="DISCRIMINACIÓN IVA (0% · 5% · 19%)"
                                        FontFamily="{StaticResource FontFamilyStackSans}"
                                        FontSize="{StaticResource FontSizeCaption}"
                                        FontWeight="{StaticResource FontWeightBold}"
-                                       Foreground="{DynamicResource BrushTextSecondary}" />
+                                       Foreground="{DynamicResource BrushTextSecondary}"
+                                       TextTrimming="CharacterEllipsis"
+                                       ToolTip.Tip="Discriminación fiscal por tarifa de IVA (0% · 5% · 19%)" />
                         </Border>
                         <DataGrid Grid.Row="1"
                                   ItemsSource="{Binding DesgloseIvaTarifas}"
@@ -123,11 +132,11 @@
                           ScrollViewer.HorizontalScrollBarVisibility="Auto"
                           ScrollViewer.VerticalScrollBarVisibility="Auto">
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="TARIFA" Binding="{Binding CodigoTarifa}" Width="75" FontFamily="{StaticResource FontFamilyPlexCondensed}" />
-                                <DataGridTextColumn Header="CONCEPTO TRIBUTARIO" Binding="{Binding DescripcionTarifa}" Width="*" />
-                                <DataGridTextColumn Header="BASE GRAVABLE" Binding="{Binding BaseFormateada}" Width="125" FontFamily="{StaticResource FontFamilyPlexCondensed}" />
-                                <DataGridTextColumn Header="IVA GENERADO" Binding="{Binding ImpuestoFormateado}" Width="120" FontFamily="{StaticResource FontFamilyPlexCondensed}" />
-                                <DataGridTextColumn Header="TOTAL" Binding="{Binding TotalFormateado}" Width="125" FontFamily="{StaticResource FontFamilyPlexCondensed}" />
+                                <DataGridTextColumn Header="TARIFA" Binding="{Binding CodigoTarifa}" Width="75" MinWidth="65" FontFamily="{StaticResource FontFamilyPlexCondensed}" />
+                                <DataGridTextColumn Header="CONCEPTO" Binding="{Binding DescripcionTarifa}" Width="*" MinWidth="130" />
+                                <DataGridTextColumn Header="BASE" Binding="{Binding BaseFormateada}" Width="125" MinWidth="100" FontFamily="{StaticResource FontFamilyPlexCondensed}" />
+                                <DataGridTextColumn Header="IVA" Binding="{Binding ImpuestoFormateado}" Width="120" MinWidth="95" FontFamily="{StaticResource FontFamilyPlexCondensed}" />
+                                <DataGridTextColumn Header="TOTAL" Binding="{Binding TotalFormateado}" Width="125" MinWidth="100" FontFamily="{StaticResource FontFamilyPlexCondensed}" />
                             </DataGrid.Columns>
                         </DataGrid>
                     </Grid>
@@ -140,22 +149,26 @@
                         BorderThickness="1"
                         CornerRadius="{StaticResource RadiusMedium}"
                         Padding="14,10">
-                    <Grid ColumnDefinitions="*,8,170,8,Auto">
-                        <TextBox Grid.Column="0"
+                    <WrapPanel>
+                        <TextBox Width="240"
+                                 Margin="0,0,8,8"
                                  Text="{Binding DescripcionGastoInput}"
-                                 PlaceholderText="Registrar egreso / gasto operativo (ej. Servicios públicos, flete)..." />
-                        <NumericUpDown Grid.Column="2"
+                                 PlaceholderText="Registrar egreso / gasto operativo..."
+                                 ToolTip.Tip="Registrar egreso / gasto operativo (ej. Servicios públicos, flete)" />
+                        <NumericUpDown Width="150"
+                                       Margin="0,0,8,8"
                                        Value="{Binding MontoGastoInput}"
                                        Minimum="1000"
                                        Increment="10000"
                                        FormatString="N0"
                                        FontFamily="{StaticResource FontFamilyPlexCondensed}" />
-                        <Button Grid.Column="4"
+                        <Button Margin="0,0,8,8"
                                 Command="{Binding RegistrarGastoOperativoCommand}"
-                                Classes="Primary" Theme="{DynamicResource SolidButton}">
-                            <TextBlock Text="Registrar Egreso" FontWeight="{StaticResource FontWeightSemiBold}" />
+                                Classes="Primary" Theme="{DynamicResource SolidButton}"
+                                MinHeight="{StaticResource SizeTouchTarget}">
+                            <TextBlock Text="Registrar Egreso" FontWeight="{StaticResource FontWeightSemiBold}" TextWrapping="Wrap" />
                         </Button>
-                    </Grid>
+                    </WrapPanel>
                 </Border>
             </Grid>
 
@@ -168,11 +181,13 @@
                     ClipToBounds="True">
                 <Grid RowDefinitions="Auto,*">
                     <Border Grid.Row="0" Background="{DynamicResource BrushSurfaceSubtle}" Padding="14,10" BorderBrush="{DynamicResource BrushBorderSubtle}" BorderThickness="0,0,0,1">
-                        <TextBlock Text="CONCILIACIÓN DE TURNOS Y ARQUEOS CIEGOS (CIERRE Z)"
+                        <TextBlock Text="CONCILIACIÓN Y ARQUEOS Z"
                                    FontFamily="{StaticResource FontFamilyStackSans}"
                                    FontSize="{StaticResource FontSizeCaption}"
                                    FontWeight="{StaticResource FontWeightBold}"
-                                   Foreground="{DynamicResource BrushTextSecondary}" />
+                                   Foreground="{DynamicResource BrushTextSecondary}"
+                                   TextTrimming="CharacterEllipsis"
+                                   ToolTip.Tip="Conciliación de turnos y arqueos ciegos (cierre Z)" />
                     </Border>
                     <DataGrid Grid.Row="1"
                               ItemsSource="{Binding HistorialArqueos}"
@@ -182,11 +197,11 @@
                           ScrollViewer.HorizontalScrollBarVisibility="Auto"
                           ScrollViewer.VerticalScrollBarVisibility="Auto">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="TURNO" Binding="{Binding Id}" Width="70" FontFamily="{StaticResource FontFamilyPlexCondensed}" />
-                            <DataGridTextColumn Header="APERTURA" Binding="{Binding AperturaTexto}" Width="130" FontFamily="{StaticResource FontFamilyPlexCondensed}" />
-                            <DataGridTextColumn Header="ESPERADO" Binding="{Binding EsperadoFormateado}" Width="115" FontFamily="{StaticResource FontFamilyPlexCondensed}" />
-                            <DataGridTextColumn Header="CONTADO" Binding="{Binding ContadoFormateado}" Width="115" FontFamily="{StaticResource FontFamilyPlexCondensed}" />
-                            <DataGridTextColumn Header="DIFERENCIA" Binding="{Binding DiferenciaFormateada}" Width="*" FontFamily="{StaticResource FontFamilyPlexCondensed}" />
+                            <DataGridTextColumn Header="TURNO" Binding="{Binding Id}" Width="70" MinWidth="60" FontFamily="{StaticResource FontFamilyPlexCondensed}" />
+                            <DataGridTextColumn Header="APERTURA" Binding="{Binding AperturaTexto}" Width="130" MinWidth="110" FontFamily="{StaticResource FontFamilyPlexCondensed}" />
+                            <DataGridTextColumn Header="ESPERADO" Binding="{Binding EsperadoFormateado}" Width="115" MinWidth="100" FontFamily="{StaticResource FontFamilyPlexCondensed}" />
+                            <DataGridTextColumn Header="CONTADO" Binding="{Binding ContadoFormateado}" Width="115" MinWidth="100" FontFamily="{StaticResource FontFamilyPlexCondensed}" />
+                            <DataGridTextColumn Header="DIFERENCIA" Binding="{Binding DiferenciaFormateada}" Width="*" MinWidth="100" FontFamily="{StaticResource FontFamilyPlexCondensed}" />
                         </DataGrid.Columns>
                     </DataGrid>
                 </Grid>
@@ -200,7 +215,7 @@
                 BorderThickness="1"
                 CornerRadius="{StaticResource RadiusSmall}"
                 Padding="12,8">
-            <TextBlock Text="{Binding MensajeEstado}" FontWeight="{StaticResource FontWeightMedium}" />
+            <TextBlock Text="{Binding MensajeEstado}" FontWeight="{StaticResource FontWeightMedium}" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding MensajeEstado}" />
         </Border>
     </Grid>
 </UserControl>

@@ -14,41 +14,51 @@
                 BorderThickness="1"
                 CornerRadius="{StaticResource RadiusMedium}"
                 Padding="16,12">
-            <Grid ColumnDefinitions="*,16,220,8,Auto,16,Auto">
-                <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
-                    <TextBlock Text="Directorio de Proveedores y Sugeridos de Reabastecimiento FEFO"
+            <StackPanel Spacing="12">
+                <StackPanel Spacing="2">
+                    <TextBlock Text="Directorio de Proveedores y Sugeridos FEFO"
                                FontFamily="{StaticResource FontFamilyStackSans}"
                                FontSize="{StaticResource FontSizeSubtitle}"
-                               FontWeight="{StaticResource FontWeightBold}" />
-                    <TextBlock Text="Gestión de proveedores NIT y atención de solicitudes automáticas de bodega a góndola."
+                               FontWeight="{StaticResource FontWeightBold}"
+                               TextTrimming="CharacterEllipsis"
+                               ToolTip.Tip="Directorio de Proveedores y Sugeridos de Reabastecimiento FEFO" />
+                    <TextBlock Text="Gestión de proveedores NIT y solicitudes automáticas de bodega a góndola."
                                FontSize="{StaticResource FontSizeCaption}"
-                               Foreground="{DynamicResource BrushTextSecondary}" />
+                               Foreground="{DynamicResource BrushTextSecondary}"
+                               TextWrapping="Wrap" />
                 </StackPanel>
 
-                <TextBox Grid.Column="2"
-                         Text="{Binding NuevaCategoriaInput}"
-                         PlaceholderText="Nueva categoría (ej. Lácteos)..."
-                         MinHeight="38" />
-                <Button Grid.Column="4"
-                        Command="{Binding CrearCategoriaCommand}"
-                        MinHeight="38">
-                    <TextBlock Text="+ Categoría" FontWeight="{StaticResource FontWeightSemiBold}" />
-                </Button>
-
-                <Button Grid.Column="6"
-                        Command="{Binding CargarDatosCommand}"
-                        Classes="Primary" Theme="{DynamicResource SolidButton}"
-                        MinHeight="38">
-                    <StackPanel Orientation="Horizontal" Spacing="6">
-                        <LucideIcon Kind="RefreshCw" Size="16" />
-                        <TextBlock Text="Actualizar" FontWeight="{StaticResource FontWeightSemiBold}" />
-                    </StackPanel>
-                </Button>
-            </Grid>
+                <WrapPanel>
+                    <TextBox Width="220"
+                             Margin="0,0,8,8"
+                             Text="{Binding NuevaCategoriaInput}"
+                             PlaceholderText="Nueva categoría (ej. Lácteos)..."
+                             MinHeight="{StaticResource SizeTouchTarget}" />
+                    <Button Margin="0,0,8,8"
+                            Command="{Binding CrearCategoriaCommand}"
+                            MinHeight="{StaticResource SizeTouchTarget}">
+                        <TextBlock Text="+ Categoría" FontWeight="{StaticResource FontWeightSemiBold}" />
+                    </Button>
+                    <Button Margin="0,0,8,8"
+                            Command="{Binding CargarDatosCommand}"
+                            Classes="Primary" Theme="{DynamicResource SolidButton}"
+                            MinHeight="{StaticResource SizeTouchTarget}">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <LucideIcon Kind="RefreshCw" Size="16" />
+                            <TextBlock Text="Actualizar" FontWeight="{StaticResource FontWeightSemiBold}" />
+                        </StackPanel>
+                    </Button>
+                </WrapPanel>
+            </StackPanel>
         </Border>
 
         <!-- Cuerpo Principal: Izquierda Proveedores / Derecha Sugeridos de Compra y Reabastecimiento -->
-        <Grid Grid.Row="2" ColumnDefinitions="*,16,460">
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" MinWidth="300" />
+                <ColumnDefinition Width="16" />
+                <ColumnDefinition Width="*" MinWidth="280" />
+            </Grid.ColumnDefinitions>
 
             <!-- Columna Izquierda: CRUD de Proveedores -->
             <Grid Grid.Column="0" RowDefinitions="Auto,12,*">
@@ -63,26 +73,45 @@
                                    FontFamily="{StaticResource FontFamilyStackSans}"
                                    FontWeight="{StaticResource FontWeightBold}" />
 
-                        <Grid ColumnDefinitions="*,8,170,8,150,8,*">
-                            <TextBox Grid.Column="0" Text="{Binding NombreProveedorInput}" PlaceholderText="Razón Social / Proveedor" />
-                            <TextBox Grid.Column="2" Text="{Binding NitProveedorInput}" PlaceholderText="NIT (ej. 900123456-1)" FontFamily="{StaticResource FontFamilyPlexCondensed}" />
-                            <TextBox Grid.Column="4" Text="{Binding TelefonoProveedorInput}" PlaceholderText="Teléfono" FontFamily="{StaticResource FontFamilyPlexCondensed}" />
-                            <TextBox Grid.Column="6" Text="{Binding CorreoProveedorInput}" PlaceholderText="Correo de pedidos" />
-                        </Grid>
+                        <WrapPanel>
+                            <TextBox Width="170"
+                                     Margin="0,0,8,8"
+                                     Text="{Binding NombreProveedorInput}"
+                                     PlaceholderText="Razón Social / Proveedor"
+                                     ToolTip.Tip="Razón Social / Proveedor" />
+                            <TextBox Width="150"
+                                     Margin="0,0,8,8"
+                                     Text="{Binding NitProveedorInput}"
+                                     PlaceholderText="NIT (ej. 900123456-1)"
+                                     FontFamily="{StaticResource FontFamilyPlexCondensed}" />
+                            <TextBox Width="130"
+                                     Margin="0,0,8,8"
+                                     Text="{Binding TelefonoProveedorInput}"
+                                     PlaceholderText="Teléfono"
+                                     FontFamily="{StaticResource FontFamilyPlexCondensed}" />
+                            <TextBox Width="170"
+                                     Margin="0,0,8,8"
+                                     Text="{Binding CorreoProveedorInput}"
+                                     PlaceholderText="Correo de pedidos" />
+                        </WrapPanel>
 
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
-                            <Button Command="{Binding LimpiarFormularioProveedorCommand}">
-                                <TextBlock Text="Nuevo / Limpiar" />
+                        <WrapPanel HorizontalAlignment="Right">
+                            <Button Margin="0,0,8,8"
+                                    MinHeight="{StaticResource SizeTouchTarget}"
+                                    Command="{Binding LimpiarFormularioProveedorCommand}">
+                                <TextBlock Text="Nuevo / Limpiar" TextWrapping="Wrap" />
                             </Button>
-                            <Button Command="{Binding GuardarProveedorCommand}"
+                            <Button Margin="0,0,8,8"
+                                    Command="{Binding GuardarProveedorCommand}"
                                     Classes="Primary" Theme="{DynamicResource SolidButton}"
+                                    MinHeight="{StaticResource SizeTouchTarget}"
                                     Padding="16,8">
                                 <StackPanel Orientation="Horizontal" Spacing="6">
                                     <LucideIcon Kind="Save" Size="16" />
-                                    <TextBlock Text="Guardar Proveedor" FontWeight="{StaticResource FontWeightBold}" />
+                                    <TextBlock Text="Guardar Proveedor" FontWeight="{StaticResource FontWeightBold}" TextWrapping="Wrap" />
                                 </StackPanel>
                             </Button>
-                        </StackPanel>
+                        </WrapPanel>
                     </StackPanel>
                 </Border>
 
@@ -100,11 +129,11 @@
                           ScrollViewer.HorizontalScrollBarVisibility="Auto"
                           ScrollViewer.VerticalScrollBarVisibility="Auto">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="65" FontFamily="{StaticResource FontFamilyPlexCondensed}" />
-                            <DataGridTextColumn Header="RAZÓN SOCIAL" Binding="{Binding Nombre}" Width="*" />
-                            <DataGridTextColumn Header="NIT" Binding="{Binding Nit}" Width="140" FontFamily="{StaticResource FontFamilyPlexCondensed}" />
-                            <DataGridTextColumn Header="TELÉFONO" Binding="{Binding Telefono}" Width="125" FontFamily="{StaticResource FontFamilyPlexCondensed}" />
-                            <DataGridTextColumn Header="CORREO" Binding="{Binding Correo}" Width="190" />
+                            <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="65" MinWidth="60" FontFamily="{StaticResource FontFamilyPlexCondensed}" />
+                            <DataGridTextColumn Header="RAZÓN SOCIAL" Binding="{Binding Nombre}" Width="*" MinWidth="160" />
+                            <DataGridTextColumn Header="NIT" Binding="{Binding Nit}" Width="140" MinWidth="120" FontFamily="{StaticResource FontFamilyPlexCondensed}" />
+                            <DataGridTextColumn Header="TELÉFONO" Binding="{Binding Telefono}" Width="125" MinWidth="110" FontFamily="{StaticResource FontFamilyPlexCondensed}" />
+                            <DataGridTextColumn Header="CORREO" Binding="{Binding Correo}" Width="190" MinWidth="150" />
                         </DataGrid.Columns>
                     </DataGrid>
                 </Border>
@@ -123,7 +152,9 @@
                         <TextBlock Text="Sugeridos de Compra y Traslado"
                                    FontFamily="{StaticResource FontFamilyStackSans}"
                                    FontSize="{StaticResource FontSizeTitle}"
-                                   FontWeight="{StaticResource FontWeightBold}" />
+                                   FontWeight="{StaticResource FontWeightBold}"
+                                   TextTrimming="CharacterEllipsis"
+                                   ToolTip.Tip="Sugeridos de Compra y Traslado" />
                     </StackPanel>
 
                     <Button Grid.Row="2"
@@ -132,54 +163,67 @@
                             BorderBrush="{DynamicResource BrushPrimaryText}"
                             BorderThickness="1"
                             HorizontalAlignment="Stretch"
-                            HorizontalContentAlignment="Center"
-                            MinHeight="40">
+                             HorizontalContentAlignment="Center"
+                             MinHeight="{StaticResource SizeTouchTarget}">
                         <StackPanel Orientation="Horizontal" Spacing="8">
                             <LucideIcon Kind="Sparkles" Size="16" Foreground="{DynamicResource BrushPrimaryText}" />
                             <TextBlock Text="Calcular Sugeridos según Stock Mínimo"
                                        FontWeight="{StaticResource FontWeightBold}"
-                                       Foreground="{DynamicResource BrushPrimaryText}" />
+                                       Foreground="{DynamicResource BrushPrimaryText}"
+                                       TextWrapping="Wrap" />
                         </StackPanel>
                     </Button>
 
-                    <ScrollViewer Grid.Row="4">
-                        <ItemsControl ItemsSource="{Binding SolicitudesPendientes}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate x:DataType="vm:SolicitudReabastecimientoItemViewModel">
-                                    <Border Background="{DynamicResource BrushSurfaceSubtle}"
-                                            BorderBrush="{DynamicResource BrushBorderSubtle}"
-                                            BorderThickness="1"
-                                            CornerRadius="{StaticResource RadiusMedium}"
-                                            Margin="0,4"
-                                            Padding="12,10">
-                                        <Grid ColumnDefinitions="*,Auto">
-                                            <StackPanel Grid.Column="0" Spacing="2">
-                                                <TextBlock Text="{Binding NombreProducto}"
-                                                           FontWeight="{StaticResource FontWeightBold}" />
-                                                <TextBlock Text="{Binding CodigoBarras, StringFormat='EAN: {0}'}"
-                                                           FontFamily="{StaticResource FontFamilyPlexCondensed}"
-                                                           FontSize="{StaticResource FontSizeCaption}"
-                                                           Foreground="{DynamicResource BrushTextSecondary}" />
-                                                <TextBlock Text="{Binding CantidadSolicitada, StringFormat='Cantidad sugerida a surtir: {0} uds/g'}"
-                                                           FontFamily="{StaticResource FontFamilyPlexCondensed}"
-                                                           FontWeight="{StaticResource FontWeightSemiBold}"
-                                                           Foreground="{DynamicResource BrushWarningText}" />
-                                            </StackPanel>
+                    <ListBox Grid.Row="4"
+                             ItemsSource="{Binding SolicitudesPendientes}"
+                             Background="Transparent"
+                             BorderThickness="0"
+                             MaxHeight="320"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                        <ListBox.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <VirtualizingStackPanel />
+                            </ItemsPanelTemplate>
+                        </ListBox.ItemsPanel>
+                        <ListBox.ItemTemplate>
+                            <DataTemplate x:DataType="vm:SolicitudReabastecimientoItemViewModel">
+                                <Border Background="{DynamicResource BrushSurfaceSubtle}"
+                                        BorderBrush="{DynamicResource BrushBorderSubtle}"
+                                        BorderThickness="1"
+                                        CornerRadius="{StaticResource RadiusMedium}"
+                                        Margin="0,4"
+                                        Padding="12,10">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <StackPanel Grid.Column="0" Spacing="2">
+                                            <TextBlock Text="{Binding NombreProducto}"
+                                                       FontWeight="{StaticResource FontWeightBold}"
+                                                       TextTrimming="CharacterEllipsis"
+                                                       ToolTip.Tip="{Binding NombreProducto}" />
+                                            <TextBlock Text="{Binding CodigoBarras, StringFormat='EAN: {0}'}"
+                                                       FontFamily="{StaticResource FontFamilyPlexCondensed}"
+                                                       FontSize="{StaticResource FontSizeCaption}"
+                                                       Foreground="{DynamicResource BrushTextSecondary}" />
+                                            <TextBlock Text="{Binding CantidadSolicitada, StringFormat='Cantidad sugerida a surtir: {0} uds/g'}"
+                                                       FontFamily="{StaticResource FontFamilyPlexCondensed}"
+                                                       FontWeight="{StaticResource FontWeightSemiBold}"
+                                                       Foreground="{DynamicResource BrushWarningText}"
+                                                       TextTrimming="CharacterEllipsis" />
+                                        </StackPanel>
 
-                                            <Button Grid.Column="1"
-                                                    Command="{Binding $parent[UserControl].((vm:ComprasProveedoresViewModel)DataContext).AtenderSolicitudReabastecimientoCommand}"
-                                                    CommandParameter="{Binding}"
-                                                    VerticalAlignment="Center"
-                                                    Classes="Success" Theme="{DynamicResource SolidButton}"
-                                                    Padding="12,6">
-                                                <TextBlock Text="Surtir Estante" FontWeight="{StaticResource FontWeightBold}" />
-                                            </Button>
-                                        </Grid>
-                                    </Border>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </ScrollViewer>
+                                        <Button Grid.Column="1"
+                                                Command="{Binding $parent[UserControl].((vm:ComprasProveedoresViewModel)DataContext).AtenderSolicitudReabastecimientoCommand}"
+                                                CommandParameter="{Binding}"
+                                                VerticalAlignment="Center"
+                                                Classes="Success" Theme="{DynamicResource SolidButton}"
+                                                MinHeight="{StaticResource SizeTouchTarget}"
+                                                Padding="12,6">
+                                            <TextBlock Text="Surtir Estante" FontWeight="{StaticResource FontWeightBold}" TextWrapping="Wrap" />
+                                        </Button>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
                 </Grid>
             </Border>
         </Grid>
@@ -191,7 +235,7 @@
                 BorderThickness="1"
                 CornerRadius="{StaticResource RadiusSmall}"
                 Padding="12,8">
-            <TextBlock Text="{Binding MensajeEstado}" FontWeight="{StaticResource FontWeightMedium}" />
+            <TextBlock Text="{Binding MensajeEstado}" FontWeight="{StaticResource FontWeightMedium}" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding MensajeEstado}" />
         </Border>
     </Grid>
 </UserControl>
