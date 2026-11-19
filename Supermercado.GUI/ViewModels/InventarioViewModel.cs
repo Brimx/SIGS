@@ -155,7 +155,7 @@ public partial class InventarioViewModel : ViewModelBase
                 CantidadEstante = c.CantidadEstante,
                 CantidadBodega = c.CantidadBodega,
                 TotalStock = c.TotalStock,
-                EnAlertaStockBajo = idsBajoMinimo.Contains(c.ProductoId) || c.CantidadEstante <= 10,
+                EnAlertaStockBajo = idsBajoMinimo.Contains(c.ProductoId),
                 ProximoAVencer = lotesPorVencerIds.Contains(c.LoteId)
             });
 
@@ -172,6 +172,26 @@ public partial class InventarioViewModel : ViewModelBase
         }
     }
 
+    public string CrearCsv()
+    {
+        static string Escapar(string valor)
+            => "\"" + valor.Replace("\"", "\"\"") + "\"";
+
+        var filas = new List<string>
+        {
+            "Codigo,Producto,Lote,Vencimiento,Estante,Bodega,Total,Estado"
+        };
+        filas.AddRange(ProductosFiltrados.Select(item => string.Join(",",
+            Escapar(item.CodigoBarras),
+            Escapar(item.NombreProducto),
+            Escapar(item.NumeroLote),
+            Escapar(item.FechaVencimiento.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture)),
+            item.CantidadEstante.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            item.CantidadBodega.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            item.TotalStock.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            Escapar(item.EstadoBadge))));
+        return string.Join("\r\n", filas);
+    }
     public void AplicarFiltros()
     {
         var query = _todosLosItems.AsEnumerable();

@@ -15,45 +15,50 @@
                     BorderThickness="1"
                     CornerRadius="{StaticResource RadiusMedium}"
                     Padding="16,12">
-                <Grid ColumnDefinitions="*,16,Auto,12,Auto,16,Auto,8,Auto">
-                    <TextBox Grid.Column="0"
+                <WrapPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBox
                              Text="{Binding FiltroTexto}"
                              PlaceholderText="Filtrar por código de barras, nombre de producto o número de lote..."
-                             MinHeight="38" />
+                             MinHeight="38" Width="300" Margin="0,0,12,8" />
 
-                    <CheckBox Grid.Column="2"
+                    <CheckBox
                               IsChecked="{Binding SoloStockBajo}"
-                              VerticalAlignment="Center">
+                              VerticalAlignment="Center" Margin="0,0,12,8">
                         <TextBlock Text="{Binding AlertasStockBajoCount, StringFormat='Solo Stock Bajo ({0})'}"
                                    FontWeight="{StaticResource FontWeightMedium}" />
                     </CheckBox>
 
-                    <CheckBox Grid.Column="4"
+                    <CheckBox
                               IsChecked="{Binding SoloProximosAVencer}"
-                              VerticalAlignment="Center">
+                              VerticalAlignment="Center" Margin="0,0,12,8">
                         <TextBlock Text="{Binding LotesPorVencerCount, StringFormat='Próximos a Vencer ({0})'}"
                                    FontWeight="{StaticResource FontWeightMedium}" />
                     </CheckBox>
 
-                    <Button Grid.Column="6"
+                    <Button
                             Command="{Binding AbrirModalMermaCommand}"
-                            MinHeight="38">
+                            MinHeight="38" Margin="0,0,8,8">
                         <StackPanel Orientation="Horizontal" Spacing="6">
                             <LucideIcon Kind="TriangleAlert" Size="16" Foreground="{DynamicResource BrushWarningText}" />
                             <TextBlock Text="Baja por Merma" FontWeight="{StaticResource FontWeightSemiBold}" />
                         </StackPanel>
                     </Button>
 
-                    <Button Grid.Column="8"
+                    <Button Click="ExportarCsv_Click"
+                            MinHeight="38" Margin="0,0,8,8">
+                        <TextBlock Text="Exportar CSV" />
+                    </Button>
+
+                    <Button
                             Command="{Binding ActualizarListadoCommand}"
                             Classes="Primary" Theme="{DynamicResource SolidButton}"
-                            MinHeight="38">
+                            MinHeight="38" Margin="0,0,8,8">
                         <StackPanel Orientation="Horizontal" Spacing="6">
                             <LucideIcon Kind="RefreshCw" Size="16" />
                             <TextBlock Text="Actualizar" FontWeight="{StaticResource FontWeightSemiBold}" />
                         </StackPanel>
                     </Button>
-                </Grid>
+                </WrapPanel>
             </Border>
 
             <!-- Grilla Densa de Inventario Consolidado FEFO -->
@@ -67,15 +72,28 @@
                           SelectedItem="{Binding ItemSeleccionado}"
                           IsReadOnly="True"
                           CanUserResizeColumns="True"
+                          ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                          ScrollViewer.VerticalScrollBarVisibility="Auto"
                           GridLinesVisibility="Horizontal">
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="CÓDIGO"
                                             Binding="{Binding CodigoBarras}"
                                             Width="120"
                                             FontFamily="{StaticResource FontFamilyPlexCondensed}" />
-                        <DataGridTextColumn Header="PRODUCTO"
-                                            Binding="{Binding NombreProducto}"
-                                            Width="*" />
+                        <DataGridTemplateColumn Header="PRODUCTO" Width="*" MinWidth="160">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Grid ColumnDefinitions="Auto,*" ToolTip.Tip="{Binding NombreProducto}">
+                                        <LucideIcon Grid.Column="0" Kind="TriangleAlert" Size="14"
+                                                    Margin="0,0,6,0"
+                                                    Foreground="{DynamicResource BrushWarningText}"
+                                                    IsVisible="{Binding EnAlertaStockBajo}" />
+                                        <TextBlock Grid.Column="1" Text="{Binding NombreProducto}"
+                                                   TextTrimming="CharacterEllipsis" />
+                                    </Grid>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
                         <DataGridTextColumn Header="LOTE FEFO"
                                             Binding="{Binding NumeroLote}"
                                             Width="120"

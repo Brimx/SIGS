@@ -92,6 +92,7 @@ public static class ExtensionesLogica
         servicios.AddScoped<IVerificadorCorreo, VerificadorCorreoNulo>();
 
         servicios.AddScoped<IWidget, VentasDelDiaWidget>();
+        servicios.AddScoped<IWidget, ResumenOperativoWidget>();
         servicios.AddScoped<IWidget, ReabastecimientosPendientesWidget>();
         servicios.AddScoped<IWidget, TrmDelDiaWidget>();
         servicios.AddScoped<IWidget, IvaGeneradoWidget>();
