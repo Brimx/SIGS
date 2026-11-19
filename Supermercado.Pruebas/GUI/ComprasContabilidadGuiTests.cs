@@ -34,8 +34,12 @@ public sealed class ComprasContabilidadGuiTests
 
         Assert.Contains("RowDefinitions=\"Auto,12,Auto\" ColumnDefinitions=\"*,12,*\"", contabilidad);
         Assert.Contains("Grid.Row=\"2\" Grid.Column=\"2\"", contabilidad);
+        Assert.Contains("ScrollViewer Grid.Row=\"4\"", contabilidad);
+        Assert.Contains("MinHeight=\"520\"", contabilidad);
         Assert.Contains("<WrapPanel>", contabilidad);
         Assert.Contains("MinWidth=\"130\"", contabilidad);
+        Assert.Contains("MinWidth=\"560\"", contabilidad);
+        Assert.Contains("TextWrapping=\"Wrap\"", contabilidad);
         Assert.Contains("ToolTip.Tip=\"{Binding IngresosTotalesFormateado}\"", contabilidad);
         Assert.DoesNotContain("Text=\"{Binding MensajeEstado}\"", contabilidad);
         Assert.DoesNotContain("ColumnDefinitions=\"*,16,Auto,8,110,12,Auto,8,Auto,8,Auto\"", contabilidad);

@@ -104,7 +104,10 @@
         </Grid>
 
         <!-- Cuerpo: Izquierda Discriminación por Tarifas de IVA y Gastos / Derecha Historial de Arqueos Z -->
-        <Grid Grid.Row="4" ColumnDefinitions="*,16,*">
+        <ScrollViewer Grid.Row="4"
+                      VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled">
+            <Grid MinHeight="520" ColumnDefinitions="*,16,*">
 
             <!-- Izquierda: Desglose Tributario IVA (0%, 5%, 19%) y Registro de Gastos -->
             <Grid Grid.Column="0" RowDefinitions="*,12,Auto">
@@ -126,6 +129,8 @@
                         </Border>
                         <DataGrid Grid.Row="1"
                                   ItemsSource="{Binding DesgloseIvaTarifas}"
+                                  MinHeight="160"
+                                  MinWidth="460"
                                   IsReadOnly="True"
                                   CanUserResizeColumns="True"
                                   GridLinesVisibility="Horizontal"
@@ -153,8 +158,9 @@
                         <TextBox Width="240"
                                  Margin="0,0,8,8"
                                  Text="{Binding DescripcionGastoInput}"
-                                 PlaceholderText="Registrar egreso / gasto operativo..."
-                                 ToolTip.Tip="Registrar egreso / gasto operativo (ej. Servicios públicos, flete)" />
+                                  PlaceholderText="Registrar egreso / gasto operativo..."
+                                  TextWrapping="Wrap"
+                                  ToolTip.Tip="Registrar egreso / gasto operativo (ej. Servicios públicos, flete)" />
                         <NumericUpDown Width="150"
                                        Margin="0,0,8,8"
                                        Value="{Binding MontoGastoInput}"
@@ -191,6 +197,8 @@
                     </Border>
                     <DataGrid Grid.Row="1"
                               ItemsSource="{Binding HistorialArqueos}"
+                              MinHeight="180"
+                              MinWidth="560"
                               IsReadOnly="True"
                               CanUserResizeColumns="True"
                               GridLinesVisibility="Horizontal"
@@ -206,6 +214,7 @@
                     </DataGrid>
                 </Grid>
             </Border>
-        </Grid>
+            </Grid>
+        </ScrollViewer>
     </Grid>
 </UserControl>
