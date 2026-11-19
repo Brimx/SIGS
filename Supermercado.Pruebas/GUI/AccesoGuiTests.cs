@@ -13,11 +13,13 @@ public sealed class AccesoGuiTests
     {
         var login = Leer("Supermercado.GUI/Views/LoginView.axaml");
 
-        Assert.Contains("<ColumnDefinition Width=\"Auto\" />", login);
-        Assert.Contains("MaxWidth=\"480\"", login);
+        Assert.Contains("MaxWidth=\"720\"", login);
+        Assert.Contains("MaxWidth=\"680\"", login);
+        Assert.Contains("HorizontalAlignment=\"Stretch\"", login);
         Assert.Contains("VerticalScrollBarVisibility=\"Auto\"", login);
         Assert.Contains("<UniformGrid Columns=\"2\">", login);
         Assert.Contains("MinHeight=\"44\"", login);
+        Assert.DoesNotContain("ScrollViewer Grid.Column=\"1\"", login);
         Assert.DoesNotContain("ColumnDefinitions=\"*,480,*\"", login);
     }
 

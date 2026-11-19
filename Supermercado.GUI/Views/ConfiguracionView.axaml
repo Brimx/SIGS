@@ -98,6 +98,8 @@
                             </Button>
                             <TextBox Text="{Binding InstruccionVinculacion}"
                                      IsReadOnly="True"
+                                     TextWrapping="Wrap"
+                                     ToolTip.Tip="{Binding InstruccionVinculacion}"
                                      PlaceholderText="El código aparecerá aquí" />
                             <TextBlock Classes="Ayuda"
                                        Text="{Binding MensajeVinculacion}"
