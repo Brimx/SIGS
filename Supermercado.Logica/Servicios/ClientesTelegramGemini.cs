@@ -1,20 +1,38 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Net.Http.Headers;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.RegularExpressions;
+using Microsoft.Extensions.Logging;
 
 namespace Supermercado.Logica.Servicios;
 
-public sealed class ClienteGeminiHttp(HttpClient http, string? clave = null, string? modelo = null)
+
+public sealed class ClienteGeminiHttp(
+    HttpClient http,
+    string? clave = null,
+    string? modelo = null,
+    ILogger<ClienteGeminiHttp>? logger = null)
     : IClienteGemini
 {
     public const string ModeloPorDefecto = "gemini-3.8-flash";
+    private const string Rojo = "[redactado]";
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
+    private static readonly HashSet<string> CamposSensibles = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "apiKey", "authorization", "args", "chatId", "chat_id", "clave", "contents",
+        "cookie", "documento", "email", "functionCall", "functionResponse", "headers",
+        "id", "motivo", "password", "phone", "prompt", "secret", "systemInstruction",
+        "telefono", "text", "token", "usuarioId", "userId", "x-goog-api-key"
+    };
     private readonly string? _clave = (clave ?? Environment.GetEnvironmentVariable("SIGS_GEMINI_API_KEY"))?.Trim();
     private readonly string _modelo = LeerModelo(modelo);
+    private readonly ILogger<ClienteGeminiHttp>? _logger = logger;
 
     private static string LeerModelo(string? modelo)
+
     {
         var configurado = string.IsNullOrWhiteSpace(modelo)
             ? Environment.GetEnvironmentVariable("SIGS_GEMINI_MODEL")
@@ -43,8 +61,112 @@ public sealed class ClienteGeminiHttp(HttpClient http, string? clave = null, str
         }
     }
 
+    private async Task RegistrarErrorAsync(
+        HttpResponseMessage respuesta,
+        CancellationToken cancelacion)
+    {
+        var cuerpo = await LeerCuerpoErrorAsync(respuesta, cancelacion);
+        _logger?.LogWarning(
+            "Gemini respondió {StatusCode}. Cuerpo saneado: {CuerpoSaneado}",
+            (int)respuesta.StatusCode,
+            cuerpo);
+    }
+
+    private async Task<string> LeerCuerpoErrorAsync(
+        HttpResponseMessage respuesta,
+        CancellationToken cancelacion)
+    {
+        string cuerpo;
+        try
+        {
+            cuerpo = await respuesta.Content.ReadAsStringAsync(cancelacion);
+        }
+        catch (TaskCanceledException) when (cancelacion.IsCancellationRequested)
+        {
+            return "(sin cuerpo)";
+        }
+        catch (HttpRequestException)
+        {
+            return "(sin cuerpo)";
+        }
+
+        return string.IsNullOrWhiteSpace(cuerpo)
+            ? "(sin cuerpo)"
+            : SanitizarCuerpo(cuerpo);
+    }
+
+    private string SanitizarCuerpo(string cuerpo)
+    {
+        try
+        {
+            using var json = JsonDocument.Parse(cuerpo);
+            using var flujo = new MemoryStream();
+            using (var escritor = new Utf8JsonWriter(flujo))
+            {
+                EscribirSanitizado(json.RootElement, escritor);
+            }
+
+            return Recortar(Encoding.UTF8.GetString(flujo.ToArray()));
+        }
+        catch (JsonException)
+        {
+            return Recortar(SanitizarTexto(cuerpo, _clave));
+        }
+    }
+
+    private void EscribirSanitizado(JsonElement elemento, Utf8JsonWriter escritor)
+    {
+        switch (elemento.ValueKind)
+        {
+            case JsonValueKind.Object:
+                escritor.WriteStartObject();
+                foreach (var propiedad in elemento.EnumerateObject())
+                {
+                    escritor.WritePropertyName(propiedad.Name);
+                    if (CamposSensibles.Contains(propiedad.Name))
+                        escritor.WriteStringValue(Rojo);
+                    else
+                        EscribirSanitizado(propiedad.Value, escritor);
+                }
+                escritor.WriteEndObject();
+                break;
+            case JsonValueKind.Array:
+                escritor.WriteStartArray();
+                foreach (var hijo in elemento.EnumerateArray())
+                    EscribirSanitizado(hijo, escritor);
+                escritor.WriteEndArray();
+                break;
+            case JsonValueKind.String:
+                escritor.WriteStringValue(
+                    SanitizarTexto(elemento.GetString() ?? string.Empty, _clave));
+                break;
+            default:
+                elemento.WriteTo(escritor);
+                break;
+        }
+    }
+
+    private static string SanitizarTexto(string texto, string? clave)
+    {
+        var resultado = string.IsNullOrWhiteSpace(clave)
+            ? texto
+            : texto.Replace(clave, Rojo, StringComparison.OrdinalIgnoreCase);
+        resultado = Regex.Replace(resultado, @"AIza[0-9A-Za-z_-]{20,}", Rojo);
+        resultado = Regex.Replace(
+            resultado,
+            @"(?i)\b(?:bearer|api[_-]?key|token)\s*[:=]?\s*[A-Za-z0-9_-]{16,}",
+            Rojo);
+        resultado = Regex.Replace(resultado, @"[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}", "[correo]");
+        resultado = Regex.Replace(resultado, @"\+?\d[\d\s().-]{6,}\d", "[numero]");
+        return resultado;
+    }
+
+    private static string Recortar(string texto)
+        => texto.Length <= 512 ? texto : texto[..512] + "…";
+
     public async Task<SolicitudHerramienta?> ElegirHerramientaAsync(
         string mensaje,
+
         CancellationToken cancelacion = default)
     {
         if (string.IsNullOrWhiteSpace(_clave))
@@ -80,6 +202,8 @@ public sealed class ClienteGeminiHttp(HttpClient http, string? clave = null, str
         };
 
         using var respuesta = await EnviarGeminiAsync(uri, cuerpo, cancelacion);
+        if (!respuesta.IsSuccessStatusCode)
+            await RegistrarErrorAsync(respuesta, cancelacion);
         if (respuesta.StatusCode == HttpStatusCode.TooManyRequests)
             throw new GeminiNoDisponibleException("Gemini alcanzó el límite de cuota. Intenta más tarde o usa /stock, /ventas, /caja o /resumen.");
         if (!respuesta.IsSuccessStatusCode)
@@ -92,6 +216,7 @@ public sealed class ClienteGeminiHttp(HttpClient http, string? clave = null, str
         }
 
         await using var flujo = await respuesta.Content.ReadAsStreamAsync(cancelacion);
+
         using var json = await JsonDocument.ParseAsync(flujo, cancellationToken: cancelacion);
         if (!json.RootElement.TryGetProperty("candidates", out var candidatos)
             || candidatos.GetArrayLength() == 0)

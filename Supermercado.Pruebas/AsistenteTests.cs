@@ -1,8 +1,10 @@
 using System.Net;
 using System.Text;
+using Microsoft.Extensions.Logging;
 using Supermercado.Logica.Servicios;
 
 namespace Supermercado.Pruebas;
+
 
 public sealed class AsistenteTests
 {
@@ -89,8 +91,63 @@ public sealed class AsistenteTests
         Assert.Contains("/stock", error.Message);
     }
 
+    [Fact]
+    public async Task ClienteGemini_RegistraErrorSinExponerClaveNiDatosSensibles()
+    {
+        const string respuesta = """
+            {"error":{"code":400,"status":"INVALID_ARGUMENT","message":"clave-prueba rechazada para cliente@example.com","prompt":"dato sensible"}}
+            """;
+        var registro = new RegistroFalso();
+        var cliente = new ClienteGeminiHttp(
+            new HttpClient(new HandlerFalso(respuesta, HttpStatusCode.BadRequest)),
+            "clave-prueba",
+            "gemini-prueba",
+            registro);
+
+        await Assert.ThrowsAsync<GeminiNoDisponibleException>(
+            () => cliente.ElegirHerramientaAsync("consulta natural"));
+
+        var mensaje = Assert.Single(registro.Mensajes);
+        Assert.Contains("400", mensaje);
+        Assert.Contains("INVALID_ARGUMENT", mensaje);
+        Assert.Contains(Rojo, mensaje);
+        Assert.DoesNotContain("clave-prueba", mensaje);
+        Assert.DoesNotContain("cliente@example.com", mensaje);
+        Assert.DoesNotContain("dato sensible", mensaje);
+    }
+
+    private const string Rojo = "[redactado]";
+
+    private sealed class RegistroFalso : ILogger<ClienteGeminiHttp>
+    {
+        public List<string> Mensajes { get; } = [];
+
+        public IDisposable BeginScope<TState>(TState state) where TState : notnull
+            => new AlcanceFalso();
+
+        public bool IsEnabled(LogLevel logLevel) => true;
+
+        public void Log<TState>(
+            LogLevel logLevel,
+            EventId eventId,
+            TState state,
+            Exception? exception,
+            Func<TState, Exception?, string> formatter)
+        {
+            Mensajes.Add(formatter(state, exception));
+        }
+
+        private sealed class AlcanceFalso : IDisposable
+        {
+            public void Dispose()
+            {
+            }
+        }
+    }
+
     private sealed class GeminiFalso : IClienteGemini
     {
+
         public int Llamadas { get; private set; }
         public SolicitudHerramienta? Resultado { get; init; }
 
