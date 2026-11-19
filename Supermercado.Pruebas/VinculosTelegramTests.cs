@@ -16,8 +16,8 @@ public sealed class VinculosTelegramTests
             var store = new VinculosTelegram(reloj, ruta);
             var codigo = store.GenerarCodigo(17, "gerente");
 
-            Assert.True(store.Vincular(codigo, 500, 900));
-            Assert.False(store.Vincular(codigo, 501, 900));
+            Assert.Equal(ResultadoVinculacion.Vinculado, store.Vincular(codigo, 500, 900));
+            Assert.Equal(ResultadoVinculacion.CodigoInvalido, store.Vincular(codigo, 501, 900));
 
             var recargado = new VinculosTelegram(reloj, ruta);
             Assert.Equal(17, recargado.Buscar(500)?.EmpleadoId);
@@ -30,6 +30,32 @@ public sealed class VinculosTelegramTests
     }
 
     [Fact]
+    public void CodigoNuevo_ReemplazaElVinculoDelMismoChatYSeConsume()
+    {
+        var ruta = Path.Combine(Path.GetTempPath(), $"telegram-{Guid.NewGuid():N}.json");
+        try
+        {
+            var reloj = new RelojVariable();
+            var vinculos = new VinculosTelegram(reloj, ruta);
+            var primerCodigo = vinculos.GenerarCodigo(1, "cajero");
+            var segundoCodigo = vinculos.GenerarCodigo(2, "gerente");
+
+            Assert.Equal(ResultadoVinculacion.Vinculado, vinculos.Vincular(primerCodigo, 500, 900));
+            Assert.Equal(ResultadoVinculacion.Vinculado, vinculos.Vincular(segundoCodigo, 500, 900));
+
+            Assert.Equal(2, vinculos.Buscar(500)?.EmpleadoId);
+            Assert.Equal("gerente", vinculos.Buscar(500)?.NombreUsuario);
+            Assert.Equal(ResultadoVinculacion.CodigoInvalido, vinculos.Vincular(segundoCodigo, 501, 900));
+            Assert.Single(new VinculosTelegram(reloj, ruta).ObtenerTodos());
+        }
+        finally
+        {
+            if (File.Exists(ruta))
+                File.Delete(ruta);
+        }
+    }
+
+    [Fact]
     public void Desvincular_QuitaElChatPersistido()
     {
         var ruta = Path.Combine(Path.GetTempPath(), $"telegram-{Guid.NewGuid():N}.json");
@@ -38,7 +64,7 @@ public sealed class VinculosTelegramTests
             var reloj = new RelojVariable();
             var vinculos = new VinculosTelegram(reloj, ruta);
             var codigo = vinculos.GenerarCodigo(4, "gerente");
-            Assert.True(vinculos.Vincular(codigo, 123, 456));
+            Assert.Equal(ResultadoVinculacion.Vinculado, vinculos.Vincular(codigo, 123, 456));
 
             vinculos.Desvincular(123);
 
@@ -60,7 +86,7 @@ public sealed class VinculosTelegramTests
         var codigo = store.GenerarCodigo(17, "gerente");
         reloj.Ahora = reloj.Ahora.AddMinutes(11);
 
-        Assert.False(store.Vincular(codigo, 500, 900));
+        Assert.Equal(ResultadoVinculacion.CodigoVencido, store.Vincular(codigo, 500, 900));
     }
 
     [Fact]

@@ -50,10 +50,25 @@ public sealed class ProcesadorTelegram(
         if (actualizacion.Texto is not string texto)
             return;
 
+        var partes = texto.Trim().Split(' ', 2, StringSplitOptions.RemoveEmptyEntries);
+        var comando = partes.Length == 0
+            ? null
+            : partes[0].Split('@')[0].ToLowerInvariant();
+
+        if (comando is "/start" or "/desvincular" or "/quien")
+        {
+            await ProcesarComandoCuentaAsync(
+                comando, partes, chatId, usuarioTelegramId, cancelacion);
+            return;
+        }
+
         var enlace = vinculos.Buscar(chatId);
         if (enlace is null)
         {
-            await VincularAsync(texto, chatId, usuarioTelegramId, cancelacion);
+            await telegram.EnviarMensajeAsync(
+                chatId,
+                "Este bot solo responde a chats vinculados. Genera un código en Configuración y envía /start CODIGO en un chat privado.",
+                cancelacion: cancelacion);
             return;
         }
 
@@ -161,29 +176,177 @@ public sealed class ProcesadorTelegram(
         }
     }
 
-    private async Task VincularAsync(
-        string texto,
+    private async Task ProcesarComandoCuentaAsync(
+        string comando,
+        string[] partes,
         long chatId,
         long usuarioTelegramId,
         CancellationToken cancelacion)
     {
-        var partes = texto.Trim().Split(' ', 2, StringSplitOptions.RemoveEmptyEntries);
-        if (partes.Length != 2
-            || !partes[0].Equals("/start", StringComparison.OrdinalIgnoreCase))
+        if (!vinculos.PermitirMensaje(chatId, reloj.GetUtcNow()))
+            return;
+
+        var enlace = vinculos.Buscar(chatId);
+
+        switch (comando)
+        {
+            case "/start":
+                if (partes.Length < 2)
+                {
+                    await ResponderStartSinCodigoAsync(enlace, chatId, cancelacion);
+                    return;
+                }
+
+                await VincularAsync(
+                    partes[1], chatId, usuarioTelegramId,
+                    enlace is not null, cancelacion);
+                return;
+
+            case "/desvincular":
+                await DesvincularAsync(
+                    enlace, chatId, usuarioTelegramId, cancelacion);
+                return;
+
+            case "/quien":
+                await ResponderQuienAsync(
+                    enlace, chatId, usuarioTelegramId, cancelacion);
+                return;
+        }
+    }
+
+    private async Task ResponderStartSinCodigoAsync(
+        VinculoTelegram? enlace,
+        long chatId,
+        CancellationToken cancelacion)
+    {
+        if (enlace is null)
         {
             await telegram.EnviarMensajeAsync(
                 chatId,
-                "Este bot solo responde a chats vinculados. Genera un código en Configuración y envía /start CODIGO en un chat privado.",
+                "Genera un código en Configuración y envía /start CODIGO en un chat privado para vincular este chat.",
                 cancelacion: cancelacion);
             return;
         }
 
-        if (!vinculos.Vincular(partes[1], chatId, usuarioTelegramId))
+        var usuario = await ObtenerUsuarioVinculadoAsync(enlace);
+        if (usuario is null)
+        {
+            vinculos.Desvincular(chatId);
+            await telegram.EnviarMensajeAsync(
+                chatId,
+                "La cuenta vinculada ya no está activa. Genera un nuevo código desde Configuración.",
+                cancelacion: cancelacion);
+            return;
+        }
+
+        await telegram.EnviarMensajeAsync(
+            chatId,
+            $"Este chat está vinculado con {usuario.NombreUsuario} (rol {RolDelUsuario(usuario)}). Para cambiarlo, genera un código en Configuración y envía /start CODIGO.",
+            cancelacion: cancelacion);
+    }
+
+    private async Task DesvincularAsync(
+        VinculoTelegram? enlace,
+        long chatId,
+        long usuarioTelegramId,
+        CancellationToken cancelacion)
+    {
+        if (enlace is null)
         {
             await telegram.EnviarMensajeAsync(
                 chatId,
-                "El código es inválido, venció o este chat ya está vinculado.",
+                "Este chat no está vinculado.",
                 cancelacion: cancelacion);
+            return;
+        }
+
+        if (enlace.UsuarioTelegramId != usuarioTelegramId)
+        {
+            await telegram.EnviarMensajeAsync(
+                chatId,
+                "Este chat está vinculado a otra cuenta de Telegram.",
+                cancelacion: cancelacion);
+            return;
+        }
+
+        var usuario = await usuarios.ObtenerPorNombreAsync(enlace.NombreUsuario);
+        vinculos.Desvincular(chatId);
+        if (usuario?.EmpleadoId == enlace.EmpleadoId)
+        {
+            using var contexto = sesion.UsarUsuario(usuario);
+            await auditoria.RegistrarAsync(
+                AccionAuditoria.VinculoTelegram,
+                nameof(Usuario),
+                usuario.Id,
+                "Origen: Telegram | Chat desvinculado");
+            await trabajo.GuardarAsync();
+        }
+
+        await telegram.EnviarMensajeAsync(
+            chatId,
+            "Desvinculación completada. Genera un código en Configuración para volver a vincular.",
+            cancelacion: cancelacion);
+    }
+
+    private async Task ResponderQuienAsync(
+        VinculoTelegram? enlace,
+        long chatId,
+        long usuarioTelegramId,
+        CancellationToken cancelacion)
+    {
+        if (enlace is null)
+        {
+            await telegram.EnviarMensajeAsync(
+                chatId,
+                "Este chat no está vinculado. Genera un código en Configuración y envía /start CODIGO.",
+                cancelacion: cancelacion);
+            return;
+        }
+
+        if (enlace.UsuarioTelegramId != usuarioTelegramId)
+        {
+            await telegram.EnviarMensajeAsync(
+                chatId,
+                "Este chat está vinculado a otra cuenta de Telegram.",
+                cancelacion: cancelacion);
+            return;
+        }
+
+        var usuario = await ObtenerUsuarioVinculadoAsync(enlace);
+        if (usuario is null)
+        {
+            vinculos.Desvincular(chatId);
+            await telegram.EnviarMensajeAsync(
+                chatId,
+                "La cuenta vinculada ya no está activa. Genera un nuevo código desde Configuración.",
+                cancelacion: cancelacion);
+            return;
+        }
+
+        await telegram.EnviarMensajeAsync(
+            chatId,
+            $"Vinculado como {usuario.NombreUsuario} (rol {RolDelUsuario(usuario)}).",
+            cancelacion: cancelacion);
+    }
+
+    private static string RolDelUsuario(Usuario usuario)
+        => usuario.Empleado?.Rol?.Nombre ?? "sin rol";
+
+    private async Task VincularAsync(
+        string codigo,
+        long chatId,
+        long usuarioTelegramId,
+        bool yaVinculado,
+        CancellationToken cancelacion)
+    {
+        var resultado = vinculos.Vincular(codigo, chatId, usuarioTelegramId);
+        if (resultado != ResultadoVinculacion.Vinculado)
+        {
+            var mensaje = resultado == ResultadoVinculacion.CodigoVencido
+                ? "El código venció. Genera uno nuevo desde Configuración."
+                : "El código es inválido o ya fue usado. Genera uno nuevo desde Configuración.";
+            await telegram.EnviarMensajeAsync(
+                chatId, mensaje, cancelacion: cancelacion);
             return;
         }
 
@@ -204,7 +367,9 @@ public sealed class ProcesadorTelegram(
             AccionAuditoria.VinculoTelegram,
             nameof(Usuario),
             usuario.Id,
-            "Origen: Telegram | Chat vinculado con código de un solo uso");
+            yaVinculado
+                ? "Origen: Telegram | Chat revinculado con código de un solo uso"
+                : "Origen: Telegram | Chat vinculado con código de un solo uso");
         await trabajo.GuardarAsync();
         await telegram.EnviarMensajeAsync(
             chatId,

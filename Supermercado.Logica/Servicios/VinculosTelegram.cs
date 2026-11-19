@@ -19,10 +19,17 @@ public sealed record AprobacionTelegram(
     long UsuarioDestino,
     DateTimeOffset Vence);
 
+public enum ResultadoVinculacion
+{
+    Vinculado,
+    CodigoInvalido,
+    CodigoVencido
+}
+
 public interface IVinculosTelegram
 {
     string GenerarCodigo(int empleadoId, string nombreUsuario);
-    bool Vincular(string codigo, long chatId, long usuarioTelegramId);
+    ResultadoVinculacion Vincular(string codigo, long chatId, long usuarioTelegramId);
     void Desvincular(long chatId);
     VinculoTelegram? Buscar(long chatId);
     IReadOnlyList<VinculoTelegram> ObtenerTodos();
@@ -86,24 +93,36 @@ public sealed class VinculosTelegram : IVinculosTelegram
         }
     }
 
-    public bool Vincular(string codigo, long chatId, long usuarioTelegramId)
+    public ResultadoVinculacion Vincular(
+        string codigo,
+        long chatId,
+        long usuarioTelegramId)
     {
         lock (_candado)
         {
+            if (string.IsNullOrEmpty(codigo))
+                return ResultadoVinculacion.CodigoInvalido;
+
+            if (_codigos.TryGetValue(codigo, out var vencido)
+                && vencido.Vence <= _reloj.GetUtcNow())
+            {
+                _codigos.Remove(codigo);
+                return ResultadoVinculacion.CodigoVencido;
+            }
+
             LimpiarExpirados();
             if (!_codigos.Remove(codigo, out var temporal)
                 || chatId == 0
-                || usuarioTelegramId == 0
-                || _vinculos.ContainsKey(chatId))
-                return false;
+                || usuarioTelegramId == 0)
+                return ResultadoVinculacion.CodigoInvalido;
 
-            _vinculos.Add(chatId, new VinculoTelegram(
+            _vinculos[chatId] = new VinculoTelegram(
                 chatId,
                 usuarioTelegramId,
                 temporal.EmpleadoId,
-                temporal.NombreUsuario));
+                temporal.NombreUsuario);
             Guardar();
-            return true;
+            return ResultadoVinculacion.Vinculado;
         }
     }
 

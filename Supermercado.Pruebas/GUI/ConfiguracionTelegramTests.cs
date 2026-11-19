@@ -41,8 +41,8 @@ public sealed class ConfiguracionTelegramTests
             Assert.StartsWith("/start ", vm.InstruccionVinculacion);
             Assert.Contains("10 minutos", vm.MensajeVinculacion);
             var codigo = vm.InstruccionVinculacion[7..];
-            Assert.True(vinculos.Vincular(codigo, 50, 60));
-            Assert.False(vinculos.Vincular(codigo, 51, 60));
+            Assert.Equal(ResultadoVinculacion.Vinculado, vinculos.Vincular(codigo, 50, 60));
+            Assert.Equal(ResultadoVinculacion.CodigoInvalido, vinculos.Vincular(codigo, 51, 60));
         }
         finally
         {
