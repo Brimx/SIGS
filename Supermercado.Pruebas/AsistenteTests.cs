@@ -325,8 +325,8 @@ public sealed class AsistenteTests
         {
             Llamadas++;
             return Task.FromResult(Resultado);
-        }
     }
+}
 
     private sealed class HandlerFalso : HttpMessageHandler
     {
