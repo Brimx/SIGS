@@ -418,3 +418,8 @@
   y la aplicación declara su política de datos y sus términos sin depender de un servidor. El costo es mantener
   `SemiBridge.axaml` cuando se adopte un control nuevo de Semi: hay que añadir sus claves finales.
   Ver `docs/sistema-diseno-tokens-ui.md`.
+
+## ADR-029: Asistente Telegram con herramientas cerradas y sesiones vinculadas
+- **Contexto:** se necesita consultar operación diaria desde Telegram sin permitir que un modelo generativo acceda a persistencia o ejecute escrituras sin autorización humana.
+- **Decisión:** `Asistente` enruta los comandos fijos localmente y limita Gemini a una lista cerrada de herramientas. Un worker hospedado en la app recibe long polling; solo atiende chats privados vinculados con código de un uso y vencimiento. Las operaciones requieren confirmación; anular exige callback único de un Gerente vinculado. Los servicios reutilizan permisos, transacción y auditoría de Lógica, con `Origen: Telegram`. Tokens/claves se leen del entorno; `SIGS_GEMINI_MODEL` permite elegir modelo (por defecto `gemini-3.8-flash`). El resumen diario programado se puede activar con una hora local configurable.
+- **Consecuencias:** las consultas fijas no dependen de Gemini; las escrituras conservan validaciones y auditoría existentes. La identidad de cada operación se instala en un contexto asíncrono aislado, sin cambiar la sesión global del usuario de escritorio. Los vínculos se guardan en un archivo local del usuario; las solicitudes pendientes de aprobación expiran y solo viven mientras corre la app.

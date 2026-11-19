@@ -8,6 +8,7 @@ using Supermercado.Logica.Comunes;
 using Supermercado.Logica.Inventario;
 using Supermercado.Logica.Seguridad;
 using Supermercado.Logica.Servicios;
+using Supermercado.Logica.Ventas;
 
 namespace Supermercado.Logica.Dashboards.Widgets;
 
@@ -170,6 +171,39 @@ public class VentasDelDiaWidget(
         [
             new PuntoDato("Total vendido", completadas.Sum(v => v.Total), FormatoDato.Moneda),
             new PuntoDato("Tickets", completadas.Count)
+        ]);
+    }
+}
+
+public sealed class ResumenOperativoWidget(
+    IVentaRepositorio ventas,
+    IServicioCaja caja,
+    IServicioAlertasInventario alertas,
+    TimeProvider reloj) : IWidget
+{
+    public string Id => "operacion.resumen";
+    public string Titulo => "Resumen operativo";
+    public string Grupo => GruposWidget.Ventas;
+    public TamanoWidget Tamano => TamanoWidget.Mediano;
+    public TimeSpan FrecuenciaActualizacion => TimeSpan.FromMinutes(1);
+    public Permiso PermisoRequerido =>
+        Permiso.VerReportes | Permiso.VerFinanzas | Permiso.VerInventario;
+
+    public async Task<DatoWidget> ObtenerDatosAsync()
+    {
+        var (desde, hasta) = reloj.RangoDeHoyUtc();
+        var delDia = (await ventas.ObtenerPorRangoAsync(desde, hasta))
+            .Where(v => v.Estado == EstadoVenta.Completada)
+            .ToList();
+        var turno = await caja.ObtenerTurnoActualAsync();
+        var stockBajo = await alertas.ObtenerBajoMinimoAsync();
+
+        return new DatoWidget(
+        [
+            new PuntoDato("Ventas de hoy", delDia.Sum(v => v.Total), FormatoDato.Moneda),
+            new PuntoDato("Tickets", delDia.Count),
+            new PuntoDato("Turno abierto", turno is null ? 0 : 1),
+            new PuntoDato("Productos bajo mínimo", stockBajo.Count)
         ]);
     }
 }

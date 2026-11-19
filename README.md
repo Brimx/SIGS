@@ -51,9 +51,9 @@ El proyecto prioriza tres cosas:
 | **Clientes** | Registro con documento único, validación de NIT (Módulo 11) y autorización de tratamiento de datos (Ley 1581). |
 | **Caja** | Arqueo con efectivo esperado, diferencia y tolerancia configurable; el cierre descuenta las ventas anuladas. |
 | **Finanzas** | IVA y retenciones parametrizables, gastos, resumen de ingresos/egresos/margen y nómina básica idempotente. |
-| **Dashboards** | Nueve widgets filtrados por permiso, gráficos de barras verticales nativos, disposición por usuario, exportar/importar y reordenar. |
+| **Dashboards** | Diez widgets filtrados por permiso, gráficos de barras verticales nativos, disposición por usuario, exportar/importar y reordenar. |
 | **Reportes** | Ticket POS (PDF con QuestPDF y ESC/POS 80mm), desprendible de nómina y reporte de ventas. |
-| **Integraciones** | TRM y consulta por código de barras (Open Food Facts) activos por defecto, apagables y con respaldo offline. |
+| **Integraciones** | TRM y consulta por código de barras (Open Food Facts), más chatbot Telegram con Gemini de herramientas cerradas, confirmación y auditoría. |
 
 ## Stack
 
@@ -135,6 +135,10 @@ La base de datos se crea sola en la carpeta de datos del usuario:
 - Linux: `~/.local/share/SIGS/sigs.db`
 
 En el primer arranque se siembran roles, cargos, impuestos, una caja y los parámetros. El usuario inicial es `admin`; la clave se pasa a `ServicioInicializacion.InicializarAsync` desde la capa que arranque la aplicación y se marca para cambio obligatorio.
+
+### Bot de Telegram (opcional)
+
+Configura `SIGS_TELEGRAM_BOT_TOKEN` y, para lenguaje natural, `SIGS_GEMINI_API_KEY` en el entorno del proceso. `SIGS_GEMINI_MODEL` es opcional y usa `gemini-3.8-flash` por defecto. Las claves no se guardan en SIGS ni en Git. En Configuración genera el código temporal y envía `/start CODIGO` al bot desde un chat privado. Los comandos `/stock`, `/ventas`, `/caja` y `/resumen` funcionan sin Gemini; las anulaciones y el reabastecimiento presentan confirmación. Para enviar un resumen diario opcional, define `SIGS_TELEGRAM_RESUMEN_HORA` con hora local `HH:mm`.
 
 ## Pruebas
 

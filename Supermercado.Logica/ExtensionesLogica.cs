@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Hosting;
 using Supermercado.Datos;
 using Supermercado.Logica.Clientes;
 using Supermercado.Logica.Comunes;
@@ -75,6 +76,13 @@ public static class ExtensionesLogica
         servicios.AddScoped<IServicioClientes, ServicioClientes>();
         servicios.AddScoped<IServicioDashboard, ServicioDashboard>();
         servicios.AddScoped<IServicioTrm, ServicioTrm>();
+
+        servicios.AddScoped<IClienteGemini, ClienteGeminiHttp>();
+        servicios.AddSingleton<IClienteTelegram, ClienteTelegramHttp>();
+        servicios.AddSingleton<IVinculosTelegram, VinculosTelegram>();
+        servicios.AddScoped<IAsistente, Asistente>();
+        servicios.AddScoped<ProcesadorTelegram>();
+        servicios.AddHostedService<TelegramWorker>();
         servicios.AddScoped<IGeneradorDatosDemo, GeneradorDatosDemo>();
 
         // Clientes externos: por defecto no hacen nada. Se reemplazan
@@ -84,6 +92,7 @@ public static class ExtensionesLogica
         servicios.AddScoped<IVerificadorCorreo, VerificadorCorreoNulo>();
 
         servicios.AddScoped<IWidget, VentasDelDiaWidget>();
+        servicios.AddScoped<IWidget, ResumenOperativoWidget>();
         servicios.AddScoped<IWidget, ReabastecimientosPendientesWidget>();
         servicios.AddScoped<IWidget, TrmDelDiaWidget>();
         servicios.AddScoped<IWidget, IvaGeneradoWidget>();

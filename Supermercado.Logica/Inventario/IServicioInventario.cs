@@ -30,7 +30,7 @@ public interface IServicioMermas
 
 public interface IServicioReabastecimiento
 {
-    Task<IReadOnlyList<Reabastecimiento>> GenerarSolicitudesAsync();
+    Task<IReadOnlyList<Reabastecimiento>> GenerarSolicitudesAsync(string? origen = null);
     Task<IReadOnlyList<Reabastecimiento>> ObtenerPendientesAsync();
     Task AtenderAsync(int reabastecimientoId);
 }

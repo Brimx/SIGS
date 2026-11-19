@@ -272,3 +272,15 @@ En la rama principal (`main`), SIGS opera de forma autónoma sobre **SQLite loca
 - [`decisiones.md`](decisiones.md): ADR-001 a ADR-028.
 - [`despliegue.md`](despliegue.md): escenarios de desarrollo y producción.
 - [`diccionario-datos.md`](diccionario-datos.md): esquema real y mapeo previsto.
+
+## Chatbot de Telegram
+
+`TelegramWorker` es un `BackgroundService` hospedado durante la vida de Avalonia y recibe actualizaciones por long polling. Crea un scope por actualización; si falta `SIGS_TELEGRAM_BOT_TOKEN`, queda inactivo sin impedir abrir SIGS. `ClienteTelegramHttp` y `ClienteGeminiHttp` son los límites de red; Gemini solo recibe lenguaje natural y puede llamar las seis herramientas declaradas en `Asistente.cs`, nunca repositorios ni contexto EF.
+
+Los comandos `/stock`, `/ventas`, `/caja` y `/resumen` se resuelven localmente y funcionan aunque Gemini no esté configurado. El acceso requiere chat privado vinculado, identidad de Telegram coincidente y límite de 20 mensajes por minuto. `/quien` informa el usuario y rol vinculados sin exponer secretos ni datos personales; `/desvincular` elimina el vínculo y lo audita.
+
+Configuración emite un código aleatorio de un uso con vencimiento de 10 minutos. Enviar `/start CODIGO` en un chat ya vinculado sustituye el vínculo anterior, consume el código y registra la auditoría con `Origen: Telegram`; un código inválido o vencido conserva el vínculo actual y explica el motivo. `/start` sin código indica con qué usuario y rol está vinculado el chat, o cómo vincularlo. Los vínculos se guardan atómicamente en `%LOCALAPPDATA%/SIGS/telegram-vinculos.json` (o `~/.local/share/SIGS/telegram-vinculos.json`).
+
+Las anulaciones se envían con botones a un Gerente vinculado y vuelven a comprobar el rol al aceptar; cada callback se consume una vez. Reabastecimiento también requiere confirmación. Las acciones usan un contexto de sesión aislado con la identidad vinculada, validan los permisos de Lógica y guardan una sola vez; la auditoría incluye `Origen: Telegram`.
+
+Credenciales y modelo: `SIGS_TELEGRAM_BOT_TOKEN`, `SIGS_GEMINI_API_KEY`, `SIGS_GEMINI_MODEL` (por defecto `gemini-3.8-flash`) y `SIGS_GEMINI_MODEL_RESPALDO` (por defecto `gemini-3.5-flash`). La clave Gemini viaja en el encabezado `x-goog-api-key`; no se registra en los logs. Un `503` del modelo principal se reintenta una sola vez con el modelo de respaldo y se reporta como saturación si ambos fallan. El resumen programado es opcional con `SIGS_TELEGRAM_RESUMEN_HORA=HH:mm`, en hora local, y se envía a chats vinculados de Gerente. No se almacenan credenciales en la base de datos ni en el repositorio.

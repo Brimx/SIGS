@@ -29,4 +29,6 @@ public interface IServicioVentas
 {
     Task<Venta> RegistrarVentaAsync(SolicitudVenta solicitud);
     Task AnularVentaAsync(int ventaId, string motivo);
+    Task AnularVentaAsync(int ventaId, string motivo, string? origen)
+        => AnularVentaAsync(ventaId, motivo);
 }

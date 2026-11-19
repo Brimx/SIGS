@@ -36,5 +36,7 @@ public enum AccionAuditoria
     ClienteModificado,
     AutorizacionSupervisor,
     RetiroCajaRegistrado,
-    VentaSuspendida
+    VentaSuspendida,
+    ReabastecimientoGenerado,
+    VinculoTelegram
 }

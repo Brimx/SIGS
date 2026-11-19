@@ -85,6 +85,20 @@ Notas:
 | `ReabastecimientosPendientesWidget` | `ObtenerDatosAsync` | `VerInventario` | No se muestra |
 | `TrmDelDiaWidget` | `ObtenerDatosAsync` | `Ninguno` | — |
 
+## Comandos del chatbot de Telegram
+
+El bot verifica los permisos con la sesión del usuario vinculado, no con la de la GUI. La tabla de roles de arriba sigue siendo la fuente de la matriz editable; aquí se resumen los roles de la semilla.
+
+| Comando | Permiso exigido | Roles de la semilla con acceso | Notas |
+| :-- | :-- | :-- | :-- |
+| `/stock` | `VerInventario` | Admin, Gerente, Bodeguero | Productos por debajo del mínimo. |
+| `/ventas` | `VerReportes` | Admin, Gerente | Cantidad y total de ventas completadas de hoy. |
+| `/caja` | `VerFinanzas` | Admin, Gerente | Turno de caja abierto del usuario vinculado. |
+| `/resumen` | `VerReportes`, `VerFinanzas`, `VerInventario` | Admin, Gerente | Cada sección aparece solo si el rol tiene ese permiso. |
+| `/start CODIGO`, `/desvincular`, `/quien` | Ninguno | Usuario activo vinculado | Gestión del vínculo; `/quien` no muestra datos sensibles. |
+
+El **Gerente** tiene `VerInventario`, `VerReportes` y `VerFinanzas` en la semilla, por lo que los cuatro comandos de consulta están permitidos. Si la matriz editable se cambia en una base existente, el bot respeta los permisos vigentes.
+
 ## Verificación en sesión
 
 `SesionActual.Exigir` aplica este orden:

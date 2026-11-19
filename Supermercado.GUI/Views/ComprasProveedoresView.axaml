@@ -96,7 +96,9 @@
                               SelectedItem="{Binding ProveedorSeleccionado}"
                               IsReadOnly="True"
                               CanUserResizeColumns="True"
-                              GridLinesVisibility="Horizontal">
+                              GridLinesVisibility="Horizontal"
+                          ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                          ScrollViewer.VerticalScrollBarVisibility="Auto">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="65" FontFamily="{StaticResource FontFamilyPlexCondensed}" />
                             <DataGridTextColumn Header="RAZÓN SOCIAL" Binding="{Binding Nombre}" Width="*" />
