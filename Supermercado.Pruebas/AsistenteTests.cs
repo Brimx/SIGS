@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text;
+using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using Supermercado.Logica.Servicios;
 
@@ -89,6 +90,64 @@ public sealed class AsistenteTests
 
         Assert.Contains("cuota", error.Message, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("/stock", error.Message);
+    }
+
+    [Fact]
+    public async Task ClienteGemini_EnvíaCuerpoConConfiguraciónEstructurada()
+    {
+        const string respuesta = """{"candidates":[]}""";
+        var handler = new HandlerFalso(respuesta);
+        var cliente = new ClienteGeminiHttp(
+            new HttpClient(handler), "clave-prueba", "gemini-prueba");
+
+        await cliente.ElegirHerramientaAsync("consulta natural");
+
+        using var json = JsonDocument.Parse(handler.Cuerpo!);
+        var raiz = json.RootElement;
+        Assert.Equal(
+            "LOW",
+            raiz.GetProperty("generationConfig")
+                .GetProperty("thinkingConfig")
+                .GetProperty("thinkingLevel")
+                .GetString());
+        var texto = raiz.GetProperty("generationConfig")
+            .GetProperty("responseFormat")
+            .GetProperty("text");
+        Assert.Equal("APPLICATION_JSON", texto.GetProperty("mimeType").GetString());
+        Assert.Equal("OBJECT", texto.GetProperty("schema").GetProperty("type").GetString());
+        Assert.True(texto.GetProperty("schema")
+            .GetProperty("properties")
+            .TryGetProperty("herramienta", out _));
+        Assert.Equal(
+            "VALIDATED",
+            raiz.GetProperty("toolConfig")
+                .GetProperty("functionCallingConfig")
+                .GetProperty("mode")
+                .GetString());
+        var declaraciones = raiz.GetProperty("tools")[0]
+            .GetProperty("functionDeclarations");
+        foreach (var declaracion in declaraciones.EnumerateArray())
+        {
+            Assert.Equal(
+                "OBJECT",
+                declaracion.GetProperty("parameters").GetProperty("type").GetString());
+        }
+    }
+
+    [Fact]
+    public async Task ClienteGemini_AceptaRespuestaEstructuradaSinFunctionCall()
+    {
+        const string respuesta = """
+            {"candidates":[{"content":{"parts":[{"text":"{\"herramienta\":\"stock_bajo\"}"}]}}]}
+            """;
+        var cliente = new ClienteGeminiHttp(
+            new HttpClient(new HandlerFalso(respuesta)),
+            "clave-prueba",
+            "gemini-prueba");
+
+        var resultado = await cliente.ElegirHerramientaAsync("consulta natural");
+
+        Assert.Equal(HerramientaAsistente.StockBajo, resultado?.Herramienta);
     }
 
     [Theory]

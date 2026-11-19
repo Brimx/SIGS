@@ -176,9 +176,11 @@ public sealed class ClienteGeminiHttp(
     private static string Recortar(string texto)
         => texto.Length <= 512 ? texto : texto[..512] + "…";
 
+    private static object ParametrosVacios()
+        => new { type = "OBJECT", properties = new { }, required = Array.Empty<string>() };
+
     public async Task<SolicitudHerramienta?> ElegirHerramientaAsync(
         string mensaje,
-
         CancellationToken cancelacion = default)
     {
         if (string.IsNullOrWhiteSpace(_clave))
@@ -191,30 +193,59 @@ public sealed class ClienteGeminiHttp(
             {
                 parts = new[]
                 {
-                    new { text = "Eres un asistente de un sistema de supermercado. Solo seleccionas una herramienta declarada. Nunca inventes datos ni afirmes que ejecutaste una acción. Si la solicitud no corresponde a una herramienta, responde sin llamar herramientas." }
+                    new { text = "Eres un asistente de un sistema de supermercado. Solo seleccionas una herramienta declarada. Nunca inventes datos ni afirmes que ejecutaste una acción. Si la solicitud no corresponde a una herramienta, devuelve un JSON válido con herramienta vacía según el esquema indicado." }
                 }
             },
             contents = new[] { new { role = "user", parts = new[] { new { text = mensaje } } } },
+            generationConfig = new
+            {
+                thinkingConfig = new { thinkingLevel = "LOW" },
+                responseFormat = new
+                {
+                    text = new
+                    {
+                        mimeType = "APPLICATION_JSON",
+                        schema = new
+                        {
+                            type = "OBJECT",
+                            properties = new
+                            {
+                                herramienta = new
+                                {
+                                    type = "STRING",
+                                    @enum = MapeoHerramientas.Keys.ToArray(),
+                                    nullable = true
+                                },
+                                id = new { type = "INTEGER", nullable = true },
+                                motivo = new { type = "STRING", nullable = true }
+                            },
+                            required = Array.Empty<string>(),
+                            additionalProperties = false
+                        }
+                    }
+                }
+            },
             tools = new[]
             {
                 new
                 {
                     functionDeclarations = new object[]
                     {
-                        new { name = "stock_bajo", description = "Consultar productos con stock bajo." },
-                        new { name = "ventas_del_dia", description = "Consultar ventas del día." },
-                        new { name = "estado_caja", description = "Consultar el estado de caja del usuario vinculado." },
-                        new { name = "resumen_diario", description = "Consultar el resumen operativo del día." },
+                        new { name = "stock_bajo", description = "Consultar productos con stock bajo.", parameters = ParametrosVacios() },
+                        new { name = "ventas_del_dia", description = "Consultar ventas del día.", parameters = ParametrosVacios() },
+                        new { name = "estado_caja", description = "Consultar el estado de caja del usuario vinculado.", parameters = ParametrosVacios() },
+                        new { name = "resumen_diario", description = "Consultar el resumen operativo del día.", parameters = ParametrosVacios() },
                         new { name = "solicitar_anulacion", description = "Solicitar aprobación de anulación de una venta.", parameters = new { type = "OBJECT", properties = new { id = new { type = "INTEGER" }, motivo = new { type = "STRING" } }, required = new[] { "id", "motivo" } } },
-                        new { name = "generar_reabastecimiento", description = "Proponer solicitudes de reabastecimiento sujetas a confirmación." }
+                        new { name = "generar_reabastecimiento", description = "Proponer solicitudes de reabastecimiento sujetas a confirmación.", parameters = ParametrosVacios() }
                     }
                 }
             },
-            toolConfig = new { functionCallingConfig = new { mode = "AUTO" } }
+            toolConfig = new { functionCallingConfig = new { mode = "VALIDATED" } }
         };
 
         using var respuesta = await EnviarGeminiAsync(uri, cuerpo, cancelacion);
         if (!respuesta.IsSuccessStatusCode)
+
         {
             await RegistrarErrorAsync(respuesta, cancelacion);
             throw new GeminiNoDisponibleException(MensajeError(respuesta.StatusCode));
@@ -223,44 +254,91 @@ public sealed class ClienteGeminiHttp(
         await using var flujo = await respuesta.Content.ReadAsStreamAsync(cancelacion);
         using var json = await JsonDocument.ParseAsync(flujo, cancellationToken: cancelacion);
         if (!json.RootElement.TryGetProperty("candidates", out var candidatos)
-
             || candidatos.GetArrayLength() == 0)
             return null;
 
         var partes = candidatos[0].GetProperty("content").GetProperty("parts");
         foreach (var parte in partes.EnumerateArray())
         {
-            if (!parte.TryGetProperty("functionCall", out var llamada)
-                || !llamada.TryGetProperty("name", out var nombreElemento))
+            if (parte.ValueKind != JsonValueKind.Object)
                 continue;
 
-            var nombre = nombreElemento.GetString();
-            if (!MapeoHerramientas.TryGetValue(nombre ?? string.Empty, out var herramienta))
+            if (parte.TryGetProperty("functionCall", out var llamada)
+                && llamada.TryGetProperty("name", out var nombreElemento))
+            {
+                var nombre = nombreElemento.GetString();
+                if (!MapeoHerramientas.TryGetValue(nombre ?? string.Empty, out var herramienta))
+                    return null;
+
+                var args = llamada.TryGetProperty("args", out var argumentos)
+                    ? argumentos
+                    : default;
+                var id = args.ValueKind == JsonValueKind.Object
+                    && args.TryGetProperty("id", out var idElemento)
+                    && idElemento.TryGetInt32(out var valorId)
+                        ? valorId
+                        : (int?)null;
+                var motivo = args.ValueKind == JsonValueKind.Object
+                    && args.TryGetProperty("motivo", out var motivoElemento)
+                        ? motivoElemento.GetString()
+                        : null;
+                if (herramienta == HerramientaAsistente.SolicitarAnulacion
+                    && (id is null or <= 0 || string.IsNullOrWhiteSpace(motivo)))
+                    return null;
+
+                return new SolicitudHerramienta(herramienta, id, motivo?.Trim());
+            }
+
+            if (parte.TryGetProperty("text", out var texto)
+                && texto.ValueKind == JsonValueKind.String)
+            {
+                var estructurada = LeerSolicitudDesdeTexto(texto.GetString());
+                if (estructurada is not null)
+                    return estructurada;
+            }
+        }
+
+        return null;
+    }
+
+    private static SolicitudHerramienta? LeerSolicitudDesdeTexto(string? texto)
+    {
+        if (string.IsNullOrWhiteSpace(texto))
+            return null;
+
+        try
+        {
+            using var json = JsonDocument.Parse(texto);
+            var raiz = json.RootElement;
+            if (raiz.ValueKind != JsonValueKind.Object
+                || !raiz.TryGetProperty("herramienta", out var elemento)
+                || elemento.ValueKind != JsonValueKind.String)
                 return null;
 
-            var args = llamada.TryGetProperty("args", out var argumentos)
-                ? argumentos
-                : default;
-            var id = args.ValueKind == JsonValueKind.Object
-                && args.TryGetProperty("id", out var idElemento)
+            if (!MapeoHerramientas.TryGetValue(elemento.GetString() ?? string.Empty, out var herramienta))
+                return null;
+
+            var id = raiz.TryGetProperty("id", out var idElemento)
                 && idElemento.TryGetInt32(out var valorId)
                     ? valorId
                     : (int?)null;
-            var motivo = args.ValueKind == JsonValueKind.Object
-                && args.TryGetProperty("motivo", out var motivoElemento)
-                    ? motivoElemento.GetString()
-                    : null;
+            var motivo = raiz.TryGetProperty("motivo", out var motivoElemento)
+                ? motivoElemento.GetString()
+                : null;
             if (herramienta == HerramientaAsistente.SolicitarAnulacion
                 && (id is null or <= 0 || string.IsNullOrWhiteSpace(motivo)))
                 return null;
 
             return new SolicitudHerramienta(herramienta, id, motivo?.Trim());
         }
-
-        return null;
+        catch (JsonException)
+        {
+            return null;
+        }
     }
 
     private static readonly IReadOnlyDictionary<string, HerramientaAsistente> MapeoHerramientas =
+
         new Dictionary<string, HerramientaAsistente>(StringComparer.Ordinal)
         {
             ["stock_bajo"] = HerramientaAsistente.StockBajo,
