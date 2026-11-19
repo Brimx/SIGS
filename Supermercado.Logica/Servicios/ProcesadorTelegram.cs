@@ -1,0 +1,568 @@
+using System.Globalization;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Supermercado.Entidades.Contratos;
+using Supermercado.Entidades.Excepciones;
+using Supermercado.Entidades.Personal;
+using Supermercado.Entidades.Seguridad;
+using Supermercado.Entidades.Ventas;
+using Supermercado.Logica.Comunes;
+using Supermercado.Logica.Inventario;
+using Supermercado.Logica.Seguridad;
+using Supermercado.Logica.Ventas;
+
+namespace Supermercado.Logica.Servicios;
+
+public sealed class ProcesadorTelegram(
+    IClienteTelegram telegram,
+    IAsistente asistente,
+    IVinculosTelegram vinculos,
+    IUsuarioRepositorio usuarios,
+    ISesionActual sesion,
+    IServicioAlertasInventario alertas,
+    IServicioVentas ventas,
+    IVentaRepositorio repositorioVentas,
+    IServicioCaja caja,
+    IServicioReabastecimiento reabastecimiento,
+    IServicioAuditoria auditoria,
+    IUnidadDeTrabajo trabajo,
+    TimeProvider reloj)
+{
+    private static readonly TimeSpan DuracionConfirmacion = TimeSpan.FromMinutes(3);
+
+    public async Task ProcesarAsync(
+        ActualizacionTelegram actualizacion,
+        CancellationToken cancelacion = default)
+    {
+        if (!actualizacion.ChatPrivado
+            || actualizacion.ChatId is not long chatId
+            || actualizacion.UsuarioId is not long usuarioTelegramId)
+            return;
+
+        if (actualizacion.CallbackData is not null)
+        {
+            await ProcesarCallbackAsync(
+                actualizacion, chatId, usuarioTelegramId, cancelacion);
+            return;
+        }
+
+        if (actualizacion.Texto is not string texto)
+            return;
+
+        var enlace = vinculos.Buscar(chatId);
+        if (enlace is null)
+        {
+            await VincularAsync(texto, chatId, usuarioTelegramId, cancelacion);
+            return;
+        }
+
+        if (enlace.UsuarioTelegramId != usuarioTelegramId)
+        {
+            await telegram.EnviarMensajeAsync(
+                chatId,
+                "Este chat está vinculado a otra cuenta de Telegram.",
+                cancelacion: cancelacion);
+            return;
+        }
+
+        if (!vinculos.PermitirMensaje(chatId, reloj.GetUtcNow()))
+            return;
+
+        var usuario = await ObtenerUsuarioVinculadoAsync(enlace);
+        if (usuario is null)
+        {
+            vinculos.Desvincular(chatId);
+            await telegram.EnviarMensajeAsync(
+                chatId,
+                "La cuenta vinculada ya no está activa. Genera un nuevo código desde Configuración.",
+                cancelacion: cancelacion);
+            return;
+        }
+
+        using var contexto = sesion.UsarUsuario(usuario);
+        if (sesion.DebeCambiarClave)
+        {
+            await telegram.EnviarMensajeAsync(
+                chatId,
+                "Debes cambiar tu clave desde SIGS antes de usar Telegram.",
+                cancelacion: cancelacion);
+            return;
+        }
+
+        SolicitudHerramienta? solicitud;
+        try
+        {
+            solicitud = await asistente.InterpretarAsync(texto, cancelacion);
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            await telegram.EnviarMensajeAsync(chatId, "Gemini respondió con un formato inválido. Usa los comandos fijos.", cancelacion: cancelacion);
+            return;
+        }
+        catch (GeminiNoDisponibleException ex)
+        {
+            await telegram.EnviarMensajeAsync(chatId, ex.Message, cancelacion: cancelacion);
+            return;
+        }
+
+        if (solicitud is null)
+        {
+            var mensaje = texto.StartsWith('/')
+                ? "Comandos disponibles: /stock, /ventas, /caja y /resumen."
+                : "No entendí la solicitud. Prueba /stock, /ventas, /caja o /resumen.";
+            await telegram.EnviarMensajeAsync(chatId, mensaje, cancelacion: cancelacion);
+            return;
+        }
+
+        try
+        {
+            await EjecutarHerramientaAsync(
+                solicitud, enlace, usuarioTelegramId, cancelacion);
+        }
+        catch (AccesoDenegadoException)
+        {
+            await telegram.EnviarMensajeAsync(
+                chatId,
+                "Tu usuario no tiene autorización para esa consulta o acción.",
+                cancelacion: cancelacion);
+        }
+        catch (DebeCambiarClaveException)
+        {
+            await telegram.EnviarMensajeAsync(
+                chatId,
+                "Debes cambiar tu clave desde SIGS antes de usar Telegram.",
+                cancelacion: cancelacion);
+        }
+        catch (Exception ex) when (
+            ex is ValidacionException
+                or VentaInvalidaException
+                or TurnoInvalidoException)
+        {
+            await telegram.EnviarMensajeAsync(chatId, ex.Message, cancelacion: cancelacion);
+        }
+    }
+
+    public async Task EnviarResumenProgramadoAsync(CancellationToken cancelacion)
+    {
+        foreach (var enlace in vinculos.ObtenerTodos())
+        {
+            var usuario = await ObtenerUsuarioVinculadoAsync(enlace);
+            if (usuario?.Empleado?.Rol?.Nombre != NombresRol.Gerente
+                || usuario.DebeCambiarClave)
+                continue;
+
+            using var contexto = sesion.UsarUsuario(usuario);
+            var resumen = await ConstruirResumenAsync();
+            await telegram.EnviarMensajeAsync(
+                enlace.ChatId,
+                $"Resumen diario programado\n{resumen}",
+                cancelacion: cancelacion);
+        }
+    }
+
+    private async Task VincularAsync(
+        string texto,
+        long chatId,
+        long usuarioTelegramId,
+        CancellationToken cancelacion)
+    {
+        var partes = texto.Trim().Split(' ', 2, StringSplitOptions.RemoveEmptyEntries);
+        if (partes.Length != 2
+            || !partes[0].Equals("/start", StringComparison.OrdinalIgnoreCase))
+        {
+            await telegram.EnviarMensajeAsync(
+                chatId,
+                "Este bot solo responde a chats vinculados. Genera un código en Configuración y envía /start CODIGO en un chat privado.",
+                cancelacion: cancelacion);
+            return;
+        }
+
+        if (!vinculos.Vincular(partes[1], chatId, usuarioTelegramId))
+        {
+            await telegram.EnviarMensajeAsync(
+                chatId,
+                "El código es inválido, venció o este chat ya está vinculado.",
+                cancelacion: cancelacion);
+            return;
+        }
+
+        var enlace = vinculos.Buscar(chatId)!;
+        var usuario = await ObtenerUsuarioVinculadoAsync(enlace);
+        if (usuario is null)
+        {
+            vinculos.Desvincular(chatId);
+            await telegram.EnviarMensajeAsync(
+                chatId,
+                "La cuenta dejó de estar activa. Genera un código nuevo desde SIGS.",
+                cancelacion: cancelacion);
+            return;
+        }
+
+        using var contexto = sesion.UsarUsuario(usuario);
+        await auditoria.RegistrarAsync(
+            AccionAuditoria.VinculoTelegram,
+            nameof(Usuario),
+            usuario.Id,
+            "Origen: Telegram | Chat vinculado con código de un solo uso");
+        await trabajo.GuardarAsync();
+        await telegram.EnviarMensajeAsync(
+            chatId,
+            "Vinculación completada. Usa /stock, /ventas, /caja o /resumen.",
+            cancelacion: cancelacion);
+    }
+
+    private async Task EjecutarHerramientaAsync(
+        SolicitudHerramienta solicitud,
+        VinculoTelegram enlace,
+        long usuarioTelegramId,
+        CancellationToken cancelacion)
+    {
+        switch (solicitud.Herramienta)
+        {
+            case HerramientaAsistente.StockBajo:
+                sesion.Exigir(Permiso.VerInventario);
+                var bajoMinimo = await alertas.ObtenerBajoMinimoAsync();
+                var lista = bajoMinimo.Count == 0
+                    ? "No hay productos por debajo del mínimo."
+                    : string.Join("\n", bajoMinimo.Take(15).Select(item =>
+                        $"• {item.Producto.Nombre}: {item.CantidadEnEstante} (mínimo {item.Producto.StockMinimoEstante})"));
+                await telegram.EnviarMensajeAsync(
+                    enlace.ChatId, lista, cancelacion: cancelacion);
+                break;
+
+            case HerramientaAsistente.VentasDelDia:
+                sesion.Exigir(Permiso.VerReportes);
+                await telegram.EnviarMensajeAsync(
+                    enlace.ChatId,
+                    await ResumenVentasAsync(),
+                    cancelacion: cancelacion);
+                break;
+
+            case HerramientaAsistente.EstadoCaja:
+                sesion.Exigir(Permiso.VerFinanzas);
+                var turno = await caja.ObtenerTurnoActualAsync();
+                var estado = turno is null
+                    ? "No tienes un turno de caja abierto."
+                    : $"Turno {turno.Id} abierto desde {turno.FechaApertura.ToLocalTime():HH:mm}. Efectivo inicial: ${turno.EfectivoInicial:N0}.";
+                await telegram.EnviarMensajeAsync(
+                    enlace.ChatId, estado, cancelacion: cancelacion);
+                break;
+
+            case HerramientaAsistente.ResumenDiario:
+                await telegram.EnviarMensajeAsync(
+                    enlace.ChatId,
+                    await ConstruirResumenAsync(),
+                    cancelacion: cancelacion);
+                break;
+
+            case HerramientaAsistente.SolicitarAnulacion:
+                if (solicitud.Id is not > 0
+                    || string.IsNullOrWhiteSpace(solicitud.Motivo))
+                {
+                    await telegram.EnviarMensajeAsync(
+                        enlace.ChatId,
+                        "Indica el número de venta y el motivo para solicitar su anulación.",
+                        cancelacion: cancelacion);
+                    break;
+                }
+                await SolicitarAprobacionGerenteAsync(solicitud, enlace, cancelacion);
+                break;
+
+            case HerramientaAsistente.GenerarReabastecimiento:
+                sesion.Exigir(Permiso.Reabastecer);
+                var aprobacion = vinculos.CrearAprobacion(
+                    HerramientaAsistente.GenerarReabastecimiento,
+                    null,
+                    null,
+                    enlace.ChatId,
+                    usuarioTelegramId,
+                    reloj.GetUtcNow().Add(DuracionConfirmacion));
+                await telegram.EnviarMensajeAsync(
+                    enlace.ChatId,
+                    "¿Confirmas generar solicitudes para los productos con stock bajo?",
+                    [
+                        new BotonTelegram("Confirmar", $"y:{aprobacion.Token}"),
+                        new BotonTelegram("Cancelar", $"n:{aprobacion.Token}")
+                    ],
+                    cancelacion);
+                break;
+        }
+    }
+
+    private async Task SolicitarAprobacionGerenteAsync(
+        SolicitudHerramienta solicitud,
+        VinculoTelegram solicitante,
+        CancellationToken cancelacion)
+    {
+        VinculoTelegram? gerente = null;
+        foreach (var enlace in vinculos.ObtenerTodos())
+        {
+            var usuario = await ObtenerUsuarioVinculadoAsync(enlace);
+            if (usuario?.Empleado?.Rol?.Nombre == NombresRol.Gerente
+                && !usuario.DebeCambiarClave)
+            {
+                gerente = enlace;
+                break;
+            }
+        }
+
+        if (gerente is null)
+        {
+            await telegram.EnviarMensajeAsync(
+                solicitante.ChatId,
+                "No hay un Gerente vinculado para aprobar anulaciones.",
+                cancelacion: cancelacion);
+            return;
+        }
+
+        var aprobacion = vinculos.CrearAprobacion(
+            HerramientaAsistente.SolicitarAnulacion,
+            solicitud.Id,
+            solicitud.Motivo,
+            gerente.ChatId,
+            gerente.UsuarioTelegramId,
+            reloj.GetUtcNow().Add(DuracionConfirmacion));
+        await telegram.EnviarMensajeAsync(
+            gerente.ChatId,
+            $"Solicitud de anulación de venta {solicitud.Id}. Motivo: {solicitud.Motivo}",
+            [
+                new BotonTelegram("Aprobar", $"a:{aprobacion.Token}"),
+                new BotonTelegram("Rechazar", $"r:{aprobacion.Token}")
+            ],
+            cancelacion);
+        await telegram.EnviarMensajeAsync(
+            solicitante.ChatId,
+            "Solicitud enviada al Gerente vinculado para aprobación.",
+            cancelacion: cancelacion);
+    }
+
+    private async Task ProcesarCallbackAsync(
+        ActualizacionTelegram actualizacion,
+        long chatId,
+        long usuarioTelegramId,
+        CancellationToken cancelacion)
+    {
+        var partes = actualizacion.CallbackData!.Split(':', 2);
+        if (partes.Length != 2 || actualizacion.CallbackId is null)
+            return;
+
+        var enlace = vinculos.Buscar(chatId);
+        if (enlace is null || enlace.UsuarioTelegramId != usuarioTelegramId)
+        {
+            await telegram.ResponderCallbackAsync(
+                actualizacion.CallbackId, "Chat no vinculado.", cancelacion);
+            return;
+        }
+
+        var usuario = await ObtenerUsuarioVinculadoAsync(enlace);
+        if (usuario is null)
+        {
+            await telegram.ResponderCallbackAsync(
+                actualizacion.CallbackId, "La cuenta vinculada está inactiva.", cancelacion);
+            return;
+        }
+
+        var esAprobacionGerente = partes[0] is "a" or "r";
+        if (esAprobacionGerente
+            && usuario.Empleado?.Rol?.Nombre != NombresRol.Gerente)
+        {
+            await telegram.ResponderCallbackAsync(
+                actualizacion.CallbackId,
+                "Solo el Gerente vinculado puede resolver esta aprobación.",
+                cancelacion);
+            return;
+        }
+        if (usuario.DebeCambiarClave)
+        {
+            await telegram.ResponderCallbackAsync(
+                actualizacion.CallbackId,
+                "Debes cambiar tu clave desde SIGS.",
+                cancelacion);
+            return;
+        }
+
+        if (!vinculos.TomarAprobacion(
+            partes[1], chatId, usuarioTelegramId, reloj.GetUtcNow(), out var aprobacion)
+            || aprobacion is null)
+        {
+            await telegram.ResponderCallbackAsync(
+                actualizacion.CallbackId,
+                "Esta confirmación ya se usó o venció.",
+                cancelacion);
+            return;
+        }
+
+        using var contexto = sesion.UsarUsuario(usuario);
+        try
+        {
+            if (partes[0] is "a" or "y")
+            {
+                if (aprobacion.Herramienta == HerramientaAsistente.SolicitarAnulacion)
+                {
+                    await ventas.AnularVentaAsync(
+                        aprobacion.Id!.Value,
+                        aprobacion.Motivo!,
+                        "Telegram");
+                    await telegram.EnviarMensajeAsync(
+                        chatId,
+                        $"Venta {aprobacion.Id} anulada.",
+                        cancelacion: cancelacion);
+                }
+                else
+                {
+                    var generadas = await reabastecimiento.GenerarSolicitudesAsync("Telegram");
+                    await telegram.EnviarMensajeAsync(
+                        chatId,
+                        $"Solicitudes de reabastecimiento generadas: {generadas.Count}.",
+                        cancelacion: cancelacion);
+                }
+            }
+            else
+            {
+                await telegram.EnviarMensajeAsync(
+                    chatId,
+                    "Solicitud rechazada o cancelada.",
+                    cancelacion: cancelacion);
+            }
+            await telegram.ResponderCallbackAsync(
+                actualizacion.CallbackId, "Listo.", cancelacion);
+        }
+        catch (AccesoDenegadoException)
+        {
+            await telegram.ResponderCallbackAsync(
+                actualizacion.CallbackId, "No tienes permiso para esta acción.", cancelacion);
+        }
+        catch (DebeCambiarClaveException)
+        {
+            await telegram.ResponderCallbackAsync(
+                actualizacion.CallbackId, "Debes cambiar tu clave desde SIGS.", cancelacion);
+        }
+        catch (Exception ex) when (
+            ex is ValidacionException
+                or VentaInvalidaException
+                or TurnoInvalidoException)
+        {
+            await telegram.ResponderCallbackAsync(
+                actualizacion.CallbackId, ex.Message, cancelacion);
+        }
+    }
+
+    private async Task<Usuario?> ObtenerUsuarioVinculadoAsync(VinculoTelegram enlace)
+    {
+        var usuario = await usuarios.ObtenerPorNombreAsync(enlace.NombreUsuario);
+        return usuario?.EmpleadoId == enlace.EmpleadoId
+            && usuario.Empleado?.Activo == true
+            && !usuario.Bloqueado
+            ? usuario
+            : null;
+    }
+
+    private async Task<string> ResumenVentasAsync()
+    {
+        var hoy = reloj.HoyLocal();
+        var inicioLocal = hoy.ToDateTime(TimeOnly.MinValue, DateTimeKind.Local);
+        var finLocal = hoy.AddDays(1).ToDateTime(TimeOnly.MinValue, DateTimeKind.Local);
+        var ventasDelDia = await repositorioVentas.ObtenerPorRangoAsync(
+            inicioLocal.ToUniversalTime(), finLocal.ToUniversalTime());
+        var completadas = ventasDelDia
+            .Where(venta => venta.Estado == EstadoVenta.Completada)
+            .ToList();
+        var total = completadas.Sum(venta => venta.Total);
+        return $"Ventas de hoy: {completadas.Count} | Total: ${total:N0}.";
+    }
+
+    private async Task<string> ConstruirResumenAsync()
+    {
+        var filas = new List<string>();
+        if (sesion.Tiene(Permiso.VerReportes))
+            filas.Add(await ResumenVentasAsync());
+        if (sesion.Tiene(Permiso.VerFinanzas))
+        {
+            var turno = await caja.ObtenerTurnoActualAsync();
+            filas.Add(turno is null
+                ? "Caja: sin turno abierto para este usuario."
+                : $"Caja: turno {turno.Id} abierto, inicial ${turno.EfectivoInicial:N0}.");
+        }
+        if (sesion.Tiene(Permiso.VerInventario))
+        {
+            var bajoMinimo = await alertas.ObtenerBajoMinimoAsync();
+            filas.Add($"Stock bajo: {bajoMinimo.Count} productos.");
+        }
+        return filas.Count == 0
+            ? "Tu rol no tiene permisos para consultar el resumen."
+            : string.Join("\n", filas);
+    }
+}
+
+public sealed class TelegramWorker(
+    IClienteTelegram telegram,
+    IServiceScopeFactory scopes,
+
+    TimeProvider reloj) : BackgroundService
+{
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+        if (string.IsNullOrWhiteSpace(
+            Environment.GetEnvironmentVariable("SIGS_TELEGRAM_BOT_TOKEN")))
+        {
+            System.Diagnostics.Trace.WriteLine("Telegram no está configurado; el servicio queda inactivo.");
+            return;
+        }
+
+        var offset = 0L;
+        DateOnly? ultimoResumen = null;
+        var horaResumen = LeerHoraResumen();
+        while (!stoppingToken.IsCancellationRequested)
+        {
+            try
+            {
+                var actualizaciones = await telegram.ObtenerActualizacionesAsync(
+                    offset, stoppingToken);
+                foreach (var actualizacion in actualizaciones)
+                {
+                    offset = Math.Max(offset, actualizacion.Id + 1);
+                    using var scope = scopes.CreateScope();
+                    var procesador = scope.ServiceProvider
+                        .GetRequiredService<ProcesadorTelegram>();
+                    await procesador.ProcesarAsync(actualizacion, stoppingToken);
+                }
+
+                var local = reloj.GetLocalNow();
+                var hoy = DateOnly.FromDateTime(local.DateTime);
+                if (horaResumen.HasValue
+                    && ultimoResumen != hoy
+                    && TimeOnly.FromDateTime(local.DateTime) >= horaResumen.Value)
+                {
+                    using var scope = scopes.CreateScope();
+                    await scope.ServiceProvider
+                        .GetRequiredService<ProcesadorTelegram>()
+                        .EnviarResumenProgramadoAsync(stoppingToken);
+                    ultimoResumen = hoy;
+                }
+            }
+            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+            {
+                break;
+            }
+            catch (HttpRequestException ex)
+            {
+                System.Diagnostics.Trace.WriteLine($"Error de comunicación con Telegram: {ex.Message}");
+                await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
+            }
+            catch (System.Text.Json.JsonException ex)
+            {
+                System.Diagnostics.Trace.WriteLine($"Telegram devolvió una respuesta no válida: {ex.Message}");
+                await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
+            }
+        }
+    }
+
+    private static TimeOnly? LeerHoraResumen()
+        => TimeOnly.TryParse(
+            Environment.GetEnvironmentVariable("SIGS_TELEGRAM_RESUMEN_HORA"),
+            CultureInfo.InvariantCulture,
+            out var hora)
+                ? hora
+                : null;
+}

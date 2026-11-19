@@ -100,7 +100,10 @@ public class ServicioVentas(
         return venta;
     }
 
-    public async Task AnularVentaAsync(int ventaId, string motivo)
+    public Task AnularVentaAsync(int ventaId, string motivo)
+        => AnularVentaAsync(ventaId, motivo, null);
+
+    public async Task AnularVentaAsync(int ventaId, string motivo, string? origen)
     {
         sesion.Exigir(Permiso.AnularVenta);
 
@@ -114,7 +117,12 @@ public class ServicioVentas(
         await inventario.ReintegrarVentaAsync(ventaId);
         ventas.Actualizar(venta);
         await auditoria.RegistrarAsync(
-            AccionAuditoria.VentaAnulada, nameof(Venta), ventaId, motivo);
+            AccionAuditoria.VentaAnulada,
+            nameof(Venta),
+            ventaId,
+            string.IsNullOrWhiteSpace(origen)
+                ? motivo
+                : $"Origen: {origen} | Motivo: {motivo}");
 
         await trabajo.GuardarAsync();
     }

@@ -172,7 +172,7 @@ public class ServicioInventario(
 
     // --- Reabastecimiento ---
 
-    public async Task<IReadOnlyList<Reabastecimiento>> GenerarSolicitudesAsync()
+    public async Task<IReadOnlyList<Reabastecimiento>> GenerarSolicitudesAsync(string? origen = null)
     {
         sesion?.Exigir(Permiso.Reabastecer);
 
@@ -199,7 +199,16 @@ public class ServicioInventario(
         foreach (var solicitud in nuevas)
             await solicitudes.AgregarAsync(solicitud);
 
-        if (trabajo is not null)
+        if (nuevas.Count > 0 && !string.IsNullOrWhiteSpace(origen) && auditoria is not null)
+        {
+            await auditoria.RegistrarAsync(
+                AccionAuditoria.ReabastecimientoGenerado,
+                nameof(Reabastecimiento),
+                null,
+                $"Origen: {origen} | Solicitudes: {nuevas.Count}");
+        }
+
+if (trabajo is not null)
             await trabajo.GuardarAsync();
 
         return nuevas;
@@ -436,7 +445,7 @@ public class ServicioReabastecimiento(
     IUnidadDeTrabajo trabajo,
     TimeProvider reloj) : IServicioReabastecimiento
 {
-    public async Task<IReadOnlyList<Reabastecimiento>> GenerarSolicitudesAsync()
+    public async Task<IReadOnlyList<Reabastecimiento>> GenerarSolicitudesAsync(string? origen = null)
     {
         sesion.Exigir(Permiso.Reabastecer);
 

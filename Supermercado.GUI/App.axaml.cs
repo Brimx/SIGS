@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Supermercado.Entidades.Contratos;
 using Supermercado.GUI.Servicios.Impresion;
 using Supermercado.GUI.Servicios.Legal;
@@ -18,6 +19,7 @@ public partial class App : Application
 {
     public IServiceProvider? Services { get; private set; }
     private IServiceScope? _appScope;
+    private IReadOnlyList<IHostedService> _serviciosHospedados = [];
 
     public override void Initialize()
     {
@@ -62,12 +64,22 @@ public partial class App : Application
             var preferencias = _appScope.ServiceProvider.GetRequiredService<IServicioPreferencias>();
             TemaSigs.Aplicar(preferencias.LeerTema());
 
+            _serviciosHospedados = Services.GetServices<IHostedService>().ToArray();
+            foreach (var servicio in _serviciosHospedados)
+                servicio.StartAsync(CancellationToken.None).GetAwaiter().GetResult();
+
             var mainVm = _appScope.ServiceProvider.GetRequiredService<MainViewModel>();
             desktop.MainWindow = new MainWindow
             {
                 DataContext = mainVm,
             };
-            desktop.Exit += (_, _) => _appScope?.Dispose();
+            desktop.Exit += (_, _) =>
+            {
+                foreach (var servicio in _serviciosHospedados.Reverse())
+                    servicio.StopAsync(CancellationToken.None).GetAwaiter().GetResult();
+                _appScope?.Dispose();
+                (Services as IDisposable)?.Dispose();
+            };
         }
 
         base.OnFrameworkInitializationCompleted();
