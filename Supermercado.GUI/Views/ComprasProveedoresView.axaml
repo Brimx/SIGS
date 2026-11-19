@@ -53,12 +53,15 @@
         </Border>
 
         <!-- Cuerpo Principal: Izquierda Proveedores / Derecha Sugeridos de Compra y Reabastecimiento -->
-        <Grid Grid.Row="2">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" MinWidth="300" />
-                <ColumnDefinition Width="16" />
-                <ColumnDefinition Width="*" MinWidth="280" />
-            </Grid.ColumnDefinitions>
+        <ScrollViewer Grid.Row="2"
+                      VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled">
+            <Grid MinHeight="520">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" MinWidth="300" />
+                    <ColumnDefinition Width="16" />
+                    <ColumnDefinition Width="*" MinWidth="300" />
+                </Grid.ColumnDefinitions>
 
             <!-- Columna Izquierda: CRUD de Proveedores -->
             <Grid Grid.Column="0" RowDefinitions="Auto,12,*">
@@ -71,7 +74,9 @@
                     <StackPanel Spacing="10">
                         <TextBlock Text="Ficha de Proveedor Comercial"
                                    FontFamily="{StaticResource FontFamilyStackSans}"
-                                   FontWeight="{StaticResource FontWeightBold}" />
+                                   FontWeight="{StaticResource FontWeightBold}"
+                                   TextTrimming="CharacterEllipsis"
+                                   ToolTip.Tip="Ficha de Proveedor Comercial" />
 
                         <WrapPanel>
                             <TextBox Width="170"
@@ -106,10 +111,13 @@
                                     Classes="Primary" Theme="{DynamicResource SolidButton}"
                                     MinHeight="{StaticResource SizeTouchTarget}"
                                     Padding="16,8">
-                                <StackPanel Orientation="Horizontal" Spacing="6">
-                                    <LucideIcon Kind="Save" Size="16" />
-                                    <TextBlock Text="Guardar Proveedor" FontWeight="{StaticResource FontWeightBold}" TextWrapping="Wrap" />
-                                </StackPanel>
+                                <Grid ColumnDefinitions="Auto,8,*">
+                                    <LucideIcon Grid.Column="0" Kind="Save" Size="16" />
+                                    <TextBlock Grid.Column="2"
+                                               Text="Guardar Proveedor"
+                                               FontWeight="{StaticResource FontWeightBold}"
+                                               TextWrapping="Wrap" />
+                                </Grid>
                             </Button>
                         </WrapPanel>
                     </StackPanel>
@@ -123,6 +131,7 @@
                         ClipToBounds="True">
                     <DataGrid ItemsSource="{Binding Proveedores}"
                               SelectedItem="{Binding ProveedorSeleccionado}"
+                              MinHeight="180"
                               IsReadOnly="True"
                               CanUserResizeColumns="True"
                               GridLinesVisibility="Horizontal"
@@ -153,7 +162,8 @@
                                    FontFamily="{StaticResource FontFamilyStackSans}"
                                    FontSize="{StaticResource FontSizeTitle}"
                                    FontWeight="{StaticResource FontWeightBold}"
-                                   TextTrimming="CharacterEllipsis"
+                                   MaxWidth="220"
+                                   TextWrapping="Wrap"
                                    ToolTip.Tip="Sugeridos de Compra y Traslado" />
                     </StackPanel>
 
@@ -165,13 +175,14 @@
                             HorizontalAlignment="Stretch"
                              HorizontalContentAlignment="Center"
                              MinHeight="{StaticResource SizeTouchTarget}">
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <LucideIcon Kind="Sparkles" Size="16" Foreground="{DynamicResource BrushPrimaryText}" />
-                            <TextBlock Text="Calcular Sugeridos según Stock Mínimo"
+                        <Grid ColumnDefinitions="Auto,8,*">
+                            <LucideIcon Grid.Column="0" Kind="Sparkles" Size="16" Foreground="{DynamicResource BrushPrimaryText}" />
+                            <TextBlock Grid.Column="2"
+                                       Text="Calcular Sugeridos según Stock Mínimo"
                                        FontWeight="{StaticResource FontWeightBold}"
                                        Foreground="{DynamicResource BrushPrimaryText}"
                                        TextWrapping="Wrap" />
-                        </StackPanel>
+                        </Grid>
                     </Button>
 
                     <ListBox Grid.Row="4"
@@ -226,6 +237,7 @@
                     </ListBox>
                 </Grid>
             </Border>
-        </Grid>
+            </Grid>
+        </ScrollViewer>
     </Grid>
 </UserControl>

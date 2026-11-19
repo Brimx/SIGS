@@ -14,7 +14,11 @@ public sealed class ComprasContabilidadGuiTests
         var compras = Leer("Supermercado.GUI/Views/ComprasProveedoresView.axaml");
 
         Assert.Contains("<ColumnDefinition Width=\"*\" MinWidth=\"300\" />", compras);
-        Assert.Contains("<ColumnDefinition Width=\"*\" MinWidth=\"280\" />", compras);
+        Assert.Contains("<ColumnDefinition Width=\"*\" MinWidth=\"300\" />", compras);
+        Assert.Contains("ScrollViewer Grid.Row=\"2\"", compras);
+        Assert.Contains("VerticalScrollBarVisibility=\"Auto\"", compras);
+        Assert.Contains("MinHeight=\"520\"", compras);
+        Assert.Contains("MaxWidth=\"220\"", compras);
         Assert.Contains("VirtualizingStackPanel", compras);
         Assert.Contains("MinWidth=\"160\"", compras);
         Assert.Contains("ToolTip.Tip=\"{Binding NombreProducto}\"", compras);
