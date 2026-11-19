@@ -6,7 +6,7 @@
              x:DataType="vm:PersonalRolesViewModel"
              FontFamily="{StaticResource FontFamilyPlex}">
 
-    <Grid RowDefinitions="Auto,16,*,12,Auto" Margin="16">
+    <Grid RowDefinitions="Auto,16,*" Margin="16">
 
         <!-- Cabecera de Acciones y Creación Rápida de Cargo/Rol -->
         <Border Grid.Row="0"
@@ -15,44 +15,57 @@
                 BorderThickness="1"
                 CornerRadius="{StaticResource RadiusMedium}"
                 Padding="16,12">
-            <Grid ColumnDefinitions="*,16,220,8,Auto,16,Auto">
-                <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
-                    <TextBlock Text="Administración de Personal, Usuarios y Matriz RBAC (18 Permisos)"
+            <StackPanel Spacing="12">
+                <StackPanel Spacing="2">
+                    <TextBlock Text="Personal, Usuarios y Matriz RBAC (18 Permisos)"
                                FontFamily="{StaticResource FontFamilyStackSans}"
                                FontSize="{StaticResource FontSizeSubtitle}"
-                               FontWeight="{StaticResource FontWeightBold}" />
-                    <TextBlock Text="Control de acceso basado en roles con protección contra escalada de privilegios."
+                               FontWeight="{StaticResource FontWeightBold}"
+                               TextTrimming="CharacterEllipsis"
+                               ToolTip.Tip="Administración de Personal, Usuarios y Matriz RBAC (18 Permisos)" />
+                    <TextBlock Text="Control de acceso por roles con protección contra escalada de privilegios."
                                FontSize="{StaticResource FontSizeCaption}"
-                               Foreground="{DynamicResource BrushTextSecondary}" />
+                               Foreground="{DynamicResource BrushTextSecondary}"
+                               TextWrapping="Wrap" />
                 </StackPanel>
 
-                <TextBox Grid.Column="2"
-                         Text="{Binding NuevoCargoNombreInput}"
-                         PlaceholderText="Nuevo cargo (ej. Supervisor)..."
-                         MinHeight="38" />
-                <Button Grid.Column="4"
-                        Command="{Binding CrearNuevoCargoCommand}"
-                        MinHeight="38">
-                    <TextBlock Text="+ Cargo" FontWeight="{StaticResource FontWeightSemiBold}" />
-                </Button>
-
-                <Button Grid.Column="6"
-                        Command="{Binding CargarDatosCommand}"
-                        Classes="Primary" Theme="{DynamicResource SolidButton}"
-                        MinHeight="38">
-                    <StackPanel Orientation="Horizontal" Spacing="6">
-                        <LucideIcon Kind="RefreshCw" Size="16" />
-                        <TextBlock Text="Recargar" FontWeight="{StaticResource FontWeightSemiBold}" />
-                    </StackPanel>
-                </Button>
-            </Grid>
+                <WrapPanel>
+                    <TextBox Width="220"
+                             Margin="0,0,8,8"
+                             Text="{Binding NuevoCargoNombreInput}"
+                             PlaceholderText="Nuevo cargo (ej. Supervisor)..."
+                             MinHeight="{StaticResource SizeTouchTarget}" />
+                    <Button Margin="0,0,8,8"
+                            Command="{Binding CrearNuevoCargoCommand}"
+                            MinHeight="{StaticResource SizeTouchTarget}">
+                        <TextBlock Text="+ Cargo" FontWeight="{StaticResource FontWeightSemiBold}" />
+                    </Button>
+                    <Button Margin="0,0,8,8"
+                            Command="{Binding CargarDatosCommand}"
+                            Classes="Primary" Theme="{DynamicResource SolidButton}"
+                            MinHeight="{StaticResource SizeTouchTarget}">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <LucideIcon Kind="RefreshCw" Size="16" />
+                            <TextBlock Text="Recargar" FontWeight="{StaticResource FontWeightSemiBold}" />
+                        </StackPanel>
+                    </Button>
+                </WrapPanel>
+            </StackPanel>
         </Border>
 
         <!-- Cuerpo Principal: Izquierda Empleados y Usuarios / Derecha Matriz de Roles y Permisos -->
-        <Grid Grid.Row="2" ColumnDefinitions="*,16,420">
+        <ScrollViewer Grid.Row="2"
+                      VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled">
+            <Grid MinHeight="560">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" MinWidth="300" />
+                    <ColumnDefinition Width="16" />
+                    <ColumnDefinition Width="*" MinWidth="280" />
+                </Grid.ColumnDefinitions>
 
             <!-- Columna Izquierda: Listado de Empleados y Alta -->
-            <Grid Grid.Column="0" RowDefinitions="Auto,12,*,12,Auto">
+            <Grid Grid.Column="0" RowDefinitions="Auto,12,Auto,12,Auto">
 
                 <!-- Formulario Alta de Empleado -->
                 <Border Grid.Row="0"
@@ -66,55 +79,69 @@
                                    FontFamily="{StaticResource FontFamilyStackSans}"
                                    FontWeight="{StaticResource FontWeightBold}" />
 
-                        <Grid ColumnDefinitions="140,8,*,8,*,8,180">
-                            <TextBox Grid.Column="0" Text="{Binding DocumentoInput}" PlaceholderText="Documento CC" />
-                            <TextBox Grid.Column="2" Text="{Binding NombresInput}" PlaceholderText="Nombres" />
-                            <TextBox Grid.Column="4" Text="{Binding ApellidosInput}" PlaceholderText="Apellidos" />
-                            <TextBox Grid.Column="6" Text="{Binding CorreoInput}" PlaceholderText="Correo electrónico" />
-                        </Grid>
+                        <WrapPanel>
+                            <TextBox Width="140"
+                                     Margin="0,0,8,8"
+                                     Text="{Binding DocumentoInput}"
+                                     PlaceholderText="Documento CC" />
+                            <TextBox Width="140"
+                                     Margin="0,0,8,8"
+                                     Text="{Binding NombresInput}"
+                                     PlaceholderText="Nombres" />
+                            <TextBox Width="140"
+                                     Margin="0,0,8,8"
+                                     Text="{Binding ApellidosInput}"
+                                     PlaceholderText="Apellidos" />
+                            <TextBox Width="180"
+                                     Margin="0,0,8,8"
+                                     Text="{Binding CorreoInput}"
+                                     PlaceholderText="Correo electrónico" />
+                        </WrapPanel>
 
-                        <Grid ColumnDefinitions="160,8,*,8,*,8,Auto">
-                            <NumericUpDown Grid.Column="0"
+                        <WrapPanel>
+                            <NumericUpDown Width="160"
+                                           Margin="0,0,8,8"
                                            Value="{Binding SalarioBaseInput}"
                                            Minimum="0"
                                            Increment="50000"
                                            FormatString="N0"
                                            FontFamily="{StaticResource FontFamilyPlexCondensed}" />
 
-                            <ComboBox Grid.Column="2"
+                            <ComboBox Width="170"
+                                      Margin="0,0,8,8"
                                       ItemsSource="{Binding Cargos}"
                                       SelectedItem="{Binding CargoFormularioSeleccionado}"
-                                      HorizontalAlignment="Stretch"
                                       PlaceholderText="Seleccione Cargo">
                                 <ComboBox.ItemTemplate>
                                     <DataTemplate x:DataType="personal:Cargo">
-                                        <TextBlock Text="{Binding Nombre}" />
+                                        <TextBlock Text="{Binding Nombre}" TextTrimming="CharacterEllipsis" />
                                     </DataTemplate>
                                 </ComboBox.ItemTemplate>
                             </ComboBox>
 
-                            <ComboBox Grid.Column="4"
+                            <ComboBox Width="170"
+                                      Margin="0,0,8,8"
                                       ItemsSource="{Binding Roles}"
                                       SelectedItem="{Binding RolFormularioSeleccionado}"
-                                      HorizontalAlignment="Stretch"
                                       PlaceholderText="Seleccione Rol RBAC">
                                 <ComboBox.ItemTemplate>
                                     <DataTemplate x:DataType="personal:Rol">
-                                        <TextBlock Text="{Binding Nombre}" />
+                                        <TextBlock Text="{Binding Nombre}" TextTrimming="CharacterEllipsis" />
                                     </DataTemplate>
                                 </ComboBox.ItemTemplate>
                             </ComboBox>
 
-                            <Button Grid.Column="6"
+                            <Button Margin="0,0,8,8"
                                     Command="{Binding RegistrarEmpleadoCommand}"
                                     Classes="Primary" Theme="{DynamicResource SolidButton}"
+                                    MinHeight="{StaticResource SizeTouchTarget}"
                                     Padding="16,0">
                                 <StackPanel Orientation="Horizontal" Spacing="6">
                                     <LucideIcon Kind="UserPlus" Size="16" />
-                                    <TextBlock Text="Guardar Empleado" FontWeight="{StaticResource FontWeightBold}" />
+                                    <TextBlock Text="Guardar Empleado" FontWeight="{StaticResource FontWeightBold}" TextWrapping="Wrap" />
                                 </StackPanel>
                             </Button>
-                        </Grid>
+                        </WrapPanel>
                     </StackPanel>
                 </Border>
 
@@ -127,19 +154,20 @@
                         ClipToBounds="True">
                     <DataGrid ItemsSource="{Binding Empleados}"
                               SelectedItem="{Binding EmpleadoSeleccionado}"
+                              MinHeight="180"
                               IsReadOnly="True"
                               CanUserResizeColumns="True"
                               GridLinesVisibility="Horizontal"
                           ScrollViewer.HorizontalScrollBarVisibility="Auto"
                           ScrollViewer.VerticalScrollBarVisibility="Auto">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="DOCUMENTO" Binding="{Binding Documento}" Width="115" FontFamily="{StaticResource FontFamilyPlexCondensed}" />
-                            <DataGridTextColumn Header="EMPLEADO" Binding="{Binding NombreCompleto}" Width="*" />
-                            <DataGridTextColumn Header="CARGO" Binding="{Binding NombreCargo}" Width="125" />
-                            <DataGridTextColumn Header="ROL RBAC" Binding="{Binding NombreRol}" Width="115" FontFamily="{StaticResource FontFamilyPlexCondensed}" />
-                            <DataGridTextColumn Header="SALARIO" Binding="{Binding SalarioFormateado}" Width="115" FontFamily="{StaticResource FontFamilyPlexCondensed}" />
-                            <DataGridTextColumn Header="USUARIO" Binding="{Binding EstadoUsuario}" Width="140" FontFamily="{StaticResource FontFamilyPlexCondensed}" />
-                            <DataGridTextColumn Header="ESTADO" Binding="{Binding EstadoEmpleado}" Width="90" FontFamily="{StaticResource FontFamilyPlexCondensed}" />
+                            <DataGridTextColumn Header="DOCUMENTO" Binding="{Binding Documento}" Width="115" MinWidth="100" FontFamily="{StaticResource FontFamilyPlexCondensed}" />
+                            <DataGridTextColumn Header="EMPLEADO" Binding="{Binding NombreCompleto}" Width="*" MinWidth="150" />
+                            <DataGridTextColumn Header="CARGO" Binding="{Binding NombreCargo}" Width="125" MinWidth="110" />
+                            <DataGridTextColumn Header="ROL RBAC" Binding="{Binding NombreRol}" Width="115" MinWidth="100" FontFamily="{StaticResource FontFamilyPlexCondensed}" />
+                            <DataGridTextColumn Header="SALARIO" Binding="{Binding SalarioFormateado}" Width="115" MinWidth="100" FontFamily="{StaticResource FontFamilyPlexCondensed}" />
+                            <DataGridTextColumn Header="USUARIO" Binding="{Binding EstadoUsuario}" Width="140" MinWidth="120" FontFamily="{StaticResource FontFamilyPlexCondensed}" />
+                            <DataGridTextColumn Header="ESTADO" Binding="{Binding EstadoEmpleado}" Width="90" MinWidth="80" FontFamily="{StaticResource FontFamilyPlexCondensed}" />
                         </DataGrid.Columns>
                     </DataGrid>
                 </Border>
@@ -151,25 +179,39 @@
                         BorderThickness="1"
                         CornerRadius="{StaticResource RadiusMedium}"
                         Padding="14,10">
-                    <Grid ColumnDefinitions="160,8,160,8,Auto,*,Auto,8,Auto,8,Auto">
-                        <TextBox Grid.Column="0" Text="{Binding NuevoUsuarioInput}" PlaceholderText="Usuario login" />
-                        <TextBox Grid.Column="2" Text="{Binding ClaveTemporalInput}" PasswordChar="•" PlaceholderText="Clave mín. 8 chars" />
-                        <Button Grid.Column="4"
+                    <WrapPanel>
+                        <TextBox Width="150"
+                                 Margin="0,0,8,8"
+                                 Text="{Binding NuevoUsuarioInput}"
+                                 PlaceholderText="Usuario login" />
+                        <TextBox Width="150"
+                                 Margin="0,0,8,8"
+                                 Text="{Binding ClaveTemporalInput}"
+                                 PasswordChar="•"
+                                 PlaceholderText="Clave mín. 8 chars" />
+                        <Button Margin="0,0,8,8"
                                 Command="{Binding CrearUsuarioParaEmpleadoCommand}"
-                                Classes="Primary" Theme="{DynamicResource SolidButton}">
-                            <TextBlock Text="Asignar Usuario" FontWeight="{StaticResource FontWeightSemiBold}" />
+                                Classes="Primary" Theme="{DynamicResource SolidButton}"
+                                MinHeight="{StaticResource SizeTouchTarget}">
+                            <TextBlock Text="Asignar Usuario" FontWeight="{StaticResource FontWeightSemiBold}" TextWrapping="Wrap" />
                         </Button>
 
-                        <Button Grid.Column="6" Command="{Binding DesbloquearUsuarioSeleccionadoCommand}">
-                            <TextBlock Text="Desbloquear" FontWeight="{StaticResource FontWeightSemiBold}" />
+                        <Button Margin="0,0,8,8"
+                                Command="{Binding DesbloquearUsuarioSeleccionadoCommand}"
+                                MinHeight="{StaticResource SizeTouchTarget}">
+                            <TextBlock Text="Desbloquear" FontWeight="{StaticResource FontWeightSemiBold}" TextWrapping="Wrap" />
                         </Button>
-                        <Button Grid.Column="8" Command="{Binding RestablecerClaveTemporalCommand}">
-                            <TextBlock Text="Reset Clave" FontWeight="{StaticResource FontWeightSemiBold}" Foreground="{DynamicResource BrushWarningText}" />
+                        <Button Margin="0,0,8,8"
+                                Command="{Binding RestablecerClaveTemporalCommand}"
+                                MinHeight="{StaticResource SizeTouchTarget}">
+                            <TextBlock Text="Reset Clave" FontWeight="{StaticResource FontWeightSemiBold}" Foreground="{DynamicResource BrushWarningText}" TextWrapping="Wrap" />
                         </Button>
-                        <Button Grid.Column="10" Command="{Binding DesactivarEmpleadoSeleccionadoCommand}">
-                            <TextBlock Text="Desactivar" FontWeight="{StaticResource FontWeightSemiBold}" Foreground="{DynamicResource BrushErrorText}" />
+                        <Button Margin="0,0,8,8"
+                                Command="{Binding DesactivarEmpleadoSeleccionadoCommand}"
+                                MinHeight="{StaticResource SizeTouchTarget}">
+                            <TextBlock Text="Desactivar" FontWeight="{StaticResource FontWeightSemiBold}" Foreground="{DynamicResource BrushErrorText}" TextWrapping="Wrap" />
                         </Button>
-                    </Grid>
+                    </WrapPanel>
                 </Border>
             </Grid>
 
@@ -180,82 +222,93 @@
                     BorderThickness="1"
                     CornerRadius="{StaticResource RadiusLarge}"
                     Padding="18">
-                <Grid RowDefinitions="Auto,12,Auto,12,*,12,Auto">
+                <Grid RowDefinitions="Auto,12,Auto,12,Auto,12,Auto">
                     <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="8">
                         <LucideIcon Kind="ShieldCheck" Size="20" Foreground="{DynamicResource BrushPrimaryText}" />
                         <TextBlock Text="Matriz de Permisos por Rol"
                                    FontFamily="{StaticResource FontFamilyStackSans}"
                                    FontSize="{StaticResource FontSizeTitle}"
-                                   FontWeight="{StaticResource FontWeightBold}" />
+                                   FontWeight="{StaticResource FontWeightBold}"
+                                   TextTrimming="CharacterEllipsis"
+                                   ToolTip.Tip="Matriz de Permisos por Rol" />
                     </StackPanel>
 
-                    <Grid Grid.Row="2" ColumnDefinitions="*,8,140,6,Auto">
-                        <ComboBox Grid.Column="0"
+                    <WrapPanel Grid.Row="2">
+                        <ComboBox Width="170"
+                                  Margin="0,0,8,8"
                                   ItemsSource="{Binding Roles}"
-                                  SelectedItem="{Binding RolSeleccionado}"
-                                  HorizontalAlignment="Stretch">
+                                  SelectedItem="{Binding RolSeleccionado}">
                             <ComboBox.ItemTemplate>
                                 <DataTemplate x:DataType="personal:Rol">
-                                    <TextBlock Text="{Binding Nombre}" FontWeight="{StaticResource FontWeightBold}" />
+                                    <TextBlock Text="{Binding Nombre}" FontWeight="{StaticResource FontWeightBold}" TextTrimming="CharacterEllipsis" />
                                 </DataTemplate>
                             </ComboBox.ItemTemplate>
                         </ComboBox>
 
-                        <TextBox Grid.Column="2" Text="{Binding NuevoRolNombreInput}" PlaceholderText="Nuevo rol..." />
-                        <Button Grid.Column="4" Command="{Binding CrearNuevoRolCommand}">
+                        <TextBox Width="140"
+                                 Margin="0,0,8,8"
+                                 Text="{Binding NuevoRolNombreInput}"
+                                 PlaceholderText="Nuevo rol..." />
+                        <Button Margin="0,0,8,8"
+                                Command="{Binding CrearNuevoRolCommand}"
+                                MinWidth="{StaticResource SizeTouchTarget}"
+                                MinHeight="{StaticResource SizeTouchTarget}">
                             <LucideIcon Kind="Plus" Size="16" />
                         </Button>
-                    </Grid>
+                    </WrapPanel>
 
-                    <ScrollViewer Grid.Row="4">
-                        <ItemsControl ItemsSource="{Binding BanderasRolSeleccionado}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate x:DataType="vm:PermisoBanderaItemViewModel">
-                                    <Border Background="{DynamicResource BrushSurfaceSubtle}"
-                                            BorderBrush="{DynamicResource BrushBorderSubtle}"
-                                            BorderThickness="1"
-                                            CornerRadius="{StaticResource RadiusSmall}"
-                                            Margin="0,3"
-                                            Padding="10,6">
-                                        <CheckBox IsChecked="{Binding Activo}">
-                                            <StackPanel Spacing="1">
-                                                <TextBlock Text="{Binding Nombre}"
-                                                           FontFamily="{StaticResource FontFamilyPlexCondensed}"
-                                                           FontWeight="{StaticResource FontWeightBold}" />
-                                                <TextBlock Text="{Binding Descripcion}"
-                                                           FontSize="{StaticResource FontSizeCaption}"
-                                                           Foreground="{DynamicResource BrushTextSecondary}" />
-                                            </StackPanel>
-                                        </CheckBox>
-                                    </Border>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </ScrollViewer>
+                    <ListBox Grid.Row="4"
+                             ItemsSource="{Binding BanderasRolSeleccionado}"
+                             Background="Transparent"
+                             BorderThickness="0"
+                             MinHeight="200"
+                             MaxHeight="320"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                        <ListBox.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <VirtualizingStackPanel />
+                            </ItemsPanelTemplate>
+                        </ListBox.ItemsPanel>
+                        <ListBox.ItemTemplate>
+                            <DataTemplate x:DataType="vm:PermisoBanderaItemViewModel">
+                                <Border Background="{DynamicResource BrushSurfaceSubtle}"
+                                        BorderBrush="{DynamicResource BrushBorderSubtle}"
+                                        BorderThickness="1"
+                                        CornerRadius="{StaticResource RadiusSmall}"
+                                        Margin="0,3"
+                                        Padding="10,6">
+                                    <CheckBox IsChecked="{Binding Activo}">
+                                        <StackPanel Spacing="1">
+                                            <TextBlock Text="{Binding Nombre}"
+                                                       FontFamily="{StaticResource FontFamilyPlexCondensed}"
+                                                       FontWeight="{StaticResource FontWeightBold}"
+                                                       TextTrimming="CharacterEllipsis"
+                                                       ToolTip.Tip="{Binding Nombre}" />
+                                            <TextBlock Text="{Binding Descripcion}"
+                                                       FontSize="{StaticResource FontSizeCaption}"
+                                                       Foreground="{DynamicResource BrushTextSecondary}"
+                                                       TextWrapping="Wrap" />
+                                        </StackPanel>
+                                    </CheckBox>
+                                </Border>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
 
                     <Button Grid.Row="6"
                             Command="{Binding GuardarPermisosRolSeleccionadoCommand}"
                             Classes="Primary" Theme="{DynamicResource SolidButton}"
-                            HorizontalAlignment="Stretch"
-                            HorizontalContentAlignment="Center"
-                            MinHeight="42">
+                             HorizontalAlignment="Stretch"
+                             HorizontalContentAlignment="Center"
+                             MinHeight="{StaticResource SizeTouchTarget}">
                         <StackPanel Orientation="Horizontal" Spacing="8">
                             <LucideIcon Kind="Save" Size="16" />
-                            <TextBlock Text="Guardar Permisos del Rol" FontWeight="{StaticResource FontWeightBold}" />
+                            <TextBlock Text="Guardar Permisos del Rol" FontWeight="{StaticResource FontWeightBold}" TextWrapping="Wrap" />
                         </StackPanel>
                     </Button>
                 </Grid>
             </Border>
-        </Grid>
-
-        <!-- Barra de Estado -->
-        <Border Grid.Row="4"
-                Background="{DynamicResource BrushSurface}"
-                BorderBrush="{DynamicResource BrushBorderSubtle}"
-                BorderThickness="1"
-                CornerRadius="{StaticResource RadiusSmall}"
-                Padding="12,8">
-            <TextBlock Text="{Binding MensajeEstado}" FontWeight="{StaticResource FontWeightMedium}" />
-        </Border>
+            </Grid>
+        </ScrollViewer>
     </Grid>
 </UserControl>
