@@ -54,15 +54,18 @@
         </Border>
 
         <!-- Cuerpo Principal: Izquierda Empleados y Usuarios / Derecha Matriz de Roles y Permisos -->
-        <Grid Grid.Row="2">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" MinWidth="300" />
-                <ColumnDefinition Width="16" />
-                <ColumnDefinition Width="*" MinWidth="280" />
-            </Grid.ColumnDefinitions>
+        <ScrollViewer Grid.Row="2"
+                      VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled">
+            <Grid MinHeight="560">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" MinWidth="300" />
+                    <ColumnDefinition Width="16" />
+                    <ColumnDefinition Width="*" MinWidth="280" />
+                </Grid.ColumnDefinitions>
 
             <!-- Columna Izquierda: Listado de Empleados y Alta -->
-            <Grid Grid.Column="0" RowDefinitions="Auto,12,*,12,Auto">
+            <Grid Grid.Column="0" RowDefinitions="Auto,12,Auto,12,Auto">
 
                 <!-- Formulario Alta de Empleado -->
                 <Border Grid.Row="0"
@@ -151,6 +154,7 @@
                         ClipToBounds="True">
                     <DataGrid ItemsSource="{Binding Empleados}"
                               SelectedItem="{Binding EmpleadoSeleccionado}"
+                              MinHeight="180"
                               IsReadOnly="True"
                               CanUserResizeColumns="True"
                               GridLinesVisibility="Horizontal"
@@ -218,7 +222,7 @@
                     BorderThickness="1"
                     CornerRadius="{StaticResource RadiusLarge}"
                     Padding="18">
-                <Grid RowDefinitions="Auto,12,Auto,12,*,12,Auto">
+                <Grid RowDefinitions="Auto,12,Auto,12,Auto,12,Auto">
                     <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="8">
                         <LucideIcon Kind="ShieldCheck" Size="20" Foreground="{DynamicResource BrushPrimaryText}" />
                         <TextBlock Text="Matriz de Permisos por Rol"
@@ -257,6 +261,7 @@
                              ItemsSource="{Binding BanderasRolSeleccionado}"
                              Background="Transparent"
                              BorderThickness="0"
+                             MinHeight="200"
                              MaxHeight="320"
                              ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                         <ListBox.ItemsPanel>
@@ -293,7 +298,7 @@
                     <Button Grid.Row="6"
                             Command="{Binding GuardarPermisosRolSeleccionadoCommand}"
                             Classes="Primary" Theme="{DynamicResource SolidButton}"
-                            HorizontalAlignment="Stretch"
+                             HorizontalAlignment="Stretch"
                              HorizontalContentAlignment="Center"
                              MinHeight="{StaticResource SizeTouchTarget}">
                         <StackPanel Orientation="Horizontal" Spacing="8">
@@ -303,6 +308,7 @@
                     </Button>
                 </Grid>
             </Border>
-        </Grid>
+            </Grid>
+        </ScrollViewer>
     </Grid>
 </UserControl>

@@ -15,6 +15,9 @@ public sealed class PersonalDashboardGuiTests
 
         Assert.Contains("<ColumnDefinition Width=\"*\" MinWidth=\"300\" />", personal);
         Assert.Contains("<ColumnDefinition Width=\"*\" MinWidth=\"280\" />", personal);
+        Assert.Contains("ScrollViewer Grid.Row=\"2\"", personal);
+        Assert.Contains("MinHeight=\"560\"", personal);
+        Assert.Contains("MinHeight=\"200\"", personal);
         Assert.Contains("VirtualizingStackPanel", personal);
         Assert.Contains("MinWidth=\"150\"", personal);
         Assert.Contains("MinWidth=\"{StaticResource SizeTouchTarget}\"", personal);
