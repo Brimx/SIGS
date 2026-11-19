@@ -6,9 +6,9 @@ using Supermercado.Logica.Servicios;
 
 namespace Supermercado.Pruebas;
 
-
 public sealed class AsistenteTests
 {
+
     [Theory]
     [InlineData("/stock", HerramientaAsistente.StockBajo)]
     [InlineData("/ventas", HerramientaAsistente.VentasDelDia)]
@@ -201,6 +201,65 @@ public sealed class AsistenteTests
     }
 
     [Fact]
+    public async Task ClienteGemini_ReintentaConModeloDeRespaldoCuandoServicioNoDisponible()
+    {
+        const string respuesta = """
+            {"candidates":[{"content":{"parts":[{"functionCall":{"name":"stock_bajo","args":{}}}]}}]}
+            """;
+        var handler = new HandlerFalso(
+            ("{}", HttpStatusCode.ServiceUnavailable),
+            (respuesta, HttpStatusCode.OK));
+        var cliente = new ClienteGeminiHttp(
+            new HttpClient(handler),
+            "clave-prueba",
+            "gemini-prueba",
+            "gemini-respaldo");
+
+        var resultado = await cliente.ElegirHerramientaAsync("consulta natural");
+
+        Assert.Equal(HerramientaAsistente.StockBajo, resultado?.Herramienta);
+        Assert.Equal(2, handler.Urls.Count);
+        Assert.Contains("gemini-prueba", handler.Urls[0].ToString());
+        Assert.Contains("gemini-respaldo", handler.Urls[1].ToString());
+    }
+
+    [Fact]
+    public async Task ClienteGemini_SinRespaldoServiceUnavailableDaMensajeDeSaturacion()
+    {
+        var handler = new HandlerFalso("{}", HttpStatusCode.ServiceUnavailable);
+        var cliente = new ClienteGeminiHttp(
+            new HttpClient(handler),
+            "clave-prueba",
+            "gemini-prueba",
+            modeloRespaldo: "");
+
+        var error = await Assert.ThrowsAsync<GeminiNoDisponibleException>(
+            () => cliente.ElegirHerramientaAsync("consulta natural"));
+
+        Assert.Contains("saturado", error.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Single(handler.Urls);
+    }
+
+    [Fact]
+    public async Task ClienteGemini_RespaldoAgotadoDaMensajeDeSaturacion()
+    {
+        var handler = new HandlerFalso(
+            ("{}", HttpStatusCode.ServiceUnavailable),
+            ("{}", HttpStatusCode.ServiceUnavailable));
+        var cliente = new ClienteGeminiHttp(
+            new HttpClient(handler),
+            "clave-prueba",
+            "gemini-prueba",
+            "gemini-respaldo");
+
+        var error = await Assert.ThrowsAsync<GeminiNoDisponibleException>(
+            () => cliente.ElegirHerramientaAsync("consulta natural"));
+
+        Assert.Contains("saturado", error.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(2, handler.Urls.Count);
+    }
+
+    [Fact]
     public async Task ClienteGemini_RegistraErrorSinExponerClaveNiDatosSensibles()
     {
         const string respuesta = """
@@ -211,7 +270,7 @@ public sealed class AsistenteTests
             new HttpClient(new HandlerFalso(respuesta, HttpStatusCode.BadRequest)),
             "clave-prueba",
             "gemini-prueba",
-            registro);
+            logger: registro);
 
         await Assert.ThrowsAsync<GeminiNoDisponibleException>(
             () => cliente.ElegirHerramientaAsync("consulta natural"));
@@ -256,9 +315,9 @@ public sealed class AsistenteTests
 
     private sealed class GeminiFalso : IClienteGemini
     {
-
         public int Llamadas { get; private set; }
         public SolicitudHerramienta? Resultado { get; init; }
+
 
         public Task<SolicitudHerramienta?> ElegirHerramientaAsync(
             string mensaje,
@@ -269,13 +328,27 @@ public sealed class AsistenteTests
         }
     }
 
-    private sealed class HandlerFalso(
-        string contenido,
-        HttpStatusCode codigo = HttpStatusCode.OK) : HttpMessageHandler
+    private sealed class HandlerFalso : HttpMessageHandler
     {
+        private readonly Queue<(string Contenido, HttpStatusCode Codigo)>? _respuestas;
+        private readonly string? _contenido;
+        private readonly HttpStatusCode _codigo;
+
+        public HandlerFalso(string contenido, HttpStatusCode codigo = HttpStatusCode.OK)
+        {
+            _contenido = contenido;
+            _codigo = codigo;
+        }
+
+        public HandlerFalso(params (string Contenido, HttpStatusCode Codigo)[] respuestas)
+        {
+            _respuestas = new Queue<(string, HttpStatusCode)>(respuestas);
+        }
+
         public string? Cuerpo { get; private set; }
         public Uri? Url { get; private set; }
         public string? ClaveApi { get; private set; }
+        public List<Uri> Urls { get; } = [];
 
         protected override async Task<HttpResponseMessage> SendAsync(
             HttpRequestMessage request,
@@ -283,11 +356,22 @@ public sealed class AsistenteTests
         {
             Cuerpo = await request.Content!.ReadAsStringAsync(cancellationToken);
             Url = request.RequestUri;
+            Urls.Add(Url!);
             ClaveApi = request.Headers.GetValues("x-goog-api-key").SingleOrDefault();
-            return new HttpResponseMessage(codigo)
+            if (_respuestas is null)
+                return NuevaRespuesta(_contenido!, _codigo);
+
+            var siguiente = _respuestas.Dequeue();
+            return NuevaRespuesta(siguiente.Contenido, siguiente.Codigo);
+        }
+
+        private static HttpResponseMessage NuevaRespuesta(
+            string contenido,
+            HttpStatusCode codigo)
+            => new(codigo)
             {
                 Content = new StringContent(contenido, Encoding.UTF8, "application/json")
             };
-        }
     }
 }
+

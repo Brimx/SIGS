@@ -9,16 +9,18 @@ using Microsoft.Extensions.Logging;
 
 namespace Supermercado.Logica.Servicios;
 
-
 public sealed class ClienteGeminiHttp(
     HttpClient http,
     string? clave = null,
     string? modelo = null,
+    string? modeloRespaldo = null,
     ILogger<ClienteGeminiHttp>? logger = null)
     : IClienteGemini
 {
     public const string ModeloPorDefecto = "gemini-3.8-flash";
+    private const string ModeloRespaldoPorDefecto = "gemini-3.5-flash";
     private const string Rojo = "[redactado]";
+
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
     private static readonly HashSet<string> CamposSensibles = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -29,17 +31,32 @@ public sealed class ClienteGeminiHttp(
     };
     private readonly string? _clave = (clave ?? Environment.GetEnvironmentVariable("SIGS_GEMINI_API_KEY"))?.Trim();
     private readonly string _modelo = LeerModelo(modelo);
+    private readonly string? _modeloRespaldo = LeerModeloRespaldo(modeloRespaldo, modelo);
     private readonly ILogger<ClienteGeminiHttp>? _logger = logger;
 
     private static string LeerModelo(string? modelo)
-
     {
         var configurado = string.IsNullOrWhiteSpace(modelo)
+
             ? Environment.GetEnvironmentVariable("SIGS_GEMINI_MODEL")
             : modelo;
         return string.IsNullOrWhiteSpace(configurado)
             ? ModeloPorDefecto
             : configurado.Trim();
+    }
+
+    private static string? LeerModeloRespaldo(string? modeloRespaldo, string? modelo)
+    {
+        var configurado = modeloRespaldo is null
+            ? Environment.GetEnvironmentVariable("SIGS_GEMINI_MODEL_RESPALDO")
+            : modeloRespaldo;
+        if (string.IsNullOrWhiteSpace(configurado))
+            return modeloRespaldo is null ? ModeloRespaldoPorDefecto : null;
+
+        var respaldo = configurado.Trim();
+        return string.Equals(respaldo, LeerModelo(modelo), StringComparison.OrdinalIgnoreCase)
+            ? null
+            : respaldo;
     }
 
     private async Task<HttpResponseMessage> EnviarGeminiAsync(string uri, object cuerpo, CancellationToken cancelacion)
@@ -66,6 +83,8 @@ public sealed class ClienteGeminiHttp(
         {
             HttpStatusCode.TooManyRequests =>
                 "Gemini alcanzó el límite de cuota. Intenta más tarde o usa /stock, /ventas, /caja o /resumen.",
+            HttpStatusCode.ServiceUnavailable =>
+                "Gemini está saturado o no está disponible. Intenta más tarde o usa /stock, /ventas, /caja o /resumen.",
             HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden =>
                 "Gemini rechazó la clave o no tiene cuota disponible. Los comandos /stock, /ventas, /caja y /resumen siguen disponibles.",
             _ when (int)estado is >= 400 and < 500 =>
@@ -179,6 +198,9 @@ public sealed class ClienteGeminiHttp(
     private static object ParametrosVacios()
         => new { type = "OBJECT", properties = new { }, required = Array.Empty<string>() };
 
+    private static string ConstruirUri(string modelo)
+        => $"https://generativelanguage.googleapis.com/v1beta/models/{Uri.EscapeDataString(modelo)}:generateContent";
+
     public async Task<SolicitudHerramienta?> ElegirHerramientaAsync(
         string mensaje,
         CancellationToken cancelacion = default)
@@ -186,7 +208,7 @@ public sealed class ClienteGeminiHttp(
         if (string.IsNullOrWhiteSpace(_clave))
             throw new GeminiNoDisponibleException("Gemini no está configurado. Los comandos /stock, /ventas, /caja y /resumen siguen disponibles.");
 
-        var uri = $"https://generativelanguage.googleapis.com/v1beta/models/{Uri.EscapeDataString(_modelo)}:generateContent";
+        var uri = ConstruirUri(_modelo);
         var cuerpo = new
         {
             systemInstruction = new
@@ -243,9 +265,28 @@ public sealed class ClienteGeminiHttp(
             toolConfig = new { functionCallingConfig = new { mode = "VALIDATED" } }
         };
 
-        using var respuesta = await EnviarGeminiAsync(uri, cuerpo, cancelacion);
-        if (!respuesta.IsSuccessStatusCode)
+        var respuesta = await EnviarGeminiAsync(uri, cuerpo, cancelacion);
+        using (respuesta)
+        {
+            if (respuesta.StatusCode == HttpStatusCode.ServiceUnavailable
+                && _modeloRespaldo is not null)
+            {
+                await RegistrarErrorAsync(respuesta, cancelacion);
+                var respuestaRespaldo = await EnviarGeminiAsync(
+                    ConstruirUri(_modeloRespaldo), cuerpo, cancelacion);
+                using (respuestaRespaldo)
+                    return await ProcesarRespuestaAsync(respuestaRespaldo, cancelacion);
+            }
 
+            return await ProcesarRespuestaAsync(respuesta, cancelacion);
+        }
+    }
+
+    private async Task<SolicitudHerramienta?> ProcesarRespuestaAsync(
+        HttpResponseMessage respuesta,
+        CancellationToken cancelacion)
+    {
+        if (!respuesta.IsSuccessStatusCode)
         {
             await RegistrarErrorAsync(respuesta, cancelacion);
             throw new GeminiNoDisponibleException(MensajeError(respuesta.StatusCode));
@@ -253,6 +294,7 @@ public sealed class ClienteGeminiHttp(
 
         await using var flujo = await respuesta.Content.ReadAsStreamAsync(cancelacion);
         using var json = await JsonDocument.ParseAsync(flujo, cancellationToken: cancelacion);
+
         if (!json.RootElement.TryGetProperty("candidates", out var candidatos)
             || candidatos.GetArrayLength() == 0)
             return null;
@@ -338,9 +380,9 @@ public sealed class ClienteGeminiHttp(
     }
 
     private static readonly IReadOnlyDictionary<string, HerramientaAsistente> MapeoHerramientas =
-
         new Dictionary<string, HerramientaAsistente>(StringComparer.Ordinal)
         {
+
             ["stock_bajo"] = HerramientaAsistente.StockBajo,
             ["ventas_del_dia"] = HerramientaAsistente.VentasDelDia,
             ["estado_caja"] = HerramientaAsistente.EstadoCaja,
