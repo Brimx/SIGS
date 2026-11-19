@@ -82,6 +82,25 @@
                         </StackPanel>
                     </Border>
 
+                    <!-- TELEGRAM -->
+                    <Border Classes="Tarjeta">
+                        <StackPanel Spacing="10">
+                            <TextBlock Classes="Etiqueta" Text="Telegram" />
+                            <TextBlock Classes="Ayuda"
+                                       Text="Vincula tu chat privado para consultar información y recibir aprobaciones. No compartas el código."
+                                       TextWrapping="Wrap" />
+                            <Button Content="Generar código de vinculación"
+                                    HorizontalAlignment="Left"
+                                    Theme="{DynamicResource OutlineButton}"
+                                    Command="{Binding GenerarCodigoVinculacionCommand}" />
+                            <TextBox Text="{Binding InstruccionVinculacion}"
+                                     IsReadOnly="True"
+                                     PlaceholderText="El código aparecerá aquí" />
+                            <TextBlock Classes="Ayuda"
+                                       Text="{Binding MensajeVinculacion}"
+                                       TextWrapping="Wrap" />
+                        </StackPanel>
+                    </Border>
                     <!-- LEGAL -->
                     <Border Classes="Tarjeta">
                         <StackPanel Spacing="10">
