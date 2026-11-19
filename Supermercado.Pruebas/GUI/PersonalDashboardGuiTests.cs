@@ -19,7 +19,7 @@ public sealed class PersonalDashboardGuiTests
         Assert.Contains("MinWidth=\"150\"", personal);
         Assert.Contains("MinWidth=\"{StaticResource SizeTouchTarget}\"", personal);
         Assert.Contains("TextWrapping=\"Wrap\"", personal);
-        Assert.Contains("TextTrimming=\"CharacterEllipsis\" ToolTip.Tip=\"{Binding MensajeEstado}\"", personal);
+        Assert.DoesNotContain("Text=\"{Binding MensajeEstado}\"", personal);
         Assert.DoesNotContain("ColumnDefinitions=\"*,16,420\"", personal);
         Assert.DoesNotContain("ItemsControl ItemsSource=\"{Binding BanderasRolSeleccionado}\"", personal);
     }

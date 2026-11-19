@@ -34,7 +34,8 @@ public sealed class PosGuiTests
         Assert.Contains("Margin=\"16\"", pos);
         Assert.Contains("TextWrapping=\"Wrap\"", pos);
         Assert.Contains("TextTrimming=\"CharacterEllipsis\"", pos);
-        Assert.Contains("ToolTip.Tip=\"{Binding MensajeEstado}\"", pos);
+        Assert.DoesNotContain("Text=\"{Binding MensajeEstado}\"", pos);
+        Assert.Contains("TotalArticulos", pos);
         Assert.DoesNotMatch("(?<!Max)(?<!Min)Width=\"600\"", pos);
         Assert.DoesNotContain("MaxHeight=\"740\"", pos);
         Assert.DoesNotContain("MaxHeight=\"680\"", pos);

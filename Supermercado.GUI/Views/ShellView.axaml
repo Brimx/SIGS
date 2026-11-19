@@ -229,7 +229,7 @@
         </Border>
 
         <!-- ÁREA PRINCIPAL (HEADER + CONTENIDO TRANSACCIONAL) -->
-        <Grid Grid.Column="1" RowDefinitions="Auto,*">
+        <Grid Grid.Column="1" RowDefinitions="Auto,*,Auto">
 
             <!-- Header Superior con Controles Rápidos para Modo Cajero Pantalla Completa -->
             <Border Grid.Row="0"
@@ -317,6 +317,17 @@
                     <CrossFade Duration="0:0:0.15" />
                 </TransitioningContentControl.PageTransition>
             </TransitioningContentControl>
+
+            <Border Grid.Row="2"
+                    Background="{DynamicResource BrushSurface}"
+                    BorderBrush="{DynamicResource BrushBorderSubtle}"
+                    BorderThickness="1,1,0,0"
+                    Padding="16,8">
+                <TextBlock Text="{Binding MensajeEstado}"
+                           FontWeight="{StaticResource FontWeightMedium}"
+                           TextWrapping="Wrap"
+                           ToolTip.Tip="{Binding MensajeEstado}" />
+            </Border>
         </Grid>
     </Grid>
 </UserControl>

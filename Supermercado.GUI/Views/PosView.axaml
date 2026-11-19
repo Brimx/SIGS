@@ -234,21 +234,13 @@
                         BorderThickness="1"
                         CornerRadius="{StaticResource RadiusSmall}"
                         Padding="12,8">
-                    <Grid ColumnDefinitions="Auto,8,*,Auto">
+                    <Grid ColumnDefinitions="Auto,8,*">
                         <LucideIcon Grid.Column="0"
                                     Kind="Receipt"
                                     Size="16"
                                     Foreground="{DynamicResource BrushPrimaryText}"
                                     VerticalAlignment="Center" />
                         <TextBlock Grid.Column="2"
-                                   Text="{Binding MensajeEstado}"
-                                   FontSize="{StaticResource FontSizeBody}"
-                                   FontWeight="{StaticResource FontWeightMedium}"
-                                   Foreground="{DynamicResource BrushTextPrimary}"
-                                   VerticalAlignment="Center"
-                                   TextTrimming="CharacterEllipsis"
-                                   ToolTip.Tip="{Binding MensajeEstado}" />
-                        <TextBlock Grid.Column="3"
                                    Text="{Binding TotalArticulos, StringFormat='Ítems: {0}'}"
                                    FontFamily="{StaticResource FontFamilyPlexCondensed}"
                                    FontWeight="{StaticResource FontWeightBold}"

@@ -18,7 +18,7 @@ public sealed class ComprasContabilidadGuiTests
         Assert.Contains("VirtualizingStackPanel", compras);
         Assert.Contains("MinWidth=\"160\"", compras);
         Assert.Contains("ToolTip.Tip=\"{Binding NombreProducto}\"", compras);
-        Assert.Contains("TextTrimming=\"CharacterEllipsis\" ToolTip.Tip=\"{Binding MensajeEstado}\"", compras);
+        Assert.DoesNotContain("Text=\"{Binding MensajeEstado}\"", compras);
         Assert.DoesNotContain("ColumnDefinitions=\"*,16,460\"", compras);
         Assert.DoesNotContain("ItemsControl ItemsSource=\"{Binding SolicitudesPendientes}\"", compras);
     }
@@ -33,7 +33,7 @@ public sealed class ComprasContabilidadGuiTests
         Assert.Contains("<WrapPanel>", contabilidad);
         Assert.Contains("MinWidth=\"130\"", contabilidad);
         Assert.Contains("ToolTip.Tip=\"{Binding IngresosTotalesFormateado}\"", contabilidad);
-        Assert.Contains("TextTrimming=\"CharacterEllipsis\" ToolTip.Tip=\"{Binding MensajeEstado}\"", contabilidad);
+        Assert.DoesNotContain("Text=\"{Binding MensajeEstado}\"", contabilidad);
         Assert.DoesNotContain("ColumnDefinitions=\"*,16,Auto,8,110,12,Auto,8,Auto,8,Auto\"", contabilidad);
         Assert.DoesNotContain("ColumnDefinitions=\"*,14,*,14,*,14,*\"", contabilidad);
     }

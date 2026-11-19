@@ -5,7 +5,7 @@
              x:DataType="vm:ContabilidadDianViewModel"
              FontFamily="{StaticResource FontFamilyPlex}">
 
-    <Grid RowDefinitions="Auto,16,Auto,16,*,12,Auto" Margin="16">
+    <Grid RowDefinitions="Auto,16,Auto,16,*" Margin="16">
 
         <!-- Cabecera de Filtros y Exportación Fiscal CSV / PDF -->
         <Border Grid.Row="0"
@@ -207,15 +207,5 @@
                 </Grid>
             </Border>
         </Grid>
-
-        <!-- Barra de Estado -->
-        <Border Grid.Row="6"
-                Background="{DynamicResource BrushSurface}"
-                BorderBrush="{DynamicResource BrushBorderSubtle}"
-                BorderThickness="1"
-                CornerRadius="{StaticResource RadiusSmall}"
-                Padding="12,8">
-            <TextBlock Text="{Binding MensajeEstado}" FontWeight="{StaticResource FontWeightMedium}" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding MensajeEstado}" />
-        </Border>
     </Grid>
 </UserControl>

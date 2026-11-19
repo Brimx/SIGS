@@ -48,4 +48,19 @@ public sealed class ShellConfiguracionGuiTests
         Assert.Contains("ToolTip.Tip=\"{Binding RolUsuarioActivo}\"", shell);
         Assert.DoesNotContain("ColumnDefinitions=\"*,Auto,10,Auto\"", shell);
     }
+
+    [Fact]
+    public void Shell_ReservaFilaParaMensajeEstadoComun()
+    {
+        var shell = Leer("Supermercado.GUI/Views/ShellView.axaml");
+        var shellVm = Leer("Supermercado.GUI/ViewModels/ShellViewModel.cs");
+
+        Assert.Contains("RowDefinitions=\"Auto,*,Auto\"", shell);
+        Assert.Contains("<Border Grid.Row=\"2\"", shell);
+        Assert.Contains("Text=\"{Binding MensajeEstado}\"", shell);
+        Assert.Contains("TextWrapping=\"Wrap\"", shell);
+        Assert.Contains("ToolTip.Tip=\"{Binding MensajeEstado}\"", shell);
+        Assert.Contains("partial void OnPaginaActualChanged(ViewModelBase value)", shellVm);
+        Assert.Contains("nameof(MensajeEstado)", shellVm);
+    }
 }
