@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Supermercado.Entidades.Clientes;
 using Supermercado.Entidades.Configuracion;
 using Supermercado.Entidades.Finanzas;
 using Supermercado.Entidades.Inventario;
@@ -17,6 +18,37 @@ public class MapeoModeloTests
     {
         using var contexto = new ContextoPruebasSqlite();
         Assert.NotNull(contexto.Db.Model);
+    }
+
+    [Fact]
+    public void Personas_TablasLlavesEIndicesNoCambian()
+    {
+        using var contexto = new ContextoPruebasSqlite();
+        var modelo = contexto.Db.Model;
+
+        var empleado = modelo.FindEntityType(typeof(Empleado))!;
+        var cliente = modelo.FindEntityType(typeof(Cliente))!;
+
+        Assert.Equal("Empleados", empleado.GetTableName());
+        Assert.Equal("Clientes", cliente.GetTableName());
+        Assert.Equal("Id", empleado.FindPrimaryKey()!.Properties.Single().Name);
+        Assert.Equal("Id", cliente.FindPrimaryKey()!.Properties.Single().Name);
+        Assert.Contains(
+            empleado.GetIndexes(),
+            i => i.IsUnique && i.Properties.Any(p => p.Name == "Documento"));
+        Assert.Contains(
+            cliente.GetIndexes(),
+            i => i.IsUnique && i.Properties.Any(p => p.Name == "Documento"));
+
+        var fkUsuario = modelo.FindEntityType(typeof(Usuario))!
+            .GetForeignKeys()
+            .Single(f => f.PrincipalEntityType.ClrType == typeof(Empleado));
+        var fkVenta = modelo.FindEntityType(typeof(Venta))!
+            .GetForeignKeys()
+            .Single(f => f.PrincipalEntityType.ClrType == typeof(Cliente));
+
+        Assert.Equal("Empleados", fkUsuario.PrincipalEntityType.GetTableName());
+        Assert.Equal("Clientes", fkVenta.PrincipalEntityType.GetTableName());
     }
 
     [Fact]

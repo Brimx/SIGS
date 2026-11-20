@@ -1,7 +1,8 @@
 using Supermercado.Entidades.Base;
+using Supermercado.Entidades.Seguridad;
 
-namespace Supermercado.Entidades.Personal;
-
+namespace Supermercado.Entidades.Personal
+{
 public class Usuario : EntidadBase
 {
     public string NombreUsuario { get; set; } = string.Empty;
@@ -45,4 +46,41 @@ public class Usuario : EntidadBase
         HashClave = nuevoHash;
         DebeCambiarClave = false;
     }
+}
+
+public class Cargo : EntidadBase
+{
+    public string Nombre { get; set; } = string.Empty;
+}
+
+public class Empleado : PersonaBase
+{
+    public bool CorreoVerificado { get; set; }
+    public DateOnly FechaIngreso { get; set; }
+    public long SalarioBase { get; set; }
+
+    public int CargoId { get; set; }
+    public Cargo? Cargo { get; set; }
+    public int RolId { get; set; }
+    public Rol? Rol { get; set; }
+
+    public void Desactivar() => Activo = false;
+}
+
+public static class NombresRol
+{
+    public const string Admin = "Admin";
+    public const string Gerente = "Gerente";
+    public const string Cajero = "Cajero";
+    public const string Bodeguero = "Bodeguero";
+}
+
+public class Rol : EntidadBase
+{
+    public string Nombre { get; set; } = string.Empty;
+    public Permiso Permisos { get; set; }
+
+    public bool Tiene(Permiso permiso)
+        => (Permisos & permiso) == permiso;
+}
 }

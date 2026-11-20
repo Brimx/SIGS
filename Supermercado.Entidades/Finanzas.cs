@@ -3,8 +3,8 @@ using Supermercado.Entidades.Configuracion;
 using Supermercado.Entidades.Excepciones;
 using Supermercado.Entidades.Personal;
 
-namespace Supermercado.Entidades.Finanzas;
-
+namespace Supermercado.Entidades.Finanzas
+{
 public class Nomina : EntidadBase
 {
     public int EmpleadoId { get; set; }
@@ -62,4 +62,52 @@ public class Nomina : EntidadBase
             FechaCalculo = ahora
         };
     }
+}
+
+public class Gasto : EntidadBase
+{
+    public string Descripcion { get; set; } = string.Empty;
+    public long Monto { get; set; }
+    public DateTime Fecha { get; set; }
+    public int RegistradoPorEmpleadoId { get; set; }
+}
+
+// PuntosBasicos es entero, igual que el dinero: 1900 equivale a 19 %.
+public abstract class Impuesto : EntidadBase
+{
+    public string Nombre { get; set; } = string.Empty;
+    public int PuntosBasicos { get; set; }
+    public bool Activo { get; set; } = true;
+
+    public decimal Porcentaje
+        => PuntosBasicos * 100m / Dinero.PuntosBasicosCien;
+
+    public abstract long Calcular(long baseGravable);
+}
+
+// El precio de venta ya incluye IVA: se extrae, no se suma.
+public sealed class Iva : Impuesto
+{
+    public override long Calcular(long baseGravable)
+        => Dinero.DividirRedondeando(
+            baseGravable * PuntosBasicos,
+            Dinero.PuntosBasicosCien + PuntosBasicos);
+}
+
+public record ParametrosNomina(
+    long SalarioMinimo,
+    long AuxilioTransporte,
+    int TopeAuxilioEnSmmlv,
+    int SaludPuntosBasicos,
+    int PensionPuntosBasicos);
+
+public sealed class Retencion : Impuesto
+{
+    public long BaseMinima { get; set; }
+
+    public override long Calcular(long baseGravable)
+        => baseGravable < BaseMinima
+            ? 0
+            : Dinero.Porcentaje(baseGravable, PuntosBasicos);
+}
 }

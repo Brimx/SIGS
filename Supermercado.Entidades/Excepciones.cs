@@ -1,7 +1,7 @@
 using Supermercado.Entidades.Seguridad;
 
-namespace Supermercado.Entidades.Excepciones;
-
+namespace Supermercado.Entidades.Excepciones
+{
 public class AccesoDenegadoException(Permiso permiso)
     : Exception($"No tienes permiso para esta acción ({permiso}).");
 
@@ -31,3 +31,4 @@ public class TurnoInvalidoException(string mensaje) : Exception(mensaje);
 public class ValidacionException(string mensaje) : Exception(mensaje);
 
 public class VentaInvalidaException(string mensaje) : Exception(mensaje);
+}

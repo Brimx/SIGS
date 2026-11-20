@@ -1,7 +1,7 @@
 using Supermercado.Entidades.Base;
 
-namespace Supermercado.Entidades.Dashboards;
-
+namespace Supermercado.Entidades.Dashboards
+{
 /// <summary>
 /// Tamaño con el que se pinta un widget en el panel. El widget propone uno por
 /// defecto y cada usuario puede cambiarlo en su disposición.
@@ -49,3 +49,4 @@ public sealed record EntradaDisposicion(
     bool Visible,
     TamanoWidget Tamano,
     string? Titulo);
+}
