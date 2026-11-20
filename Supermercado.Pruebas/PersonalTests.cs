@@ -4,6 +4,7 @@ using Supermercado.Entidades.Seguridad;
 using Supermercado.Logica.Personal;
 using Supermercado.Logica.Servicios;
 using Supermercado.Pruebas.Falsos;
+using Supermercado.Logica.Seguridad;
 
 namespace Supermercado.Pruebas;
 
@@ -243,5 +244,154 @@ public class ServicioEmpleadosTests
         var servicio = CrearServicio();
         await Assert.ThrowsAsync<ValidacionException>(
             () => servicio.CrearUsuarioAsync(5, "usr5", "123")); // < 6 chars
+    }
+}
+
+public class ServicioUsuariosTests
+{
+    private readonly UsuariosEnMemoria usuarios = new();
+    private readonly HasheadorFalso hasheador = new();
+    private readonly AuditoriaFalsa auditoria = new();
+
+    private ServicioPersonal CrearServicio(
+        Permiso permisos = Permiso.GestionarPersonal | Permiso.GestionarRoles)
+        => new(
+            null!,
+            null!,
+            null!,
+            usuarios,
+            null!,
+            null!,
+            hasheador,
+            auditoria,
+            Sesiones.Con(permisos),
+            TimeProvider.System);
+
+    [Fact]
+    public async Task ObtenerTodosAsync_ConPermiso_RetornaUsuarios()
+    {
+        var servicio = CrearServicio();
+        await usuarios.AgregarAsync(new Usuario
+        {
+            Id = 1,
+            NombreUsuario = "u1"
+        });
+        await usuarios.AgregarAsync(new Usuario
+        {
+            Id = 2,
+            NombreUsuario = "u2"
+        });
+
+        var lista = await servicio.ObtenerTodosAsync();
+
+        Assert.Equal(2, lista.Count);
+    }
+
+    [Fact]
+    public async Task ObtenerTodosAsync_SinPermiso_LanzaAccesoDenegado()
+    {
+        var servicio = CrearServicio(Permiso.Vender);
+
+        await Assert.ThrowsAsync<AccesoDenegadoException>(
+            () => servicio.ObtenerTodosAsync());
+    }
+
+    [Fact]
+    public async Task DesbloquearAsync_ConPermiso_DesbloqueaYAudita()
+    {
+        var servicio = CrearServicio();
+        var usuario = new Usuario
+        {
+            Id = 1,
+            NombreUsuario = "bloqueado",
+            Bloqueado = true,
+            IntentosFallidos = 5
+        };
+        await usuarios.AgregarAsync(usuario);
+
+        await servicio.DesbloquearAsync(1);
+
+        Assert.False(usuario.Bloqueado);
+        Assert.Equal(0, usuario.IntentosFallidos);
+        Assert.Contains(
+            AccionAuditoria.UsuarioDesbloqueado,
+            auditoria.Acciones);
+        Assert.Equal(1, usuarios.Guardados);
+    }
+
+    [Fact]
+    public async Task DesbloquearAsync_SinPermiso_LanzaAccesoDenegado()
+    {
+        var servicio = CrearServicio(Permiso.Ninguno);
+
+        await Assert.ThrowsAsync<AccesoDenegadoException>(
+            () => servicio.DesbloquearAsync(1));
+    }
+
+    [Fact]
+    public async Task DesbloquearAsync_UsuarioInexistente_LanzaError()
+    {
+        var servicio = CrearServicio();
+
+        await Assert.ThrowsAsync<ValidacionException>(
+            () => servicio.DesbloquearAsync(999));
+    }
+
+    [Fact]
+    public async Task RestablecerClaveTemporal_AsignaHashObligaCambioYAudita()
+    {
+        var servicio = CrearServicio();
+        var usuario = new Usuario
+        {
+            Id = 1,
+            NombreUsuario = "juan",
+            HashClave = "antiguo",
+            Bloqueado = true,
+            DebeCambiarClave = false
+        };
+        await usuarios.AgregarAsync(usuario);
+
+        var temporal = await servicio.RestablecerClaveTemporalAsync(1);
+
+        Assert.NotEmpty(temporal);
+        Assert.Equal("h:" + temporal, usuario.HashClave);
+        Assert.True(usuario.DebeCambiarClave);
+        Assert.False(usuario.Bloqueado);
+        Assert.Contains(
+            AccionAuditoria.ClaveRestablecida,
+            auditoria.Acciones);
+        Assert.Equal(1, usuarios.Guardados);
+    }
+
+    [Fact]
+    public async Task RestablecerClaveTemporal_SinPermiso_LanzaAccesoDenegado()
+    {
+        var servicio = CrearServicio(Permiso.VerInventario);
+
+        await Assert.ThrowsAsync<AccesoDenegadoException>(
+            () => servicio.RestablecerClaveTemporalAsync(1));
+    }
+
+    [Fact]
+    public async Task RestablecerClaveTemporal_GerenteSinGestionarRoles_LanzaAccesoDenegado()
+    {
+        var usuario = new Usuario { Id = 1, NombreUsuario = "admin" };
+        await usuarios.AgregarAsync(usuario);
+        var servicio = CrearServicio(Permiso.GestionarPersonal);
+
+        await Assert.ThrowsAsync<AccesoDenegadoException>(
+            () => servicio.RestablecerClaveTemporalAsync(1));
+
+        Assert.Equal(string.Empty, usuario.HashClave);
+        Assert.Equal(0, usuarios.Guardados);
+    }
+
+    [Fact]
+    public async Task RestablecerClaveTemporal_Inexistente_LanzaError()
+    {
+        var servicio = CrearServicio();
+
+        await Assert.ThrowsAsync<ValidacionException>(
+            () => servicio.RestablecerClaveTemporalAsync(999));
     }
 }
