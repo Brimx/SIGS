@@ -133,7 +133,7 @@ public class ClienteTrmDatosGov(
 
 public class ServicioTrm(
     ITrmClient cliente,
-    IServicioParametros parametros,
+    ServicioParametros parametros,
     TimeProvider reloj) : IServicioTrm
 {
     private const string FormatoFecha = "yyyy-MM-dd";
@@ -246,7 +246,7 @@ public class ConsultaCodigoBarrasNula : IConsultaCodigoBarras
 public class ClienteCodigoBarrasOff(
     HttpClient http,
     OpcionesApisExternas opciones,
-    IServicioParametros parametros) : IConsultaCodigoBarras
+    ServicioParametros parametros) : IConsultaCodigoBarras
 {
     public async Task<InfoProductoExterno?> ConsultarAsync(
         string codigo,
@@ -333,7 +333,7 @@ public class VerificadorCorreoNulo : IVerificadorCorreo
 public class ClienteVerificadorCorreoHttp(
     HttpClient http,
     OpcionesApisExternas opciones,
-    IServicioParametros parametros) : IVerificadorCorreo
+    ServicioParametros parametros) : IVerificadorCorreo
 {
     public async Task<bool> VerificarAsync(
         string correo,

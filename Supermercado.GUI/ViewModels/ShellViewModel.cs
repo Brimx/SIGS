@@ -12,7 +12,7 @@ namespace Supermercado.GUI.ViewModels;
 
 public partial class ShellViewModel : ViewModelBase
 {
-    private readonly ISesionActual? _sesion;
+    private readonly SesionActual? _sesion;
     private readonly IServicioPreferencias? _preferencias;
 
     public PosViewModel PosVm { get; }
@@ -118,7 +118,7 @@ public partial class ShellViewModel : ViewModelBase
     }
 
     public ShellViewModel(
-        ISesionActual sesion,
+        SesionActual sesion,
         PosViewModel posVm,
         InventarioViewModel inventarioVm,
         CajaTurnoViewModel cajaTurnoVm,
@@ -163,7 +163,7 @@ public partial class ShellViewModel : ViewModelBase
         await NavegarAsync(moduloInicial);
     }
 
-    public void AplicarPermisosDeNavegacion(ISesionActual sesion)
+    public void AplicarPermisosDeNavegacion(SesionActual sesion)
     {
         PuedeVerPos = sesion.Tiene(Permiso.Vender);
         PuedeVerTurno = sesion.Tiene(Permiso.AbrirCerrarTurno);

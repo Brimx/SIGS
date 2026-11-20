@@ -14,7 +14,7 @@ namespace Supermercado.GUI.ViewModels;
 public partial class ConfiguracionViewModel : ViewModelBase
 {
     private readonly IServicioPreferencias? _preferencias;
-    private readonly ISesionActual? _sesion;
+    private readonly SesionActual? _sesion;
     private readonly IVinculosTelegram? _vinculos;
     private readonly TimeProvider? _reloj;
 
@@ -56,7 +56,7 @@ public partial class ConfiguracionViewModel : ViewModelBase
     public ConfiguracionViewModel(
         IServicioPreferencias? preferencias,
         IServicioTextosLegales? legales,
-        ISesionActual? sesion,
+        SesionActual? sesion,
         IVinculosTelegram? vinculos,
         TimeProvider? reloj)
     {

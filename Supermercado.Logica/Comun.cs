@@ -171,7 +171,7 @@ public static partial class Validador
 }
 
 public class TraductorExcepciones(
-    ILogger<TraductorExcepciones>? logger = null) : ITraductorExcepciones
+    ILogger<TraductorExcepciones>? logger = null)
 {
     public string Traducir(Exception excepcion)
     {
@@ -202,11 +202,6 @@ public class TraductorExcepciones(
         return "Ocurrió un error inesperado. Intente de nuevo o contacte "
             + "al administrador.";
     }
-}
-
-public interface ITraductorExcepciones
-{
-    string Traducir(Exception excepcion);
 }
 
 public static class ExtensionesReloj

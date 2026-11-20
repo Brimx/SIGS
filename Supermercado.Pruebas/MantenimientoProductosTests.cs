@@ -11,12 +11,12 @@ public class MantenimientoProductosTests
     private readonly ProductosEnMemoria productos = new();
     private readonly AuditoriaFalsa auditoria = new();
 
-    private ServicioMantenimientoProductos CrearServicio(
+    private ServicioProductos CrearServicio(
         Permiso permisos = Permiso.GestionarProductos)
         => new(
             productos,
-            auditoria,
-            Sesiones.Con(permisos));
+            auditoria: auditoria,
+            sesion: Sesiones.Con(permisos));
 
     [Fact]
     public async Task EditarAsync_ConPermiso_ActualizaYAudita()

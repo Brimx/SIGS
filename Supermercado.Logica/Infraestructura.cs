@@ -18,9 +18,9 @@ public interface IServicioRespaldo
 }
 
 public class ServicioRespaldo(
-    IServicioParametros parametros,
-    ISesionActual sesion,
-    IServicioAuditoria auditoria,
+    ServicioParametros parametros,
+    SesionActual sesion,
+    ServicioAuditoria auditoria,
     IRegistroAuditoriaRepositorio registros,
     TimeProvider reloj) : IServicioRespaldo
 {

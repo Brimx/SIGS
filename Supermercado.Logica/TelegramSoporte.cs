@@ -38,14 +38,7 @@ public interface IClienteGemini
         CancellationToken cancelacion = default);
 }
 
-public interface IAsistente
-{
-    Task<SolicitudHerramienta?> InterpretarAsync(
-        string mensaje,
-        CancellationToken cancelacion = default);
-}
-
-public sealed class Asistente(IClienteGemini gemini) : IAsistente
+public sealed class Asistente(IClienteGemini gemini)
 {
     public Task<SolicitudHerramienta?> InterpretarAsync(
         string mensaje,

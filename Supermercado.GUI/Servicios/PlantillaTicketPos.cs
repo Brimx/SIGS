@@ -25,7 +25,7 @@ public static class PlantillaTicketPos
 
     public static async Task<string> GenerarTextoTirillaAsync(
         Venta venta,
-        IServicioParametros parametros)
+        ServicioParametros parametros)
     {
         var nombreTienda = await ObtenerSeguroAsync(parametros, ClavesParametro.NegocioNombre, "SUPERMERCADO SIGS S.A.S.");
         var nitTienda = await ObtenerSeguroAsync(parametros, ClavesParametro.NegocioNit, "900.480.569-1");
@@ -154,7 +154,7 @@ public static class PlantillaTicketPos
         => new(caracter, AnchoColumnas);
 
     private static async Task<string> ObtenerSeguroAsync(
-        IServicioParametros parametros,
+        ServicioParametros parametros,
         string clave,
         string porDefecto)
     {

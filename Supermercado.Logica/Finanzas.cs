@@ -14,19 +14,19 @@ namespace Supermercado.Logica.Finanzas
 public class ServicioFinanzas(
     IVentaRepositorio ventas,
     IGastoRepositorio gastos,
-    IServicioAuditoria? auditoria = null,
-    ISesionActual? sesion = null,
+    ServicioAuditoria? auditoria = null,
+    SesionActual? sesion = null,
     TimeProvider? reloj = null,
     IImpuestoRepositorio? impuestos = null,
     IEmpleadoRepositorio? empleados = null,
     INominaRepositorio? nominas = null,
-    IServicioParametros? parametros = null) : IServicioFinanzas, IServicioImpuestos, IServicioNomina
+    ServicioParametros? parametros = null)
 {
     private readonly TimeProvider _reloj = reloj ?? TimeProvider.System;
 
     // --- Gastos y resumen financiero ---
 
-    public async Task RegistrarGastoAsync(string descripcion, long monto)
+    public virtual async Task RegistrarGastoAsync(string descripcion, long monto)
     {
         sesion?.Exigir(Permiso.VerFinanzas);
 
@@ -50,7 +50,7 @@ public class ServicioFinanzas(
         await gastos.GuardarAsync();
     }
 
-    public async Task<ResumenFinanciero> ObtenerResumenAsync(
+    public virtual async Task<ResumenFinanciero> ObtenerResumenAsync(
         DateTime desde,
         DateTime hasta)
     {
@@ -73,7 +73,7 @@ public class ServicioFinanzas(
 
     // --- Impuestos ---
 
-    public async Task<IReadOnlyList<Impuesto>> ObtenerActivosAsync()
+    public virtual async Task<IReadOnlyList<Impuesto>> ObtenerActivosAsync()
     {
         if (impuestos is null)
             return [];
@@ -81,7 +81,7 @@ public class ServicioFinanzas(
         return (await impuestos.ObtenerTodosAsync()).Where(i => i.Activo).ToList();
     }
 
-    public async Task CambiarTarifaAsync(int impuestoId, int puntosBasicos)
+    public virtual async Task CambiarTarifaAsync(int impuestoId, int puntosBasicos)
     {
         sesion?.Exigir(Permiso.GestionarTarifas);
 
@@ -111,7 +111,7 @@ public class ServicioFinanzas(
 
     // --- Nómina ---
 
-    public async Task<Nomina> CalcularAsync(int empleadoId, int anio, int mes)
+    public virtual async Task<Nomina> CalcularAsync(int empleadoId, int anio, int mes)
     {
         sesion?.Exigir(Permiso.GestionarPersonal);
 
@@ -158,51 +158,9 @@ public class ServicioFinanzas(
     }
 }
 
-// Adaptadores para compatibilidad de pruebas existentes
-public class ServicioImpuestos(
-    IImpuestoRepositorio impuestos,
-    IServicioAuditoria auditoria,
-    ISesionActual sesion) : ServicioFinanzas(
-        null!,
-        null!,
-        auditoria: auditoria,
-        sesion: sesion,
-        impuestos: impuestos);
-
-public class ServicioNomina(
-    IEmpleadoRepositorio empleados,
-    INominaRepositorio nominas,
-    IServicioParametros parametros,
-    ISesionActual sesion,
-    TimeProvider reloj) : ServicioFinanzas(
-        null!,
-        null!,
-        sesion: sesion,
-        reloj: reloj,
-        empleados: empleados,
-        nominas: nominas,
-        parametros: parametros);
-
 public record ResumenFinanciero(
     long Ingresos,
     long Egresos,
     long IvaGenerado,
     long Margen);
-
-public interface IServicioImpuestos
-{
-    Task<IReadOnlyList<Impuesto>> ObtenerActivosAsync();
-    Task CambiarTarifaAsync(int impuestoId, int puntosBasicos);
-}
-
-public interface IServicioNomina
-{
-    Task<Nomina> CalcularAsync(int empleadoId, int anio, int mes);
-}
-
-public interface IServicioFinanzas
-{
-    Task RegistrarGastoAsync(string descripcion, long monto);
-    Task<ResumenFinanciero> ObtenerResumenAsync(DateTime desde, DateTime hasta);
-}
 }

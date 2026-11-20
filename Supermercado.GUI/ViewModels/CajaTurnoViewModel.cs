@@ -15,9 +15,9 @@ public partial class CajaTurnoViewModel : ViewModelBase
 {
     private static readonly CultureInfo CulturaCo = new("es-CO");
 
-    private readonly IServicioCaja? _servicioCaja;
-    private readonly IServicioAutenticacion? _servicioAutenticacion;
-    private readonly ITraductorExcepciones? _traductor;
+    private readonly ServicioCaja? _servicioCaja;
+    private readonly ServicioAutenticacion? _servicioAutenticacion;
+    private readonly TraductorExcepciones? _traductor;
     private readonly IServiceScopeFactory? _scopeFactory;
 
     public ObservableCollection<RetiroCaja> RetirosTurnoActual { get; } = [];
@@ -83,9 +83,9 @@ public partial class CajaTurnoViewModel : ViewModelBase
         => _scopeFactory = scopeFactory;
 
     public CajaTurnoViewModel(
-        IServicioCaja servicioCaja,
-        ITraductorExcepciones? traductor = null,
-        IServicioAutenticacion? servicioAutenticacion = null)
+        ServicioCaja servicioCaja,
+        TraductorExcepciones? traductor = null,
+        ServicioAutenticacion? servicioAutenticacion = null)
     {
         _servicioCaja = servicioCaja;
         _traductor = traductor;
@@ -97,7 +97,7 @@ public partial class CajaTurnoViewModel : ViewModelBase
     {
         using var scope = _scopeFactory?.CreateScope();
         var servicios = scope?.ServiceProvider;
-        var servicioCaja = _servicioCaja ?? servicios?.GetService<IServicioCaja>();
+        var servicioCaja = _servicioCaja ?? servicios?.GetService<ServicioCaja>();
         if (servicioCaja is null)
             return;
 
@@ -133,7 +133,7 @@ public partial class CajaTurnoViewModel : ViewModelBase
         }
     }
 
-    private async Task CargarRetirosDelTurnoAsync(IServicioCaja servicioCaja)
+    private async Task CargarRetirosDelTurnoAsync(ServicioCaja servicioCaja)
     {
         var retiros = await servicioCaja.ObtenerRetirosTurnoActualAsync();
         RetirosTurnoActual.Clear();
@@ -151,7 +151,7 @@ public partial class CajaTurnoViewModel : ViewModelBase
     {
         using var scope = _scopeFactory?.CreateScope();
         var servicios = scope?.ServiceProvider;
-        var servicioCaja = _servicioCaja ?? servicios?.GetService<IServicioCaja>();
+        var servicioCaja = _servicioCaja ?? servicios?.GetService<ServicioCaja>();
         if (servicioCaja is null)
             return;
 
@@ -181,8 +181,8 @@ public partial class CajaTurnoViewModel : ViewModelBase
     {
         using var scope = _scopeFactory?.CreateScope();
         var servicios = scope?.ServiceProvider;
-        var servicioCaja = _servicioCaja ?? servicios?.GetService<IServicioCaja>();
-        var servicioAuth = _servicioAutenticacion ?? servicios?.GetService<IServicioAutenticacion>();
+        var servicioCaja = _servicioCaja ?? servicios?.GetService<ServicioCaja>();
+        var servicioAuth = _servicioAutenticacion ?? servicios?.GetService<ServicioAutenticacion>();
         if (servicioCaja is null)
             return;
 
@@ -223,7 +223,7 @@ public partial class CajaTurnoViewModel : ViewModelBase
     {
         using var scope = _scopeFactory?.CreateScope();
         var servicios = scope?.ServiceProvider;
-        var servicioCaja = _servicioCaja ?? servicios?.GetService<IServicioCaja>();
+        var servicioCaja = _servicioCaja ?? servicios?.GetService<ServicioCaja>();
         if (servicioCaja is null)
             return;
 
@@ -246,6 +246,6 @@ public partial class CajaTurnoViewModel : ViewModelBase
 
     private string Traducir(IServiceProvider? servicios, Exception ex)
         => _traductor?.Traducir(ex)
-           ?? servicios?.GetService<ITraductorExcepciones>()?.Traducir(ex)
+           ?? servicios?.GetService<TraductorExcepciones>()?.Traducir(ex)
            ?? ex.Message;
 }

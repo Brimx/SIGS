@@ -1,6 +1,7 @@
 using Supermercado.Entidades.Excepciones;
 using Supermercado.Entidades.Personal;
 using Supermercado.Entidades.Seguridad;
+using Supermercado.Logica.Personal;
 using Supermercado.Logica.Seguridad;
 using Supermercado.Pruebas.Falsos;
 
@@ -12,13 +13,19 @@ public class ServicioUsuariosTests
     private readonly HasheadorFalso hasheador = new();
     private readonly AuditoriaFalsa auditoria = new();
 
-    private ServicioUsuarios CrearServicio(
+    private ServicioPersonal CrearServicio(
         Permiso permisos = Permiso.GestionarPersonal | Permiso.GestionarRoles)
         => new(
+            null!,
+            null!,
+            null!,
             usuarios,
+            null!,
+            null!,
             hasheador,
             auditoria,
-            Sesiones.Con(permisos));
+            Sesiones.Con(permisos),
+            TimeProvider.System);
 
     [Fact]
     public async Task ObtenerTodosAsync_ConPermiso_RetornaUsuarios()

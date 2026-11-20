@@ -31,10 +31,10 @@ public sealed class ProductoInventarioItemViewModel
 
 public partial class InventarioViewModel : ViewModelBase
 {
-    private readonly IServicioConsultaInventario? _consultaInventario;
-    private readonly IServicioAlertasInventario? _alertasInventario;
-    private readonly IServicioMermas? _servicioMermas;
-    private readonly ITraductorExcepciones? _traductor;
+    private readonly ServicioInventario? _consultaInventario;
+    private readonly ServicioInventario? _alertasInventario;
+    private readonly ServicioInventario? _servicioMermas;
+    private readonly TraductorExcepciones? _traductor;
     private readonly IServiceScopeFactory? _scopeFactory;
 
     private readonly List<ProductoInventarioItemViewModel> _todosLosItems = [];
@@ -86,10 +86,10 @@ public partial class InventarioViewModel : ViewModelBase
         => _scopeFactory = scopeFactory;
 
     public InventarioViewModel(
-        IServicioConsultaInventario consultaInventario,
-        IServicioAlertasInventario? alertasInventario = null,
-        IServicioMermas? servicioMermas = null,
-        ITraductorExcepciones? traductor = null)
+        ServicioInventario consultaInventario,
+        ServicioInventario? alertasInventario = null,
+        ServicioInventario? servicioMermas = null,
+        TraductorExcepciones? traductor = null)
     {
         _consultaInventario = consultaInventario;
         _alertasInventario = alertasInventario;
@@ -120,9 +120,9 @@ public partial class InventarioViewModel : ViewModelBase
         using var scope = _scopeFactory?.CreateScope();
         var servicios = scope?.ServiceProvider;
         var consulta = _consultaInventario
-            ?? servicios?.GetService<IServicioConsultaInventario>();
+            ?? servicios?.GetService<ServicioInventario>();
         var alertas = _alertasInventario
-            ?? servicios?.GetService<IServicioAlertasInventario>();
+            ?? servicios?.GetService<ServicioInventario>();
         if (consulta is null)
             return;
 
@@ -244,7 +244,7 @@ public partial class InventarioViewModel : ViewModelBase
         using var scope = _scopeFactory?.CreateScope();
         var servicios = scope?.ServiceProvider;
         var servicioMermas = _servicioMermas
-            ?? servicios?.GetService<IServicioMermas>();
+            ?? servicios?.GetService<ServicioInventario>();
         if (servicioMermas is null || ItemSeleccionado is null || CantidadMermaInput <= 0)
             return;
 
@@ -269,6 +269,6 @@ public partial class InventarioViewModel : ViewModelBase
 
     private string Traducir(IServiceProvider? servicios, Exception ex)
         => _traductor?.Traducir(ex)
-            ?? servicios?.GetService<ITraductorExcepciones>()?.Traducir(ex)
+            ?? servicios?.GetService<TraductorExcepciones>()?.Traducir(ex)
             ?? ex.Message;
 }

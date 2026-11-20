@@ -209,11 +209,17 @@ public class VentasEnEsperaYSupervisionTests
     public async Task VentasEnEspera_SuspenderYRecuperar_RestauraLineasCorrectamente()
     {
         var repo = new VentasEnEsperaEnMemoria();
-        var servicio = new ServicioVentasEnEspera(
-            repo,
-            Sesiones.Con(Permiso.Vender),
+        var servicio = new ServicioVentas(
+            null!,
+            null!,
+            null!,
+            null!,
+            null!,
+            null!,
             new AuditoriaFalsa(),
-            new RelojFijo(EscenarioInventario.Ahora));
+            Sesiones.Con(Permiso.Vender),
+            new RelojFijo(EscenarioInventario.Ahora),
+            repo);
 
         var lineas = new List<LineaVenta>
         {

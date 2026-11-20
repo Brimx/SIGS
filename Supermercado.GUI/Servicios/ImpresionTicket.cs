@@ -20,7 +20,7 @@ public interface IImpresorTicket
 /// </summary>
 public class ImpresorTicketPdf(
     IGeneradorTicket generadorTicket,
-    IServicioParametros parametros) : IImpresorTicket
+    ServicioParametros parametros) : IImpresorTicket
 {
     public string CarpetaExportacion { get; set; } = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
@@ -51,7 +51,7 @@ public class ImpresorTicketPdf(
 /// Adaptador de impresión térmica ESC/POS directa para rollo de 80mm (Epson TM, Star Micronics, Bixolon).
 /// Soporta comandos nativos de corte de papel, apertura de gaveta monedero y código QR bidimensional.
 /// </summary>
-public class ImpresorTicketEscPos(IServicioParametros parametros) : IImpresorTicket
+public class ImpresorTicketEscPos(ServicioParametros parametros) : IImpresorTicket
 {
     // Secuencias estándar ESC/POS
     private static readonly byte[] CmdInicializar = [0x1B, 0x40]; // ESC @

@@ -17,15 +17,15 @@ public class ServicioVentas(
     IProductoRepositorio productos,
     IVentaRepositorio ventas,
     ITurnoCajaRepositorio turnos,
-    IServicioInventario inventario,
+    ServicioInventario inventario,
     IClienteRepositorio clientes,
-    IServicioParametros parametros,
-    IServicioAuditoria auditoria,
-    ISesionActual sesion,
+    ServicioParametros parametros,
+    ServicioAuditoria auditoria,
+    SesionActual sesion,
     TimeProvider reloj,
-    IVentaEnEsperaRepositorio? ventasEnEspera = null) : IServicioVentas, IServicioVentasEnEspera
+    IVentaEnEsperaRepositorio? ventasEnEspera = null)
 {
-    public async Task<Venta> RegistrarVentaAsync(SolicitudVenta solicitud)
+    public virtual async Task<Venta> RegistrarVentaAsync(SolicitudVenta solicitud)
     {
         sesion.Exigir(Permiso.Vender);
 
@@ -99,10 +99,10 @@ public class ServicioVentas(
         return venta;
     }
 
-    public Task AnularVentaAsync(int ventaId, string motivo)
+    public virtual Task AnularVentaAsync(int ventaId, string motivo)
         => AnularVentaAsync(ventaId, motivo, null);
 
-    public async Task AnularVentaAsync(int ventaId, string motivo, string? origen)
+    public virtual async Task AnularVentaAsync(int ventaId, string motivo, string? origen)
     {
         sesion.Exigir(Permiso.AnularVenta);
 
@@ -173,7 +173,7 @@ public class ServicioVentas(
 
     // --- Ventas en Espera ---
 
-    public async Task<VentaEnEspera> SuspenderVentaAsync(
+    public virtual async Task<VentaEnEspera> SuspenderVentaAsync(
         int cajaId,
         IReadOnlyList<LineaVenta> lineas,
         int? clienteId,
@@ -215,7 +215,7 @@ public class ServicioVentas(
         return ventaEnEspera;
     }
 
-    public async Task<IReadOnlyList<ItemVentaEnEspera>> ObtenerVentasEnEsperaAsync(int cajaId)
+    public virtual async Task<IReadOnlyList<ItemVentaEnEspera>> ObtenerVentasEnEsperaAsync(int cajaId)
     {
         sesion.Exigir(Permiso.Vender);
 
@@ -241,7 +241,7 @@ public class ServicioVentas(
             .ToList();
     }
 
-    public async Task<(VentaEnEspera Venta, IReadOnlyList<LineaVenta> Lineas)> RecuperarVentaAsync(int id)
+    public virtual async Task<(VentaEnEspera Venta, IReadOnlyList<LineaVenta> Lineas)> RecuperarVentaAsync(int id)
     {
         sesion.Exigir(Permiso.Vender);
 
@@ -262,7 +262,7 @@ public class ServicioVentas(
         return (venta, lineas);
     }
 
-    public async Task CancelarVentaEnEsperaAsync(int id)
+    public virtual async Task CancelarVentaEnEsperaAsync(int id)
     {
         sesion.Exigir(Permiso.Vender);
 
@@ -296,24 +296,6 @@ public class ServicioVentas(
     }
 }
 
-// Adaptador para compatibilidad de pruebas existentes
-public class ServicioVentasEnEspera(
-    IVentaEnEsperaRepositorio ventasEnEspera,
-    ISesionActual sesion,
-    IServicioAuditoria auditoria,
-    TimeProvider reloj) : ServicioVentas(
-        null!,
-        null!,
-        null!,
-        null!,
-        null!,
-        null!,
-        auditoria,
-        sesion,
-        reloj,
-        ventasEnEspera: ventasEnEspera);
-
-
 public record ItemVentaEnEspera(
     int Id,
     DateTime FechaCreacion,
@@ -321,29 +303,6 @@ public record ItemVentaEnEspera(
     int TotalItems,
     long TotalEstimado,
     string? Nota);
-
-public interface IServicioVentasEnEspera
-{
-    Task<VentaEnEspera> SuspenderVentaAsync(
-        int cajaId,
-        IReadOnlyList<LineaVenta> lineas,
-        int? clienteId,
-        string identificadorCliente,
-        long totalEstimado,
-        string? nota = null);
-
-    Task<IReadOnlyList<ItemVentaEnEspera>> ObtenerVentasEnEsperaAsync(int cajaId);
-    Task<(VentaEnEspera Venta, IReadOnlyList<LineaVenta> Lineas)> RecuperarVentaAsync(int id);
-    Task CancelarVentaEnEsperaAsync(int id);
-}
-
-public interface IServicioVentas
-{
-    Task<Venta> RegistrarVentaAsync(SolicitudVenta solicitud);
-    Task AnularVentaAsync(int ventaId, string motivo);
-    Task AnularVentaAsync(int ventaId, string motivo, string? origen)
-        => AnularVentaAsync(ventaId, motivo);
-}
 
 public record LineaVenta(string CodigoBarras, int Cantidad);
 

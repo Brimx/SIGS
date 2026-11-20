@@ -10,13 +10,17 @@ namespace Supermercado.Pruebas.GUI;
 
 public class PlantillaYRegulacionGuiTests
 {
-    private sealed class ServicioParametrosFalso : IServicioParametros
+    private sealed class ServicioParametrosFalso : ServicioParametros
     {
-        public Task<string> ObtenerTextoAsync(string clave) => Task.FromResult(string.Empty);
-        public Task<int> ObtenerEnteroAsync(string clave) => Task.FromResult(0);
-        public Task<long> ObtenerLongAsync(string clave) => Task.FromResult(0L);
-        public Task GuardarAsync(string clave, string valor) => Task.CompletedTask;
-        public Task GuardarRespaldoAsync(IReadOnlyDictionary<string, string> valores) => Task.CompletedTask;
+        public ServicioParametrosFalso() : base(null!, null!, null!)
+        {
+        }
+
+        public override Task<string> ObtenerTextoAsync(string clave) => Task.FromResult(string.Empty);
+        public override Task<int> ObtenerEnteroAsync(string clave) => Task.FromResult(0);
+        public override Task<long> ObtenerLongAsync(string clave) => Task.FromResult(0L);
+        public override Task GuardarAsync(string clave, string valor) => Task.CompletedTask;
+        public override Task GuardarRespaldoAsync(IReadOnlyDictionary<string, string> valores) => Task.CompletedTask;
     }
 
     [Fact]

@@ -137,15 +137,19 @@ public sealed class TelegramFalsoTelegram : IClienteTelegram
         => Task.CompletedTask;
 }
 
-public sealed class RegistroAuditoriaFalsoTelegram : IServicioAuditoria
+public sealed class RegistroAuditoriaFalsoTelegram : ServicioAuditoria
 {
+    public RegistroAuditoriaFalsoTelegram() : base(null!, null!, null!)
+    {
+    }
+
     public List<(
         AccionAuditoria Accion,
         string Entidad,
         int? EntidadId,
         string Detalle)> Registros { get; } = [];
 
-    public Task RegistrarAsync(
+    public override Task RegistrarAsync(
         AccionAuditoria accion,
         string entidad,
         int? entidadId = null,
@@ -226,60 +230,77 @@ public sealed class VentaRepositorioFalsoTelegram : IVentaRepositorio
         => Task.FromResult<Venta?>(null);
 }
 
-public sealed class AlertasFalsasTelegram : IServicioAlertasInventario
+public sealed class AlertasFalsasTelegram : ServicioInventario
 {
-    public Task<IReadOnlyList<AlertaStockMinimo>> ObtenerBajoMinimoAsync()
+    public AlertasFalsasTelegram() : base(null!, null!, null!, null!, null!, null!)
+    {
+    }
+
+    public override Task<IReadOnlyList<AlertaStockMinimo>> ObtenerBajoMinimoAsync()
         => Task.FromResult<IReadOnlyList<AlertaStockMinimo>>(
             Array.Empty<AlertaStockMinimo>());
 
-    public Task<IReadOnlyList<Lote>> ObtenerLotesPorVencerAsync()
+    public override Task<IReadOnlyList<Lote>> ObtenerLotesPorVencerAsync()
         => Task.FromResult<IReadOnlyList<Lote>>(Array.Empty<Lote>());
 }
 
-public sealed class CajaFalsaTelegram : IServicioCaja
+public sealed class CajaFalsaTelegram : ServicioCaja
 {
-    public Task<TurnoCaja> AbrirTurnoAsync(int cajaId, long efectivoInicial)
+    public CajaFalsaTelegram() : base(null!, null!, null!, null!, null!, null!, null!)
+    {
+    }
+
+    public override Task<TurnoCaja> AbrirTurnoAsync(int cajaId, long efectivoInicial)
         => throw new NotImplementedException();
 
-    public Task<ResultadoArqueo> CerrarTurnoAsync(long efectivoContado)
+    public override Task<ResultadoArqueo> CerrarTurnoAsync(long efectivoContado)
         => throw new NotImplementedException();
 
-    public Task<TurnoCaja?> ObtenerTurnoActualAsync()
+    public override Task<TurnoCaja?> ObtenerTurnoActualAsync()
         => Task.FromResult<TurnoCaja?>(null);
 
-    public Task<RetiroCaja> RegistrarRetiroAsync(
+    public override Task<RetiroCaja> RegistrarRetiroAsync(
         long monto,
         string motivo,
         int supervisorId)
         => throw new NotImplementedException();
 
-    public Task<IReadOnlyList<RetiroCaja>> ObtenerRetirosTurnoActualAsync()
+    public override Task<IReadOnlyList<RetiroCaja>> ObtenerRetirosTurnoActualAsync()
         => Task.FromResult<IReadOnlyList<RetiroCaja>>(
             Array.Empty<RetiroCaja>());
 }
 
-public sealed class VentasFalsasTelegram : IServicioVentas
+public sealed class VentasFalsasTelegram : ServicioVentas
 {
-    public Task<Venta> RegistrarVentaAsync(SolicitudVenta solicitud)
+    public VentasFalsasTelegram() : base(null!, null!, null!, null!, null!, null!, null!, null!, null!)
+    {
+    }
+
+    public override Task<Venta> RegistrarVentaAsync(SolicitudVenta solicitud)
         => throw new NotImplementedException();
 
-    public Task AnularVentaAsync(int ventaId, string motivo)
+    public override Task AnularVentaAsync(int ventaId, string motivo)
         => Task.CompletedTask;
 
-    public Task AnularVentaAsync(int ventaId, string motivo, string? origen)
+    public override Task AnularVentaAsync(int ventaId, string motivo, string? origen)
         => Task.CompletedTask;
 }
 
-public sealed class ReabastecimientoFalsoTelegram : IServicioReabastecimiento
+public sealed class ReabastecimientoFalsoTelegram : ServicioInventario
 {
-    public Task<IReadOnlyList<Reabastecimiento>> GenerarSolicitudesAsync(
+    public ReabastecimientoFalsoTelegram()
+        : base(null!, null!, null!, null!, null!, null!)
+    {
+    }
+
+    public override Task<IReadOnlyList<Reabastecimiento>> GenerarSolicitudesAsync(
         string? origen = null)
         => Task.FromResult<IReadOnlyList<Reabastecimiento>>(
             Array.Empty<Reabastecimiento>());
 
-    public Task<IReadOnlyList<Reabastecimiento>> ObtenerPendientesAsync()
+    public override Task<IReadOnlyList<Reabastecimiento>> ObtenerPendientesAsync()
         => Task.FromResult<IReadOnlyList<Reabastecimiento>>(
             Array.Empty<Reabastecimiento>());
 
-    public Task AtenderAsync(int reabastecimientoId) => Task.CompletedTask;
+    public override Task AtenderAsync(int reabastecimientoId) => Task.CompletedTask;
 }

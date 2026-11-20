@@ -11,12 +11,14 @@ public class ServicioImpuestosTests
     private readonly ImpuestosEnMemoria impuestos = new();
     private readonly AuditoriaFalsa auditoria = new();
 
-    private ServicioImpuestos CrearServicio(
+    private ServicioFinanzas CrearServicio(
         Permiso permisos = Permiso.GestionarTarifas)
         => new(
-            impuestos,
-            auditoria,
-            Sesiones.Con(permisos));
+            null!,
+            null!,
+            auditoria: auditoria,
+            sesion: Sesiones.Con(permisos),
+            impuestos: impuestos);
 
     [Fact]
     public async Task ObtenerActivosAsync_FiltraSoloLosActivos()

@@ -14,14 +14,19 @@ public class EstructuraTests
     private readonly RolesEnMemoria roles = new();
     private readonly AuditoriaFalsa auditoria = new();
 
-    private ServicioEstructura CrearServicio(
+    private ServicioPersonal CrearServicio(
         Permiso permisos = Permiso.GestionarPersonal | Permiso.GestionarRoles)
         => new(
-            cajas,
-            cargos,
-            roles,
-            auditoria,
-            Sesiones.Con(permisos));
+            null!,
+            cargos: cargos,
+            roles: roles,
+            usuarios: null!,
+            cajas: cajas,
+            verificador: null!,
+            hasheador: null!,
+            auditoria: auditoria,
+            sesion: Sesiones.Con(permisos),
+            reloj: TimeProvider.System);
 
     [Fact]
     public async Task CrearCaja_ConPermiso_GuardaYAudita()

@@ -26,9 +26,9 @@ public sealed class SolicitudReabastecimientoItemViewModel
 
 public partial class ComprasProveedoresViewModel : ViewModelBase
 {
-    private readonly IServicioCatalogos? _servicioCatalogos;
-    private readonly IServicioReabastecimiento? _servicioReabastecimiento;
-    private readonly ITraductorExcepciones? _traductor;
+    private readonly ServicioProductos? _servicioCatalogos;
+    private readonly ServicioInventario? _servicioReabastecimiento;
+    private readonly TraductorExcepciones? _traductor;
     private readonly IServiceScopeFactory? _scopeFactory;
 
     public ObservableCollection<Proveedor> Proveedores { get; } = [];
@@ -70,9 +70,9 @@ public partial class ComprasProveedoresViewModel : ViewModelBase
         => _scopeFactory = scopeFactory;
 
     public ComprasProveedoresViewModel(
-        IServicioCatalogos servicioCatalogos,
-        IServicioReabastecimiento servicioReabastecimiento,
-        ITraductorExcepciones? traductor = null)
+        ServicioProductos servicioCatalogos,
+        ServicioInventario servicioReabastecimiento,
+        TraductorExcepciones? traductor = null)
     {
         _servicioCatalogos = servicioCatalogos;
         _servicioReabastecimiento = servicioReabastecimiento;
@@ -98,8 +98,8 @@ public partial class ComprasProveedoresViewModel : ViewModelBase
 
         using var scope = _scopeFactory?.CreateScope();
         var servicios = scope?.ServiceProvider;
-        var catalogos = _servicioCatalogos ?? servicios?.GetService<IServicioCatalogos>();
-        var reabastecimiento = _servicioReabastecimiento ?? servicios?.GetService<IServicioReabastecimiento>();
+        var catalogos = _servicioCatalogos ?? servicios?.GetService<ServicioProductos>();
+        var reabastecimiento = _servicioReabastecimiento ?? servicios?.GetService<ServicioInventario>();
         var repoProductos = servicios?.GetService<IProductoRepositorio>();
         if (catalogos is null)
             return;
@@ -164,7 +164,7 @@ public partial class ComprasProveedoresViewModel : ViewModelBase
     {
         using var scope = _scopeFactory?.CreateScope();
         var servicios = scope?.ServiceProvider;
-        var catalogos = _servicioCatalogos ?? servicios?.GetService<IServicioCatalogos>();
+        var catalogos = _servicioCatalogos ?? servicios?.GetService<ServicioProductos>();
         if (catalogos is null)
             return;
 
@@ -219,7 +219,7 @@ public partial class ComprasProveedoresViewModel : ViewModelBase
 
         using var scope = _scopeFactory?.CreateScope();
         var servicios = scope?.ServiceProvider;
-        var catalogos = _servicioCatalogos ?? servicios?.GetService<IServicioCatalogos>();
+        var catalogos = _servicioCatalogos ?? servicios?.GetService<ServicioProductos>();
         if (catalogos is null)
             return;
 
@@ -243,7 +243,7 @@ public partial class ComprasProveedoresViewModel : ViewModelBase
     {
         using var scope = _scopeFactory?.CreateScope();
         var servicios = scope?.ServiceProvider;
-        var reabastecimiento = _servicioReabastecimiento ?? servicios?.GetService<IServicioReabastecimiento>();
+        var reabastecimiento = _servicioReabastecimiento ?? servicios?.GetService<ServicioInventario>();
         if (reabastecimiento is null)
             return;
 
@@ -269,7 +269,7 @@ public partial class ComprasProveedoresViewModel : ViewModelBase
 
         using var scope = _scopeFactory?.CreateScope();
         var servicios = scope?.ServiceProvider;
-        var reabastecimiento = _servicioReabastecimiento ?? servicios?.GetService<IServicioReabastecimiento>();
+        var reabastecimiento = _servicioReabastecimiento ?? servicios?.GetService<ServicioInventario>();
         if (reabastecimiento is null)
             return;
 
@@ -289,6 +289,6 @@ public partial class ComprasProveedoresViewModel : ViewModelBase
 
     private string Traducir(IServiceProvider? servicios, Exception ex)
         => _traductor?.Traducir(ex)
-           ?? servicios?.GetService<ITraductorExcepciones>()?.Traducir(ex)
+           ?? servicios?.GetService<TraductorExcepciones>()?.Traducir(ex)
            ?? ex.Message;
 }

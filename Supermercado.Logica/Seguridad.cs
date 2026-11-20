@@ -12,11 +12,11 @@ namespace Supermercado.Logica.Seguridad
 public class ServicioAutenticacion(
     IUsuarioRepositorio usuarios,
     IIntentoAccesoRepositorio intentos,
-    IServicioAuditoria auditoria,
-    IServicioParametros parametros,
+    ServicioAuditoria auditoria,
+    ServicioParametros parametros,
     IHasheadorClave hasheador,
-    ISesionActual sesion,
-    TimeProvider reloj) : IServicioAutenticacion
+    SesionActual sesion,
+    TimeProvider reloj)
 {
     public const int LongitudMinimaClave = 8;
     public const int LongitudMinimaPin = 4;
@@ -176,7 +176,6 @@ public class ServicioAutenticacion(
         => sesion.Usuario
             ?? throw new SesionNoIniciadaException();
 
-    public Task InicializarAsync(string claveAdminInicial) => Task.CompletedTask;
 }
 
 public class ServicioInicializacion(
@@ -186,7 +185,7 @@ public class ServicioInicializacion(
     ICargoRepositorio cargos,
     IRolRepositorio roles,
     IHasheadorClave hasheador,
-    TimeProvider reloj) : IServicioInicializacion
+    TimeProvider reloj)
 {
     public const string UsuarioAdministrador = "admin";
 
@@ -229,60 +228,6 @@ public class ServicioInicializacion(
 }
 
 
-public interface IServicioInicializacion
-{
-    Task InicializarAsync(string claveAdminInicial);
-}
-
-// Servicio unificado de autenticación e inicialización de seguridad
-public interface IServicioAutenticacion : IServicioInicializacion
-{
-    Task IniciarSesionAsync(string nombreUsuario, string clave);
-    Task IniciarSesionConPinAsync(string nombreUsuario, string pin);
-    Task CambiarClaveAsync(string claveActual, string claveNueva);
-    Task AsignarPinAsync(string pin);
-    void CerrarSesion();
-    Task<Empleado> ValidarSupervisorAsync(string nombreUsuario, string pinOClave, Permiso permisoExigido);
-}
-
-public interface IServicioConsultaAuditoria
-{
-    Task<ResultadoPaginado<RegistroAuditoria>> ConsultarAsync(FiltroAuditoria filtro);
-}
-
-public interface IServicioAuditoria
-{
-    Task RegistrarAsync(
-        AccionAuditoria accion,
-        string entidad,
-        int? entidadId = null,
-        string detalle = "");
-}
-
-public interface IServicioUsuarios
-{
-    Task<IReadOnlyList<Usuario>> ObtenerTodosAsync();
-    Task DesbloquearAsync(int usuarioId);
-    Task<string> RestablecerClaveTemporalAsync(int usuarioId);
-}
-
-// Adaptador para compatibilidad de pruebas existentes
-public class ServicioUsuarios(
-    IUsuarioRepositorio usuarios,
-    IHasheadorClave hasheador,
-    IServicioAuditoria auditoria,
-    ISesionActual sesion) : Personal.ServicioPersonal(
-        null!,
-        null!,
-        null!,
-        usuarios,
-        null!,
-        null!,
-        hasheador,
-        auditoria,
-        sesion,
-        TimeProvider.System);
-
 public interface IHasheadorClave
 {
     string Hashear(string secreto);
@@ -300,10 +245,10 @@ public class HasheadorBCrypt : IHasheadorClave
 
 public class ServicioAuditoria(
     IRegistroAuditoriaRepositorio registros,
-    ISesionActual sesion,
-    TimeProvider reloj) : IServicioAuditoria, IServicioConsultaAuditoria
+    SesionActual sesion,
+    TimeProvider reloj)
 {
-    public Task RegistrarAsync(
+    public virtual Task RegistrarAsync(
         AccionAuditoria accion,
         string entidad,
         int? entidadId = null,
@@ -318,7 +263,7 @@ public class ServicioAuditoria(
             Detalle = detalle
         });
 
-    public async Task<ResultadoPaginado<RegistroAuditoria>> ConsultarAsync(
+    public virtual async Task<ResultadoPaginado<RegistroAuditoria>> ConsultarAsync(
         FiltroAuditoria filtro)
     {
         sesion.Exigir(Permiso.VerAuditoria);
@@ -356,29 +301,12 @@ public class ServicioAuditoria(
     }
 }
 
-// Adaptador para compatibilidad binaria con pruebas de consulta aislada
-public class ServicioConsultaAuditoria(
-    IRegistroAuditoriaRepositorio registros,
-    ISesionActual sesion) : ServicioAuditoria(registros, sesion, TimeProvider.System);
-
-public interface IServicioParametros
-{
-    Task<string> ObtenerTextoAsync(string clave);
-    Task<int> ObtenerEnteroAsync(string clave);
-    Task<long> ObtenerLongAsync(string clave);
-    // Cambio administrativo: exige permiso y deja auditoría.
-    Task GuardarAsync(string clave, string valor);
-
-    // Respaldo interno (semilla, TRM): sin permiso ni auditoría, atómico.
-    Task GuardarRespaldoAsync(IReadOnlyDictionary<string, string> valores);
-}
-
 public static class ExtensionesParametros
 {
     // Interruptor: «0», «false» o «no» apagan; cualquier otro valor enciende.
     // Si el parámetro no existe (base anterior a la clave) vale `porDefecto`.
     public static async Task<bool> ObtenerBoolAsync(
-        this IServicioParametros parametros,
+        this ServicioParametros parametros,
         string clave,
         bool porDefecto = true)
     {
@@ -395,7 +323,7 @@ public static class ExtensionesParametros
     }
 
     public static async Task<string?> ObtenerTextoOpcionalAsync(
-        this IServicioParametros parametros,
+        this ServicioParametros parametros,
         string clave,
         string? porDefecto = null)
     {
@@ -413,19 +341,19 @@ public static class ExtensionesParametros
 
 public class ServicioParametros(
     IParametroRepositorio parametros,
-    IServicioAuditoria auditoria,
-    ISesionActual sesion) : IServicioParametros
+    ServicioAuditoria auditoria,
+    SesionActual sesion)
 {
-    public async Task<string> ObtenerTextoAsync(string clave)
+    public virtual async Task<string> ObtenerTextoAsync(string clave)
     {
         var parametro = await parametros.ObtenerPorClaveAsync(clave);
         return parametro?.Valor ?? throw new ParametroFaltanteException(clave);
     }
 
-    public async Task<int> ObtenerEnteroAsync(string clave)
+    public virtual async Task<int> ObtenerEnteroAsync(string clave)
         => (int)await ObtenerLongAsync(clave);
 
-    public async Task<long> ObtenerLongAsync(string clave)
+    public virtual async Task<long> ObtenerLongAsync(string clave)
     {
         var texto = await ObtenerTextoAsync(clave);
         var valido = long.TryParse(
@@ -437,7 +365,7 @@ public class ServicioParametros(
             : throw new ValidacionException($"'{clave}' no es un número.");
     }
 
-    public async Task GuardarAsync(string clave, string valor)
+    public virtual async Task GuardarAsync(string clave, string valor)
     {
         sesion.Exigir(Permiso.GestionarPersonal);
 
@@ -451,7 +379,7 @@ public class ServicioParametros(
         await parametros.GuardarAsync();
     }
 
-    public async Task GuardarRespaldoAsync(
+    public virtual async Task GuardarRespaldoAsync(
         IReadOnlyDictionary<string, string> valores)
     {
         foreach (var (clave, valor) in valores)
@@ -475,20 +403,7 @@ public class ServicioParametros(
     }
 }
 
-public interface ISesionActual
-{
-    Usuario? Usuario { get; }
-    bool EstaAutenticada { get; }
-    bool DebeCambiarClave { get; }
-    int EmpleadoId { get; }
-    bool Tiene(Permiso permiso);
-    void Exigir(Permiso permiso);
-    void Iniciar(Usuario usuario);
-    IDisposable UsarUsuario(Usuario usuario);
-    void Cerrar();
-}
-
-public class SesionActual : ISesionActual
+public class SesionActual
 {
     private readonly AsyncLocal<Usuario?> _usuarioTemporal = new();
     private Usuario? _usuarioActual;

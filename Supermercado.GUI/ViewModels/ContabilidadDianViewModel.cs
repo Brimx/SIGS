@@ -55,9 +55,9 @@ public partial class ContabilidadDianViewModel : ViewModelBase
 {
     private static readonly CultureInfo CulturaCo = new("es-CO");
 
-    private readonly IServicioFinanzas? _servicioFinanzas;
+    private readonly ServicioFinanzas? _servicioFinanzas;
     private readonly IServicioReportes? _servicioReportes;
-    private readonly ITraductorExcepciones? _traductor;
+    private readonly TraductorExcepciones? _traductor;
     private readonly IServiceScopeFactory? _scopeFactory;
 
     private IReadOnlyList<Venta> _ultimasVentasConsultadas = [];
@@ -115,9 +115,9 @@ public partial class ContabilidadDianViewModel : ViewModelBase
         => _scopeFactory = scopeFactory;
 
     public ContabilidadDianViewModel(
-        IServicioFinanzas servicioFinanzas,
+        ServicioFinanzas servicioFinanzas,
         IServicioReportes? servicioReportes = null,
-        ITraductorExcepciones? traductor = null)
+        TraductorExcepciones? traductor = null)
     {
         _servicioFinanzas = servicioFinanzas;
         _servicioReportes = servicioReportes;
@@ -132,7 +132,7 @@ public partial class ContabilidadDianViewModel : ViewModelBase
 
         using var scope = _scopeFactory?.CreateScope();
         var servicios = scope?.ServiceProvider;
-        var finanzas = _servicioFinanzas ?? servicios?.GetService<IServicioFinanzas>();
+        var finanzas = _servicioFinanzas ?? servicios?.GetService<ServicioFinanzas>();
         var repoVentas = servicios?.GetService<IVentaRepositorio>();
         var repoTurnos = servicios?.GetService<ITurnoCajaRepositorio>();
 
@@ -221,7 +221,7 @@ public partial class ContabilidadDianViewModel : ViewModelBase
 
         using var scope = _scopeFactory?.CreateScope();
         var servicios = scope?.ServiceProvider;
-        var finanzas = _servicioFinanzas ?? servicios?.GetService<IServicioFinanzas>();
+        var finanzas = _servicioFinanzas ?? servicios?.GetService<ServicioFinanzas>();
         if (finanzas is null)
             return;
 
@@ -316,6 +316,6 @@ public partial class ContabilidadDianViewModel : ViewModelBase
 
     private string Traducir(IServiceProvider? servicios, Exception ex)
         => _traductor?.Traducir(ex)
-           ?? servicios?.GetService<ITraductorExcepciones>()?.Traducir(ex)
+           ?? servicios?.GetService<TraductorExcepciones>()?.Traducir(ex)
            ?? ex.Message;
 }

@@ -97,16 +97,16 @@ public partial class PosViewModel : ViewModelBase
 {
     private static readonly CultureInfo CulturaCo = new("es-CO");
 
-    private readonly IServicioVentas? _servicioVentas;
-    private readonly IServicioCaja? _servicioCaja;
-    private readonly IServicioProductos? _servicioProductos;
-    private readonly IServicioBusquedaProductos? _servicioBusqueda;
-    private readonly IServicioClientes? _servicioClientes;
-    private readonly IServicioVentasEnEspera? _servicioVentasEnEspera;
-    private readonly IServicioAutenticacion? _servicioAutenticacion;
-    private readonly ISesionActual? _sesion;
+    private readonly ServicioVentas? _servicioVentas;
+    private readonly ServicioCaja? _servicioCaja;
+    private readonly ServicioProductos? _servicioProductos;
+    private readonly ServicioProductos? _servicioBusqueda;
+    private readonly ServicioClientes? _servicioClientes;
+    private readonly ServicioVentas? _servicioVentasEnEspera;
+    private readonly ServicioAutenticacion? _servicioAutenticacion;
+    private readonly SesionActual? _sesion;
     private readonly IImpresorTicket? _impresorTicket;
-    private readonly ITraductorExcepciones? _traductor;
+    private readonly TraductorExcepciones? _traductor;
     private readonly IServiceScopeFactory? _scopeFactory;
     private string? _claveIdempotenciaCobro;
     private Func<Task>? _accionPendienteSupervisor;
@@ -348,16 +348,16 @@ public partial class PosViewModel : ViewModelBase
     }
 
     public PosViewModel(
-        IServicioVentas servicioVentas,
-        IServicioCaja servicioCaja,
-        IServicioProductos servicioProductos,
-        IServicioBusquedaProductos? servicioBusqueda = null,
-        IServicioClientes? servicioClientes = null,
+        ServicioVentas servicioVentas,
+        ServicioCaja servicioCaja,
+        ServicioProductos servicioProductos,
+        ServicioProductos? servicioBusqueda = null,
+        ServicioClientes? servicioClientes = null,
         IImpresorTicket? impresorTicket = null,
-        ITraductorExcepciones? traductor = null,
-        IServicioVentasEnEspera? servicioVentasEnEspera = null,
-        IServicioAutenticacion? servicioAutenticacion = null,
-        ISesionActual? sesion = null)
+        TraductorExcepciones? traductor = null,
+        ServicioVentas? servicioVentasEnEspera = null,
+        ServicioAutenticacion? servicioAutenticacion = null,
+        SesionActual? sesion = null)
     {
         _servicioVentas = servicioVentas;
         _servicioCaja = servicioCaja;
@@ -395,7 +395,7 @@ public partial class PosViewModel : ViewModelBase
         using var scope = _scopeFactory?.CreateScope();
         var servicios = scope?.ServiceProvider;
         var servicioCaja = _servicioCaja
-            ?? servicios?.GetService<IServicioCaja>();
+            ?? servicios?.GetService<ServicioCaja>();
         if (servicioCaja is null)
             return;
 
@@ -429,7 +429,7 @@ public partial class PosViewModel : ViewModelBase
         var entrada = CodigoBarrasInput?.Trim();
         using var scope = _scopeFactory?.CreateScope();
         var servicioProductos = _servicioProductos
-            ?? scope?.ServiceProvider.GetService<IServicioProductos>();
+            ?? scope?.ServiceProvider.GetService<ServicioProductos>();
         if (string.IsNullOrWhiteSpace(entrada) || servicioProductos is null)
             return;
 
@@ -646,7 +646,7 @@ public partial class PosViewModel : ViewModelBase
         using var scope = _scopeFactory?.CreateScope();
         var servicios = scope?.ServiceProvider;
         var servicioVentas = _servicioVentas
-            ?? servicios?.GetService<IServicioVentas>();
+            ?? servicios?.GetService<ServicioVentas>();
         var impresor = _impresorTicket
             ?? servicios?.GetService<IImpresorTicket>();
         if (servicioVentas is null || !PuedeCobrar)
@@ -752,7 +752,7 @@ public partial class PosViewModel : ViewModelBase
         using var scope = _scopeFactory?.CreateScope();
         var servicios = scope?.ServiceProvider;
         var servicioEspera = _servicioVentasEnEspera
-            ?? servicios?.GetService<IServicioVentasEnEspera>();
+            ?? servicios?.GetService<ServicioVentas>();
         if (servicioEspera is null || Carrito.Count == 0)
             return;
 
@@ -821,9 +821,9 @@ public partial class PosViewModel : ViewModelBase
         using var scope = _scopeFactory?.CreateScope();
         var servicios = scope?.ServiceProvider;
         var servicioEspera = _servicioVentasEnEspera
-            ?? servicios?.GetService<IServicioVentasEnEspera>();
+            ?? servicios?.GetService<ServicioVentas>();
         var servicioProductos = _servicioProductos
-            ?? servicios?.GetService<IServicioProductos>();
+            ?? servicios?.GetService<ServicioProductos>();
         if (servicioEspera is null || servicioProductos is null)
             return;
 
@@ -844,7 +844,7 @@ public partial class PosViewModel : ViewModelBase
 
             if (venta.ClienteId.HasValue)
             {
-                var servicioClientes = _servicioClientes ?? servicios?.GetService<IServicioClientes>();
+                var servicioClientes = _servicioClientes ?? servicios?.GetService<ServicioClientes>();
                 if (servicioClientes is not null && !string.IsNullOrWhiteSpace(venta.IdentificadorCliente))
                 {
                     ClienteActual = await servicioClientes.BuscarPorDocumentoAsync(venta.IdentificadorCliente);
@@ -875,7 +875,7 @@ public partial class PosViewModel : ViewModelBase
         using var scope = _scopeFactory?.CreateScope();
         var servicios = scope?.ServiceProvider;
         var servicioEspera = _servicioVentasEnEspera
-            ?? servicios?.GetService<IServicioVentasEnEspera>();
+            ?? servicios?.GetService<ServicioVentas>();
         if (servicioEspera is null)
             return;
 
@@ -895,7 +895,7 @@ public partial class PosViewModel : ViewModelBase
     private async Task ActualizarContadorVentasEnEsperaAsync(IServiceProvider? servicios)
     {
         var servicioEspera = _servicioVentasEnEspera
-            ?? servicios?.GetService<IServicioVentasEnEspera>();
+            ?? servicios?.GetService<ServicioVentas>();
         if (servicioEspera is null)
             return;
 
@@ -919,7 +919,7 @@ public partial class PosViewModel : ViewModelBase
 
     private bool UsuarioActivoTienePermiso(IServiceProvider? servicios, Permiso permiso)
     {
-        var sesion = _sesion ?? servicios?.GetService<ISesionActual>();
+        var sesion = _sesion ?? servicios?.GetService<SesionActual>();
         if (sesion is null || !sesion.EstaAutenticada)
             return true; // En pruebas unitarias sin sesión inyectada permite ejecución directa
 
@@ -1017,7 +1017,7 @@ public partial class PosViewModel : ViewModelBase
         using var scope = _scopeFactory?.CreateScope();
         var servicios = scope?.ServiceProvider;
         var servicioAuth = _servicioAutenticacion
-            ?? servicios?.GetService<IServicioAutenticacion>();
+            ?? servicios?.GetService<ServicioAutenticacion>();
         if (servicioAuth is null)
             return;
 
@@ -1063,7 +1063,7 @@ public partial class PosViewModel : ViewModelBase
         using var scope = _scopeFactory?.CreateScope();
         var servicios = scope?.ServiceProvider;
         var servicioVentas = _servicioVentas
-            ?? servicios?.GetService<IServicioVentas>();
+            ?? servicios?.GetService<ServicioVentas>();
         if (servicioVentas is null)
             return;
 
@@ -1128,7 +1128,7 @@ public partial class PosViewModel : ViewModelBase
     {
         using var scope = _scopeFactory?.CreateScope();
         var servicioBusqueda = _servicioBusqueda
-            ?? scope?.ServiceProvider.GetService<IServicioBusquedaProductos>();
+            ?? scope?.ServiceProvider.GetService<ServicioProductos>();
         if (servicioBusqueda is null || string.IsNullOrWhiteSpace(TerminoBusquedaRapida))
             return;
 
@@ -1193,7 +1193,7 @@ public partial class PosViewModel : ViewModelBase
     {
         using var scope = _scopeFactory?.CreateScope();
         var servicioClientes = _servicioClientes
-            ?? scope?.ServiceProvider.GetService<IServicioClientes>();
+            ?? scope?.ServiceProvider.GetService<ServicioClientes>();
         if (servicioClientes is null || string.IsNullOrWhiteSpace(DocumentoClienteInput))
             return;
 
@@ -1227,7 +1227,7 @@ public partial class PosViewModel : ViewModelBase
         using var scope = _scopeFactory?.CreateScope();
         var servicios = scope?.ServiceProvider;
         var servicioCaja = _servicioCaja
-            ?? servicios?.GetService<IServicioCaja>();
+            ?? servicios?.GetService<ServicioCaja>();
         if (servicioCaja is null)
             return;
 
@@ -1256,6 +1256,6 @@ public partial class PosViewModel : ViewModelBase
 
     private string Traducir(IServiceProvider? servicios, Exception ex)
         => _traductor?.Traducir(ex)
-           ?? servicios?.GetService<ITraductorExcepciones>()?.Traducir(ex)
+           ?? servicios?.GetService<TraductorExcepciones>()?.Traducir(ex)
            ?? ex.Message;
 }

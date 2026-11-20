@@ -11,8 +11,12 @@ namespace Supermercado.Pruebas.GUI;
 
 public class PosViewModelTests
 {
-    private sealed class ServicioProductosFalso : IServicioProductos
+    private sealed class ServicioProductosFalso : ServicioProductos
     {
+        public ServicioProductosFalso() : base(null!)
+        {
+        }
+
         private readonly Dictionary<string, Producto> _catalogo = new(StringComparer.OrdinalIgnoreCase)
         {
             ["7701001"] = new ProductoUnitario
@@ -41,47 +45,53 @@ public class PosViewModelTests
             }
         };
 
-        public Task RegistrarAsync(Producto producto) => Task.CompletedTask;
-        public Task<Producto?> BuscarPorCodigoBarrasAsync(string codigo)
+        public override Task RegistrarAsync(Producto producto) => Task.CompletedTask;
+        public override Task<Producto?> BuscarPorCodigoBarrasAsync(string codigo)
             => Task.FromResult(_catalogo.GetValueOrDefault(codigo));
-        public Task<InfoProductoExterno?> ConsultarExternoAsync(string codigo, CancellationToken ct = default)
+        public override Task<InfoProductoExterno?> ConsultarExternoAsync(string codigo, CancellationToken ct = default)
             => Task.FromResult<InfoProductoExterno?>(null);
-        public Task RegistrarIngresoLoteAsync(int productoId, string numeroLote, DateOnly vencimiento, int cantidad, long costoUnitario)
+        public override Task RegistrarIngresoLoteAsync(int productoId, string numeroLote, DateOnly vencimiento, int cantidad, long costoUnitario)
             => Task.CompletedTask;
     }
 
-    private sealed class ServicioCajaFalso(bool turnoAbierto) : IServicioCaja
+    private sealed class ServicioCajaFalso(bool turnoAbierto)
+        : ServicioCaja(null!, null!, null!, null!, null!, null!, null!)
     {
         public bool Abierto { get; set; } = turnoAbierto;
 
-        public Task<TurnoCaja> AbrirTurnoAsync(int cajaId, long efectivoInicial)
+        public override Task<TurnoCaja> AbrirTurnoAsync(int cajaId, long efectivoInicial)
         {
             Abierto = true;
             return Task.FromResult(TurnoCaja.Abrir(cajaId, 1, efectivoInicial, DateTime.UtcNow));
         }
 
-        public Task<ResultadoArqueo> CerrarTurnoAsync(long efectivoContado)
+        public override Task<ResultadoArqueo> CerrarTurnoAsync(long efectivoContado)
         {
             Abierto = false;
             return Task.FromResult(new ResultadoArqueo(100000, efectivoContado, efectivoContado - 100000, true));
         }
 
-        public Task<TurnoCaja?> ObtenerTurnoActualAsync()
+        public override Task<TurnoCaja?> ObtenerTurnoActualAsync()
             => Task.FromResult(Abierto ? TurnoCaja.Abrir(1, 1, 100000, DateTime.UtcNow) : null);
 
-        public Task<RetiroCaja> RegistrarRetiroAsync(long monto, string motivo, int supervisorId)
+        public override Task<RetiroCaja> RegistrarRetiroAsync(long monto, string motivo, int supervisorId)
             => Task.FromResult(new RetiroCaja { Monto = monto, Motivo = motivo, EmpleadoAutorizaId = supervisorId });
 
-        public Task<IReadOnlyList<RetiroCaja>> ObtenerRetirosTurnoActualAsync()
+        public override Task<IReadOnlyList<RetiroCaja>> ObtenerRetirosTurnoActualAsync()
             => Task.FromResult<IReadOnlyList<RetiroCaja>>([]);
     }
 
-    private sealed class ServicioVentasFalso : IServicioVentas
+    private sealed class ServicioVentasFalso : ServicioVentas
     {
+        public ServicioVentasFalso()
+            : base(null!, null!, null!, null!, null!, null!, null!, null!, null!)
+        {
+        }
+
         public List<SolicitudVenta> Solicitudes { get; } = [];
         public bool FallarPrimera { get; set; }
 
-        public Task<Venta> RegistrarVentaAsync(SolicitudVenta solicitud)
+        public override Task<Venta> RegistrarVentaAsync(SolicitudVenta solicitud)
         {
             Solicitudes.Add(solicitud);
             if (FallarPrimera && Solicitudes.Count == 1)
@@ -95,7 +105,7 @@ public class PosViewModelTests
             return Task.FromResult(v);
         }
 
-        public Task AnularVentaAsync(int ventaId, string motivo) => Task.CompletedTask;
+        public override Task AnularVentaAsync(int ventaId, string motivo) => Task.CompletedTask;
     }
 
     private sealed class ImpresorFalso(bool fallar) : IImpresorTicket

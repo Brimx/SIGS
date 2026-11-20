@@ -40,9 +40,10 @@ public class ConsultasLecturaTests
             EmpleadoId = 2
         });
 
-        var servicio = new ServicioConsultaAuditoria(
+        var servicio = new ServicioAuditoria(
             registros,
-            Sesiones.Con(Permiso.VerAuditoria));
+            Sesiones.Con(Permiso.VerAuditoria),
+            TimeProvider.System);
 
         var filtro = new FiltroAuditoria(
             Accion: AccionAuditoria.VentaAnulada,
@@ -61,9 +62,10 @@ public class ConsultasLecturaTests
     public async Task ConsultaAuditoria_SinPermiso_LanzaAccesoDenegado()
     {
         var registros = new RegistrosAuditoriaEnMemoria();
-        var servicio = new ServicioConsultaAuditoria(
+        var servicio = new ServicioAuditoria(
             registros,
-            Sesiones.Con(Permiso.Vender));
+            Sesiones.Con(Permiso.Vender),
+            TimeProvider.System);
 
         await Assert.ThrowsAsync<AccesoDenegadoException>(
             () => servicio.ConsultarAsync(new FiltroAuditoria()));
@@ -105,13 +107,16 @@ public class ConsultasLecturaTests
         sb.Aumentar(13);
         await bodega.AgregarAsync(sb);
 
-        var servicio = new ServicioConsultaInventario(
+        var servicio = new ServicioInventario(
             estante,
             bodega,
-            productos,
-            lotes,
             movs,
-            Sesiones.Con(Permiso.VerInventario));
+            null!,
+            null!,
+            TimeProvider.System,
+            productos: productos,
+            lotes: lotes,
+            sesion: Sesiones.Con(Permiso.VerInventario));
 
         var consolidado = await servicio.ObtenerStockConsolidadoAsync(1);
 
@@ -164,13 +169,16 @@ public class ConsultasLecturaTests
             Fecha = fechaBase.AddHours(4)
         });
 
-        var servicio = new ServicioConsultaInventario(
+        var servicio = new ServicioInventario(
             estante,
             bodega,
-            productos,
-            lotes,
             movs,
-            Sesiones.Con(Permiso.VerInventario));
+            null!,
+            null!,
+            TimeProvider.System,
+            productos: productos,
+            lotes: lotes,
+            sesion: Sesiones.Con(Permiso.VerInventario));
 
         var kardex = await servicio.ObtenerKardexAsync(
             1,
@@ -211,7 +219,7 @@ public class ConsultasLecturaTests
             Activo = true
         });
 
-        var servicio = new ServicioBusquedaProductos(productos);
+        var servicio = new ServicioProductos(productos);
 
         var resultados = await servicio.BuscarPorNombreAsync("arroz", 1);
         Assert.Single(resultados);

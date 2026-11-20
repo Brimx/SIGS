@@ -11,7 +11,7 @@ namespace Supermercado.Pruebas;
 
 public class ClientesExternosTests
 {
-    private static IServicioParametros CrearParametros()
+    private static ServicioParametros CrearParametros()
     {
         var p = new ParametrosFalsos();
         p.Valores[ClavesParametro.TimeoutSegundos] = "2";

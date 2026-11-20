@@ -12,22 +12,19 @@ namespace Supermercado.Logica.Productos
 public class ServicioProductos(
     IProductoRepositorio productos,
     ILoteRepositorio? lotes = null,
-    IServicioInventario? inventario = null,
+    ServicioInventario? inventario = null,
     IConsultaCodigoBarras? externo = null,
-    ISesionActual? sesion = null,
+    SesionActual? sesion = null,
     TimeProvider? reloj = null,
     ICategoriaRepositorio? categorias = null,
     IProveedorRepositorio? proveedores = null,
-    IServicioAuditoria? auditoria = null) : IServicioProductos,
-        IServicioBusquedaProductos,
-        IServicioMantenimientoProductos,
-        IServicioCatalogos
+    ServicioAuditoria? auditoria = null)
 {
     private readonly TimeProvider _reloj = reloj ?? TimeProvider.System;
 
     // --- Catálogo y Registro ---
 
-    public async Task RegistrarAsync(Producto producto)
+    public virtual async Task RegistrarAsync(Producto producto)
     {
         sesion?.Exigir(Permiso.GestionarProductos);
         Validar(producto);
@@ -40,10 +37,10 @@ public class ServicioProductos(
         await productos.GuardarAsync();
     }
 
-    public Task<Producto?> BuscarPorCodigoBarrasAsync(string codigo)
+    public virtual Task<Producto?> BuscarPorCodigoBarrasAsync(string codigo)
         => productos.ObtenerPorCodigoBarrasAsync(codigo);
 
-    public async Task<InfoProductoExterno?> ConsultarExternoAsync(
+    public virtual async Task<InfoProductoExterno?> ConsultarExternoAsync(
         string codigo,
         CancellationToken ct = default)
     {
@@ -65,7 +62,7 @@ public class ServicioProductos(
         }
     }
 
-    public async Task RegistrarIngresoLoteAsync(
+    public virtual async Task RegistrarIngresoLoteAsync(
         int productoId,
         string numeroLote,
         DateOnly vencimiento,
@@ -106,7 +103,7 @@ public class ServicioProductos(
 
     // --- Búsqueda de Productos ---
 
-    public async Task<IReadOnlyList<Producto>> BuscarPorNombreAsync(
+    public virtual async Task<IReadOnlyList<Producto>> BuscarPorNombreAsync(
         string termino,
         int limite = 20)
     {
@@ -126,7 +123,7 @@ public class ServicioProductos(
 
     // --- Mantenimiento de Productos ---
 
-    public async Task EditarAsync(
+    public virtual async Task EditarAsync(
         int productoId,
         string nuevoNombre,
         int stockMinimoEstante,
@@ -164,7 +161,7 @@ public class ServicioProductos(
         await productos.GuardarAsync();
     }
 
-    public async Task CambiarPrecioAsync(int productoId, long nuevoPrecio)
+    public virtual async Task CambiarPrecioAsync(int productoId, long nuevoPrecio)
     {
         sesion?.Exigir(Permiso.GestionarProductos);
 
@@ -189,7 +186,7 @@ public class ServicioProductos(
         await productos.GuardarAsync();
     }
 
-    public async Task ActivarAsync(int productoId)
+    public virtual async Task ActivarAsync(int productoId)
     {
         sesion?.Exigir(Permiso.GestionarProductos);
 
@@ -209,7 +206,7 @@ public class ServicioProductos(
         await productos.GuardarAsync();
     }
 
-    public async Task DesactivarAsync(int productoId)
+    public virtual async Task DesactivarAsync(int productoId)
     {
         sesion?.Exigir(Permiso.GestionarProductos);
 
@@ -231,12 +228,12 @@ public class ServicioProductos(
 
     // --- Categorías y Proveedores ---
 
-    public Task<IReadOnlyList<Categoria>> ObtenerCategoriasAsync()
+    public virtual Task<IReadOnlyList<Categoria>> ObtenerCategoriasAsync()
         => categorias is not null
             ? categorias.ObtenerTodosAsync()
             : Task.FromResult<IReadOnlyList<Categoria>>([]);
 
-    public async Task<Categoria> CrearCategoriaAsync(string nombre)
+    public virtual async Task<Categoria> CrearCategoriaAsync(string nombre)
     {
         sesion?.Exigir(Permiso.GestionarProductos);
 
@@ -261,7 +258,7 @@ public class ServicioProductos(
         return categoria;
     }
 
-    public async Task EditarCategoriaAsync(int id, string nuevoNombre)
+    public virtual async Task EditarCategoriaAsync(int id, string nuevoNombre)
     {
         sesion?.Exigir(Permiso.GestionarProductos);
 
@@ -288,12 +285,12 @@ public class ServicioProductos(
             await categorias.GuardarAsync();
     }
 
-    public Task<IReadOnlyList<Proveedor>> ObtenerProveedoresAsync()
+    public virtual Task<IReadOnlyList<Proveedor>> ObtenerProveedoresAsync()
         => proveedores is not null
             ? proveedores.ObtenerTodosAsync()
             : Task.FromResult<IReadOnlyList<Proveedor>>([]);
 
-    public async Task<Proveedor> CrearProveedorAsync(
+    public virtual async Task<Proveedor> CrearProveedorAsync(
         string nombre,
         string nit,
         string telefono,
@@ -329,7 +326,7 @@ public class ServicioProductos(
         return proveedor;
     }
 
-    public async Task EditarProveedorAsync(
+    public virtual async Task EditarProveedorAsync(
         int id,
         string nuevoNombre,
         string nit,
@@ -382,77 +379,6 @@ public class ServicioProductos(
             throw new ValidacionException("Falta el impuesto.");
     }
 }
-
-// Adaptadores para compatibilidad de pruebas existentes
-public class ServicioBusquedaProductos(
-    IProductoRepositorio productos) : ServicioProductos(productos);
-
-public class ServicioMantenimientoProductos(
-    IProductoRepositorio productos,
-    IServicioAuditoria auditoria,
-    ISesionActual sesion) : ServicioProductos(
-        productos,
-        auditoria: auditoria,
-        sesion: sesion);
-
-public class ServicioCatalogos(
-    ICategoriaRepositorio categorias,
-    IProveedorRepositorio proveedores,
-    IServicioAuditoria auditoria,
-    ISesionActual sesion) : ServicioProductos(
-        null!,
-        categorias: categorias,
-        proveedores: proveedores,
-        auditoria: auditoria,
-        sesion: sesion);
-
-public interface IServicioBusquedaProductos
-{
-    Task<IReadOnlyList<Producto>> BuscarPorNombreAsync(string termino, int limite = 20);
-}
-
-public interface IServicioMantenimientoProductos
-{
-    Task EditarAsync(
-        int productoId,
-        string nuevoNombre,
-        int stockMinimoEstante,
-        int categoriaId,
-        int proveedorId,
-        int impuestoId);
-    Task CambiarPrecioAsync(int productoId, long nuevoPrecio);
-    Task ActivarAsync(int productoId);
-    Task DesactivarAsync(int productoId);
-}
-
-public interface IServicioCatalogos
-{
-    Task<IReadOnlyList<Categoria>> ObtenerCategoriasAsync();
-    Task<Categoria> CrearCategoriaAsync(string nombre);
-    Task EditarCategoriaAsync(int id, string nuevoNombre);
-    Task<IReadOnlyList<Proveedor>> ObtenerProveedoresAsync();
-    Task<Proveedor> CrearProveedorAsync(string nombre, string nit, string telefono, string correo);
-    Task EditarProveedorAsync(int id, string nuevoNombre, string nit, string telefono, string correo);
-}
-
-// Interfaz núcleo de productos
-public interface IServicioProductos
-{
-    Task RegistrarAsync(Producto producto);
-    Task<Producto?> BuscarPorCodigoBarrasAsync(string codigo);
-    Task<InfoProductoExterno?> ConsultarExternoAsync(string codigo, CancellationToken ct = default);
-    Task RegistrarIngresoLoteAsync(
-        int productoId,
-        string numeroLote,
-        DateOnly vencimiento,
-        int cantidad,
-        long costoUnitario);
-}
-
-public record FactorConversionUnidad(
-    string UnidadOrigen,
-    string UnidadDestino,
-    decimal Factor);
 
 // Conversor de unidades de compra a unidades de venta para inventario y Kardex.
 // Permite ingresar bultos, arrobas o cajas y transformarlos a kilos, gramos o unidades.

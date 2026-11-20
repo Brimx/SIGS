@@ -15,7 +15,7 @@ public class ServicioNominaTests
     private readonly ParametrosFalsos parametros = new();
     private readonly RelojFijo reloj = new(EscenarioInventario.Ahora);
 
-    private ServicioNomina CrearServicio(
+    private ServicioFinanzas CrearServicio(
         Permiso permisos = Permiso.GestionarPersonal)
     {
         parametros.Valores[ClavesParametro.SalarioMinimo] = "1300000";
@@ -24,12 +24,14 @@ public class ServicioNominaTests
         parametros.Valores[ClavesParametro.SaludPuntosBasicos] = "400";
         parametros.Valores[ClavesParametro.PensionPuntosBasicos] = "400";
 
-        return new ServicioNomina(
-            empleados,
-            nominas,
-            parametros,
-            Sesiones.Con(permisos),
-            reloj);
+        return new ServicioFinanzas(
+            null!,
+            null!,
+            sesion: Sesiones.Con(permisos),
+            reloj: reloj,
+            empleados: empleados,
+            nominas: nominas,
+            parametros: parametros);
     }
 
     [Fact]

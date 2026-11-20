@@ -16,15 +16,19 @@ public class ServicioAlertasInventarioTests
     private readonly ParametrosFalsos parametros = new();
     private readonly RelojFijo reloj = new(EscenarioInventario.Ahora);
 
-    private ServicioAlertasInventario CrearServicio(
+    private ServicioInventario CrearServicio(
         Permiso permisos = Permiso.VerInventario)
         => new(
-            productos,
             estante,
-            lotes,
-            parametros,
-            Sesiones.Con(permisos),
-            reloj);
+            null!,
+            null!,
+            null!,
+            null!,
+            reloj,
+            productos: productos,
+            lotes: lotes,
+            parametros: parametros,
+            sesion: Sesiones.Con(permisos));
 
     [Fact]
     public async Task ObtenerBajoMinimo_IdentificaProductosBajoElMinimo()

@@ -16,16 +16,16 @@ namespace Supermercado.Logica.Servicios
 {
 public sealed partial class ProcesadorTelegram(
     IClienteTelegram telegram,
-    IAsistente asistente,
+    Asistente asistente,
     IVinculosTelegram vinculos,
     IUsuarioRepositorio usuarios,
-    ISesionActual sesion,
-    IServicioAlertasInventario alertas,
-    IServicioVentas ventas,
+    SesionActual sesion,
+    ServicioInventario alertas,
+    ServicioVentas ventas,
     IVentaRepositorio repositorioVentas,
-    IServicioCaja caja,
-    IServicioReabastecimiento reabastecimiento,
-    IServicioAuditoria auditoria,
+    ServicioCaja caja,
+    ServicioInventario reabastecimiento,
+    ServicioAuditoria auditoria,
     TimeProvider reloj)
 {
     private static readonly TimeSpan DuracionConfirmacion = TimeSpan.FromMinutes(3);

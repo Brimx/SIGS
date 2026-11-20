@@ -12,19 +12,46 @@ using Supermercado.Logica.Ventas;
 
 namespace Supermercado.Logica.Dashboards.Widgets;
 
+public abstract class WidgetBase : IWidget
+{
+    protected WidgetBase(
+        string id,
+        string titulo,
+        string grupo,
+        TamanoWidget tamano,
+        TimeSpan frecuenciaActualizacion,
+        Permiso permisoRequerido)
+    {
+        Id = id;
+        Titulo = titulo;
+        Grupo = grupo;
+        Tamano = tamano;
+        FrecuenciaActualizacion = frecuenciaActualizacion;
+        PermisoRequerido = permisoRequerido;
+    }
+
+    public string Id { get; }
+    public string Titulo { get; }
+    public string Grupo { get; }
+    public TamanoWidget Tamano { get; }
+    public TimeSpan FrecuenciaActualizacion { get; }
+    public Permiso PermisoRequerido { get; }
+
+    public abstract Task<DatoWidget> ObtenerDatosAsync();
+}
+
 public class ArqueoTurnoWidget(
     ITurnoCajaRepositorio turnos,
     IVentaRepositorio ventas,
-    ISesionActual sesion) : IWidget
+    SesionActual sesion) : WidgetBase(
+        "caja.arqueo_turno",
+        "Arqueo del turno",
+        GruposWidget.Caja,
+        TamanoWidget.Pequeno,
+        TimeSpan.FromMinutes(1),
+        Permiso.AbrirCerrarTurno)
 {
-    public string Id => "caja.arqueo_turno";
-    public string Titulo => "Arqueo del turno";
-    public string Grupo => GruposWidget.Caja;
-    public TamanoWidget Tamano => TamanoWidget.Pequeno;
-    public TimeSpan FrecuenciaActualizacion => TimeSpan.FromMinutes(1);
-    public Permiso PermisoRequerido => Permiso.AbrirCerrarTurno;
-
-    public async Task<DatoWidget> ObtenerDatosAsync()
+    public override async Task<DatoWidget> ObtenerDatosAsync()
     {
         if (!sesion.EstaAutenticada)
             return new DatoWidget([new PuntoDato("Sin sesión", 0)]);
@@ -48,16 +75,15 @@ public class ArqueoTurnoWidget(
 
 public class IvaGeneradoWidget(
     IVentaRepositorio ventas,
-    TimeProvider reloj) : IWidget
+    TimeProvider reloj) : WidgetBase(
+        "finanzas.iva_generado",
+        "IVA generado",
+        GruposWidget.Finanzas,
+        TamanoWidget.Pequeno,
+        TimeSpan.FromMinutes(2),
+        Permiso.VerFinanzas)
 {
-    public string Id => "finanzas.iva_generado";
-    public string Titulo => "IVA generado";
-    public string Grupo => GruposWidget.Finanzas;
-    public TamanoWidget Tamano => TamanoWidget.Pequeno;
-    public TimeSpan FrecuenciaActualizacion => TimeSpan.FromMinutes(2);
-    public Permiso PermisoRequerido => Permiso.VerFinanzas;
-
-    public async Task<DatoWidget> ObtenerDatosAsync()
+    public override async Task<DatoWidget> ObtenerDatosAsync()
     {
         var (desde, hasta) = reloj.RangoDeHoyUtc();
         var completadas = (await ventas.ObtenerPorRangoAsync(desde, hasta))
@@ -74,16 +100,15 @@ public class IvaGeneradoWidget(
 }
 
 public class LotesPorVencerWidget(
-    IServicioAlertasInventario alertas) : IWidget
+    ServicioInventario alertas) : WidgetBase(
+        "inventario.lotes_por_vencer",
+        "Lotes por vencer",
+        GruposWidget.Inventario,
+        TamanoWidget.Pequeno,
+        TimeSpan.FromMinutes(5),
+        Permiso.VerInventario)
 {
-    public string Id => "inventario.lotes_por_vencer";
-    public string Titulo => "Lotes por vencer";
-    public string Grupo => GruposWidget.Inventario;
-    public TamanoWidget Tamano => TamanoWidget.Pequeno;
-    public TimeSpan FrecuenciaActualizacion => TimeSpan.FromMinutes(5);
-    public Permiso PermisoRequerido => Permiso.VerInventario;
-
-    public async Task<DatoWidget> ObtenerDatosAsync()
+    public override async Task<DatoWidget> ObtenerDatosAsync()
     {
         var lotes = await alertas.ObtenerLotesPorVencerAsync();
         return new DatoWidget(
@@ -94,16 +119,15 @@ public class LotesPorVencerWidget(
 }
 
 public class ReabastecimientosPendientesWidget(
-    IReabastecimientoRepositorio solicitudes) : IWidget
+    IReabastecimientoRepositorio solicitudes) : WidgetBase(
+        "inventario.reabastecimientos",
+        "Reabastecimientos pendientes",
+        GruposWidget.Inventario,
+        TamanoWidget.Pequeno,
+        TimeSpan.FromMinutes(5),
+        Permiso.VerInventario)
 {
-    public string Id => "inventario.reabastecimientos";
-    public string Titulo => "Reabastecimientos pendientes";
-    public string Grupo => GruposWidget.Inventario;
-    public TamanoWidget Tamano => TamanoWidget.Pequeno;
-    public TimeSpan FrecuenciaActualizacion => TimeSpan.FromMinutes(5);
-    public Permiso PermisoRequerido => Permiso.VerInventario;
-
-    public async Task<DatoWidget> ObtenerDatosAsync()
+    public override async Task<DatoWidget> ObtenerDatosAsync()
     {
         var pendientes = await solicitudes.ObtenerPendientesAsync();
         return new DatoWidget([new PuntoDato("Pendientes", pendientes.Count)]);
@@ -111,16 +135,15 @@ public class ReabastecimientosPendientesWidget(
 }
 
 public class StockBajoMinimoWidget(
-    IServicioAlertasInventario alertas) : IWidget
+    ServicioInventario alertas) : WidgetBase(
+        "inventario.stock_bajo_minimo",
+        "Stock bajo el mínimo",
+        GruposWidget.Inventario,
+        TamanoWidget.Pequeno,
+        TimeSpan.FromMinutes(3),
+        Permiso.VerInventario)
 {
-    public string Id => "inventario.stock_bajo_minimo";
-    public string Titulo => "Stock bajo el mínimo";
-    public string Grupo => GruposWidget.Inventario;
-    public TamanoWidget Tamano => TamanoWidget.Pequeno;
-    public TimeSpan FrecuenciaActualizacion => TimeSpan.FromMinutes(3);
-    public Permiso PermisoRequerido => Permiso.VerInventario;
-
-    public async Task<DatoWidget> ObtenerDatosAsync()
+    public override async Task<DatoWidget> ObtenerDatosAsync()
     {
         var deficit = await alertas.ObtenerBajoMinimoAsync();
         return new DatoWidget(
@@ -130,16 +153,15 @@ public class StockBajoMinimoWidget(
     }
 }
 
-public class TrmDelDiaWidget(IServicioTrm trm) : IWidget
+public class TrmDelDiaWidget(IServicioTrm trm) : WidgetBase(
+    "externo.trm",
+    "TRM del día",
+    GruposWidget.Externo,
+    TamanoWidget.Pequeno,
+    TimeSpan.FromHours(1),
+    Permiso.Ninguno)
 {
-    public string Id => "externo.trm";
-    public string Titulo => "TRM del día";
-    public string Grupo => GruposWidget.Externo;
-    public TamanoWidget Tamano => TamanoWidget.Pequeno;
-    public TimeSpan FrecuenciaActualizacion => TimeSpan.FromHours(1);
-    public Permiso PermisoRequerido => Permiso.Ninguno;
-
-    public async Task<DatoWidget> ObtenerDatosAsync()
+    public override async Task<DatoWidget> ObtenerDatosAsync()
     {
         var valor = await trm.ObtenerAsync();
 
@@ -151,16 +173,15 @@ public class TrmDelDiaWidget(IServicioTrm trm) : IWidget
 
 public class VentasDelDiaWidget(
     IVentaRepositorio ventas,
-    TimeProvider reloj) : IWidget
+    TimeProvider reloj) : WidgetBase(
+        "ventas.del_dia",
+        "Ventas del día",
+        GruposWidget.Ventas,
+        TamanoWidget.Pequeno,
+        TimeSpan.FromMinutes(1),
+        Permiso.VerReportes)
 {
-    public string Id => "ventas.del_dia";
-    public string Titulo => "Ventas del día";
-    public string Grupo => GruposWidget.Ventas;
-    public TamanoWidget Tamano => TamanoWidget.Pequeno;
-    public TimeSpan FrecuenciaActualizacion => TimeSpan.FromMinutes(1);
-    public Permiso PermisoRequerido => Permiso.VerReportes;
-
-    public async Task<DatoWidget> ObtenerDatosAsync()
+    public override async Task<DatoWidget> ObtenerDatosAsync()
     {
         var (desde, hasta) = reloj.RangoDeHoyUtc();
         var completadas = (await ventas.ObtenerPorRangoAsync(desde, hasta))
@@ -177,19 +198,17 @@ public class VentasDelDiaWidget(
 
 public sealed class ResumenOperativoWidget(
     IVentaRepositorio ventas,
-    IServicioCaja caja,
-    IServicioAlertasInventario alertas,
-    TimeProvider reloj) : IWidget
+    ServicioCaja caja,
+    ServicioInventario alertas,
+    TimeProvider reloj) : WidgetBase(
+        "operacion.resumen",
+        "Resumen operativo",
+        GruposWidget.Ventas,
+        TamanoWidget.Mediano,
+        TimeSpan.FromMinutes(1),
+        Permiso.VerReportes | Permiso.VerFinanzas | Permiso.VerInventario)
 {
-    public string Id => "operacion.resumen";
-    public string Titulo => "Resumen operativo";
-    public string Grupo => GruposWidget.Ventas;
-    public TamanoWidget Tamano => TamanoWidget.Mediano;
-    public TimeSpan FrecuenciaActualizacion => TimeSpan.FromMinutes(1);
-    public Permiso PermisoRequerido =>
-        Permiso.VerReportes | Permiso.VerFinanzas | Permiso.VerInventario;
-
-    public async Task<DatoWidget> ObtenerDatosAsync()
+    public override async Task<DatoWidget> ObtenerDatosAsync()
     {
         var (desde, hasta) = reloj.RangoDeHoyUtc();
         var delDia = (await ventas.ObtenerPorRangoAsync(desde, hasta))
@@ -212,16 +231,15 @@ public class VentasPorCategoriaWidget(
     IVentaRepositorio ventas,
     IProductoRepositorio productos,
     ICategoriaRepositorio categorias,
-    TimeProvider reloj) : IWidget
+    TimeProvider reloj) : WidgetBase(
+        "reportes.ventas_categoria",
+        "Ventas por categoría",
+        GruposWidget.Ventas,
+        TamanoWidget.Mediano,
+        TimeSpan.FromMinutes(2),
+        Permiso.VerReportes)
 {
-    public string Id => "reportes.ventas_categoria";
-    public string Titulo => "Ventas por categoría";
-    public string Grupo => GruposWidget.Ventas;
-    public TamanoWidget Tamano => TamanoWidget.Mediano;
-    public TimeSpan FrecuenciaActualizacion => TimeSpan.FromMinutes(2);
-    public Permiso PermisoRequerido => Permiso.VerReportes;
-
-    public async Task<DatoWidget> ObtenerDatosAsync()
+    public override async Task<DatoWidget> ObtenerDatosAsync()
     {
         var (desde, hasta) = reloj.RangoDeHoyUtc();
         var completadas = (await ventas.ObtenerPorRangoAsync(desde, hasta))
@@ -264,16 +282,15 @@ public class MargenPorCategoriaWidget(
     ILoteRepositorio lotes,
     IProductoRepositorio productos,
     ICategoriaRepositorio categorias,
-    TimeProvider reloj) : IWidget
+    TimeProvider reloj) : WidgetBase(
+        "finanzas.margen_categoria",
+        "Margen por categoría",
+        GruposWidget.Finanzas,
+        TamanoWidget.Mediano,
+        TimeSpan.FromMinutes(5),
+        Permiso.VerFinanzas)
 {
-    public string Id => "finanzas.margen_categoria";
-    public string Titulo => "Margen por categoría";
-    public string Grupo => GruposWidget.Finanzas;
-    public TamanoWidget Tamano => TamanoWidget.Mediano;
-    public TimeSpan FrecuenciaActualizacion => TimeSpan.FromMinutes(5);
-    public Permiso PermisoRequerido => Permiso.VerFinanzas;
-
-    public async Task<DatoWidget> ObtenerDatosAsync()
+    public override async Task<DatoWidget> ObtenerDatosAsync()
     {
         var (desde, hasta) = reloj.RangoDeHoyUtc();
         var completadas = (await ventas.ObtenerPorRangoAsync(desde, hasta))

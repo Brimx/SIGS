@@ -1,72 +1,81 @@
+using Supermercado.Entidades.Contratos;
 using Supermercado.Entidades.Excepciones;
 using Supermercado.Entidades.Finanzas;
 using Supermercado.Entidades.Inventario;
 using Supermercado.Entidades.Productos;
 using Supermercado.Entidades.Seguridad;
 using Supermercado.Logica.Inventario;
+using Supermercado.Logica.Seguridad;
 using Supermercado.Pruebas.Falsos;
 
 namespace Supermercado.Pruebas;
 
 public class ServicioReabastecimientoTests
 {
-    private class Escenario
-    {
-        public ReabastecimientosEnMemoria Solicitudes { get; } = new();
-        public AlertasInventarioFalsas Alertas { get; } = new();
-        public InventarioFalso Inventario { get; } = new();
-        public RelojFijo Reloj { get; } = new(EscenarioInventario.Ahora);
-
-        public ServicioReabastecimiento CrearServicio(
-            Permiso permisos = Permiso.Reabastecer)
-            => new(
-                Solicitudes,
-                Alertas,
-                Inventario,
-                Sesiones.Con(permisos),
-                Reloj);
-    }
-
-    public class AlertasInventarioFalsas : IServicioAlertasInventario
+    public class EstadoReabastecimientoFalso
     {
         public List<AlertaStockMinimo> AlertasBajo { get; } = [];
         public List<Lote> LotesPorVencer { get; } = [];
+        public int TrasladosLlamados { get; set; }
+    }
 
-        public Task<IReadOnlyList<AlertaStockMinimo>>
+    private class Escenario
+    {
+        public ReabastecimientosEnMemoria Solicitudes { get; } = new();
+        private readonly EstadoReabastecimientoFalso estado = new();
+        public RelojFijo Reloj { get; } = new(EscenarioInventario.Ahora);
+
+        public AlertasInventarioFalsas Inventario => CrearServicio();
+        public AlertasInventarioFalsas Alertas => CrearServicio();
+
+        public AlertasInventarioFalsas CrearServicio(
+            Permiso permisos = Permiso.Reabastecer)
+            => new(estado, Solicitudes, Sesiones.Con(permisos), Reloj);
+    }
+
+    public class AlertasInventarioFalsas : ServicioInventario
+    {
+        public AlertasInventarioFalsas()
+            : this(new EstadoReabastecimientoFalso(), null!, null!, TimeProvider.System)
+        {
+        }
+
+        public AlertasInventarioFalsas(
+            EstadoReabastecimientoFalso estado,
+            IReabastecimientoRepositorio solicitudes,
+            SesionActual sesion,
+            TimeProvider reloj)
+            : base(
+                null!,
+                null!,
+                null!,
+                null!,
+                null!,
+                reloj,
+                solicitudes: solicitudes,
+                sesion: sesion)
+        {
+            Estado = estado;
+        }
+
+        private EstadoReabastecimientoFalso Estado { get; }
+
+        public List<AlertaStockMinimo> AlertasBajo => Estado.AlertasBajo;
+        public List<Lote> LotesPorVencer => Estado.LotesPorVencer;
+        public int TrasladosLlamados => Estado.TrasladosLlamados;
+
+        public override Task<IReadOnlyList<AlertaStockMinimo>>
             ObtenerBajoMinimoAsync()
             => Task.FromResult<IReadOnlyList<AlertaStockMinimo>>(AlertasBajo);
 
-        public Task<IReadOnlyList<Lote>> ObtenerLotesPorVencerAsync()
+        public override Task<IReadOnlyList<Lote>> ObtenerLotesPorVencerAsync()
             => Task.FromResult<IReadOnlyList<Lote>>(LotesPorVencer);
-    }
 
-    public class InventarioFalso : IServicioInventario
-    {
-        public int TrasladosLlamados { get; private set; }
-
-        public Task DescontarVentaAsync(
-            int productoId, int cantidad, Entidades.Ventas.Venta venta)
-            => Task.CompletedTask;
-
-        public Task ReintegrarVentaAsync(int ventaId)
-            => Task.CompletedTask;
-
-        public Task TrasladarAEstanteAsync(int productoId, int cantidad)
+        public override Task TrasladarAEstanteAsync(int productoId, int cantidad)
         {
-            TrasladosLlamados++;
+            Estado.TrasladosLlamados++;
             return Task.CompletedTask;
         }
-
-        public Task RegistrarIngresoAsync(Lote lote, int cantidad)
-            => Task.CompletedTask;
-
-        public Task RegistrarMermaAsync(
-            int productoId,
-            int loteId,
-            UbicacionStock ubicacion,
-            int cantidad,
-            string motivo)
-            => Task.CompletedTask;
     }
 
     [Fact]

@@ -25,7 +25,7 @@ public class ServicioEmpleadosTests
     private readonly AuditoriaFalsa auditoria = new();
     private readonly RelojFijo reloj = new(EscenarioInventario.Ahora);
 
-    private ServicioEmpleados CrearServicio(
+    private ServicioPersonal CrearServicio(
         Permiso permisos = Permiso.GestionarPersonal | Permiso.GestionarRoles,
         bool correoValido = true)
     {
@@ -41,13 +41,15 @@ public class ServicioEmpleadosTests
 
         return new(
             empleados,
-            roles,
-            usuarios,
-            new VerificadorCorreoFalso(correoValido),
-            hasheador,
-            auditoria,
-            Sesiones.Con(permisos),
-            reloj);
+            cargos: null!,
+            roles: roles,
+            usuarios: usuarios,
+            cajas: null!,
+            verificador: new VerificadorCorreoFalso(correoValido),
+            hasheador: hasheador,
+            auditoria: auditoria,
+            sesion: Sesiones.Con(permisos),
+            reloj: reloj);
     }
 
     [Fact]

@@ -29,7 +29,7 @@ public interface IServicioReportes
 }
 
 public class ServicioReportesQuestPdf(
-    ISesionActual sesion) : IServicioReportes
+    SesionActual sesion) : IServicioReportes
 {
     static ServicioReportesQuestPdf()
     {
@@ -289,14 +289,8 @@ public interface IGeneradorTicket
     Task<byte[]> GenerarPdfAsync(Venta venta);
 }
 
-public class GeneradorTicketNulo : IGeneradorTicket
-{
-    public Task<byte[]> GenerarPdfAsync(Venta venta)
-        => Task.FromResult(Array.Empty<byte>());
-}
-
 public class GeneradorTicketQuestPdf(
-    IServicioParametros parametros) : IGeneradorTicket
+    ServicioParametros parametros) : IGeneradorTicket
 {
     static GeneradorTicketQuestPdf()
     {

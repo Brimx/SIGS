@@ -179,7 +179,7 @@ public partial class RegistroUsuarioViewModel : ViewModelBase
         {
             TieneError = true;
             MensajeEstado = scope?.ServiceProvider
-                .GetService<ITraductorExcepciones>()?.Traducir(ex) ?? ex.Message;
+                .GetService<TraductorExcepciones>()?.Traducir(ex) ?? ex.Message;
         }
         finally
         {
@@ -203,7 +203,7 @@ public partial class RegistroUsuarioViewModel : ViewModelBase
             return;
         }
 
-        var inicializacion = servicios?.GetService<IServicioInicializacion>();
+        var inicializacion = servicios?.GetService<ServicioInicializacion>();
         if (inicializacion is not null)
         {
             await inicializacion.InicializarAsync(ClaveInicial);
@@ -234,7 +234,7 @@ public partial class RegistroUsuarioViewModel : ViewModelBase
             ? $"{Documento.Trim()}-{DigitoVerificacion}"
             : Documento.Trim();
 
-        var clientes = servicios?.GetService<IServicioClientes>();
+        var clientes = servicios?.GetService<ServicioClientes>();
         if (clientes is not null)
         {
             var cliente = await clientes.CrearAsync(

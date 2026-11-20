@@ -24,27 +24,31 @@ public class ServicioProductosTests
                 : Task.FromResult(respuesta);
     }
 
-    private class InventarioMock : IServicioInventario
+    private class InventarioMock : ServicioInventario
     {
+        public InventarioMock() : base(null!, null!, null!, null!, null!, null!)
+        {
+        }
+
         public int IngresosRegistrados { get; private set; }
 
-        public Task DescontarVentaAsync(
+        public override Task DescontarVentaAsync(
             int productoId, int cantidad, Entidades.Ventas.Venta venta)
             => Task.CompletedTask;
 
-        public Task ReintegrarVentaAsync(int ventaId)
+        public override Task ReintegrarVentaAsync(int ventaId)
             => Task.CompletedTask;
 
-        public Task TrasladarAEstanteAsync(int productoId, int cantidad)
+        public override Task TrasladarAEstanteAsync(int productoId, int cantidad)
             => Task.CompletedTask;
 
-        public Task RegistrarIngresoAsync(Lote lote, int cantidad)
+        public override Task RegistrarIngresoAsync(Lote lote, int cantidad)
         {
             IngresosRegistrados += cantidad;
             return Task.CompletedTask;
         }
 
-        public Task RegistrarMermaAsync(
+        public override Task RegistrarMermaAsync(
             int productoId,
             int loteId,
             UbicacionStock ubicacion,

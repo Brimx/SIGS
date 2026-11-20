@@ -12,13 +12,14 @@ public class CatalogosTests
     private readonly ProveedoresEnMemoria proveedores = new();
     private readonly AuditoriaFalsa auditoria = new();
 
-    private ServicioCatalogos CrearServicio(
+    private ServicioProductos CrearServicio(
         Permiso permisos = Permiso.GestionarProductos)
         => new(
-            categorias,
-            proveedores,
-            auditoria,
-            Sesiones.Con(permisos));
+            null!,
+            categorias: categorias,
+            proveedores: proveedores,
+            auditoria: auditoria,
+            sesion: Sesiones.Con(permisos));
 
     [Fact]
     public async Task CrearCategoria_ConPermiso_GuardaYAudita()

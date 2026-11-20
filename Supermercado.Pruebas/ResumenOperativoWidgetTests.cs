@@ -44,20 +44,28 @@ public sealed class ResumenOperativoWidgetTests
         public Task<int> GuardarAsync() => Task.FromResult(0);
     }
 
-    private sealed class CajaVacia : IServicioCaja
+    private sealed class CajaVacia : ServicioCaja
     {
-        public Task<TurnoCaja?> ObtenerTurnoActualAsync() => Task.FromResult<TurnoCaja?>(null);
-        public Task<TurnoCaja> AbrirTurnoAsync(int cajaId, long efectivoInicial) => throw new NotSupportedException();
-        public Task<ResultadoArqueo> CerrarTurnoAsync(long efectivoContado) => throw new NotSupportedException();
-        public Task<RetiroCaja> RegistrarRetiroAsync(long monto, string motivo, int supervisorId) => throw new NotSupportedException();
-        public Task<IReadOnlyList<RetiroCaja>> ObtenerRetirosTurnoActualAsync() => throw new NotSupportedException();
+        public CajaVacia() : base(null!, null!, null!, null!, null!, null!, null!)
+        {
+        }
+
+        public override Task<TurnoCaja?> ObtenerTurnoActualAsync() => Task.FromResult<TurnoCaja?>(null);
+        public override Task<TurnoCaja> AbrirTurnoAsync(int cajaId, long efectivoInicial) => throw new NotSupportedException();
+        public override Task<ResultadoArqueo> CerrarTurnoAsync(long efectivoContado) => throw new NotSupportedException();
+        public override Task<RetiroCaja> RegistrarRetiroAsync(long monto, string motivo, int supervisorId) => throw new NotSupportedException();
+        public override Task<IReadOnlyList<RetiroCaja>> ObtenerRetirosTurnoActualAsync() => throw new NotSupportedException();
     }
 
-    private sealed class AlertasVacias : IServicioAlertasInventario
+    private sealed class AlertasVacias : ServicioInventario
     {
-        public Task<IReadOnlyList<AlertaStockMinimo>> ObtenerBajoMinimoAsync()
+        public AlertasVacias() : base(null!, null!, null!, null!, null!, null!)
+        {
+        }
+
+        public override Task<IReadOnlyList<AlertaStockMinimo>> ObtenerBajoMinimoAsync()
             => Task.FromResult<IReadOnlyList<AlertaStockMinimo>>([]);
-        public Task<IReadOnlyList<Lote>> ObtenerLotesPorVencerAsync()
+        public override Task<IReadOnlyList<Lote>> ObtenerLotesPorVencerAsync()
             => Task.FromResult<IReadOnlyList<Lote>>([]);
     }
 }

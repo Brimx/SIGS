@@ -21,11 +21,15 @@ public class HasheadorFalso : IHasheadorClave
         => hash == "h:" + secreto;
 }
 
-public class AuditoriaFalsa : IServicioAuditoria
+public class AuditoriaFalsa : ServicioAuditoria
 {
+    public AuditoriaFalsa() : base(null!, null!, null!)
+    {
+    }
+
     public List<AccionAuditoria> Acciones { get; } = [];
 
-    public Task RegistrarAsync(
+    public override Task RegistrarAsync(
         AccionAuditoria accion,
         string entidad,
         int? entidadId = null,
@@ -36,28 +40,32 @@ public class AuditoriaFalsa : IServicioAuditoria
     }
 }
 
-public class ParametrosFalsos : IServicioParametros
+public class ParametrosFalsos : ServicioParametros
 {
+    public ParametrosFalsos() : base(null!, null!, null!)
+    {
+    }
+
     public Dictionary<string, string> Valores { get; } = [];
 
-    public Task<string> ObtenerTextoAsync(string clave)
+    public override Task<string> ObtenerTextoAsync(string clave)
         => Valores.TryGetValue(clave, out var valor)
             ? Task.FromResult(valor)
             : throw new ParametroFaltanteException(clave);
 
-    public async Task<int> ObtenerEnteroAsync(string clave)
+    public override async Task<int> ObtenerEnteroAsync(string clave)
         => (int)await ObtenerLongAsync(clave);
 
-    public async Task<long> ObtenerLongAsync(string clave)
+    public override async Task<long> ObtenerLongAsync(string clave)
         => long.Parse(await ObtenerTextoAsync(clave));
 
-    public Task GuardarAsync(string clave, string valor)
+    public override Task GuardarAsync(string clave, string valor)
     {
         Valores[clave] = valor;
         return Task.CompletedTask;
     }
 
-    public Task GuardarRespaldoAsync(
+    public override Task GuardarRespaldoAsync(
         IReadOnlyDictionary<string, string> valores)
     {
         foreach (var (clave, valor) in valores)

@@ -170,8 +170,8 @@ public sealed class GrupoCatalogoViewModel(string nombre)
 
 public partial class DashboardViewModel : ViewModelBase
 {
-    private readonly IServicioDashboard? _servicioDashboard;
-    private readonly ITraductorExcepciones? _traductor;
+    private readonly ServicioDashboard? _servicioDashboard;
+    private readonly TraductorExcepciones? _traductor;
     private readonly IServiceScopeFactory? _scopeFactory;
 
     private DispatcherTimer? _refresco;
@@ -204,8 +204,8 @@ public partial class DashboardViewModel : ViewModelBase
         => _scopeFactory = scopeFactory;
 
     public DashboardViewModel(
-        IServicioDashboard servicioDashboard,
-        ITraductorExcepciones? traductor = null)
+        ServicioDashboard servicioDashboard,
+        TraductorExcepciones? traductor = null)
     {
         _servicioDashboard = servicioDashboard;
         _traductor = traductor;
@@ -216,7 +216,7 @@ public partial class DashboardViewModel : ViewModelBase
     {
         using var scope = _scopeFactory?.CreateScope();
         var servicios = scope?.ServiceProvider;
-        var servicio = _servicioDashboard ?? servicios?.GetService<IServicioDashboard>();
+        var servicio = _servicioDashboard ?? servicios?.GetService<ServicioDashboard>();
         if (servicio is null)
             return;
 
@@ -377,7 +377,7 @@ public partial class DashboardViewModel : ViewModelBase
 
         using var scope = _scopeFactory?.CreateScope();
         var servicios = scope?.ServiceProvider;
-        var servicio = _servicioDashboard ?? servicios?.GetService<IServicioDashboard>();
+        var servicio = _servicioDashboard ?? servicios?.GetService<ServicioDashboard>();
         if (servicio is null)
             return;
 
@@ -405,7 +405,7 @@ public partial class DashboardViewModel : ViewModelBase
     {
         using var scope = _scopeFactory?.CreateScope();
         var servicios = scope?.ServiceProvider;
-        var servicio = _servicioDashboard ?? servicios?.GetService<IServicioDashboard>();
+        var servicio = _servicioDashboard ?? servicios?.GetService<ServicioDashboard>();
         if (servicio is null)
             return;
 
@@ -428,7 +428,7 @@ public partial class DashboardViewModel : ViewModelBase
     {
         using var scope = _scopeFactory?.CreateScope();
         var servicios = scope?.ServiceProvider;
-        var servicio = _servicioDashboard ?? servicios?.GetService<IServicioDashboard>();
+        var servicio = _servicioDashboard ?? servicios?.GetService<ServicioDashboard>();
         if (servicio is null)
             return;
 
@@ -452,7 +452,7 @@ public partial class DashboardViewModel : ViewModelBase
     }
 
     private async Task CargarPanelAsync(
-        IServicioDashboard servicio,
+        ServicioDashboard servicio,
         IServiceProvider? servicios,
         bool silencioso = false)
     {
@@ -501,7 +501,7 @@ public partial class DashboardViewModel : ViewModelBase
         }
     }
 
-    private void CargarCatalogo(IServicioDashboard servicio)
+    private void CargarCatalogo(ServicioDashboard servicio)
     {
         var visibles = Tarjetas.Select(t => t.Id).ToHashSet(StringComparer.Ordinal);
 
@@ -544,14 +544,14 @@ public partial class DashboardViewModel : ViewModelBase
     }
 
     private async Task EjecutarAsync(
-        Func<IServicioDashboard, Task> accion,
+        Func<ServicioDashboard, Task> accion,
         string mensajeExito,
         Action? alExito = null,
         bool recargarPanel = true)
     {
         using var scope = _scopeFactory?.CreateScope();
         var servicios = scope?.ServiceProvider;
-        var servicio = _servicioDashboard ?? servicios?.GetService<IServicioDashboard>();
+        var servicio = _servicioDashboard ?? servicios?.GetService<ServicioDashboard>();
         if (servicio is null)
             return;
 
@@ -573,7 +573,7 @@ public partial class DashboardViewModel : ViewModelBase
 
     private string Traducir(IServiceProvider? servicios, Exception ex)
         => _traductor?.Traducir(ex)
-           ?? servicios?.GetService<ITraductorExcepciones>()?.Traducir(ex)
+           ?? servicios?.GetService<TraductorExcepciones>()?.Traducir(ex)
            ?? ex.Message;
 
     private static int OrdenDeGrupo(string grupo)

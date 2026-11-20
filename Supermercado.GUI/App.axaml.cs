@@ -51,7 +51,7 @@ public partial class App : Application
             {
                 try
                 {
-                    var demo = _appScope.ServiceProvider.GetRequiredService<IGeneradorDatosDemo>();
+                    var demo = _appScope.ServiceProvider.GetRequiredService<GeneradorDatosDemo>();
                     demo.GenerarAsync().GetAwaiter().GetResult();
                 }
                 catch (Exception ex)
@@ -102,7 +102,7 @@ public partial class App : Application
             sp.GetRequiredService<IServiceScopeFactory>()));
         servicios.AddTransient(sp => new LoginViewModel(
             sp.GetRequiredService<IServiceScopeFactory>(),
-            sp.GetRequiredService<Supermercado.Logica.Seguridad.ISesionActual>()));
+            sp.GetRequiredService<Supermercado.Logica.Seguridad.SesionActual>()));
         servicios.AddTransient(sp => new PosViewModel(
             sp.GetRequiredService<IServiceScopeFactory>()));
         servicios.AddTransient(sp => new InventarioViewModel(

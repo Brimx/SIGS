@@ -31,59 +31,33 @@ public static class ExtensionesLogica
     {
         servicios.AgregarDatos(rutaBaseDatos);
 
-        servicios.AddSingleton<ISesionActual, SesionActual>();
+        servicios.AddSingleton<SesionActual>();
         servicios.AddSingleton<IHasheadorClave, HasheadorBCrypt>();
-        servicios.AddScoped<IEstrategiaSalida, SalidaFefo>();
+        servicios.AddScoped<EstrategiaSalida, SalidaFefo>();
 
         // Servicios de dominio consolidados (8 módulos de negocio)
         servicios.AddScoped<ServicioAuditoria>();
-        servicios.AddScoped<IServicioAuditoria>(sp => sp.GetRequiredService<ServicioAuditoria>());
-        servicios.AddScoped<IServicioConsultaAuditoria>(sp => sp.GetRequiredService<ServicioAuditoria>());
-
-        servicios.AddScoped<IServicioParametros, ServicioParametros>();
-        servicios.AddScoped<IServicioAutenticacion, ServicioAutenticacion>();
-        servicios.AddScoped<IServicioInicializacion, ServicioInicializacion>();
+        servicios.AddScoped<ServicioParametros>();
+        servicios.AddScoped<ServicioAutenticacion>();
+        servicios.AddScoped<ServicioInicializacion>();
 
         servicios.AddScoped<ServicioPersonal>();
-        servicios.AddScoped<IServicioPersonal>(sp => sp.GetRequiredService<ServicioPersonal>());
-        servicios.AddScoped<IServicioEmpleados>(sp => sp.GetRequiredService<ServicioPersonal>());
-        servicios.AddScoped<IServicioEstructura>(sp => sp.GetRequiredService<ServicioPersonal>());
-        servicios.AddScoped<IServicioUsuarios>(sp => sp.GetRequiredService<ServicioPersonal>());
-
         servicios.AddScoped<ServicioProductos>();
-        servicios.AddScoped<IServicioProductos>(sp => sp.GetRequiredService<ServicioProductos>());
-        servicios.AddScoped<IServicioBusquedaProductos>(sp => sp.GetRequiredService<ServicioProductos>());
-        servicios.AddScoped<IServicioMantenimientoProductos>(sp => sp.GetRequiredService<ServicioProductos>());
-        servicios.AddScoped<IServicioCatalogos>(sp => sp.GetRequiredService<ServicioProductos>());
-
         servicios.AddScoped<ServicioInventario>();
-        servicios.AddScoped<IServicioInventario>(sp => sp.GetRequiredService<ServicioInventario>());
-        servicios.AddScoped<IServicioConsultaInventario>(sp => sp.GetRequiredService<ServicioInventario>());
-        servicios.AddScoped<IServicioMermas>(sp => sp.GetRequiredService<ServicioInventario>());
-        servicios.AddScoped<IServicioAlertasInventario>(sp => sp.GetRequiredService<ServicioInventario>());
-        servicios.AddScoped<IServicioReabastecimiento>(sp => sp.GetRequiredService<ServicioInventario>());
-
-        servicios.AddScoped<IServicioCaja, ServicioCaja>();
+        servicios.AddScoped<ServicioCaja>();
         servicios.AddScoped<ServicioVentas>();
-        servicios.AddScoped<IServicioVentas>(sp => sp.GetRequiredService<ServicioVentas>());
-        servicios.AddScoped<IServicioVentasEnEspera>(sp => sp.GetRequiredService<ServicioVentas>());
-
         servicios.AddScoped<ServicioFinanzas>();
-        servicios.AddScoped<IServicioFinanzas>(sp => sp.GetRequiredService<ServicioFinanzas>());
-        servicios.AddScoped<IServicioImpuestos>(sp => sp.GetRequiredService<ServicioFinanzas>());
-        servicios.AddScoped<IServicioNomina>(sp => sp.GetRequiredService<ServicioFinanzas>());
-
-        servicios.AddScoped<IServicioClientes, ServicioClientes>();
-        servicios.AddScoped<IServicioDashboard, ServicioDashboard>();
+        servicios.AddScoped<ServicioClientes>();
+        servicios.AddScoped<ServicioDashboard>();
         servicios.AddScoped<IServicioTrm, ServicioTrm>();
 
         servicios.AddScoped<IClienteGemini, ClienteGeminiHttp>();
         servicios.AddSingleton<IClienteTelegram, ClienteTelegramHttp>();
         servicios.AddSingleton<IVinculosTelegram, VinculosTelegram>();
-        servicios.AddScoped<IAsistente, Asistente>();
+        servicios.AddScoped<Asistente>();
         servicios.AddScoped<ProcesadorTelegram>();
         servicios.AddHostedService<TelegramWorker>();
-        servicios.AddScoped<IGeneradorDatosDemo, GeneradorDatosDemo>();
+        servicios.AddScoped<GeneradorDatosDemo>();
 
         // Clientes externos: por defecto no hacen nada. Se reemplazan
         // registrando la implementación real después de este método.
@@ -112,7 +86,7 @@ public static class ExtensionesLogica
             sp => new ProveedorLogArchivo(
                 RutasDatos.ArchivoLogPorDefecto(),
                 sp.GetService<TimeProvider>()));
-        servicios.AddScoped<ITraductorExcepciones, TraductorExcepciones>();
+        servicios.AddScoped<TraductorExcepciones>();
 
         // APIs abiertas activas por defecto; sin internet degradan solas.
         servicios.AgregarClientesExternos();

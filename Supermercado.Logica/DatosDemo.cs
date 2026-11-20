@@ -28,7 +28,7 @@ public class GeneradorDatosDemo(
     IVentaRepositorio ventas,
     IGastoRepositorio gastos,
     IHasheadorClave hasheador,
-    TimeProvider reloj) : IGeneradorDatosDemo
+    TimeProvider reloj)
 {
     public async Task GenerarAsync(int semilla = 42)
     {
@@ -406,10 +406,5 @@ public class GeneradorDatosDemo(
 
         await gastos.GuardarAsync();
     }
-}
-
-public interface IGeneradorDatosDemo
-{
-    Task GenerarAsync(int semilla = 42);
 }
 }

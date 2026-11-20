@@ -21,7 +21,7 @@ public sealed class ComposicionTelegramTests
         Assert.IsType<TelegramWorker>(worker);
         Assert.IsAssignableFrom<IClienteTelegram>(
             proveedor.GetRequiredService<IClienteTelegram>());
-        Assert.IsAssignableFrom<IAsistente>(
-            proveedor.GetRequiredService<IAsistente>());
+        Assert.IsAssignableFrom<Asistente>(
+            proveedor.GetRequiredService<Asistente>());
     }
 }

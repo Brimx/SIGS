@@ -12,13 +12,13 @@ public class ServicioCaja(
     ITurnoCajaRepositorio turnos,
     IVentaRepositorio ventas,
     ICajaRepositorio cajas,
-    IServicioParametros parametros,
-    IServicioAuditoria auditoria,
-    ISesionActual sesion,
+    ServicioParametros parametros,
+    ServicioAuditoria auditoria,
+    SesionActual sesion,
     TimeProvider reloj,
-    IRetiroCajaRepositorio? retiros = null) : IServicioCaja
+    IRetiroCajaRepositorio? retiros = null)
 {
-    public async Task<TurnoCaja> AbrirTurnoAsync(
+    public virtual async Task<TurnoCaja> AbrirTurnoAsync(
         int cajaId,
         long efectivoInicial)
     {
@@ -46,7 +46,7 @@ public class ServicioCaja(
         return turno;
     }
 
-    public async Task<ResultadoArqueo> CerrarTurnoAsync(long efectivoContado)
+    public virtual async Task<ResultadoArqueo> CerrarTurnoAsync(long efectivoContado)
     {
         sesion.Exigir(Permiso.AbrirCerrarTurno);
 
@@ -76,10 +76,10 @@ public class ServicioCaja(
             Math.Abs(diferencia) <= tolerancia);
     }
 
-    public Task<TurnoCaja?> ObtenerTurnoActualAsync()
+    public virtual Task<TurnoCaja?> ObtenerTurnoActualAsync()
         => turnos.ObtenerAbiertoPorEmpleadoAsync(sesion.EmpleadoId);
 
-    public async Task<RetiroCaja> RegistrarRetiroAsync(
+    public virtual async Task<RetiroCaja> RegistrarRetiroAsync(
         long monto,
         string motivo,
         int supervisorId)
@@ -121,7 +121,7 @@ public class ServicioCaja(
         return retiro;
     }
 
-    public async Task<IReadOnlyList<RetiroCaja>> ObtenerRetirosTurnoActualAsync()
+    public virtual async Task<IReadOnlyList<RetiroCaja>> ObtenerRetirosTurnoActualAsync()
     {
         var turno = await ObtenerTurnoActualAsync();
         if (turno is null)
@@ -136,13 +136,4 @@ public record ResultadoArqueo(
     long Contado,
     long Diferencia,
     bool DentroDeTolerancia);
-
-public interface IServicioCaja
-{
-    Task<TurnoCaja> AbrirTurnoAsync(int cajaId, long efectivoInicial);
-    Task<ResultadoArqueo> CerrarTurnoAsync(long efectivoContado);
-    Task<TurnoCaja?> ObtenerTurnoActualAsync();
-    Task<RetiroCaja> RegistrarRetiroAsync(long monto, string motivo, int supervisorId);
-    Task<IReadOnlyList<RetiroCaja>> ObtenerRetirosTurnoActualAsync();
-}
 }
