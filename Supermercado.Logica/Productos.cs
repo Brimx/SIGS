@@ -7,8 +7,8 @@ using Supermercado.Logica.Inventario;
 using Supermercado.Logica.Seguridad;
 using Supermercado.Logica.Servicios;
 
-namespace Supermercado.Logica.Productos;
-
+namespace Supermercado.Logica.Productos
+{
 public class ServicioProductos(
     IProductoRepositorio productos,
     ILoteRepositorio? lotes = null,
@@ -405,3 +405,159 @@ public class ServicioCatalogos(
         proveedores: proveedores,
         auditoria: auditoria,
         sesion: sesion);
+
+public interface IServicioBusquedaProductos
+{
+    Task<IReadOnlyList<Producto>> BuscarPorNombreAsync(string termino, int limite = 20);
+}
+
+public interface IServicioMantenimientoProductos
+{
+    Task EditarAsync(
+        int productoId,
+        string nuevoNombre,
+        int stockMinimoEstante,
+        int categoriaId,
+        int proveedorId,
+        int impuestoId);
+    Task CambiarPrecioAsync(int productoId, long nuevoPrecio);
+    Task ActivarAsync(int productoId);
+    Task DesactivarAsync(int productoId);
+}
+
+public interface IServicioCatalogos
+{
+    Task<IReadOnlyList<Categoria>> ObtenerCategoriasAsync();
+    Task<Categoria> CrearCategoriaAsync(string nombre);
+    Task EditarCategoriaAsync(int id, string nuevoNombre);
+    Task<IReadOnlyList<Proveedor>> ObtenerProveedoresAsync();
+    Task<Proveedor> CrearProveedorAsync(string nombre, string nit, string telefono, string correo);
+    Task EditarProveedorAsync(int id, string nuevoNombre, string nit, string telefono, string correo);
+}
+
+// Interfaz núcleo de productos
+public interface IServicioProductos
+{
+    Task RegistrarAsync(Producto producto);
+    Task<Producto?> BuscarPorCodigoBarrasAsync(string codigo);
+    Task<InfoProductoExterno?> ConsultarExternoAsync(string codigo, CancellationToken ct = default);
+    Task RegistrarIngresoLoteAsync(
+        int productoId,
+        string numeroLote,
+        DateOnly vencimiento,
+        int cantidad,
+        long costoUnitario);
+}
+
+public record FactorConversionUnidad(
+    string UnidadOrigen,
+    string UnidadDestino,
+    decimal Factor);
+
+// Conversor de unidades de compra a unidades de venta para inventario y Kardex.
+// Permite ingresar bultos, arrobas o cajas y transformarlos a kilos, gramos o unidades.
+public static class ConversorUnidades
+{
+    public const string Bulto50Kg = "Bulto50Kg";
+    public const string Arroba = "Arroba";
+    public const string Libra = "Libra";
+    public const string Kilo = "Kilo";
+    public const string Gramo = "Gramo";
+    public const string Caja = "Caja";
+    public const string Unidad = "Unidad";
+
+    private static readonly Dictionary<string, decimal> FactoresAGramos =
+        new(StringComparer.OrdinalIgnoreCase)
+        {
+            [Bulto50Kg] = 50_000m,
+            [Arroba] = 12_500m,
+            [Kilo] = 1_000m,
+            [Libra] = 500m,
+            [Gramo] = 1m
+        };
+
+    public static int ConvertirAGramos(decimal cantidad, string unidadOrigen)
+    {
+        if (cantidad <= 0)
+            throw new ValidacionException("La cantidad debe ser mayor a cero.");
+
+        if (!FactoresAGramos.TryGetValue(unidadOrigen.Trim(), out var factor))
+            throw new ValidacionException(
+                $"La unidad '{unidadOrigen}' no tiene factor de conversión a gramos registrado.");
+
+        var gramos = (int)Math.Round(cantidad * factor, MidpointRounding.AwayFromZero);
+        return Math.Max(1, gramos);
+    }
+
+    public static int ConvertirCajaAUnidades(int cantidadCajas, int unidadesPorCaja)
+    {
+        if (cantidadCajas <= 0 || unidadesPorCaja <= 0)
+            throw new ValidacionException("La cantidad de cajas y unidades por caja deben ser positivas.");
+
+        return cantidadCajas * unidadesPorCaja;
+    }
+
+    public static int Bultos50KgAGramos(decimal bultos) => ConvertirAGramos(bultos, Bulto50Kg);
+
+    public static int ArrobasAGramos(decimal arrobas) => ConvertirAGramos(arrobas, Arroba);
+
+    public static int KilosAGramos(decimal kilos) => ConvertirAGramos(kilos, Kilo);
+
+    public static int LibrasAGramos(decimal libras) => ConvertirAGramos(libras, Libra);
+
+    public static int CajasAUnidades(int cajas, int unidadesPorCaja) => ConvertirCajaAUnidades(cajas, unidadesPorCaja);
+
+    public static decimal CalcularCostoPorGramo(long costoTotalCompra, decimal cantidadComprada, string unidadOrigen)
+    {
+        var gramosTotales = ConvertirAGramos(cantidadComprada, unidadOrigen);
+        if (gramosTotales <= 0) return 0m;
+        return (decimal)costoTotalCompra / gramosTotales;
+    }
+
+    public static long CalcularCostoUnitarioDeCaja(long costoTotalCompra, int cantidadCajas, int unidadesPorCaja)
+    {
+        var unidadesTotales = ConvertirCajaAUnidades(cantidadCajas, unidadesPorCaja);
+        if (unidadesTotales <= 0) return 0;
+        return (long)Math.Round((decimal)costoTotalCompra / unidadesTotales, MidpointRounding.AwayFromZero);
+    }
+}
+
+// Parser para códigos de barras EAN-13 emitidos por balanzas de fruver,
+// carnicería y charcutería con prefijo de medida variable GS1 (20 a 29).
+// Formato estándar retail: PP [PLU: 5 dígitos] [GRAMOS: 5 dígitos] [CHECK: 1 dígito]
+public static class ParserCodigoBalanza
+{
+    public static ResultadoCodigoBalanza Parsear(string? codigo)
+    {
+        if (string.IsNullOrWhiteSpace(codigo))
+            return new ResultadoCodigoBalanza(false, "", "", 0, codigo ?? "");
+
+        var limpio = codigo.Trim();
+        if (limpio.Length != 13 || !limpio.All(char.IsDigit))
+            return new ResultadoCodigoBalanza(false, "", "", 0, limpio);
+
+        var prefijoNum = int.Parse(limpio[..2]);
+        if (prefijoNum is < 20 or > 29)
+            return new ResultadoCodigoBalanza(false, "", "", 0, limpio);
+
+        var prefijo = limpio[..2];
+        var plu = limpio[2..7];
+        var gramos = int.Parse(limpio[7..12]);
+        var digitoControl = limpio[12] - '0';
+
+        return new ResultadoCodigoBalanza(true, prefijo, plu, gramos, limpio, digitoControl);
+    }
+}
+
+public record ResultadoCodigoBalanza(
+    bool EsCodigoBalanza,
+    string Prefijo,
+    string Plu,
+    int Gramos,
+    string CodigoOriginal,
+    int DigitoControl = 0)
+{
+    public bool EsValido => EsCodigoBalanza;
+    public decimal PesoKg => Gramos / 1000m;
+}
+}

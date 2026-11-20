@@ -11,8 +11,8 @@ using Supermercado.Logica.Inventario;
 using Supermercado.Logica.Productos;
 using Supermercado.Logica.Seguridad;
 
-namespace Supermercado.Logica.Ventas;
-
+namespace Supermercado.Logica.Ventas
+{
 public class ServicioVentas(
     IProductoRepositorio productos,
     IVentaRepositorio ventas,
@@ -313,3 +313,43 @@ public class ServicioVentasEnEspera(
         reloj,
         ventasEnEspera: ventasEnEspera);
 
+
+public record ItemVentaEnEspera(
+    int Id,
+    DateTime FechaCreacion,
+    string IdentificadorCliente,
+    int TotalItems,
+    long TotalEstimado,
+    string? Nota);
+
+public interface IServicioVentasEnEspera
+{
+    Task<VentaEnEspera> SuspenderVentaAsync(
+        int cajaId,
+        IReadOnlyList<LineaVenta> lineas,
+        int? clienteId,
+        string identificadorCliente,
+        long totalEstimado,
+        string? nota = null);
+
+    Task<IReadOnlyList<ItemVentaEnEspera>> ObtenerVentasEnEsperaAsync(int cajaId);
+    Task<(VentaEnEspera Venta, IReadOnlyList<LineaVenta> Lineas)> RecuperarVentaAsync(int id);
+    Task CancelarVentaEnEsperaAsync(int id);
+}
+
+public interface IServicioVentas
+{
+    Task<Venta> RegistrarVentaAsync(SolicitudVenta solicitud);
+    Task AnularVentaAsync(int ventaId, string motivo);
+    Task AnularVentaAsync(int ventaId, string motivo, string? origen)
+        => AnularVentaAsync(ventaId, motivo);
+}
+
+public record LineaVenta(string CodigoBarras, int Cantidad);
+
+public record SolicitudVenta(
+    IReadOnlyList<LineaVenta> Lineas,
+    IReadOnlyList<Pago> Pagos,
+    int? ClienteId = null,
+    string? ClaveIdempotencia = null);
+}

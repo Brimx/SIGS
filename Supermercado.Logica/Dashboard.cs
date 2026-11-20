@@ -2,9 +2,12 @@ using Supermercado.Entidades.Contratos;
 using Supermercado.Entidades.Dashboards;
 using Supermercado.Entidades.Excepciones;
 using Supermercado.Logica.Seguridad;
+using Supermercado.Entidades.Seguridad;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
-namespace Supermercado.Logica.Dashboards;
-
+namespace Supermercado.Logica.Dashboards
+{
 public class ServicioDashboard(
     IEnumerable<IWidget> widgets,
     IConfiguracionWidgetRepositorio configuraciones,
@@ -304,4 +307,137 @@ public class ServicioDashboard(
         => guardadas.Count == 0
             ? 0
             : guardadas.Max(c => c.Posicion) + 1;
+}
+
+/// <summary>Grupos del catálogo de widgets (§12 del documento de proyecto).</summary>
+public static class GruposWidget
+{
+    public const string Ventas = "Ventas";
+    public const string Inventario = "Inventario";
+    public const string Caja = "Caja";
+    public const string Personal = "Personal";
+    public const string Finanzas = "Finanzas";
+    public const string Externo = "Externo";
+
+    /// <summary>Orden en el que se presentan los grupos.</summary>
+    public static readonly IReadOnlyList<string> Orden =
+    [
+        Ventas, Inventario, Caja, Personal, Finanzas, Externo
+    ];
+}
+
+/// <summary>Cómo se lee el valor de un punto de dato al presentarlo.</summary>
+public enum FormatoDato
+{
+    Numero,
+    Moneda,
+    MonedaEnCentavos
+}
+
+public record PuntoDato(
+    string Etiqueta,
+    long Valor,
+    FormatoDato Formato = FormatoDato.Numero);
+
+public record DatoWidget(IReadOnlyList<PuntoDato> Puntos);
+
+/// <summary>
+/// Contrato común de los dashboards modulares: identidad, título, grupo,
+/// tamaño por defecto, frecuencia de actualización, permiso y fuente de datos.
+/// </summary>
+public interface IWidget
+{
+    string Id { get; }
+    string Titulo { get; }
+    string Grupo { get; }
+    TamanoWidget Tamano { get; }
+    TimeSpan FrecuenciaActualizacion { get; }
+    Permiso PermisoRequerido { get; }
+
+    Task<DatoWidget> ObtenerDatosAsync();
+}
+
+/// <summary>Widget listo para pintar: el contrato más la personalización del usuario.</summary>
+public sealed record WidgetEnPanel(IWidget Widget, TamanoWidget Tamano, string Titulo)
+{
+    public string Id => Widget.Id;
+}
+
+public interface IServicioDashboard
+{
+    /// <summary>Widgets que el rol de la sesión puede ver, sin importar su disposición.</summary>
+    IReadOnlyList<IWidget> ObtenerDisponibles();
+
+    /// <summary>
+    /// Disposición efectiva del empleado: widgets visibles en orden. Si el
+    /// empleado nunca guardó nada, devuelve todos los disponibles.
+    /// </summary>
+    Task<IReadOnlyList<WidgetEnPanel>> ObtenerPanelAsync();
+
+    Task AgregarAsync(string widgetId);
+    Task QuitarAsync(string widgetId);
+    Task ReordenarAsync(IReadOnlyList<string> widgetIds);
+    Task CambiarTamanoAsync(string widgetId, TamanoWidget tamano);
+
+    /// <summary>Renombra el widget en el panel; nulo o vacío restaura el título original.</summary>
+    Task RenombrarAsync(string widgetId, string? titulo);
+
+    /// <summary>Devuelve el panel a la disposición por defecto del rol.</summary>
+    Task RestablecerAsync();
+
+    /// <summary>Serializa la disposición completa (incluidos los widgets ocultos).</summary>
+    Task<string> ExportarAsync();
+
+    /// <summary>
+    /// Aplica una disposición exportada. Omite los widgets que el rol no puede
+    /// ver y devuelve cuáles quedaron fuera.
+    /// </summary>
+    Task<ResultadoImportacion> ImportarAsync(string json);
+}
+
+public sealed record ResultadoImportacion(
+    int Aplicados,
+    IReadOnlyList<string> Omitidos);
+
+/// <summary>
+/// Formato de intercambio de la disposición del panel. Los enums se guardan
+/// como texto para que el archivo se lea y se edite a mano.
+/// </summary>
+public static class DisposicionPanelJson
+{
+    private static readonly JsonSerializerOptions Opciones = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        WriteIndented = true,
+        Converters = { new JsonStringEnumConverter() }
+    };
+
+    public static string Serializar(DisposicionPanel disposicion)
+        => JsonSerializer.Serialize(disposicion, Opciones);
+
+    public static DisposicionPanel Deserializar(string json)
+    {
+        if (string.IsNullOrWhiteSpace(json))
+            throw new ValidacionException("El archivo del panel está vacío.");
+
+        DisposicionPanel? disposicion;
+        try
+        {
+            disposicion = JsonSerializer.Deserialize<DisposicionPanel>(json, Opciones);
+        }
+        catch (JsonException)
+        {
+            throw new ValidacionException("El archivo no es una disposición de panel válida.");
+        }
+
+        if (disposicion is null)
+            throw new ValidacionException("El archivo no es una disposición de panel válida.");
+
+        if (disposicion.Version != DisposicionPanel.VersionActual)
+            throw new ValidacionException(
+                $"La versión {disposicion.Version} del archivo no es compatible con esta instalación.");
+
+        return disposicion with { Widgets = disposicion.Widgets ?? [] };
+    }
+}
 }

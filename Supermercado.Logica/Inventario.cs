@@ -8,8 +8,8 @@ using Supermercado.Entidades.Ventas;
 using Supermercado.Logica.Comunes;
 using Supermercado.Logica.Seguridad;
 
-namespace Supermercado.Logica.Inventario;
-
+namespace Supermercado.Logica.Inventario
+{
 public class ServicioInventario(
     IStockEstanteRepositorio estante,
     IStockBodegaRepositorio bodega,
@@ -525,4 +525,5 @@ public class ServicioMermas(
                 await mermas.GuardarAsync();
             }).Unwrap();
     }
+}
 }

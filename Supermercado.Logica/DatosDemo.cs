@@ -8,8 +8,8 @@ using Supermercado.Entidades.Ventas;
 using Supermercado.Logica.Comunes;
 using Supermercado.Logica.Seguridad;
 
-namespace Supermercado.Logica.DatosDemo;
-
+namespace Supermercado.Logica.DatosDemo
+{
 public class GeneradorDatosDemo(
     ICategoriaRepositorio categorias,
     IProveedorRepositorio proveedores,
@@ -406,4 +406,10 @@ public class GeneradorDatosDemo(
 
         await gastos.GuardarAsync();
     }
+}
+
+public interface IGeneradorDatosDemo
+{
+    Task GenerarAsync(int semilla = 42);
+}
 }

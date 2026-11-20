@@ -6,8 +6,8 @@ using Supermercado.Entidades.Ventas;
 using Supermercado.Logica.Comunes;
 using Supermercado.Logica.Seguridad;
 
-namespace Supermercado.Logica.Ventas;
-
+namespace Supermercado.Logica.Ventas
+{
 public class ServicioCaja(
     ITurnoCajaRepositorio turnos,
     IVentaRepositorio ventas,
@@ -129,4 +129,20 @@ public class ServicioCaja(
 
         return turno.Retiros.ToList();
     }
+}
+
+public record ResultadoArqueo(
+    long Esperado,
+    long Contado,
+    long Diferencia,
+    bool DentroDeTolerancia);
+
+public interface IServicioCaja
+{
+    Task<TurnoCaja> AbrirTurnoAsync(int cajaId, long efectivoInicial);
+    Task<ResultadoArqueo> CerrarTurnoAsync(long efectivoContado);
+    Task<TurnoCaja?> ObtenerTurnoActualAsync();
+    Task<RetiroCaja> RegistrarRetiroAsync(long monto, string motivo, int supervisorId);
+    Task<IReadOnlyList<RetiroCaja>> ObtenerRetirosTurnoActualAsync();
+}
 }

@@ -1,8 +1,78 @@
-﻿using System.Security.Cryptography;
-using System.Text.Json;
+using System.Globalization;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Supermercado.Entidades.Contratos;
+using Supermercado.Entidades.Excepciones;
+using Supermercado.Entidades.Personal;
+using Supermercado.Entidades.Seguridad;
+using Supermercado.Entidades.Ventas;
 using Supermercado.Logica.Comunes;
+using Supermercado.Logica.Inventario;
+using Supermercado.Logica.Seguridad;
+using Supermercado.Logica.Ventas;
+using System.Security.Cryptography;
+using System.Text.Json;
 
-namespace Supermercado.Logica.Servicios;
+namespace Supermercado.Logica.Servicios
+{
+public enum HerramientaAsistente
+{
+    StockBajo,
+    VentasDelDia,
+    EstadoCaja,
+    ResumenDiario,
+    SolicitarAnulacion,
+    GenerarReabastecimiento
+}
+
+public sealed record SolicitudHerramienta(
+    HerramientaAsistente Herramienta,
+    int? Id = null,
+    string? Motivo = null);
+
+public interface IClienteGemini
+{
+    Task<SolicitudHerramienta?> ElegirHerramientaAsync(
+        string mensaje,
+        CancellationToken cancelacion = default);
+}
+
+public interface IAsistente
+{
+    Task<SolicitudHerramienta?> InterpretarAsync(
+        string mensaje,
+        CancellationToken cancelacion = default);
+}
+
+public sealed class Asistente(IClienteGemini gemini) : IAsistente
+{
+    public Task<SolicitudHerramienta?> InterpretarAsync(
+        string mensaje,
+        CancellationToken cancelacion = default)
+    {
+        if (string.IsNullOrWhiteSpace(mensaje))
+            return Task.FromResult<SolicitudHerramienta?>(null);
+
+        var comando = mensaje.Trim().Split(' ', 2)[0].Split('@')[0];
+        var herramienta = comando.ToLowerInvariant() switch
+        {
+            "/stock" => HerramientaAsistente.StockBajo,
+            "/ventas" => HerramientaAsistente.VentasDelDia,
+            "/caja" => HerramientaAsistente.EstadoCaja,
+            "/resumen" => HerramientaAsistente.ResumenDiario,
+            _ => (HerramientaAsistente?)null
+        };
+
+        if (herramienta.HasValue)
+            return Task.FromResult<SolicitudHerramienta?>(
+                new SolicitudHerramienta(herramienta.Value));
+
+        return comando.StartsWith('/')
+            ? Task.FromResult<SolicitudHerramienta?>(null)
+            : gemini.ElegirHerramientaAsync(mensaje, cancelacion);
+    }
+}
 
 public sealed record VinculoTelegram(
     long ChatId,
@@ -255,4 +325,77 @@ public sealed class VinculosTelegram : IVinculosTelegram
         int EmpleadoId,
         string NombreUsuario,
         DateTimeOffset Vence);
+}
+
+public sealed class TelegramWorker(
+    IClienteTelegram telegram,
+    IServiceScopeFactory scopes,
+
+    TimeProvider reloj) : BackgroundService
+{
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+        if (string.IsNullOrWhiteSpace(
+            Environment.GetEnvironmentVariable("SIGS_TELEGRAM_BOT_TOKEN")))
+        {
+            System.Diagnostics.Trace.WriteLine("Telegram no está configurado; el servicio queda inactivo.");
+            return;
+        }
+
+        var offset = 0L;
+        DateOnly? ultimoResumen = null;
+        var horaResumen = LeerHoraResumen();
+        while (!stoppingToken.IsCancellationRequested)
+        {
+            try
+            {
+                var actualizaciones = await telegram.ObtenerActualizacionesAsync(
+                    offset, stoppingToken);
+                foreach (var actualizacion in actualizaciones)
+                {
+                    offset = Math.Max(offset, actualizacion.Id + 1);
+                    using var scope = scopes.CreateScope();
+                    var procesador = scope.ServiceProvider
+                        .GetRequiredService<ProcesadorTelegram>();
+                    await procesador.ProcesarAsync(actualizacion, stoppingToken);
+                }
+
+                var local = reloj.GetLocalNow();
+                var hoy = DateOnly.FromDateTime(local.DateTime);
+                if (horaResumen.HasValue
+                    && ultimoResumen != hoy
+                    && TimeOnly.FromDateTime(local.DateTime) >= horaResumen.Value)
+                {
+                    using var scope = scopes.CreateScope();
+                    await scope.ServiceProvider
+                        .GetRequiredService<ProcesadorTelegram>()
+                        .EnviarResumenProgramadoAsync(stoppingToken);
+                    ultimoResumen = hoy;
+                }
+            }
+            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+            {
+                break;
+            }
+            catch (HttpRequestException ex)
+            {
+                System.Diagnostics.Trace.WriteLine($"Error de comunicación con Telegram: {ex.Message}");
+                await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
+            }
+            catch (System.Text.Json.JsonException ex)
+            {
+                System.Diagnostics.Trace.WriteLine($"Telegram devolvió una respuesta no válida: {ex.Message}");
+                await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
+            }
+        }
+    }
+
+    private static TimeOnly? LeerHoraResumen()
+        => TimeOnly.TryParse(
+            Environment.GetEnvironmentVariable("SIGS_TELEGRAM_RESUMEN_HORA"),
+            CultureInfo.InvariantCulture,
+            out var hora)
+                ? hora
+                : null;
+}
 }

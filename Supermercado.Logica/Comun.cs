@@ -1,9 +1,10 @@
 using System.Net.Mail;
 using System.Text.RegularExpressions;
 using Supermercado.Entidades.Excepciones;
+using Microsoft.Extensions.Logging;
 
-namespace Supermercado.Logica.Comunes;
-
+namespace Supermercado.Logica.Comunes
+{
 // Reglas de formato compartidas. El backend las exige siempre; la UI puede
 // usar los métodos Es* para dar aviso mientras el usuario escribe.
 public static partial class Validador
@@ -167,4 +168,61 @@ public static partial class Validador
         }
     }
 
+}
+
+public class TraductorExcepciones(
+    ILogger<TraductorExcepciones>? logger = null) : ITraductorExcepciones
+{
+    public string Traducir(Exception excepcion)
+    {
+        ArgumentNullException.ThrowIfNull(excepcion);
+
+        return excepcion switch
+        {
+            ValidacionException
+                or VentaInvalidaException
+                or StockInsuficienteException
+                or TurnoInvalidoException
+                or AccesoDenegadoException
+                or CredencialesInvalidasException
+                or CuentaBloqueadaException
+                or SesionNoIniciadaException
+                or DebeCambiarClaveException
+                or ParametroFaltanteException
+                or ServicioNoConfiguradoException => excepcion.Message,
+            _ => RegistrarYDevolverGenerico(excepcion)
+        };
+    }
+
+    private string RegistrarYDevolverGenerico(Exception excepcion)
+    {
+        logger?.LogError(
+            excepcion,
+            "Error inesperado no controlado en la aplicación.");
+        return "Ocurrió un error inesperado. Intente de nuevo o contacte "
+            + "al administrador.";
+    }
+}
+
+public interface ITraductorExcepciones
+{
+    string Traducir(Exception excepcion);
+}
+
+public static class ExtensionesReloj
+{
+    public static DateTime AhoraUtc(this TimeProvider reloj)
+        => reloj.GetUtcNow().UtcDateTime;
+
+    public static DateOnly HoyLocal(this TimeProvider reloj)
+        => DateOnly.FromDateTime(reloj.GetLocalNow().DateTime);
+
+    public static (DateTime Desde, DateTime Hasta) RangoDeHoyUtc(
+        this TimeProvider reloj)
+    {
+        var inicio = reloj.HoyLocal().ToDateTime(TimeOnly.MinValue);
+        var desde = TimeZoneInfo.ConvertTimeToUtc(inicio, reloj.LocalTimeZone);
+        return (desde, desde.AddDays(1));
+    }
+}
 }
