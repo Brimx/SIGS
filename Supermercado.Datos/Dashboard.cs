@@ -24,16 +24,16 @@ public class ConfiguracionWidgetRepositorio(SigsDbContext db)
     : RepositorioBase(db), IConfiguracionWidgetRepositorio
 {
     public async Task<ConfiguracionWidget?> ObtenerPorIdAsync(int id)
-        => await db.Set<ConfiguracionWidget>().FindAsync(id);
+        => await Db.Set<ConfiguracionWidget>().FindAsync(id);
 
     public async Task<IReadOnlyList<ConfiguracionWidget>> ObtenerTodosAsync()
-        => await db.Set<ConfiguracionWidget>().ToListAsync();
+        => await Db.Set<ConfiguracionWidget>().ToListAsync();
 
     public async Task AgregarAsync(ConfiguracionWidget entidad)
-        => await db.Set<ConfiguracionWidget>().AddAsync(entidad);
+        => await Db.Set<ConfiguracionWidget>().AddAsync(entidad);
 
     public void Actualizar(ConfiguracionWidget entidad)
-        => db.Set<ConfiguracionWidget>().Update(entidad);
+        => Db.Set<ConfiguracionWidget>().Update(entidad);
 
     public async Task<IReadOnlyList<ConfiguracionWidget>> ObtenerPorEmpleadoAsync(
         int empleadoId)

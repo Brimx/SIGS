@@ -237,10 +237,12 @@ public static class ExtensionesDatos
 namespace Supermercado.Datos.Repositorios
 {
     // SaveChanges ya es una transacción: todo lo pendiente se guarda junto.
-    public abstract class RepositorioBase(SigsDbContext db)
+    public abstract class RepositorioBase
     {
-        protected SigsDbContext Db => db;
+        protected RepositorioBase(SigsDbContext db) => Db = db;
 
-        public Task<int> GuardarAsync() => db.SaveChangesAsync();
+        protected SigsDbContext Db { get; }
+
+        public Task<int> GuardarAsync() => Db.SaveChangesAsync();
     }
 }

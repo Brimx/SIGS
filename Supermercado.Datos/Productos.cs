@@ -52,15 +52,15 @@ public class ProductoRepositorio(SigsDbContext db)
     : RepositorioBase(db), IProductoRepositorio
 {
     public async Task<Producto?> ObtenerPorIdAsync(int id)
-        => await db.Set<Producto>().FindAsync(id);
+        => await Db.Set<Producto>().FindAsync(id);
 
     public async Task<IReadOnlyList<Producto>> ObtenerTodosAsync()
-        => await db.Set<Producto>().ToListAsync();
+        => await Db.Set<Producto>().ToListAsync();
 
     public async Task AgregarAsync(Producto entidad)
-        => await db.Set<Producto>().AddAsync(entidad);
+        => await Db.Set<Producto>().AddAsync(entidad);
 
-    public void Actualizar(Producto entidad) => db.Set<Producto>().Update(entidad);
+    public void Actualizar(Producto entidad) => Db.Set<Producto>().Update(entidad);
 
     public Task<Producto?> ObtenerPorCodigoBarrasAsync(string codigo)
         => Db.Productos
@@ -72,47 +72,47 @@ public class CategoriaRepositorio(SigsDbContext db)
     : RepositorioBase(db), ICategoriaRepositorio
 {
     public async Task<Categoria?> ObtenerPorIdAsync(int id)
-        => await db.Set<Categoria>().FindAsync(id);
+        => await Db.Set<Categoria>().FindAsync(id);
 
     public async Task<IReadOnlyList<Categoria>> ObtenerTodosAsync()
-        => await db.Set<Categoria>().ToListAsync();
+        => await Db.Set<Categoria>().ToListAsync();
 
     public async Task AgregarAsync(Categoria entidad)
-        => await db.Set<Categoria>().AddAsync(entidad);
+        => await Db.Set<Categoria>().AddAsync(entidad);
 
     public void Actualizar(Categoria entidad)
-        => db.Set<Categoria>().Update(entidad);
+        => Db.Set<Categoria>().Update(entidad);
 }
 
 public class ProveedorRepositorio(SigsDbContext db)
     : RepositorioBase(db), IProveedorRepositorio
 {
     public async Task<Proveedor?> ObtenerPorIdAsync(int id)
-        => await db.Set<Proveedor>().FindAsync(id);
+        => await Db.Set<Proveedor>().FindAsync(id);
 
     public async Task<IReadOnlyList<Proveedor>> ObtenerTodosAsync()
-        => await db.Set<Proveedor>().ToListAsync();
+        => await Db.Set<Proveedor>().ToListAsync();
 
     public async Task AgregarAsync(Proveedor entidad)
-        => await db.Set<Proveedor>().AddAsync(entidad);
+        => await Db.Set<Proveedor>().AddAsync(entidad);
 
     public void Actualizar(Proveedor entidad)
-        => db.Set<Proveedor>().Update(entidad);
+        => Db.Set<Proveedor>().Update(entidad);
 }
 
 public class ImpuestoRepositorio(SigsDbContext db)
     : RepositorioBase(db), IImpuestoRepositorio
 {
     public async Task<Impuesto?> ObtenerPorIdAsync(int id)
-        => await db.Set<Impuesto>().FindAsync(id);
+        => await Db.Set<Impuesto>().FindAsync(id);
 
     public async Task<IReadOnlyList<Impuesto>> ObtenerTodosAsync()
-        => await db.Set<Impuesto>().ToListAsync();
+        => await Db.Set<Impuesto>().ToListAsync();
 
     public async Task AgregarAsync(Impuesto entidad)
-        => await db.Set<Impuesto>().AddAsync(entidad);
+        => await Db.Set<Impuesto>().AddAsync(entidad);
 
     public void Actualizar(Impuesto entidad)
-        => db.Set<Impuesto>().Update(entidad);
+        => Db.Set<Impuesto>().Update(entidad);
 }
 }

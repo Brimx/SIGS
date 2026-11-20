@@ -34,15 +34,15 @@ public class GastoRepositorio(SigsDbContext db)
     : RepositorioBase(db), IGastoRepositorio
 {
     public async Task<Gasto?> ObtenerPorIdAsync(int id)
-        => await db.Set<Gasto>().FindAsync(id);
+        => await Db.Set<Gasto>().FindAsync(id);
 
     public async Task<IReadOnlyList<Gasto>> ObtenerTodosAsync()
-        => await db.Set<Gasto>().ToListAsync();
+        => await Db.Set<Gasto>().ToListAsync();
 
     public async Task AgregarAsync(Gasto entidad)
-        => await db.Set<Gasto>().AddAsync(entidad);
+        => await Db.Set<Gasto>().AddAsync(entidad);
 
-    public void Actualizar(Gasto entidad) => db.Set<Gasto>().Update(entidad);
+    public void Actualizar(Gasto entidad) => Db.Set<Gasto>().Update(entidad);
 
     public async Task<IReadOnlyList<Gasto>> ObtenerPorRangoAsync(
         DateTime desde,
@@ -56,14 +56,14 @@ public class NominaRepositorio(SigsDbContext db)
     : RepositorioBase(db), INominaRepositorio
 {
     public async Task<Nomina?> ObtenerPorIdAsync(int id)
-        => await db.Set<Nomina>().FindAsync(id);
+        => await Db.Set<Nomina>().FindAsync(id);
 
     public async Task<IReadOnlyList<Nomina>> ObtenerTodosAsync()
-        => await db.Set<Nomina>().ToListAsync();
+        => await Db.Set<Nomina>().ToListAsync();
 
     public async Task AgregarAsync(Nomina entidad)
-        => await db.Set<Nomina>().AddAsync(entidad);
+        => await Db.Set<Nomina>().AddAsync(entidad);
 
-    public void Actualizar(Nomina entidad) => db.Set<Nomina>().Update(entidad);
+    public void Actualizar(Nomina entidad) => Db.Set<Nomina>().Update(entidad);
 }
 }

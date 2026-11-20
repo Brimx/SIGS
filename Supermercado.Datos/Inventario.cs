@@ -85,15 +85,15 @@ public class LoteRepositorio(SigsDbContext db)
     : RepositorioBase(db), ILoteRepositorio
 {
     public async Task<Lote?> ObtenerPorIdAsync(int id)
-        => await db.Set<Lote>().FindAsync(id);
+        => await Db.Set<Lote>().FindAsync(id);
 
     public async Task<IReadOnlyList<Lote>> ObtenerTodosAsync()
-        => await db.Set<Lote>().ToListAsync();
+        => await Db.Set<Lote>().ToListAsync();
 
     public async Task AgregarAsync(Lote entidad)
-        => await db.Set<Lote>().AddAsync(entidad);
+        => await Db.Set<Lote>().AddAsync(entidad);
 
-    public void Actualizar(Lote entidad) => db.Set<Lote>().Update(entidad);
+    public void Actualizar(Lote entidad) => Db.Set<Lote>().Update(entidad);
 
     public async Task<IReadOnlyList<Lote>> ObtenerPorVencerAsync(DateOnly hasta)
         => await Db.Lotes
@@ -109,16 +109,16 @@ public class MovimientoRepositorio(SigsDbContext db)
     : RepositorioBase(db), IMovimientoRepositorio
 {
     public async Task<MovimientoInventario?> ObtenerPorIdAsync(int id)
-        => await db.Set<MovimientoInventario>().FindAsync(id);
+        => await Db.Set<MovimientoInventario>().FindAsync(id);
 
     public async Task<IReadOnlyList<MovimientoInventario>> ObtenerTodosAsync()
-        => await db.Set<MovimientoInventario>().ToListAsync();
+        => await Db.Set<MovimientoInventario>().ToListAsync();
 
     public async Task AgregarAsync(MovimientoInventario entidad)
-        => await db.Set<MovimientoInventario>().AddAsync(entidad);
+        => await Db.Set<MovimientoInventario>().AddAsync(entidad);
 
     public void Actualizar(MovimientoInventario entidad)
-        => db.Set<MovimientoInventario>().Update(entidad);
+        => Db.Set<MovimientoInventario>().Update(entidad);
 
     public async Task<IReadOnlyList<MovimientoInventario>> ObtenerSalidasDeVentaAsync(int ventaId)
         => await Db.Movimientos
@@ -130,16 +130,16 @@ public class ReabastecimientoRepositorio(SigsDbContext db)
     : RepositorioBase(db), IReabastecimientoRepositorio
 {
     public async Task<Reabastecimiento?> ObtenerPorIdAsync(int id)
-        => await db.Set<Reabastecimiento>().FindAsync(id);
+        => await Db.Set<Reabastecimiento>().FindAsync(id);
 
     public async Task<IReadOnlyList<Reabastecimiento>> ObtenerTodosAsync()
-        => await db.Set<Reabastecimiento>().ToListAsync();
+        => await Db.Set<Reabastecimiento>().ToListAsync();
 
     public async Task AgregarAsync(Reabastecimiento entidad)
-        => await db.Set<Reabastecimiento>().AddAsync(entidad);
+        => await Db.Set<Reabastecimiento>().AddAsync(entidad);
 
     public void Actualizar(Reabastecimiento entidad)
-        => db.Set<Reabastecimiento>().Update(entidad);
+        => Db.Set<Reabastecimiento>().Update(entidad);
 
     public async Task<IReadOnlyList<Reabastecimiento>> ObtenerPendientesAsync()
         => await Db.Reabastecimientos
@@ -151,16 +151,16 @@ public class StockEstanteRepositorio(SigsDbContext db)
     : RepositorioBase(db), IStockEstanteRepositorio
 {
     public async Task<StockEstante?> ObtenerPorIdAsync(int id)
-        => await db.Set<StockEstante>().FindAsync(id);
+        => await Db.Set<StockEstante>().FindAsync(id);
 
     public async Task<IReadOnlyList<StockEstante>> ObtenerTodosAsync()
-        => await db.Set<StockEstante>().ToListAsync();
+        => await Db.Set<StockEstante>().ToListAsync();
 
     public async Task AgregarAsync(StockEstante entidad)
-        => await db.Set<StockEstante>().AddAsync(entidad);
+        => await Db.Set<StockEstante>().AddAsync(entidad);
 
     public void Actualizar(StockEstante entidad)
-        => db.Set<StockEstante>().Update(entidad);
+        => Db.Set<StockEstante>().Update(entidad);
 
     public async Task<IReadOnlyList<StockEstante>> ObtenerPorProductoAsync(
         int productoId)
@@ -184,16 +184,16 @@ public class StockBodegaRepositorio(SigsDbContext db)
     : RepositorioBase(db), IStockBodegaRepositorio
 {
     public async Task<StockBodega?> ObtenerPorIdAsync(int id)
-        => await db.Set<StockBodega>().FindAsync(id);
+        => await Db.Set<StockBodega>().FindAsync(id);
 
     public async Task<IReadOnlyList<StockBodega>> ObtenerTodosAsync()
-        => await db.Set<StockBodega>().ToListAsync();
+        => await Db.Set<StockBodega>().ToListAsync();
 
     public async Task AgregarAsync(StockBodega entidad)
-        => await db.Set<StockBodega>().AddAsync(entidad);
+        => await Db.Set<StockBodega>().AddAsync(entidad);
 
     public void Actualizar(StockBodega entidad)
-        => db.Set<StockBodega>().Update(entidad);
+        => Db.Set<StockBodega>().Update(entidad);
 
     public async Task<IReadOnlyList<StockBodega>> ObtenerPorProductoAsync(
         int productoId)
@@ -217,14 +217,14 @@ public class MermaRepositorio(SigsDbContext db)
     : RepositorioBase(db), IMermaRepositorio
 {
     public async Task<Merma?> ObtenerPorIdAsync(int id)
-        => await db.Set<Merma>().FindAsync(id);
+        => await Db.Set<Merma>().FindAsync(id);
 
     public async Task<IReadOnlyList<Merma>> ObtenerTodosAsync()
-        => await db.Set<Merma>().ToListAsync();
+        => await Db.Set<Merma>().ToListAsync();
 
     public async Task AgregarAsync(Merma entidad)
-        => await db.Set<Merma>().AddAsync(entidad);
+        => await Db.Set<Merma>().AddAsync(entidad);
 
-    public void Actualizar(Merma entidad) => db.Set<Merma>().Update(entidad);
+    public void Actualizar(Merma entidad) => Db.Set<Merma>().Update(entidad);
 }
 }

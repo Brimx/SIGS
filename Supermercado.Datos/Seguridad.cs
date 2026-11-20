@@ -66,15 +66,15 @@ public class UsuarioRepositorio(SigsDbContext db)
     : RepositorioBase(db), IUsuarioRepositorio
 {
     public async Task<Usuario?> ObtenerPorIdAsync(int id)
-        => await db.Set<Usuario>().FindAsync(id);
+        => await Db.Set<Usuario>().FindAsync(id);
 
     public async Task<IReadOnlyList<Usuario>> ObtenerTodosAsync()
-        => await db.Set<Usuario>().ToListAsync();
+        => await Db.Set<Usuario>().ToListAsync();
 
     public async Task AgregarAsync(Usuario entidad)
-        => await db.Set<Usuario>().AddAsync(entidad);
+        => await Db.Set<Usuario>().AddAsync(entidad);
 
-    public void Actualizar(Usuario entidad) => db.Set<Usuario>().Update(entidad);
+    public void Actualizar(Usuario entidad) => Db.Set<Usuario>().Update(entidad);
 
     public Task<Usuario?> ObtenerPorNombreAsync(string nombreUsuario)
         => Db.Usuarios
@@ -86,15 +86,15 @@ public class RolRepositorio(SigsDbContext db)
     : RepositorioBase(db), IRolRepositorio
 {
     public async Task<Rol?> ObtenerPorIdAsync(int id)
-        => await db.Set<Rol>().FindAsync(id);
+        => await Db.Set<Rol>().FindAsync(id);
 
     public async Task<IReadOnlyList<Rol>> ObtenerTodosAsync()
-        => await db.Set<Rol>().ToListAsync();
+        => await Db.Set<Rol>().ToListAsync();
 
     public async Task AgregarAsync(Rol entidad)
-        => await db.Set<Rol>().AddAsync(entidad);
+        => await Db.Set<Rol>().AddAsync(entidad);
 
-    public void Actualizar(Rol entidad) => db.Set<Rol>().Update(entidad);
+    public void Actualizar(Rol entidad) => Db.Set<Rol>().Update(entidad);
 
     public Task<Rol?> ObtenerPorNombreAsync(string nombre)
         => Db.Roles.FirstOrDefaultAsync(r => r.Nombre == nombre);
@@ -104,16 +104,16 @@ public class ParametroRepositorio(SigsDbContext db)
     : RepositorioBase(db), IParametroRepositorio
 {
     public async Task<Parametro?> ObtenerPorIdAsync(int id)
-        => await db.Set<Parametro>().FindAsync(id);
+        => await Db.Set<Parametro>().FindAsync(id);
 
     public async Task<IReadOnlyList<Parametro>> ObtenerTodosAsync()
-        => await db.Set<Parametro>().ToListAsync();
+        => await Db.Set<Parametro>().ToListAsync();
 
     public async Task AgregarAsync(Parametro entidad)
-        => await db.Set<Parametro>().AddAsync(entidad);
+        => await Db.Set<Parametro>().AddAsync(entidad);
 
     public void Actualizar(Parametro entidad)
-        => db.Set<Parametro>().Update(entidad);
+        => Db.Set<Parametro>().Update(entidad);
 
     public Task<Parametro?> ObtenerPorClaveAsync(string clave)
         => Db.Parametros.FirstOrDefaultAsync(p => p.Clave == clave);
@@ -123,31 +123,31 @@ public class IntentoAccesoRepositorio(SigsDbContext db)
     : RepositorioBase(db), IIntentoAccesoRepositorio
 {
     public async Task<IntentoAcceso?> ObtenerPorIdAsync(int id)
-        => await db.Set<IntentoAcceso>().FindAsync(id);
+        => await Db.Set<IntentoAcceso>().FindAsync(id);
 
     public async Task<IReadOnlyList<IntentoAcceso>> ObtenerTodosAsync()
-        => await db.Set<IntentoAcceso>().ToListAsync();
+        => await Db.Set<IntentoAcceso>().ToListAsync();
 
     public async Task AgregarAsync(IntentoAcceso entidad)
-        => await db.Set<IntentoAcceso>().AddAsync(entidad);
+        => await Db.Set<IntentoAcceso>().AddAsync(entidad);
 
     public void Actualizar(IntentoAcceso entidad)
-        => db.Set<IntentoAcceso>().Update(entidad);
+        => Db.Set<IntentoAcceso>().Update(entidad);
 }
 
 public class RegistroAuditoriaRepositorio(SigsDbContext db)
     : RepositorioBase(db), IRegistroAuditoriaRepositorio
 {
     public async Task<RegistroAuditoria?> ObtenerPorIdAsync(int id)
-        => await db.Set<RegistroAuditoria>().FindAsync(id);
+        => await Db.Set<RegistroAuditoria>().FindAsync(id);
 
     public async Task<IReadOnlyList<RegistroAuditoria>> ObtenerTodosAsync()
-        => await db.Set<RegistroAuditoria>().ToListAsync();
+        => await Db.Set<RegistroAuditoria>().ToListAsync();
 
     public async Task AgregarAsync(RegistroAuditoria entidad)
-        => await db.Set<RegistroAuditoria>().AddAsync(entidad);
+        => await Db.Set<RegistroAuditoria>().AddAsync(entidad);
 
     public void Actualizar(RegistroAuditoria entidad)
-        => db.Set<RegistroAuditoria>().Update(entidad);
+        => Db.Set<RegistroAuditoria>().Update(entidad);
 }
 }

@@ -23,15 +23,15 @@ public class ClienteRepositorio(SigsDbContext db)
     : RepositorioBase(db), IClienteRepositorio
 {
     public async Task<Cliente?> ObtenerPorIdAsync(int id)
-        => await db.Set<Cliente>().FindAsync(id);
+        => await Db.Set<Cliente>().FindAsync(id);
 
     public async Task<IReadOnlyList<Cliente>> ObtenerTodosAsync()
-        => await db.Set<Cliente>().ToListAsync();
+        => await Db.Set<Cliente>().ToListAsync();
 
     public async Task AgregarAsync(Cliente entidad)
-        => await db.Set<Cliente>().AddAsync(entidad);
+        => await Db.Set<Cliente>().AddAsync(entidad);
 
-    public void Actualizar(Cliente entidad) => db.Set<Cliente>().Update(entidad);
+    public void Actualizar(Cliente entidad) => Db.Set<Cliente>().Update(entidad);
 
     public Task<Cliente?> ObtenerPorDocumentoAsync(string documento)
         => Db.Clientes.FirstOrDefaultAsync(c => c.Documento == documento);

@@ -34,15 +34,15 @@ public class VentaRepositorio(SigsDbContext db)
     : RepositorioBase(db), IVentaRepositorio
 {
     public async Task<Venta?> ObtenerPorIdAsync(int id)
-        => await db.Set<Venta>().FindAsync(id);
+        => await Db.Set<Venta>().FindAsync(id);
 
     public async Task<IReadOnlyList<Venta>> ObtenerTodosAsync()
-        => await db.Set<Venta>().ToListAsync();
+        => await Db.Set<Venta>().ToListAsync();
 
     public async Task AgregarAsync(Venta entidad)
-        => await db.Set<Venta>().AddAsync(entidad);
+        => await Db.Set<Venta>().AddAsync(entidad);
 
-    public void Actualizar(Venta entidad) => db.Set<Venta>().Update(entidad);
+    public void Actualizar(Venta entidad) => Db.Set<Venta>().Update(entidad);
 
     public async Task<IReadOnlyList<Venta>> ObtenerPorTurnoAsync(int turnoId)
         => await Completas()
@@ -75,15 +75,15 @@ public class VentaEnEsperaRepositorio(SigsDbContext db)
     : RepositorioBase(db), IVentaEnEsperaRepositorio
 {
     public async Task<VentaEnEspera?> ObtenerPorIdAsync(int id)
-        => await db.Set<VentaEnEspera>().FindAsync(id);
+        => await Db.Set<VentaEnEspera>().FindAsync(id);
 
     public async Task<IReadOnlyList<VentaEnEspera>> ObtenerTodosAsync()
-        => await db.Set<VentaEnEspera>().ToListAsync();
+        => await Db.Set<VentaEnEspera>().ToListAsync();
 
     public async Task AgregarAsync(VentaEnEspera entidad)
-        => await db.Set<VentaEnEspera>().AddAsync(entidad);
+        => await Db.Set<VentaEnEspera>().AddAsync(entidad);
 
     public void Actualizar(VentaEnEspera entidad)
-        => db.Set<VentaEnEspera>().Update(entidad);
+        => Db.Set<VentaEnEspera>().Update(entidad);
 }
 }

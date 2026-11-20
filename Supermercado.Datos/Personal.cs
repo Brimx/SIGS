@@ -30,30 +30,30 @@ public class EmpleadoRepositorio(SigsDbContext db)
     : RepositorioBase(db), IEmpleadoRepositorio
 {
     public async Task<Empleado?> ObtenerPorIdAsync(int id)
-        => await db.Set<Empleado>().FindAsync(id);
+        => await Db.Set<Empleado>().FindAsync(id);
 
     public async Task<IReadOnlyList<Empleado>> ObtenerTodosAsync()
-        => await db.Set<Empleado>().ToListAsync();
+        => await Db.Set<Empleado>().ToListAsync();
 
     public async Task AgregarAsync(Empleado entidad)
-        => await db.Set<Empleado>().AddAsync(entidad);
+        => await Db.Set<Empleado>().AddAsync(entidad);
 
     public void Actualizar(Empleado entidad)
-        => db.Set<Empleado>().Update(entidad);
+        => Db.Set<Empleado>().Update(entidad);
 }
 
 public class CargoRepositorio(SigsDbContext db)
     : RepositorioBase(db), ICargoRepositorio
 {
     public async Task<Cargo?> ObtenerPorIdAsync(int id)
-        => await db.Set<Cargo>().FindAsync(id);
+        => await Db.Set<Cargo>().FindAsync(id);
 
     public async Task<IReadOnlyList<Cargo>> ObtenerTodosAsync()
-        => await db.Set<Cargo>().ToListAsync();
+        => await Db.Set<Cargo>().ToListAsync();
 
     public async Task AgregarAsync(Cargo entidad)
-        => await db.Set<Cargo>().AddAsync(entidad);
+        => await Db.Set<Cargo>().AddAsync(entidad);
 
-    public void Actualizar(Cargo entidad) => db.Set<Cargo>().Update(entidad);
+    public void Actualizar(Cargo entidad) => Db.Set<Cargo>().Update(entidad);
 }
 }
