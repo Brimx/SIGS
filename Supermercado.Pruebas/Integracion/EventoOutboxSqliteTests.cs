@@ -40,7 +40,7 @@ public class EventoOutboxSqliteTests
         };
 
         await ventaRepo.AgregarAsync(venta);
-        await contexto.CrearUnidadDeTrabajo().GuardarAsync();
+        await contexto.Db.SaveChangesAsync();
 
         contexto.Db.ChangeTracker.Clear();
 

@@ -33,20 +33,20 @@ public sealed class EscenarioTelegram : IDisposable
             ["cajero"] = CrearUsuario(1, "cajero", roles[NombresRol.Cajero]),
             ["gerente"] = CrearUsuario(2, "gerente", roles[NombresRol.Gerente])
         };
+        Usuarios = new UsuarioRepositorioFalsoTelegram(_usuarios);
         Procesador = new ProcesadorTelegram(
             Telegram,
             new Asistente(new GeminiFalsoTelegram()),
             Vinculos,
-            new UsuarioRepositorioFalsoTelegram(_usuarios),
+            Usuarios,
             new SesionActual(),
             new AlertasFalsasTelegram(),
             new VentasFalsasTelegram(),
             new VentaRepositorioFalsoTelegram(),
             new CajaFalsaTelegram(),
             new ReabastecimientoFalsoTelegram(),
-            Auditoria,
-            Trabajo,
-            Reloj);
+        Auditoria,
+        Reloj);
     }
 
     public RelojVariableTelegram Reloj { get; }
@@ -57,7 +57,7 @@ public sealed class EscenarioTelegram : IDisposable
 
     public RegistroAuditoriaFalsoTelegram Auditoria { get; } = new();
 
-    public UnidadDeTrabajoFalsa Trabajo { get; } = new();
+    public UsuarioRepositorioFalsoTelegram Usuarios { get; }
 
     public ProcesadorTelegram Procesador { get; }
 
@@ -183,10 +183,25 @@ public sealed class UsuarioRepositorioFalsoTelegram(
     public void Actualizar(Usuario entidad)
     {
     }
+
+    public int Guardados { get; private set; }
+
+    public Task<int> GuardarAsync()
+    {
+        Guardados++;
+        return Task.FromResult(0);
+    }
 }
 
 public sealed class VentaRepositorioFalsoTelegram : IVentaRepositorio
 {
+    public int Guardados { get; private set; }
+
+    public Task<int> GuardarAsync()
+    {
+        Guardados++;
+        return Task.FromResult(0);
+    }
     public Task<Venta?> ObtenerPorIdAsync(int id)
         => Task.FromResult<Venta?>(null);
 

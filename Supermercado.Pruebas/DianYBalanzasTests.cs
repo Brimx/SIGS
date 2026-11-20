@@ -144,7 +144,6 @@ public class DianYBalanzasTests
         public ClientesEnMemoria Clientes { get; } = new();
         public ParametrosFalsos Parametros { get; } = new();
         public AuditoriaFalsa Auditoria { get; } = new();
-        public UnidadDeTrabajoFalsa Trabajo { get; } = new();
         public ServicioVentas Servicio { get; }
         public RelojFijo Reloj { get; } = new(EscenarioInventario.Ahora);
 
@@ -164,7 +163,6 @@ public class DianYBalanzasTests
                 Parametros,
                 Auditoria,
                 sesion,
-                Trabajo,
                 Reloj);
         }
     }

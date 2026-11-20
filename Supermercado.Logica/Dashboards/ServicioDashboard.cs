@@ -8,8 +8,7 @@ namespace Supermercado.Logica.Dashboards;
 public class ServicioDashboard(
     IEnumerable<IWidget> widgets,
     IConfiguracionWidgetRepositorio configuraciones,
-    ISesionActual sesion,
-    IUnidadDeTrabajo trabajo) : IServicioDashboard
+    ISesionActual sesion) : IServicioDashboard
 {
     private const int LongitudMaximaTitulo = 60;
 
@@ -64,7 +63,7 @@ public class ServicioDashboard(
                 Posicion = SiguientePosicion(guardadas)
             });
 
-        await trabajo.GuardarAsync();
+        await configuraciones.GuardarAsync();
     }
 
     public async Task QuitarAsync(string widgetId)
@@ -78,7 +77,7 @@ public class ServicioDashboard(
             configuraciones.Actualizar(c);
         }
 
-        await trabajo.GuardarAsync();
+        await configuraciones.GuardarAsync();
     }
 
     public async Task ReordenarAsync(IReadOnlyList<string> widgetIds)
@@ -97,7 +96,7 @@ public class ServicioDashboard(
             configuraciones.Actualizar(c);
         }
 
-        await trabajo.GuardarAsync();
+        await configuraciones.GuardarAsync();
     }
 
     public async Task CambiarTamanoAsync(string widgetId, TamanoWidget tamano)
@@ -112,7 +111,7 @@ public class ServicioDashboard(
         if (!esNueva)
             configuraciones.Actualizar(config);
 
-        await trabajo.GuardarAsync();
+        await configuraciones.GuardarAsync();
     }
 
     public async Task RenombrarAsync(string widgetId, string? titulo)
@@ -128,7 +127,7 @@ public class ServicioDashboard(
         if (!esNueva)
             configuraciones.Actualizar(config);
 
-        await trabajo.GuardarAsync();
+        await configuraciones.GuardarAsync();
     }
 
     public async Task RestablecerAsync()
@@ -162,7 +161,7 @@ public class ServicioDashboard(
             configuraciones.Actualizar(config);
         }
 
-        await trabajo.GuardarAsync();
+        await configuraciones.GuardarAsync();
     }
 
     public async Task<string> ExportarAsync()
@@ -240,7 +239,7 @@ public class ServicioDashboard(
             configuraciones.Actualizar(c);
         }
 
-        await trabajo.GuardarAsync();
+        await configuraciones.GuardarAsync();
 
         return new ResultadoImportacion(
             disposicion.Widgets.Count - omitidos.Count, omitidos);

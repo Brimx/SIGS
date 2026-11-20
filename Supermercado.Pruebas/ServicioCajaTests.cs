@@ -15,10 +15,9 @@ public class ServicioCajaTests
     {
         public TurnosEnMemoria Turnos { get; } = new();
         public VentasEnMemoria Ventas { get; } = new();
-        public RepositorioEnMemoria<Caja> Cajas { get; } = new();
+        public CajasEnMemoria Cajas { get; } = new();
         public ParametrosFalsos Parametros { get; } = new();
         public AuditoriaFalsa Auditoria { get; } = new();
-        public UnidadDeTrabajoFalsa Trabajo { get; } = new();
         public ServicioCaja Servicio { get; }
 
         public Escenario(bool activa = true, long tolerancia = 1000)
@@ -35,7 +34,6 @@ public class ServicioCajaTests
                 Parametros,
                 Auditoria,
                 Sesiones.Con(Permiso.AbrirCerrarTurno),
-                Trabajo,
                 new RelojFijo(EscenarioInventario.Ahora));
         }
     }
@@ -93,7 +91,6 @@ public class ServicioCajaTests
             e.Parametros,
             e.Auditoria,
             Sesiones.Con(Permiso.Vender),
-            e.Trabajo,
             new RelojFijo(EscenarioInventario.Ahora));
 
         await Assert.ThrowsAsync<AccesoDenegadoException>(

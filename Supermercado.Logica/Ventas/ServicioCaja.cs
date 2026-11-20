@@ -11,13 +11,12 @@ namespace Supermercado.Logica.Ventas;
 public class ServicioCaja(
     ITurnoCajaRepositorio turnos,
     IVentaRepositorio ventas,
-    IRepositorio<Caja> cajas,
+    ICajaRepositorio cajas,
     IServicioParametros parametros,
     IServicioAuditoria auditoria,
     ISesionActual sesion,
-    IUnidadDeTrabajo trabajo,
     TimeProvider reloj,
-    IRepositorio<RetiroCaja>? retiros = null) : IServicioCaja
+    IRetiroCajaRepositorio? retiros = null) : IServicioCaja
 {
     public async Task<TurnoCaja> AbrirTurnoAsync(
         int cajaId,
@@ -43,7 +42,7 @@ public class ServicioCaja(
         await turnos.AgregarAsync(turno);
         await auditoria.RegistrarAsync(
             AccionAuditoria.AperturaTurno, nameof(TurnoCaja), turno.Id);
-        await trabajo.GuardarAsync();
+        await turnos.GuardarAsync();
         return turno;
     }
 
@@ -68,7 +67,7 @@ public class ServicioCaja(
             nameof(TurnoCaja),
             turno.Id,
             $"Diferencia de arqueo: {diferencia}");
-        await trabajo.GuardarAsync();
+        await turnos.GuardarAsync();
 
         return new ResultadoArqueo(
             esperado,
@@ -118,7 +117,7 @@ public class ServicioCaja(
             nameof(RetiroCaja),
             retiro.Id,
             $"Retiro de ${monto:N0} en turno {turno.Id}. Autorizado por supervisor {supervisorId}. Motivo: {motivo}");
-        await trabajo.GuardarAsync();
+        await turnos.GuardarAsync();
         return retiro;
     }
 

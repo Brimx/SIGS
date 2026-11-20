@@ -10,10 +10,9 @@ namespace Supermercado.Pruebas;
 
 public class ServicioNominaTests
 {
-    private readonly RepositorioEnMemoria<Empleado> empleados = new();
-    private readonly RepositorioEnMemoria<Nomina> nominas = new();
+    private readonly EmpleadosEnMemoria empleados = new();
+    private readonly NominasEnMemoria nominas = new();
     private readonly ParametrosFalsos parametros = new();
-    private readonly UnidadDeTrabajoFalsa trabajo = new();
     private readonly RelojFijo reloj = new(EscenarioInventario.Ahora);
 
     private ServicioNomina CrearServicio(
@@ -30,7 +29,6 @@ public class ServicioNominaTests
             nominas,
             parametros,
             Sesiones.Con(permisos),
-            trabajo,
             reloj);
     }
 
@@ -54,7 +52,7 @@ public class ServicioNominaTests
         Assert.Equal(2026, nomina.Anio);
         Assert.Equal(10, nomina.Mes);
         Assert.Single(nominas.Datos);
-        Assert.Equal(1, trabajo.Guardados);
+        Assert.Equal(1, nominas.Guardados);
     }
 
     [Fact]

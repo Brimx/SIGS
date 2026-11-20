@@ -122,7 +122,7 @@ public class RepositoriosSqliteTests
         await contexto.Db.SaveChangesAsync();
         contexto.Db.ChangeTracker.Clear();
 
-        var repo = new StockRepositorio<StockEstante>(contexto.Db);
+        var repo = new StockEstanteRepositorio(contexto.Db);
         var totales = await repo.ObtenerTotalesPorProductoAsync();
 
         Assert.Equal(25, totales[p1.Id]);

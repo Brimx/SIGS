@@ -54,9 +54,8 @@ public class ServicioProductosTests
     }
 
     private readonly ProductosEnMemoria productos = new();
-    private readonly RepositorioEnMemoria<Lote> lotes = new();
+    private readonly LotesEnMemoria lotes = new();
     private readonly InventarioMock inventario = new();
-    private readonly UnidadDeTrabajoFalsa trabajo = new();
     private readonly RelojFijo reloj = new(EscenarioInventario.Ahora);
 
     private ServicioProductos CrearServicio(
@@ -69,7 +68,6 @@ public class ServicioProductosTests
             inventario,
             new ConsultaExternaFalsa(respuestaExterna, fallaExterna),
             Sesiones.Con(permisos),
-            trabajo,
             reloj);
 
     [Fact]
@@ -87,7 +85,7 @@ public class ServicioProductosTests
         await servicio.RegistrarAsync(prod);
 
         Assert.Single(productos.Datos);
-        Assert.Equal(1, trabajo.Guardados);
+        Assert.Equal(1, productos.Guardados);
     }
 
     [Fact]
@@ -149,7 +147,7 @@ public class ServicioProductosTests
 
         Assert.Single(lotes.Datos);
         Assert.Equal(100, inventario.IngresosRegistrados);
-        Assert.Equal(1, trabajo.Guardados);
+        Assert.Equal(1, lotes.Guardados);
     }
 
     [Fact]

@@ -10,7 +10,7 @@ namespace Supermercado.Pruebas;
 
 public class ServicioAlertasInventarioTests
 {
-    private readonly StockEnMemoria<StockEstante> estante = new();
+    private readonly StockEstanteEnMemoria estante = new();
     private readonly ProductosEnMemoria productos = new();
     private readonly LotesEnMemoria lotes = new();
     private readonly ParametrosFalsos parametros = new();

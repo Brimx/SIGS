@@ -18,12 +18,11 @@ public class ServicioEmpleadosTests
             => Task.FromResult(resultado);
     }
 
-    private readonly RepositorioEnMemoria<Empleado> empleados = new();
-    private readonly RepositorioEnMemoria<Rol> roles = new();
+    private readonly EmpleadosEnMemoria empleados = new();
+    private readonly RolesEnMemoria roles = new();
     private readonly UsuariosEnMemoria usuarios = new();
     private readonly HasheadorFalso hasheador = new();
     private readonly AuditoriaFalsa auditoria = new();
-    private readonly UnidadDeTrabajoFalsa trabajo = new();
     private readonly RelojFijo reloj = new(EscenarioInventario.Ahora);
 
     private ServicioEmpleados CrearServicio(
@@ -48,7 +47,6 @@ public class ServicioEmpleadosTests
             hasheador,
             auditoria,
             Sesiones.Con(permisos),
-            trabajo,
             reloj);
     }
 
@@ -72,7 +70,7 @@ public class ServicioEmpleadosTests
         Assert.Single(empleados.Datos);
         Assert.True(emp.CorreoVerificado);
         Assert.Contains(AccionAuditoria.EmpleadoCreado, auditoria.Acciones);
-        Assert.Equal(1, trabajo.Guardados);
+        Assert.Equal(1, empleados.Guardados);
     }
 
     [Fact]
@@ -132,7 +130,7 @@ public class ServicioEmpleadosTests
             () => servicio.CrearUsuarioAsync(5, "admin-nuevo", "temporal123"));
 
         Assert.Empty(usuarios.Datos);
-        Assert.Equal(0, trabajo.Guardados);
+        Assert.Equal(0, usuarios.Guardados);
     }
 
     [Fact]
@@ -180,7 +178,7 @@ public class ServicioEmpleadosTests
 
         Assert.Equal(2, emp.RolId);
         Assert.Contains(AccionAuditoria.CambioRol, auditoria.Acciones);
-        Assert.Equal(1, trabajo.Guardados);
+        Assert.Equal(1, empleados.Guardados);
     }
 
     [Fact]
@@ -202,7 +200,7 @@ public class ServicioEmpleadosTests
         Assert.Contains(
             AccionAuditoria.EmpleadoDesactivado,
             auditoria.Acciones);
-        Assert.Equal(1, trabajo.Guardados);
+        Assert.Equal(1, empleados.Guardados);
     }
 
     [Fact]
@@ -225,7 +223,7 @@ public class ServicioEmpleadosTests
         Assert.Equal("h:temporal123", u.HashClave);
         Assert.True(u.DebeCambiarClave);
         Assert.Contains(AccionAuditoria.UsuarioCreado, auditoria.Acciones);
-        Assert.Equal(1, trabajo.Guardados);
+        Assert.Equal(1, usuarios.Guardados);
     }
 
     [Fact]

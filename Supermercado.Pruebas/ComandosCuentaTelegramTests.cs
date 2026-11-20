@@ -18,7 +18,7 @@ public sealed class ComandosCuentaTelegramTests
         var registro = escenario.Auditoria.Registros[^1];
         Assert.Contains("Origen: Telegram", registro.Detalle);
         Assert.Contains("desvinculado", registro.Detalle);
-        Assert.Equal(2, escenario.Trabajo.Guardados);
+        Assert.Equal(2, escenario.Usuarios.Guardados);
     }
 
     [Fact]

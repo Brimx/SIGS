@@ -41,6 +41,7 @@ public sealed class ResumenOperativoWidgetTests
         public Task<IReadOnlyList<Venta>> ObtenerPorTurnoAsync(int turnoId) => Task.FromResult<IReadOnlyList<Venta>>([]);
         public Task<IReadOnlyList<Venta>> ObtenerPorRangoAsync(DateTime desde, DateTime hasta) => Task.FromResult<IReadOnlyList<Venta>>([]);
         public Task<Venta?> ObtenerPorClaveIdempotenciaAsync(string claveIdempotencia) => Task.FromResult<Venta?>(null);
+        public Task<int> GuardarAsync() => Task.FromResult(0);
     }
 
     private sealed class CajaVacia : IServicioCaja

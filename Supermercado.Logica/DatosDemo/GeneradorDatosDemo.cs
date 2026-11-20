@@ -11,24 +11,23 @@ using Supermercado.Logica.Seguridad;
 namespace Supermercado.Logica.DatosDemo;
 
 public class GeneradorDatosDemo(
-    IRepositorio<Categoria> categorias,
-    IRepositorio<Proveedor> proveedores,
-    IRepositorio<Impuesto> impuestos,
+    ICategoriaRepositorio categorias,
+    IProveedorRepositorio proveedores,
+    IImpuestoRepositorio impuestos,
     IProductoRepositorio productos,
     ILoteRepositorio lotes,
-    IStockRepositorio<StockEstante> estantes,
-    IStockRepositorio<StockBodega> bodegas,
+    IStockEstanteRepositorio estantes,
+    IStockBodegaRepositorio bodegas,
     IMovimientoRepositorio movimientos,
-    IRepositorio<Cargo> cargos,
+    ICargoRepositorio cargos,
     IRolRepositorio roles,
-    IRepositorio<Empleado> empleados,
+    IEmpleadoRepositorio empleados,
     IUsuarioRepositorio usuarios,
-    IRepositorio<Caja> cajas,
+    ICajaRepositorio cajas,
     ITurnoCajaRepositorio turnos,
     IVentaRepositorio ventas,
     IGastoRepositorio gastos,
     IHasheadorClave hasheador,
-    IUnidadDeTrabajo trabajo,
     TimeProvider reloj) : IGeneradorDatosDemo
 {
     public async Task GenerarAsync(int semilla = 42)
@@ -127,7 +126,7 @@ public class GeneradorDatosDemo(
         await productos.AgregarAsync(pAceite);
         await productos.AgregarAsync(pLeche);
         await productos.AgregarAsync(pTomate);
-        await trabajo.GuardarAsync();
+        await productos.GuardarAsync();
 
         // 4. Lotes e inventario inicial
         // Arroz: L1 vigente (6 meses), L2 próximo (7 días)
@@ -151,7 +150,7 @@ public class GeneradorDatosDemo(
         };
         await lotes.AgregarAsync(lArroz1);
         await lotes.AgregarAsync(lArroz2);
-        await trabajo.GuardarAsync();
+        await lotes.GuardarAsync();
 
         // Stock Arroz L1: 50 en bodega, 30 en estante
         var sbArroz1 = new StockBodega
@@ -287,7 +286,7 @@ public class GeneradorDatosDemo(
         await empleados.AgregarAsync(empCajero);
         await empleados.AgregarAsync(empGerente);
         await empleados.AgregarAsync(empBodega);
-        await trabajo.GuardarAsync();
+        await empleados.GuardarAsync();
 
         // Usuarios demo por rol (4 roles canónicos)
         await usuarios.AgregarAsync(new Usuario
@@ -330,7 +329,7 @@ public class GeneradorDatosDemo(
             efectivoInicial: 100000,
             ahora: ahora.AddHours(-4));
         await turnos.AgregarAsync(turno);
-        await trabajo.GuardarAsync();
+        await turnos.GuardarAsync();
 
         // Venta 1: 2 Arroz ($9.000) en efectivo
         var v1 = new Venta
@@ -405,6 +404,6 @@ public class GeneradorDatosDemo(
             RegistradoPorEmpleadoId = empAdmin.Id
         });
 
-        await trabajo.GuardarAsync();
+        await gastos.GuardarAsync();
     }
 }

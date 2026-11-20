@@ -1,3 +1,4 @@
+using Supermercado.Datos;
 using Supermercado.Entidades.Configuracion;
 using Supermercado.Entidades.Contratos;
 using Supermercado.Entidades.Excepciones;
@@ -9,12 +10,11 @@ namespace Supermercado.Logica.Seguridad;
 
 public class ServicioAutenticacion(
     IUsuarioRepositorio usuarios,
-    IRepositorio<IntentoAcceso> intentos,
+    IIntentoAccesoRepositorio intentos,
     IServicioAuditoria auditoria,
     IServicioParametros parametros,
     IHasheadorClave hasheador,
     ISesionActual sesion,
-    IUnidadDeTrabajo trabajo,
     TimeProvider reloj) : IServicioAutenticacion
 {
     public const int LongitudMinimaClave = 8;
@@ -39,7 +39,7 @@ public class ServicioAutenticacion(
         usuarios.Actualizar(usuario);
         await auditoria.RegistrarAsync(
             AccionAuditoria.CambioClave, nameof(Usuario), usuario.Id);
-        await trabajo.GuardarAsync();
+        await usuarios.GuardarAsync();
     }
 
     public async Task AsignarPinAsync(string pin)
@@ -51,7 +51,7 @@ public class ServicioAutenticacion(
 
         usuario.HashPin = hasheador.Hashear(pin);
         usuarios.Actualizar(usuario);
-        await trabajo.GuardarAsync();
+        await usuarios.GuardarAsync();
     }
 
     public void CerrarSesion() => sesion.Cerrar();
@@ -83,7 +83,7 @@ public class ServicioAutenticacion(
                 nameof(Usuario),
                 usuario.Id,
                 $"Intento fallido de autorización supervisor: {nombreUsuario}");
-            await trabajo.GuardarAsync();
+            await usuarios.GuardarAsync();
             throw new CredencialesInvalidasException();
         }
 
@@ -98,7 +98,7 @@ public class ServicioAutenticacion(
             nameof(Empleado),
             empleado.Id,
             $"Supervisor {nombreUsuario} autorizó operación que exige {permisoExigido}");
-        await trabajo.GuardarAsync();
+        await usuarios.GuardarAsync();
 
         return empleado;
     }
@@ -113,7 +113,7 @@ public class ServicioAutenticacion(
         if (usuario is null)
         {
             await RegistrarIntentoAsync(nombre, false, usaPin);
-            await trabajo.GuardarAsync();
+            await intentos.GuardarAsync();
             throw new CredencialesInvalidasException();
         }
 
@@ -122,7 +122,7 @@ public class ServicioAutenticacion(
             await RegistrarIntentoAsync(nombre, false, usaPin);
             await auditoria.RegistrarAsync(
                 AccionAuditoria.InicioSesionFallido, nameof(Usuario), usuario.Id);
-            await trabajo.GuardarAsync();
+            await intentos.GuardarAsync();
             throw new CuentaBloqueadaException();
         }
 
@@ -139,7 +139,7 @@ public class ServicioAutenticacion(
         await RegistrarIntentoAsync(nombre, true, usaPin);
         await auditoria.RegistrarAsync(
             AccionAuditoria.InicioSesion, nameof(Usuario), usuario.Id);
-        await trabajo.GuardarAsync();
+        await intentos.GuardarAsync();
         sesion.Iniciar(usuario);
     }
 
@@ -155,7 +155,7 @@ public class ServicioAutenticacion(
         await RegistrarIntentoAsync(usuario.NombreUsuario, false, usaPin);
         await auditoria.RegistrarAsync(
             AccionAuditoria.InicioSesionFallido, nameof(Usuario), usuario.Id);
-        await trabajo.GuardarAsync();
+        await intentos.GuardarAsync();
 
         return usuario.Bloqueado
             ? new CuentaBloqueadaException()
@@ -179,13 +179,12 @@ public class ServicioAutenticacion(
 }
 
 public class ServicioInicializacion(
-    IInicializadorBaseDatos baseDatos,
-    IRepositorio<Usuario> usuarios,
-    IRepositorio<Empleado> empleados,
-    IRepositorio<Cargo> cargos,
+    InicializadorBaseDatos baseDatos,
+    IUsuarioRepositorio usuarios,
+    IEmpleadoRepositorio empleados,
+    ICargoRepositorio cargos,
     IRolRepositorio roles,
     IHasheadorClave hasheador,
-    IUnidadDeTrabajo trabajo,
     TimeProvider reloj) : IServicioInicializacion
 {
     public const string UsuarioAdministrador = "admin";
@@ -224,7 +223,7 @@ public class ServicioInicializacion(
             DebeCambiarClave = true,
             Empleado = empleado
         });
-        await trabajo.GuardarAsync();
+        await usuarios.GuardarAsync();
     }
 }
 

@@ -1,4 +1,3 @@
-using Supermercado.Entidades.Contratos;
 using Supermercado.Entidades.Excepciones;
 using Supermercado.Entidades.Personal;
 using Supermercado.Entidades.Seguridad;
@@ -12,17 +11,6 @@ public class RelojFijo(DateTimeOffset ahora) : TimeProvider
     public override DateTimeOffset GetUtcNow() => ahora;
 
     public override TimeZoneInfo LocalTimeZone => TimeZoneInfo.Utc;
-}
-
-public class UnidadDeTrabajoFalsa : IUnidadDeTrabajo
-{
-    public int Guardados { get; private set; }
-
-    public Task<int> GuardarAsync()
-    {
-        Guardados++;
-        return Task.FromResult(0);
-    }
 }
 
 public class HasheadorFalso : IHasheadorClave

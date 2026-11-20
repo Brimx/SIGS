@@ -22,7 +22,6 @@ public class ClientesPuntosTests
         public ClientesEnMemoria Clientes { get; } = new();
         public ParametrosFalsos Parametros { get; } = new();
         public AuditoriaFalsa Auditoria { get; } = new();
-        public UnidadDeTrabajoFalsa Trabajo { get; } = new();
         public Cliente Cliente { get; }
         public ServicioVentas Servicio { get; }
         public ServicioClientes ServicioClientes { get; }
@@ -52,10 +51,10 @@ public class ClientesPuntosTests
             var sesion = Sesiones.Con(permisos);
             Servicio = new ServicioVentas(
                 Productos, Ventas, Turnos, Inventario.Servicio, Clientes,
-                Parametros, Auditoria, sesion, Trabajo,
+                Parametros, Auditoria, sesion,
                 new RelojFijo(EscenarioInventario.Ahora));
             ServicioClientes = new ServicioClientes(
-                Clientes, Auditoria, sesion, Trabajo);
+                Clientes, Auditoria, sesion);
         }
 
         public SolicitudVenta Solicitud(
@@ -121,7 +120,7 @@ public class ClientesPuntosTests
         await Assert.ThrowsAsync<ValidacionException>(
             () => e.ServicioClientes.CrearAsync(
                 documento, nombres, "", "", correo));
-        Assert.Equal(0, e.Trabajo.Guardados);
+        Assert.Equal(0, e.Clientes.Guardados);
     }
 
     [Fact]

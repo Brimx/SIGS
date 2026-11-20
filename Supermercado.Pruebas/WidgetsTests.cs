@@ -75,7 +75,7 @@ public class WidgetsTests
     {
         var ventas = new VentasEnMemoria();
         var productos = new ProductosEnMemoria();
-        var categorias = new RepositorioEnMemoria<Categoria>();
+        var categorias = new CategoriasEnMemoria();
 
         var catLacteos = new Categoria { Id = 1, Nombre = "Lácteos" };
         var catGranos = new Categoria { Id = 2, Nombre = "Granos" };
@@ -133,7 +133,7 @@ public class WidgetsTests
         var movs = new MovimientosEnMemoria();
         var lotes = new LotesEnMemoria();
         var productos = new ProductosEnMemoria();
-        var categorias = new RepositorioEnMemoria<Categoria>();
+        var categorias = new CategoriasEnMemoria();
 
         var cat = new Categoria { Id = 1, Nombre = "Bebidas" };
         await categorias.AgregarAsync(cat);
@@ -194,7 +194,7 @@ public class WidgetsTests
         var movs = new MovimientosEnMemoria();
         var lotes = new LotesEnMemoria();
         var productos = new ProductosEnMemoria();
-        var categorias = new RepositorioEnMemoria<Categoria>();
+        var categorias = new CategoriasEnMemoria();
         await categorias.AgregarAsync(new Categoria { Id = 1, Nombre = "Fruver" });
 
         await productos.AgregarAsync(new ProductoPesado

@@ -211,7 +211,7 @@ public sealed class ResumenOperativoWidget(
 public class VentasPorCategoriaWidget(
     IVentaRepositorio ventas,
     IProductoRepositorio productos,
-    IRepositorio<Categoria> categorias,
+    ICategoriaRepositorio categorias,
     TimeProvider reloj) : IWidget
 {
     public string Id => "reportes.ventas_categoria";
@@ -263,7 +263,7 @@ public class MargenPorCategoriaWidget(
     IMovimientoRepositorio movimientos,
     ILoteRepositorio lotes,
     IProductoRepositorio productos,
-    IRepositorio<Categoria> categorias,
+    ICategoriaRepositorio categorias,
     TimeProvider reloj) : IWidget
 {
     public string Id => "finanzas.margen_categoria";

@@ -1,9 +1,11 @@
 using Supermercado.Entidades.Clientes;
 using Supermercado.Entidades.Contratos;
 using Supermercado.Entidades.Dashboards;
+using Supermercado.Entidades.Finanzas;
 using Supermercado.Entidades.Inventario;
 using Supermercado.Entidades.Personal;
 using Supermercado.Entidades.Productos;
+using Supermercado.Entidades.Seguridad;
 using Supermercado.Entidades.Ventas;
 
 namespace Supermercado.Pruebas.Falsos;
@@ -108,4 +110,64 @@ public class ClientesEnMemoria
 {
     public Task<Cliente?> ObtenerPorDocumentoAsync(string documento)
         => Task.FromResult(Datos.FirstOrDefault(c => c.Documento == documento));
+}
+
+public class CategoriasEnMemoria
+    : RepositorioEnMemoria<Categoria>, ICategoriaRepositorio
+{
+}
+
+public class ProveedoresEnMemoria
+    : RepositorioEnMemoria<Proveedor>, IProveedorRepositorio
+{
+}
+
+public class ImpuestosEnMemoria
+    : RepositorioEnMemoria<Impuesto>, IImpuestoRepositorio
+{
+}
+
+public class EmpleadosEnMemoria
+    : RepositorioEnMemoria<Empleado>, IEmpleadoRepositorio
+{
+}
+
+public class CargosEnMemoria
+    : RepositorioEnMemoria<Cargo>, ICargoRepositorio
+{
+}
+
+public class CajasEnMemoria
+    : RepositorioEnMemoria<Caja>, ICajaRepositorio
+{
+}
+
+public class RetirosCajaEnMemoria
+    : RepositorioEnMemoria<RetiroCaja>, IRetiroCajaRepositorio
+{
+}
+
+public class MermasEnMemoria
+    : RepositorioEnMemoria<Merma>, IMermaRepositorio
+{
+}
+
+public class VentasEnEsperaEnMemoria
+    : RepositorioEnMemoria<VentaEnEspera>, IVentaEnEsperaRepositorio
+{
+}
+
+public class RegistrosAuditoriaEnMemoria
+    : RepositorioEnMemoria<RegistroAuditoria>, IRegistroAuditoriaRepositorio
+{
+}
+
+public class IntentosAccesoEnMemoria
+    : RepositorioEnMemoria<IntentoAcceso>, IIntentoAccesoRepositorio
+{
+}
+
+public class NominasEnMemoria
+    : RepositorioEnMemoria<Nomina>, INominaRepositorio
+{
 }

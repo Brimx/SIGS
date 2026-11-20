@@ -22,9 +22,8 @@ public class ServicioVentas(
     IServicioParametros parametros,
     IServicioAuditoria auditoria,
     ISesionActual sesion,
-    IUnidadDeTrabajo trabajo,
     TimeProvider reloj,
-    IRepositorio<VentaEnEspera>? ventasEnEspera = null) : IServicioVentas, IServicioVentasEnEspera
+    IVentaEnEsperaRepositorio? ventasEnEspera = null) : IServicioVentas, IServicioVentasEnEspera
 {
     public async Task<Venta> RegistrarVentaAsync(SolicitudVenta solicitud)
     {
@@ -96,7 +95,7 @@ public class ServicioVentas(
             await inventario.DescontarVentaAsync(
                 detalle.ProductoId, detalle.Cantidad, venta);
 
-        await trabajo.GuardarAsync();
+        await GuardarAsync();
         return venta;
     }
 
@@ -124,7 +123,7 @@ public class ServicioVentas(
                 ? motivo
                 : $"Origen: {origen} | Motivo: {motivo}");
 
-        await trabajo.GuardarAsync();
+        await GuardarAsync();
     }
 
     private async Task<Cliente?> BuscarClienteAsync(SolicitudVenta solicitud)
@@ -211,7 +210,7 @@ public class ServicioVentas(
             nameof(VentaEnEspera),
             ventaEnEspera.Id,
             $"Venta suspendida en caja {cajaId}. Items: {lineas.Count}, Total: ${totalEstimado:N0}");
-        await trabajo.GuardarAsync();
+        await GuardarAsync();
 
         return ventaEnEspera;
     }
@@ -257,7 +256,7 @@ public class ServicioVentas(
 
         venta.Recuperada = true;
         ventasEnEspera.Actualizar(venta);
-        await trabajo.GuardarAsync();
+        await GuardarAsync();
 
         var lineas = DeserializarLineas(venta.LineasJson);
         return (venta, lineas);
@@ -275,8 +274,11 @@ public class ServicioVentas(
 
         venta.Recuperada = true;
         ventasEnEspera.Actualizar(venta);
-        await trabajo.GuardarAsync();
+        await GuardarAsync();
     }
+
+    private Task<int> GuardarAsync()
+        => ventas?.GuardarAsync() ?? ventasEnEspera!.GuardarAsync();
 
     private static IReadOnlyList<LineaVenta> DeserializarLineas(string json)
     {
@@ -296,10 +298,9 @@ public class ServicioVentas(
 
 // Adaptador para compatibilidad de pruebas existentes
 public class ServicioVentasEnEspera(
-    IRepositorio<VentaEnEspera> ventasEnEspera,
+    IVentaEnEsperaRepositorio ventasEnEspera,
     ISesionActual sesion,
     IServicioAuditoria auditoria,
-    IUnidadDeTrabajo trabajo,
     TimeProvider reloj) : ServicioVentas(
         null!,
         null!,
@@ -309,7 +310,6 @@ public class ServicioVentasEnEspera(
         null!,
         auditoria,
         sesion,
-        trabajo,
         reloj,
         ventasEnEspera: ventasEnEspera);
 

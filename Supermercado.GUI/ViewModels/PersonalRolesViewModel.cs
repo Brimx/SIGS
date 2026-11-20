@@ -193,7 +193,7 @@ public partial class PersonalRolesViewModel : ViewModelBase
         var servicios = scope?.ServiceProvider;
         var estructura = _servicioEstructura ?? servicios?.GetService<IServicioEstructura>();
         var servicioUsuarios = _servicioUsuarios ?? servicios?.GetService<IServicioUsuarios>();
-        var repoEmpleados = servicios?.GetService<IRepositorio<Empleado>>();
+        var repoEmpleados = servicios?.GetService<IEmpleadoRepositorio>();
         if (estructura is null)
             return;
 

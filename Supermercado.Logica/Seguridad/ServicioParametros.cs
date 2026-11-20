@@ -59,8 +59,7 @@ public static class ExtensionesParametros
 public class ServicioParametros(
     IParametroRepositorio parametros,
     IServicioAuditoria auditoria,
-    ISesionActual sesion,
-    IUnidadDeTrabajo trabajo) : IServicioParametros
+    ISesionActual sesion) : IServicioParametros
 {
     public async Task<string> ObtenerTextoAsync(string clave)
     {
@@ -94,7 +93,7 @@ public class ServicioParametros(
             nameof(Parametro),
             detalle: clave);
 
-        await trabajo.GuardarAsync();
+        await parametros.GuardarAsync();
     }
 
     public async Task GuardarRespaldoAsync(
@@ -103,7 +102,7 @@ public class ServicioParametros(
         foreach (var (clave, valor) in valores)
             await AsignarAsync(clave, valor);
 
-        await trabajo.GuardarAsync();
+        await parametros.GuardarAsync();
     }
 
     private async Task AsignarAsync(string clave, string valor)

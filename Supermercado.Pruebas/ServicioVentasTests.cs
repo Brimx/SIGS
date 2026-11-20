@@ -21,7 +21,6 @@ public class ServicioVentasTests
         public ClientesEnMemoria Clientes { get; } = new();
         public ParametrosFalsos Parametros { get; } = new();
         public AuditoriaFalsa Auditoria { get; } = new();
-        public UnidadDeTrabajoFalsa Trabajo { get; } = new();
         public StockEstante Fila { get; }
         public ServicioVentas Servicio { get; }
 
@@ -49,7 +48,6 @@ public class ServicioVentasTests
                 Parametros,
                 Auditoria,
                 Sesiones.Con(permisos),
-                Trabajo,
                 new RelojFijo(EscenarioInventario.Ahora));
         }
     }
@@ -71,7 +69,7 @@ public class ServicioVentasTests
         Assert.Equal(6200L, venta.Cambio);
         Assert.Equal(EstadoVenta.Completada, venta.Estado);
         Assert.Equal(8, e.Fila.Cantidad);
-        Assert.Equal(1, e.Trabajo.Guardados);
+        Assert.Equal(1, e.Ventas.Guardados);
     }
 
     [Fact]
@@ -82,7 +80,7 @@ public class ServicioVentasTests
         await Assert.ThrowsAsync<StockInsuficienteException>(
             () => e.Servicio.RegistrarVentaAsync(Solicitud(11, 200000)));
 
-        Assert.Equal(0, e.Trabajo.Guardados);
+        Assert.Equal(0, e.Ventas.Guardados);
     }
 
     [Fact]

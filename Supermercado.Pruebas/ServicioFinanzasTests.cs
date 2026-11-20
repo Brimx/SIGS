@@ -14,7 +14,6 @@ public class ServicioFinanzasTests
             new GastosEnMemoria(),
             new AuditoriaFalsa(),
             Sesiones.Con(permisos),
-            new UnidadDeTrabajoFalsa(),
             new RelojFijo(EscenarioInventario.Ahora));
 
     [Fact]
@@ -30,13 +29,12 @@ public class ServicioFinanzasTests
     public async Task RegistrarGasto_ConPermiso_Audita()
     {
         var auditoria = new AuditoriaFalsa();
-        var trabajo = new UnidadDeTrabajoFalsa();
+        var gastos = new GastosEnMemoria();
         var servicio = new ServicioFinanzas(
             new VentasEnMemoria(),
-            new GastosEnMemoria(),
+            gastos,
             auditoria,
             Sesiones.Con(Permiso.VerFinanzas),
-            trabajo,
             new RelojFijo(EscenarioInventario.Ahora));
 
         await servicio.RegistrarGastoAsync("aseo", 50000);
@@ -44,6 +42,6 @@ public class ServicioFinanzasTests
         Assert.Equal(
             AccionAuditoria.GastoRegistrado,
             Assert.Single(auditoria.Acciones));
-        Assert.Equal(1, trabajo.Guardados);
+        Assert.Equal(1, gastos.Guardados);
     }
 }

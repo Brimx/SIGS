@@ -53,10 +53,10 @@ public class RespaldoYErroresTests
             var auditoria = new AuditoriaFalsa();
             var reloj = new RelojFijo(
                 new DateTime(2026, 4, 20, 14, 30, 0, DateTimeKind.Utc));
-            var uow = new UnidadDeTrabajoFalsa();
+            var registros = new RegistrosAuditoriaEnMemoria();
 
             var servicio = new ServicioRespaldo(
-                parametros, sesion, auditoria, uow, reloj);
+                parametros, sesion, auditoria, registros, reloj);
 
             var rutaCopia = await servicio.CrearRespaldoAsync(origen);
 
@@ -66,7 +66,7 @@ public class RespaldoYErroresTests
             Assert.Contains(
                 AccionAuditoria.RespaldoBaseDatos,
                 auditoria.Acciones);
-            Assert.Equal(1, uow.Guardados);
+            Assert.Equal(1, registros.Guardados);
         }
         finally
         {
@@ -82,17 +82,17 @@ public class RespaldoYErroresTests
         var sesionSinPermiso = Sesiones.Con(Permiso.Vender);
         var auditoria = new AuditoriaFalsa();
         var reloj = new RelojFijo(DateTime.UtcNow);
-        var uow = new UnidadDeTrabajoFalsa();
+        var registros = new RegistrosAuditoriaEnMemoria();
 
         var servicioSinPermiso = new ServicioRespaldo(
-            parametros, sesionSinPermiso, auditoria, uow, reloj);
+            parametros, sesionSinPermiso, auditoria, registros, reloj);
 
         await Assert.ThrowsAsync<AccesoDenegadoException>(
             () => servicioSinPermiso.CrearRespaldoAsync("/no/existe.db"));
 
         var sesionAdmin = Sesiones.Con(Permiso.GestionarRoles);
         var servicioAdmin = new ServicioRespaldo(
-            parametros, sesionAdmin, auditoria, uow, reloj);
+            parametros, sesionAdmin, auditoria, registros, reloj);
 
         await Assert.ThrowsAsync<ValidacionException>(
             () => servicioAdmin.CrearRespaldoAsync("/no/existe/sigs.db"));

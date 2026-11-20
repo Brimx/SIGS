@@ -21,7 +21,6 @@ public class VentasEnEsperaYSupervisionTests
         var hasheador = new HasheadorFalso();
         var usuarios = new UsuariosEnMemoria();
         var sesionCajero = new SesionActual();
-        var trabajo = new UnidadDeTrabajoFalsa();
         var parametros = new ParametrosFalsos();
         parametros.Valores[ClavesParametro.MaxIntentosFallidos] = "3";
 
@@ -56,12 +55,11 @@ public class VentasEnEsperaYSupervisionTests
 
         var servicioAuth = new ServicioAutenticacion(
             usuarios,
-            new RepositorioEnMemoria<IntentoAcceso>(),
+            new IntentosAccesoEnMemoria(),
             new AuditoriaFalsa(),
             parametros,
             hasheador,
             sesionCajero,
-            trabajo,
             new RelojFijo(EscenarioInventario.Ahora));
 
         var empAutorizado = await servicioAuth.ValidarSupervisorAsync(
@@ -98,12 +96,11 @@ public class VentasEnEsperaYSupervisionTests
 
         var servicioAuth = new ServicioAutenticacion(
             usuarios,
-            new RepositorioEnMemoria<IntentoAcceso>(),
+            new IntentosAccesoEnMemoria(),
             new AuditoriaFalsa(),
             parametros,
             hasheador,
             sesion,
-            new UnidadDeTrabajoFalsa(),
             new RelojFijo(EscenarioInventario.Ahora));
 
         await Assert.ThrowsAsync<CredencialesInvalidasException>(() =>
@@ -135,12 +132,11 @@ public class VentasEnEsperaYSupervisionTests
 
         var servicioAuth = new ServicioAutenticacion(
             usuarios,
-            new RepositorioEnMemoria<IntentoAcceso>(),
+            new IntentosAccesoEnMemoria(),
             new AuditoriaFalsa(),
             parametros,
             hasheador,
             sesion,
-            new UnidadDeTrabajoFalsa(),
             new RelojFijo(EscenarioInventario.Ahora));
 
         await Assert.ThrowsAsync<AccesoDenegadoException>(() =>
@@ -152,8 +148,8 @@ public class VentasEnEsperaYSupervisionTests
     {
         var turnos = new TurnosEnMemoria();
         var ventas = new VentasEnMemoria();
-        var cajas = new RepositorioEnMemoria<Caja>();
-        var retiros = new RepositorioEnMemoria<RetiroCaja>();
+        var cajas = new CajasEnMemoria();
+        var retiros = new RetirosCajaEnMemoria();
         var parametros = new ParametrosFalsos();
         parametros.Valores[ClavesParametro.ToleranciaArqueo] = "1000";
 
@@ -166,7 +162,6 @@ public class VentasEnEsperaYSupervisionTests
             parametros,
             new AuditoriaFalsa(),
             Sesiones.Con(Permiso.AbrirCerrarTurno),
-            new UnidadDeTrabajoFalsa(),
             new RelojFijo(EscenarioInventario.Ahora),
             retiros);
 
@@ -189,7 +184,7 @@ public class VentasEnEsperaYSupervisionTests
     {
         var turnos = new TurnosEnMemoria();
         var ventas = new VentasEnMemoria();
-        var cajas = new RepositorioEnMemoria<Caja>();
+        var cajas = new CajasEnMemoria();
         var parametros = new ParametrosFalsos();
         parametros.Valores[ClavesParametro.ToleranciaArqueo] = "1000";
 
@@ -202,7 +197,6 @@ public class VentasEnEsperaYSupervisionTests
             parametros,
             new AuditoriaFalsa(),
             Sesiones.Con(Permiso.AbrirCerrarTurno),
-            new UnidadDeTrabajoFalsa(),
             new RelojFijo(EscenarioInventario.Ahora));
 
         await servicioCaja.AbrirTurnoAsync(1, 50000);
@@ -214,12 +208,11 @@ public class VentasEnEsperaYSupervisionTests
     [Fact]
     public async Task VentasEnEspera_SuspenderYRecuperar_RestauraLineasCorrectamente()
     {
-        var repo = new RepositorioEnMemoria<VentaEnEspera>();
+        var repo = new VentasEnEsperaEnMemoria();
         var servicio = new ServicioVentasEnEspera(
             repo,
             Sesiones.Con(Permiso.Vender),
             new AuditoriaFalsa(),
-            new UnidadDeTrabajoFalsa(),
             new RelojFijo(EscenarioInventario.Ahora));
 
         var lineas = new List<LineaVenta>

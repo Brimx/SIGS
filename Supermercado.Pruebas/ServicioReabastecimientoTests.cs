@@ -15,7 +15,6 @@ public class ServicioReabastecimientoTests
         public ReabastecimientosEnMemoria Solicitudes { get; } = new();
         public AlertasInventarioFalsas Alertas { get; } = new();
         public InventarioFalso Inventario { get; } = new();
-        public UnidadDeTrabajoFalsa Trabajo { get; } = new();
         public RelojFijo Reloj { get; } = new(EscenarioInventario.Ahora);
 
         public ServicioReabastecimiento CrearServicio(
@@ -25,7 +24,6 @@ public class ServicioReabastecimientoTests
                 Alertas,
                 Inventario,
                 Sesiones.Con(permisos),
-                Trabajo,
                 Reloj);
     }
 
@@ -107,7 +105,7 @@ public class ServicioReabastecimientoTests
         var generada = Assert.Single(nuevas);
         Assert.Equal(2, generada.ProductoId);
         Assert.Equal(5, generada.CantidadSolicitada);
-        Assert.Equal(1, e.Trabajo.Guardados);
+        Assert.Equal(1, e.Solicitudes.Guardados);
     }
 
     [Fact]
@@ -139,7 +137,7 @@ public class ServicioReabastecimientoTests
         Assert.Equal(EstadoReabastecimiento.Atendido, reab.Estado);
         Assert.NotNull(reab.FechaAtencion);
         Assert.Equal(1, e.Inventario.TrasladosLlamados);
-        Assert.Equal(1, e.Trabajo.Guardados);
+        Assert.Equal(1, e.Solicitudes.Guardados);
     }
 
     [Fact]

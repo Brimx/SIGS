@@ -15,8 +15,7 @@ public class ServicioUsuarios(
     IUsuarioRepositorio usuarios,
     IHasheadorClave hasheador,
     IServicioAuditoria auditoria,
-    ISesionActual sesion,
-    IUnidadDeTrabajo trabajo) : Personal.ServicioPersonal(
+    ISesionActual sesion) : Personal.ServicioPersonal(
         null!,
         null!,
         null!,
@@ -26,5 +25,4 @@ public class ServicioUsuarios(
         hasheador,
         auditoria,
         sesion,
-        trabajo,
         TimeProvider.System);

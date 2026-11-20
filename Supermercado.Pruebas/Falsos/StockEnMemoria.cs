@@ -3,7 +3,7 @@ using Supermercado.Entidades.Inventario;
 
 namespace Supermercado.Pruebas.Falsos;
 
-public class StockEnMemoria<T> : RepositorioEnMemoria<T>, IStockRepositorio<T>
+public class StockEnMemoria<T> : RepositorioEnMemoria<T>
     where T : StockLote
 {
     public override Task AgregarAsync(T entidad)
@@ -27,4 +27,14 @@ public class StockEnMemoria<T> : RepositorioEnMemoria<T>, IStockRepositorio<T>
         => Task.FromResult<IReadOnlyDictionary<int, int>>(Datos
             .GroupBy(s => s.ProductoId)
             .ToDictionary(g => g.Key, g => g.Sum(s => s.Cantidad)));
+}
+
+public class StockEstanteEnMemoria
+    : StockEnMemoria<StockEstante>, IStockEstanteRepositorio
+{
+}
+
+public class StockBodegaEnMemoria
+    : StockEnMemoria<StockBodega>, IStockBodegaRepositorio
+{
 }

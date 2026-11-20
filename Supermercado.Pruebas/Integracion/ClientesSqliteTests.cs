@@ -16,7 +16,7 @@ public class ClientesSqliteTests
             Documento = "1020304050",
             Nombres = "Lucía"
         });
-        await contexto.CrearUnidadDeTrabajo().GuardarAsync();
+        await contexto.Db.SaveChangesAsync();
         contexto.Db.ChangeTracker.Clear();
 
         var leido = await repo.ObtenerPorDocumentoAsync("1020304050");

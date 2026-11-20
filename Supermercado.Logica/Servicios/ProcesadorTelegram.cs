@@ -26,7 +26,6 @@ public sealed class ProcesadorTelegram(
     IServicioCaja caja,
     IServicioReabastecimiento reabastecimiento,
     IServicioAuditoria auditoria,
-    IUnidadDeTrabajo trabajo,
     TimeProvider reloj)
 {
     private static readonly TimeSpan DuracionConfirmacion = TimeSpan.FromMinutes(3);
@@ -279,7 +278,7 @@ public sealed class ProcesadorTelegram(
                 nameof(Usuario),
                 usuario.Id,
                 "Origen: Telegram | Chat desvinculado");
-            await trabajo.GuardarAsync();
+            await usuarios.GuardarAsync();
         }
 
         await telegram.EnviarMensajeAsync(
@@ -370,7 +369,7 @@ public sealed class ProcesadorTelegram(
             yaVinculado
                 ? "Origen: Telegram | Chat revinculado con código de un solo uso"
                 : "Origen: Telegram | Chat vinculado con código de un solo uso");
-        await trabajo.GuardarAsync();
+        await usuarios.GuardarAsync();
         await telegram.EnviarMensajeAsync(
             chatId,
             "Vinculación completada. Usa /stock, /ventas, /caja o /resumen.",

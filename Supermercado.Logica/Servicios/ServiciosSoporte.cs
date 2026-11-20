@@ -21,7 +21,7 @@ public class ServicioRespaldo(
     IServicioParametros parametros,
     ISesionActual sesion,
     IServicioAuditoria auditoria,
-    IUnidadDeTrabajo trabajo,
+    IRegistroAuditoriaRepositorio registros,
     TimeProvider reloj) : IServicioRespaldo
 {
     public async Task<string> CrearRespaldoAsync(string? rutaOrigen = null)
@@ -56,7 +56,7 @@ public class ServicioRespaldo(
             "BaseDatos",
             null,
             $"Respaldo creado en {rutaDestino}");
-        await trabajo.GuardarAsync();
+        await registros.GuardarAsync();
 
         return rutaDestino;
     }

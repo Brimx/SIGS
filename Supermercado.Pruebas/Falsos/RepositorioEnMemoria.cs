@@ -1,9 +1,8 @@
 using Supermercado.Entidades.Base;
-using Supermercado.Entidades.Contratos;
 
 namespace Supermercado.Pruebas.Falsos;
 
-public class RepositorioEnMemoria<T> : IRepositorio<T> where T : EntidadBase
+public class RepositorioEnMemoria<T> where T : EntidadBase
 {
     private int _siguienteId = 1000;
 
@@ -11,6 +10,14 @@ public class RepositorioEnMemoria<T> : IRepositorio<T> where T : EntidadBase
 
     /// <summary>Cuántas veces se pidió marcar una entidad como modificada.</summary>
     public int Actualizaciones { get; private set; }
+
+    public int Guardados { get; private set; }
+
+    public Task<int> GuardarAsync()
+    {
+        Guardados++;
+        return Task.FromResult(0);
+    }
 
     public Task<T?> ObtenerPorIdAsync(int id)
         => Task.FromResult(Datos.FirstOrDefault(e => e.Id == id));

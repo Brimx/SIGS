@@ -11,10 +11,10 @@ using Supermercado.Logica.Seguridad;
 namespace Supermercado.Logica.Inventario;
 
 public class ServicioInventario(
-    IStockRepositorio<StockEstante> estante,
-    IStockRepositorio<StockBodega> bodega,
+    IStockEstanteRepositorio estante,
+    IStockBodegaRepositorio bodega,
     IMovimientoRepositorio movimientos,
-    IRepositorio<Merma> mermas,
+    IMermaRepositorio mermas,
     IEstrategiaSalida estrategia,
     TimeProvider reloj,
     IProductoRepositorio? productos = null,
@@ -22,8 +22,7 @@ public class ServicioInventario(
     IReabastecimientoRepositorio? solicitudes = null,
     IServicioParametros? parametros = null,
     IServicioAuditoria? auditoria = null,
-    ISesionActual? sesion = null,
-    IUnidadDeTrabajo? trabajo = null) : IServicioInventario,
+    ISesionActual? sesion = null) : IServicioInventario,
         IServicioConsultaInventario,
         IServicioAlertasInventario,
         IServicioMermas,
@@ -33,7 +32,7 @@ public class ServicioInventario(
 
     public async Task DescontarVentaAsync(int productoId, int cantidad, Venta venta)
     {
-        var filas = await OrdenarAsyncParaVentaAsync(estante, productoId);
+        var filas = await OrdenarAsyncParaVentaAsync(productoId);
 
         foreach (var (fila, tomar) in PlanDeSalida.Repartir(filas, cantidad))
         {
@@ -66,7 +65,7 @@ public class ServicioInventario(
 
     public async Task TrasladarAEstanteAsync(int productoId, int cantidad)
     {
-        var filas = await OrdenarAsyncParaTrasladoAsync(bodega, productoId);
+        var filas = await OrdenarAsyncParaTrasladoAsync(productoId);
 
         foreach (var (origen, tomar) in PlanDeSalida.Repartir(filas, cantidad))
         {
@@ -135,8 +134,7 @@ public class ServicioInventario(
         if (auditoria is not null)
             await auditoria.RegistrarAsync(AccionAuditoria.Merma, nameof(Merma), loteId, motivo);
 
-        if (trabajo is not null)
-            await trabajo.GuardarAsync();
+        await mermas.GuardarAsync();
     }
 
     // --- Alertas de inventario ---
@@ -208,8 +206,8 @@ public class ServicioInventario(
                 $"Origen: {origen} | Solicitudes: {nuevas.Count}");
         }
 
-if (trabajo is not null)
-            await trabajo.GuardarAsync();
+        if (solicitudes is not null)
+            await solicitudes.GuardarAsync();
 
         return nuevas;
     }
@@ -236,8 +234,7 @@ if (trabajo is not null)
         solicitud.Atender(reloj.AhoraUtc());
         solicitudes.Actualizar(solicitud);
 
-        if (trabajo is not null)
-            await trabajo.GuardarAsync();
+        await solicitudes.GuardarAsync();
     }
 
     // --- Consultas y Kardex ---
@@ -358,19 +355,17 @@ if (trabajo is not null)
         return fila ?? throw new StockInsuficienteException($"lote {loteId}");
     }
 
-    private async Task<List<T>> OrdenarAsyncParaVentaAsync<T>(
-        IStockRepositorio<T> repositorio,
-        int productoId) where T : StockLote
+    private async Task<List<StockEstante>> OrdenarAsyncParaVentaAsync(
+        int productoId)
     {
-        var filas = await repositorio.ObtenerPorProductoAsync(productoId);
+        var filas = await estante.ObtenerPorProductoAsync(productoId);
         return estrategia.Ordenar(filas, reloj.HoyLocal()).ToList();
     }
 
-    private async Task<List<T>> OrdenarAsyncParaTrasladoAsync<T>(
-        IStockRepositorio<T> repositorio,
-        int productoId) where T : StockLote
+    private async Task<List<StockBodega>> OrdenarAsyncParaTrasladoAsync(
+        int productoId)
     {
-        var filas = await repositorio.ObtenerPorProductoAsync(productoId);
+        var filas = await bodega.ObtenerPorProductoAsync(productoId);
         return filas
             .Where(s => !s.Lote.EstaVencido(reloj.HoyLocal()))
             .OrderBy(s => s.Lote.FechaVencimiento)
@@ -421,7 +416,7 @@ if (trabajo is not null)
 
 public class ServicioAlertasInventario(
     IProductoRepositorio productos,
-    IStockRepositorio<StockEstante> estante,
+    IStockEstanteRepositorio estante,
     ILoteRepositorio lotes,
     IServicioParametros parametros,
     ISesionActual sesion,
@@ -442,7 +437,6 @@ public class ServicioReabastecimiento(
     IServicioAlertasInventario alertas,
     IServicioInventario inventario,
     ISesionActual sesion,
-    IUnidadDeTrabajo trabajo,
     TimeProvider reloj) : IServicioReabastecimiento
 {
     public async Task<IReadOnlyList<Reabastecimiento>> GenerarSolicitudesAsync(string? origen = null)
@@ -469,7 +463,7 @@ public class ServicioReabastecimiento(
         foreach (var solicitud in nuevas)
             await solicitudes.AgregarAsync(solicitud);
 
-        await trabajo.GuardarAsync();
+        await solicitudes.GuardarAsync();
         return nuevas;
     }
 
@@ -489,13 +483,13 @@ public class ServicioReabastecimiento(
         await inventario.TrasladarAEstanteAsync(solicitud.ProductoId, solicitud.CantidadSolicitada);
         solicitud.Atender(reloj.AhoraUtc());
         solicitudes.Actualizar(solicitud);
-        await trabajo.GuardarAsync();
+        await solicitudes.GuardarAsync();
     }
 }
 
 public class ServicioConsultaInventario(
-    IStockRepositorio<StockEstante> estante,
-    IStockRepositorio<StockBodega> bodega,
+    IStockEstanteRepositorio estante,
+    IStockBodegaRepositorio bodega,
     IProductoRepositorio productos,
     ILoteRepositorio lotes,
     IMovimientoRepositorio movimientos,
@@ -514,7 +508,7 @@ public class ServicioMermas(
     IServicioInventario inventario,
     IServicioAuditoria auditoria,
     ISesionActual sesion,
-    IUnidadDeTrabajo trabajo) : IServicioMermas
+    IMermaRepositorio mermas) : IServicioMermas
 {
     public Task RegistrarAsync(
         int productoId,
@@ -528,7 +522,7 @@ public class ServicioMermas(
             .ContinueWith(async _ =>
             {
                 await auditoria.RegistrarAsync(AccionAuditoria.Merma, nameof(Merma), loteId, motivo);
-                await trabajo.GuardarAsync();
+                await mermas.GuardarAsync();
             }).Unwrap();
     }
 }

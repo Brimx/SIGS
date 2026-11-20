@@ -13,15 +13,13 @@ public class ServicioParametrosTests
     {
         public ParametrosEnMemoria Parametros { get; } = new();
         public AuditoriaFalsa Auditoria { get; } = new();
-        public UnidadDeTrabajoFalsa Trabajo { get; } = new();
         public ServicioParametros Servicio { get; }
 
         public Escenario(Permiso permisos = Permiso.GestionarPersonal)
             => Servicio = new ServicioParametros(
                 Parametros,
                 Auditoria,
-                Sesiones.Con(permisos),
-                Trabajo);
+                Sesiones.Con(permisos));
     }
 
     [Fact]
@@ -32,7 +30,7 @@ public class ServicioParametrosTests
         await e.Servicio.GuardarAsync("clave.prueba", "42");
 
         Assert.Equal("42", await e.Servicio.ObtenerTextoAsync("clave.prueba"));
-        Assert.Equal(1, e.Trabajo.Guardados);
+        Assert.Equal(1, e.Parametros.Guardados);
         Assert.Equal(
             AccionAuditoria.ParametroCambiado,
             Assert.Single(e.Auditoria.Acciones));
@@ -47,7 +45,7 @@ public class ServicioParametrosTests
             () => e.Servicio.GuardarAsync("clave.prueba", "42"));
 
         Assert.Empty(e.Parametros.Datos);
-        Assert.Equal(0, e.Trabajo.Guardados);
+        Assert.Equal(0, e.Parametros.Guardados);
     }
 
     [Fact]
@@ -56,8 +54,7 @@ public class ServicioParametrosTests
         var servicio = new ServicioParametros(
             new ParametrosEnMemoria(),
             new AuditoriaFalsa(),
-            new SesionActual(),
-            new UnidadDeTrabajoFalsa());
+            new SesionActual());
 
         await servicio.GuardarRespaldoAsync(new Dictionary<string, string>
         {

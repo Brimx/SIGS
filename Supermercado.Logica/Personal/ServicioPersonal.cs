@@ -11,16 +11,15 @@ using Supermercado.Logica.Servicios;
 namespace Supermercado.Logica.Personal;
 
 public class ServicioPersonal(
-    IRepositorio<Empleado> empleados,
-    IRepositorio<Cargo> cargos,
-    IRepositorio<Rol> roles,
+    IEmpleadoRepositorio empleados,
+    ICargoRepositorio cargos,
+    IRolRepositorio roles,
     IUsuarioRepositorio usuarios,
-    IRepositorio<Caja> cajas,
+    ICajaRepositorio cajas,
     IVerificadorCorreo verificador,
     IHasheadorClave hasheador,
     IServicioAuditoria auditoria,
     ISesionActual sesion,
-    IUnidadDeTrabajo trabajo,
     TimeProvider reloj) : IServicioPersonal, IServicioEmpleados, IServicioEstructura, IServicioUsuarios
 {
     private const string CaracteresClave =
@@ -47,7 +46,7 @@ public class ServicioPersonal(
             AccionAuditoria.EmpleadoCreado,
             nameof(Empleado),
             detalle: empleado.Documento);
-        await trabajo.GuardarAsync();
+        await empleados.GuardarAsync();
     }
 
     public async Task EditarAsync(Empleado empleado)
@@ -74,7 +73,7 @@ public class ServicioPersonal(
             existente.RolId = empleado.RolId;
 
         empleados.Actualizar(existente);
-        await trabajo.GuardarAsync();
+        await empleados.GuardarAsync();
     }
 
     public async Task CambiarRolAsync(int empleadoId, int rolId)
@@ -93,7 +92,7 @@ public class ServicioPersonal(
             nameof(Empleado),
             empleadoId,
             $"Rol {anterior} a {rol.Id}");
-        await trabajo.GuardarAsync();
+        await empleados.GuardarAsync();
     }
 
     public async Task DesactivarAsync(int empleadoId)
@@ -106,7 +105,7 @@ public class ServicioPersonal(
         empleados.Actualizar(empleado);
         await auditoria.RegistrarAsync(
             AccionAuditoria.EmpleadoDesactivado, nameof(Empleado), empleadoId);
-        await trabajo.GuardarAsync();
+        await empleados.GuardarAsync();
     }
 
     public async Task CrearUsuarioAsync(
@@ -142,7 +141,7 @@ public class ServicioPersonal(
             AccionAuditoria.UsuarioCreado,
             nameof(Usuario),
             detalle: nombreUsuario);
-        await trabajo.GuardarAsync();
+        await usuarios.GuardarAsync();
     }
 
     // --- Estructura (Cajas, Cargos, Roles) ---
@@ -163,7 +162,7 @@ public class ServicioPersonal(
             AccionAuditoria.CajaCreada,
             nameof(Caja),
             detalle: $"Caja creada: {caja.Nombre}");
-        await trabajo.GuardarAsync();
+        await cajas.GuardarAsync();
         return caja;
     }
 
@@ -186,7 +185,7 @@ public class ServicioPersonal(
             nameof(Caja),
             caja.Id,
             $"Caja modificada: {caja.Nombre} (Activa: {activa})");
-        await trabajo.GuardarAsync();
+        await cajas.GuardarAsync();
     }
 
     public Task<IReadOnlyList<Cargo>> ObtenerCargosAsync()
@@ -205,7 +204,7 @@ public class ServicioPersonal(
             AccionAuditoria.CargoCreado,
             nameof(Cargo),
             detalle: $"Cargo creado: {cargo.Nombre}");
-        await trabajo.GuardarAsync();
+        await cargos.GuardarAsync();
         return cargo;
     }
 
@@ -226,7 +225,7 @@ public class ServicioPersonal(
             nameof(Cargo),
             cargo.Id,
             $"Cargo renombrado a {cargo.Nombre}");
-        await trabajo.GuardarAsync();
+        await cargos.GuardarAsync();
     }
 
     public Task<IReadOnlyList<Rol>> ObtenerRolesAsync()
@@ -256,7 +255,7 @@ public class ServicioPersonal(
             AccionAuditoria.RolCreado,
             nameof(Rol),
             detalle: $"Rol creado: {rol.Nombre} con permisos {rol.Permisos}");
-        await trabajo.GuardarAsync();
+        await roles.GuardarAsync();
         return rol;
     }
 
@@ -281,7 +280,7 @@ public class ServicioPersonal(
             nameof(Rol),
             rol.Id,
             $"Permisos de rol {rol.Nombre} actualizados a {nuevosPermisos}");
-        await trabajo.GuardarAsync();
+        await roles.GuardarAsync();
     }
 
     // --- Usuarios ---
@@ -307,7 +306,7 @@ public class ServicioPersonal(
             nameof(Usuario),
             usuario.Id,
             $"Usuario {usuario.NombreUsuario} desbloqueado");
-        await trabajo.GuardarAsync();
+        await usuarios.GuardarAsync();
     }
 
     public async Task<string> RestablecerClaveTemporalAsync(int usuarioId)
@@ -328,7 +327,7 @@ public class ServicioPersonal(
             nameof(Usuario),
             usuario.Id,
             $"Clave restablecida para {usuario.NombreUsuario}");
-        await trabajo.GuardarAsync();
+        await usuarios.GuardarAsync();
 
         return claveTemporal;
     }
@@ -390,14 +389,13 @@ public class ServicioPersonal(
 
 // Adaptadores para pruebas existentes
 public class ServicioEmpleados(
-    IRepositorio<Empleado> empleados,
-    IRepositorio<Rol> roles,
+    IEmpleadoRepositorio empleados,
+    IRolRepositorio roles,
     IUsuarioRepositorio usuarios,
     IVerificadorCorreo verificador,
     IHasheadorClave hasheador,
     IServicioAuditoria auditoria,
     ISesionActual sesion,
-    IUnidadDeTrabajo trabajo,
     TimeProvider reloj) : ServicioPersonal(
         empleados,
         null!,
@@ -408,16 +406,14 @@ public class ServicioEmpleados(
         hasheador,
         auditoria,
         sesion,
-        trabajo,
         reloj);
 
 public class ServicioEstructura(
-    IRepositorio<Caja> cajas,
-    IRepositorio<Cargo> cargos,
+    ICajaRepositorio cajas,
+    ICargoRepositorio cargos,
     IRolRepositorio roles,
     IServicioAuditoria auditoria,
-    ISesionActual sesion,
-    IUnidadDeTrabajo trabajo) : ServicioPersonal(
+    ISesionActual sesion) : ServicioPersonal(
         null!,
         cargos,
         roles,
@@ -427,5 +423,4 @@ public class ServicioEstructura(
         null!,
         auditoria,
         sesion,
-        trabajo,
         TimeProvider.System);

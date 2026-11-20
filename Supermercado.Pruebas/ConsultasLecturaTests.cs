@@ -15,7 +15,7 @@ public class ConsultasLecturaTests
     [Fact]
     public async Task ConsultaAuditoria_FiltraYPagina()
     {
-        var registros = new RepositorioEnMemoria<RegistroAuditoria>();
+        var registros = new RegistrosAuditoriaEnMemoria();
         var ahora = new DateTime(2026, 10, 24, 10, 0, 0, DateTimeKind.Utc);
 
         await registros.AgregarAsync(new RegistroAuditoria
@@ -60,7 +60,7 @@ public class ConsultasLecturaTests
     [Fact]
     public async Task ConsultaAuditoria_SinPermiso_LanzaAccesoDenegado()
     {
-        var registros = new RepositorioEnMemoria<RegistroAuditoria>();
+        var registros = new RegistrosAuditoriaEnMemoria();
         var servicio = new ServicioConsultaAuditoria(
             registros,
             Sesiones.Con(Permiso.Vender));
@@ -74,8 +74,8 @@ public class ConsultasLecturaTests
     {
         var productos = new ProductosEnMemoria();
         var lotes = new LotesEnMemoria();
-        var estante = new StockEnMemoria<StockEstante>();
-        var bodega = new StockEnMemoria<StockBodega>();
+        var estante = new StockEstanteEnMemoria();
+        var bodega = new StockBodegaEnMemoria();
         var movs = new MovimientosEnMemoria();
 
         var impuesto = new Iva { Nombre = "IVA 0", PuntosBasicos = 0 };
@@ -127,8 +127,8 @@ public class ConsultasLecturaTests
     {
         var productos = new ProductosEnMemoria();
         var lotes = new LotesEnMemoria();
-        var estante = new StockEnMemoria<StockEstante>();
-        var bodega = new StockEnMemoria<StockBodega>();
+        var estante = new StockEstanteEnMemoria();
+        var bodega = new StockBodegaEnMemoria();
         var movs = new MovimientosEnMemoria();
 
         var lote = new Lote { Id = 1, NumeroLote = "L1", ProductoId = 1 };

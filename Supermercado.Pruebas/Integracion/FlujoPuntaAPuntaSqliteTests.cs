@@ -25,36 +25,34 @@ public class FlujoPuntaAPuntaSqliteTests
         await inicializador.CrearYSembrarAsync();
 
         var demo = new Supermercado.Logica.DatosDemo.GeneradorDatosDemo(
-            new Repositorio<Categoria>(contexto.Db),
-            new Repositorio<Proveedor>(contexto.Db),
-            new Repositorio<Supermercado.Entidades.Finanzas.Impuesto>(contexto.Db),
+            new CategoriaRepositorio(contexto.Db),
+            new ProveedorRepositorio(contexto.Db),
+            new ImpuestoRepositorio(contexto.Db),
             new ProductoRepositorio(contexto.Db),
             new LoteRepositorio(contexto.Db),
-            new StockRepositorio<StockEstante>(contexto.Db),
-            new StockRepositorio<StockBodega>(contexto.Db),
+            new StockEstanteRepositorio(contexto.Db),
+            new StockBodegaRepositorio(contexto.Db),
             new MovimientoRepositorio(contexto.Db),
-            new Repositorio<Cargo>(contexto.Db),
+            new CargoRepositorio(contexto.Db),
             new RolRepositorio(contexto.Db),
-            new Repositorio<Empleado>(contexto.Db),
+            new EmpleadoRepositorio(contexto.Db),
             new UsuarioRepositorio(contexto.Db),
-            new Repositorio<Caja>(contexto.Db),
+            new CajaRepositorio(contexto.Db),
             new TurnoCajaRepositorio(contexto.Db),
             new VentaRepositorio(contexto.Db),
             new GastoRepositorio(contexto.Db),
             new HasheadorFalso(),
-            new UnidadDeTrabajo(contexto.Db),
             contexto.Reloj);
 
         await demo.GenerarAsync();
 
         var auth = new ServicioAutenticacion(
             new UsuarioRepositorio(contexto.Db),
-            new Repositorio<IntentoAcceso>(contexto.Db),
+            new IntentoAccesoRepositorio(contexto.Db),
             new AuditoriaFalsa(),
             new ParametrosFalsos(),
             new HasheadorFalso(),
             new SesionActual(),
-            new UnidadDeTrabajo(contexto.Db),
             contexto.Reloj);
 
         await auth.IniciarSesionAsync("cajero", "Cajero123*");
@@ -108,19 +106,18 @@ public class FlujoPuntaAPuntaSqliteTests
         sesion.Iniciar(usuario);
 
         // 4. Instanciar servicios de dominio con repositorios EF Core
-        var trabajo = new UnidadDeTrabajo(contexto.Db);
-        var auditoriaRepo = new Repositorio<RegistroAuditoria>(contexto.Db);
+        var auditoriaRepo = new RegistroAuditoriaRepositorio(contexto.Db);
         var servicioAuditoria = new ServicioAuditoria(
             auditoriaRepo, sesion, contexto.Reloj);
 
         var paramRepo = new ParametroRepositorio(contexto.Db);
         var servicioParametros = new ServicioParametros(
-            paramRepo, servicioAuditoria, sesion, trabajo);
+            paramRepo, servicioAuditoria, sesion);
 
-        var estanteRepo = new StockRepositorio<StockEstante>(contexto.Db);
-        var bodegaRepo = new StockRepositorio<StockBodega>(contexto.Db);
+        var estanteRepo = new StockEstanteRepositorio(contexto.Db);
+        var bodegaRepo = new StockBodegaRepositorio(contexto.Db);
         var movRepo = new MovimientoRepositorio(contexto.Db);
-        var mermaRepo = new Repositorio<Merma>(contexto.Db);
+        var mermaRepo = new MermaRepositorio(contexto.Db);
         var estrategia = new SalidaFefo();
         var servicioInventario = new ServicioInventario(
             estanteRepo,
@@ -138,12 +135,11 @@ public class FlujoPuntaAPuntaSqliteTests
             servicioInventario,
             new ConsultaCodigoBarrasNula(),
             sesion,
-            trabajo,
             contexto.Reloj);
 
         var turnoRepo = new TurnoCajaRepositorio(contexto.Db);
         var ventaRepo = new VentaRepositorio(contexto.Db);
-        var cajaRepo = new Repositorio<Caja>(contexto.Db);
+        var cajaRepo = new CajaRepositorio(contexto.Db);
         var servicioCaja = new ServicioCaja(
             turnoRepo,
             ventaRepo,
@@ -151,7 +147,6 @@ public class FlujoPuntaAPuntaSqliteTests
             servicioParametros,
             servicioAuditoria,
             sesion,
-            trabajo,
             contexto.Reloj);
 
         var servicioVentas = new ServicioVentas(
@@ -163,7 +158,6 @@ public class FlujoPuntaAPuntaSqliteTests
             servicioParametros,
             servicioAuditoria,
             sesion,
-            trabajo,
             contexto.Reloj);
 
         // 5. Abrir turno
@@ -206,7 +200,7 @@ public class FlujoPuntaAPuntaSqliteTests
 
         // Trasladar 20 unidades de bodega a estante
         await servicioInventario.TrasladarAEstanteAsync(producto.Id, 20);
-        await trabajo.GuardarAsync();
+        await contexto.Db.SaveChangesAsync();
 
         var totalesEstanteAntes = await estanteRepo
             .ObtenerTotalesPorProductoAsync();

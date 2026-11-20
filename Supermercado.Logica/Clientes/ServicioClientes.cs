@@ -10,8 +10,7 @@ namespace Supermercado.Logica.Clientes;
 public class ServicioClientes(
     IClienteRepositorio clientes,
     IServicioAuditoria auditoria,
-    ISesionActual sesion,
-    IUnidadDeTrabajo trabajo) : IServicioClientes
+    ISesionActual sesion) : IServicioClientes
 {
     public async Task<Cliente> CrearAsync(
         string documento,
@@ -36,7 +35,7 @@ public class ServicioClientes(
             AccionAuditoria.ClienteCreado,
             nameof(Cliente),
             detalle: cliente.Documento);
-        await trabajo.GuardarAsync();
+        await clientes.GuardarAsync();
         return cliente;
     }
 
@@ -70,7 +69,7 @@ public class ServicioClientes(
             nameof(Cliente),
             id,
             cliente.Documento);
-        await trabajo.GuardarAsync();
+        await clientes.GuardarAsync();
     }
 
     public async Task DesactivarAsync(int id)
@@ -85,7 +84,7 @@ public class ServicioClientes(
             nameof(Cliente),
             id,
             "Desactivado");
-        await trabajo.GuardarAsync();
+        await clientes.GuardarAsync();
     }
 
     public async Task<Cliente?> BuscarPorDocumentoAsync(string documento)

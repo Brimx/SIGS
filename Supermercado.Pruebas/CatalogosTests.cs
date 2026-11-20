@@ -8,10 +8,9 @@ namespace Supermercado.Pruebas;
 
 public class CatalogosTests
 {
-    private readonly RepositorioEnMemoria<Categoria> categorias = new();
-    private readonly RepositorioEnMemoria<Proveedor> proveedores = new();
+    private readonly CategoriasEnMemoria categorias = new();
+    private readonly ProveedoresEnMemoria proveedores = new();
     private readonly AuditoriaFalsa auditoria = new();
-    private readonly UnidadDeTrabajoFalsa trabajo = new();
 
     private ServicioCatalogos CrearServicio(
         Permiso permisos = Permiso.GestionarProductos)
@@ -19,8 +18,7 @@ public class CatalogosTests
             categorias,
             proveedores,
             auditoria,
-            Sesiones.Con(permisos),
-            trabajo);
+            Sesiones.Con(permisos));
 
     [Fact]
     public async Task CrearCategoria_ConPermiso_GuardaYAudita()
@@ -32,7 +30,7 @@ public class CatalogosTests
         Assert.Equal("Bebidas", creada.Nombre);
         Assert.Single(categorias.Datos);
         Assert.Contains(AccionAuditoria.CategoriaCreada, auditoria.Acciones);
-        Assert.Equal(1, trabajo.Guardados);
+        Assert.Equal(1, categorias.Guardados);
     }
 
     [Fact]
@@ -57,7 +55,7 @@ public class CatalogosTests
         Assert.Contains(
             AccionAuditoria.CategoriaModificada,
             auditoria.Acciones);
-        Assert.Equal(1, trabajo.Guardados);
+        Assert.Equal(1, categorias.Guardados);
     }
 
     [Fact]
@@ -75,7 +73,7 @@ public class CatalogosTests
         Assert.Equal("900123456-1", prov.Nit);
         Assert.Single(proveedores.Datos);
         Assert.Contains(AccionAuditoria.ProveedorCreado, auditoria.Acciones);
-        Assert.Equal(1, trabajo.Guardados);
+        Assert.Equal(1, proveedores.Guardados);
     }
 
     [Fact]
@@ -109,6 +107,6 @@ public class CatalogosTests
         Assert.Contains(
             AccionAuditoria.ProveedorModificado,
             auditoria.Acciones);
-        Assert.Equal(1, trabajo.Guardados);
+        Assert.Equal(1, proveedores.Guardados);
     }
 }

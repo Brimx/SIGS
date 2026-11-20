@@ -13,24 +13,23 @@ public class GeneradorDatosDemoTests
 {
     private class EscenarioDemo
     {
-        public RepositorioEnMemoria<Categoria> Categorias { get; } = new();
-        public RepositorioEnMemoria<Proveedor> Proveedores { get; } = new();
-        public RepositorioEnMemoria<Impuesto> Impuestos { get; } = new();
+        public CategoriasEnMemoria Categorias { get; } = new();
+        public ProveedoresEnMemoria Proveedores { get; } = new();
+        public ImpuestosEnMemoria Impuestos { get; } = new();
         public ProductosEnMemoria Productos { get; } = new();
         public LotesEnMemoria Lotes { get; } = new();
-        public StockEnMemoria<StockEstante> Estantes { get; } = new();
-        public StockEnMemoria<StockBodega> Bodegas { get; } = new();
+        public StockEstanteEnMemoria Estantes { get; } = new();
+        public StockBodegaEnMemoria Bodegas { get; } = new();
         public MovimientosEnMemoria Movimientos { get; } = new();
-        public RepositorioEnMemoria<Cargo> Cargos { get; } = new();
+        public CargosEnMemoria Cargos { get; } = new();
         public RolesEnMemoria Roles { get; } = new();
-        public RepositorioEnMemoria<Empleado> Empleados { get; } = new();
+        public EmpleadosEnMemoria Empleados { get; } = new();
         public UsuariosEnMemoria Usuarios { get; } = new();
-        public RepositorioEnMemoria<Caja> Cajas { get; } = new();
+        public CajasEnMemoria Cajas { get; } = new();
         public TurnosEnMemoria Turnos { get; } = new();
         public VentasEnMemoria Ventas { get; } = new();
         public GastosEnMemoria Gastos { get; } = new();
         public HasheadorFalso Hasheador { get; } = new();
-        public UnidadDeTrabajoFalsa Trabajo { get; } = new();
         public RelojFijo Reloj { get; } = new(EscenarioInventario.Ahora);
 
         public GeneradorDatosDemo Generador { get; }
@@ -62,7 +61,6 @@ public class GeneradorDatosDemoTests
                 Ventas,
                 Gastos,
                 Hasheador,
-                Trabajo,
                 Reloj);
         }
     }
@@ -79,7 +77,7 @@ public class GeneradorDatosDemoTests
         Assert.NotEmpty(e.Ventas.Datos);
         Assert.NotEmpty(e.Gastos.Datos);
         Assert.NotEmpty(e.Usuarios.Datos);
-        Assert.True(e.Trabajo.Guardados >= 1);
+        Assert.True(e.Productos.Guardados >= 1);
     }
 
     [Fact]

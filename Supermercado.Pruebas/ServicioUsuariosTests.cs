@@ -11,7 +11,6 @@ public class ServicioUsuariosTests
     private readonly UsuariosEnMemoria usuarios = new();
     private readonly HasheadorFalso hasheador = new();
     private readonly AuditoriaFalsa auditoria = new();
-    private readonly UnidadDeTrabajoFalsa trabajo = new();
 
     private ServicioUsuarios CrearServicio(
         Permiso permisos = Permiso.GestionarPersonal | Permiso.GestionarRoles)
@@ -19,8 +18,7 @@ public class ServicioUsuariosTests
             usuarios,
             hasheador,
             auditoria,
-            Sesiones.Con(permisos),
-            trabajo);
+            Sesiones.Con(permisos));
 
     [Fact]
     public async Task ObtenerTodosAsync_ConPermiso_RetornaUsuarios()
@@ -71,7 +69,7 @@ public class ServicioUsuariosTests
         Assert.Contains(
             AccionAuditoria.UsuarioDesbloqueado,
             auditoria.Acciones);
-        Assert.Equal(1, trabajo.Guardados);
+        Assert.Equal(1, usuarios.Guardados);
     }
 
     [Fact]
@@ -115,7 +113,7 @@ public class ServicioUsuariosTests
         Assert.Contains(
             AccionAuditoria.ClaveRestablecida,
             auditoria.Acciones);
-        Assert.Equal(1, trabajo.Guardados);
+        Assert.Equal(1, usuarios.Guardados);
     }
 
     [Fact]
@@ -138,7 +136,7 @@ public class ServicioUsuariosTests
             () => servicio.RestablecerClaveTemporalAsync(1));
 
         Assert.Equal(string.Empty, usuario.HashClave);
-        Assert.Equal(0, trabajo.Guardados);
+        Assert.Equal(0, usuarios.Guardados);
     }
 
     [Fact]

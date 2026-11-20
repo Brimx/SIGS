@@ -8,17 +8,15 @@ namespace Supermercado.Pruebas;
 
 public class ServicioImpuestosTests
 {
-    private readonly RepositorioEnMemoria<Impuesto> impuestos = new();
+    private readonly ImpuestosEnMemoria impuestos = new();
     private readonly AuditoriaFalsa auditoria = new();
-    private readonly UnidadDeTrabajoFalsa trabajo = new();
 
     private ServicioImpuestos CrearServicio(
         Permiso permisos = Permiso.GestionarTarifas)
         => new(
             impuestos,
             auditoria,
-            Sesiones.Con(permisos),
-            trabajo);
+            Sesiones.Con(permisos));
 
     [Fact]
     public async Task ObtenerActivosAsync_FiltraSoloLosActivos()
@@ -59,7 +57,7 @@ public class ServicioImpuestosTests
 
         Assert.Equal(1600, iva.PuntosBasicos);
         Assert.Contains(AccionAuditoria.CambioTarifa, auditoria.Acciones);
-        Assert.Equal(1, trabajo.Guardados);
+        Assert.Equal(1, impuestos.Guardados);
     }
 
     [Fact]

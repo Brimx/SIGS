@@ -3,7 +3,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Supermercado.Entidades.Contratos;
+using Supermercado.Datos;
 using Supermercado.GUI.Servicios.Impresion;
 using Supermercado.GUI.Servicios.Legal;
 using Supermercado.GUI.Servicios.Preferencias;
@@ -37,7 +37,7 @@ public partial class App : Application
         // Asegura esquema y semillas básicas en SQLite o PostgreSQL antes de renderizar vistas
         try
         {
-            var inicializador = _appScope.ServiceProvider.GetRequiredService<IInicializadorBaseDatos>();
+            var inicializador = _appScope.ServiceProvider.GetRequiredService<InicializadorBaseDatos>();
             inicializador.CrearYSembrarAsync().GetAwaiter().GetResult();
         }
         catch (Exception ex)

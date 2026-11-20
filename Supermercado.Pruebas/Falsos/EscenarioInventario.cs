@@ -9,10 +9,10 @@ public class EscenarioInventario
     public static readonly DateTimeOffset Ahora
         = new(2026, 10, 17, 12, 0, 0, TimeSpan.Zero);
 
-    public StockEnMemoria<StockEstante> Estante { get; } = new();
-    public StockEnMemoria<StockBodega> Bodega { get; } = new();
+    public StockEstanteEnMemoria Estante { get; } = new();
+    public StockBodegaEnMemoria Bodega { get; } = new();
     public MovimientosEnMemoria Movimientos { get; } = new();
-    public RepositorioEnMemoria<Merma> Mermas { get; } = new();
+    public MermasEnMemoria Mermas { get; } = new();
     public ServicioInventario Servicio { get; }
 
     public EscenarioInventario()

@@ -1,8 +1,6 @@
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Supermercado.Datos;
-using Supermercado.Datos.Repositorios;
-using Supermercado.Entidades.Contratos;
 using Supermercado.Pruebas.Falsos;
 
 namespace Supermercado.Pruebas.Integracion;
@@ -32,9 +30,6 @@ public sealed class ContextoPruebasSqlite : IDisposable
         else
             Db.Database.EnsureCreated();
     }
-
-    public IUnidadDeTrabajo CrearUnidadDeTrabajo()
-        => new UnidadDeTrabajo(Db);
 
     public void Dispose()
     {

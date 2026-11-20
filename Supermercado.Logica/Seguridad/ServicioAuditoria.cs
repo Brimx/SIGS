@@ -5,7 +5,7 @@ using Supermercado.Logica.Comunes;
 namespace Supermercado.Logica.Seguridad;
 
 public class ServicioAuditoria(
-    IRepositorio<RegistroAuditoria> registros,
+    IRegistroAuditoriaRepositorio registros,
     ISesionActual sesion,
     TimeProvider reloj) : IServicioAuditoria, IServicioConsultaAuditoria
 {
@@ -64,5 +64,5 @@ public class ServicioAuditoria(
 
 // Adaptador para compatibilidad binaria con pruebas de consulta aislada
 public class ServicioConsultaAuditoria(
-    IRepositorio<RegistroAuditoria> registros,
+    IRegistroAuditoriaRepositorio registros,
     ISesionActual sesion) : ServicioAuditoria(registros, sesion, TimeProvider.System);

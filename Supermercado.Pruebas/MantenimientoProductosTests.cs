@@ -10,15 +10,13 @@ public class MantenimientoProductosTests
 {
     private readonly ProductosEnMemoria productos = new();
     private readonly AuditoriaFalsa auditoria = new();
-    private readonly UnidadDeTrabajoFalsa trabajo = new();
 
     private ServicioMantenimientoProductos CrearServicio(
         Permiso permisos = Permiso.GestionarProductos)
         => new(
             productos,
             auditoria,
-            Sesiones.Con(permisos),
-            trabajo);
+            Sesiones.Con(permisos));
 
     [Fact]
     public async Task EditarAsync_ConPermiso_ActualizaYAudita()
@@ -48,7 +46,7 @@ public class MantenimientoProductosTests
         Assert.Contains(
             AccionAuditoria.ProductoModificado,
             auditoria.Acciones);
-        Assert.Equal(1, trabajo.Guardados);
+        Assert.Equal(1, productos.Guardados);
     }
 
     [Fact]
@@ -89,7 +87,7 @@ public class MantenimientoProductosTests
         Assert.Contains(
             AccionAuditoria.PrecioCambiado,
             auditoria.Acciones);
-        Assert.Equal(1, trabajo.Guardados);
+        Assert.Equal(1, productos.Guardados);
     }
 
     [Fact]
@@ -128,11 +126,11 @@ public class MantenimientoProductosTests
 
         await servicio.DesactivarAsync(1);
         Assert.False(producto.Activo);
-        Assert.Equal(1, trabajo.Guardados);
+        Assert.Equal(1, productos.Guardados);
 
         await servicio.ActivarAsync(1);
         Assert.True(producto.Activo);
-        Assert.Equal(2, trabajo.Guardados);
+        Assert.Equal(2, productos.Guardados);
         Assert.Equal(2, auditoria.Acciones.Count(
             a => a == AccionAuditoria.ProductoModificado));
     }

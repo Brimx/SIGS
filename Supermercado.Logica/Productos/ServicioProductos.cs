@@ -11,14 +11,13 @@ namespace Supermercado.Logica.Productos;
 
 public class ServicioProductos(
     IProductoRepositorio productos,
-    IRepositorio<Lote>? lotes = null,
+    ILoteRepositorio? lotes = null,
     IServicioInventario? inventario = null,
     IConsultaCodigoBarras? externo = null,
     ISesionActual? sesion = null,
-    IUnidadDeTrabajo? trabajo = null,
     TimeProvider? reloj = null,
-    IRepositorio<Categoria>? categorias = null,
-    IRepositorio<Proveedor>? proveedores = null,
+    ICategoriaRepositorio? categorias = null,
+    IProveedorRepositorio? proveedores = null,
     IServicioAuditoria? auditoria = null) : IServicioProductos,
         IServicioBusquedaProductos,
         IServicioMantenimientoProductos,
@@ -38,8 +37,7 @@ public class ServicioProductos(
             throw new ValidacionException("Ya existe ese código de barras.");
 
         await productos.AgregarAsync(producto);
-        if (trabajo is not null)
-            await trabajo.GuardarAsync();
+        await productos.GuardarAsync();
     }
 
     public Task<Producto?> BuscarPorCodigoBarrasAsync(string codigo)
@@ -102,8 +100,8 @@ public class ServicioProductos(
         if (inventario is not null)
             await inventario.RegistrarIngresoAsync(lote, cantidad);
 
-        if (trabajo is not null)
-            await trabajo.GuardarAsync();
+        if (lotes is not null)
+            await lotes.GuardarAsync();
     }
 
     // --- Búsqueda de Productos ---
@@ -163,8 +161,7 @@ public class ServicioProductos(
                 producto.Id,
                 $"Datos actualizados de {producto.Nombre}");
 
-        if (trabajo is not null)
-            await trabajo.GuardarAsync();
+        await productos.GuardarAsync();
     }
 
     public async Task CambiarPrecioAsync(int productoId, long nuevoPrecio)
@@ -189,8 +186,7 @@ public class ServicioProductos(
                 producto.Id,
                 $"Precio cambiado de {anterior} a {nuevoPrecio}");
 
-        if (trabajo is not null)
-            await trabajo.GuardarAsync();
+        await productos.GuardarAsync();
     }
 
     public async Task ActivarAsync(int productoId)
@@ -210,8 +206,7 @@ public class ServicioProductos(
                 producto.Id,
                 $"Producto {producto.Nombre} activado");
 
-        if (trabajo is not null)
-            await trabajo.GuardarAsync();
+        await productos.GuardarAsync();
     }
 
     public async Task DesactivarAsync(int productoId)
@@ -231,8 +226,7 @@ public class ServicioProductos(
                 producto.Id,
                 $"Producto {producto.Nombre} desactivado");
 
-        if (trabajo is not null)
-            await trabajo.GuardarAsync();
+        await productos.GuardarAsync();
     }
 
     // --- Categorías y Proveedores ---
@@ -261,8 +255,8 @@ public class ServicioProductos(
                 nameof(Categoria),
                 detalle: $"Categoría creada: {categoria.Nombre}");
 
-        if (trabajo is not null)
-            await trabajo.GuardarAsync();
+        if (categorias is not null)
+            await categorias.GuardarAsync();
 
         return categoria;
     }
@@ -290,8 +284,8 @@ public class ServicioProductos(
                 categoria.Id,
                 $"Categoría renombrada a {categoria.Nombre}");
 
-        if (trabajo is not null)
-            await trabajo.GuardarAsync();
+        if (categorias is not null)
+            await categorias.GuardarAsync();
     }
 
     public Task<IReadOnlyList<Proveedor>> ObtenerProveedoresAsync()
@@ -329,8 +323,8 @@ public class ServicioProductos(
                 nameof(Proveedor),
                 detalle: $"Proveedor {proveedor.Nombre} ({proveedor.Nit})");
 
-        if (trabajo is not null)
-            await trabajo.GuardarAsync();
+        if (proveedores is not null)
+            await proveedores.GuardarAsync();
 
         return proveedor;
     }
@@ -370,8 +364,8 @@ public class ServicioProductos(
                 proveedor.Id,
                 $"Proveedor actualizado: {proveedor.Nombre}");
 
-        if (trabajo is not null)
-            await trabajo.GuardarAsync();
+        if (proveedores is not null)
+            await proveedores.GuardarAsync();
     }
 
     private static void Validar(Producto producto)
@@ -396,22 +390,18 @@ public class ServicioBusquedaProductos(
 public class ServicioMantenimientoProductos(
     IProductoRepositorio productos,
     IServicioAuditoria auditoria,
-    ISesionActual sesion,
-    IUnidadDeTrabajo trabajo) : ServicioProductos(
+    ISesionActual sesion) : ServicioProductos(
         productos,
         auditoria: auditoria,
-        sesion: sesion,
-        trabajo: trabajo);
+        sesion: sesion);
 
 public class ServicioCatalogos(
-    IRepositorio<Categoria> categorias,
-    IRepositorio<Proveedor> proveedores,
+    ICategoriaRepositorio categorias,
+    IProveedorRepositorio proveedores,
     IServicioAuditoria auditoria,
-    ISesionActual sesion,
-    IUnidadDeTrabajo trabajo) : ServicioProductos(
+    ISesionActual sesion) : ServicioProductos(
         null!,
         categorias: categorias,
         proveedores: proveedores,
         auditoria: auditoria,
-        sesion: sesion,
-        trabajo: trabajo);
+        sesion: sesion);

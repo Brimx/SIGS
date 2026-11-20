@@ -16,11 +16,10 @@ public class ServicioFinanzas(
     IGastoRepositorio gastos,
     IServicioAuditoria? auditoria = null,
     ISesionActual? sesion = null,
-    IUnidadDeTrabajo? trabajo = null,
     TimeProvider? reloj = null,
-    IRepositorio<Impuesto>? impuestos = null,
-    IRepositorio<Empleado>? empleados = null,
-    IRepositorio<Nomina>? nominas = null,
+    IImpuestoRepositorio? impuestos = null,
+    IEmpleadoRepositorio? empleados = null,
+    INominaRepositorio? nominas = null,
     IServicioParametros? parametros = null) : IServicioFinanzas, IServicioImpuestos, IServicioNomina
 {
     private readonly TimeProvider _reloj = reloj ?? TimeProvider.System;
@@ -48,8 +47,7 @@ public class ServicioFinanzas(
                 nameof(Gasto),
                 detalle: descripcion);
 
-        if (trabajo is not null)
-            await trabajo.GuardarAsync();
+        await gastos.GuardarAsync();
     }
 
     public async Task<ResumenFinanciero> ObtenerResumenAsync(
@@ -107,8 +105,8 @@ public class ServicioFinanzas(
                 impuestoId,
                 $"{anterior} a {puntosBasicos} puntos básicos");
 
-        if (trabajo is not null)
-            await trabajo.GuardarAsync();
+        if (impuestos is not null)
+            await impuestos.GuardarAsync();
     }
 
     // --- Nómina ---
@@ -140,8 +138,7 @@ public class ServicioFinanzas(
 
         await nominas.AgregarAsync(nomina);
 
-        if (trabajo is not null)
-            await trabajo.GuardarAsync();
+        await nominas.GuardarAsync();
 
         return nomina;
     }
@@ -163,28 +160,24 @@ public class ServicioFinanzas(
 
 // Adaptadores para compatibilidad de pruebas existentes
 public class ServicioImpuestos(
-    IRepositorio<Impuesto> impuestos,
+    IImpuestoRepositorio impuestos,
     IServicioAuditoria auditoria,
-    ISesionActual sesion,
-    IUnidadDeTrabajo trabajo) : ServicioFinanzas(
+    ISesionActual sesion) : ServicioFinanzas(
         null!,
         null!,
         auditoria: auditoria,
         sesion: sesion,
-        trabajo: trabajo,
         impuestos: impuestos);
 
 public class ServicioNomina(
-    IRepositorio<Empleado> empleados,
-    IRepositorio<Nomina> nominas,
+    IEmpleadoRepositorio empleados,
+    INominaRepositorio nominas,
     IServicioParametros parametros,
     ISesionActual sesion,
-    IUnidadDeTrabajo trabajo,
     TimeProvider reloj) : ServicioFinanzas(
         null!,
         null!,
         sesion: sesion,
-        trabajo: trabajo,
         reloj: reloj,
         empleados: empleados,
         nominas: nominas,

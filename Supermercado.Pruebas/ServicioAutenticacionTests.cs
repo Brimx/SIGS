@@ -16,7 +16,6 @@ public class ServicioAutenticacionTests
     {
         public UsuariosEnMemoria Usuarios { get; } = new();
         public SesionActual Sesion { get; } = new();
-        public UnidadDeTrabajoFalsa Trabajo { get; } = new();
         public ServicioAutenticacion Servicio { get; }
         public Usuario Ana { get; }
 
@@ -42,12 +41,11 @@ public class ServicioAutenticacionTests
 
             Servicio = new ServicioAutenticacion(
                 Usuarios,
-                new RepositorioEnMemoria<IntentoAcceso>(),
+                new IntentosAccesoEnMemoria(),
                 new AuditoriaFalsa(),
                 parametros,
                 hasheador,
                 Sesion,
-                Trabajo,
                 new RelojFijo(EscenarioInventario.Ahora));
         }
     }

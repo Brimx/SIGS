@@ -30,7 +30,7 @@ public sealed class RevinculacionTelegramTests
             escenario.Auditoria.Registros,
             registro => Assert.Contains("Origen: Telegram", registro.Detalle));
         Assert.Contains("revinculado", escenario.Auditoria.Registros[^1].Detalle);
-        Assert.Equal(2, escenario.Trabajo.Guardados);
+        Assert.Equal(2, escenario.Usuarios.Guardados);
     }
 
     [Fact]
