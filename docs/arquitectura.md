@@ -5,122 +5,78 @@
 ```text
 ┌─────────────────────────────────────────────┐
 │ Supermercado.GUI (Avalonia + MVVM)          │
-│  Pantallas, ViewModels, comandos            │
+│  Pantallas, ViewModels, ServiciosGui.cs     │
 └───────────────────┬─────────────────────────┘
-                    │ interfaces de lógica
+                    │ clases concretas + interfaces externas
 ┌───────────────────▼─────────────────────────┐
 │ Supermercado.Logica                         │
 │  Casos de uso, permisos, auditoría,         │
-│  cálculo, widgets, clientes externos        │
+│  cálculo, widgets, integraciones            │
 └───────────────────┬─────────────────────────┘
-                    │ contratos de Entidades
+                    │ repositorios por módulo + GuardarAsync
 ┌───────────────────▼─────────────────────────┐
 │ Supermercado.Datos                          │
-│  SigsDbContext, configuraciones EF,         │
-│  repositorios, unidad de trabajo, semilla   │
+│  SigsDbContext, repositorios, EF, SQLite,   │
+│  semillas y migración inicial               │
 └───────────────────┬─────────────────────────┘
                     │ entidades y enums
 ┌───────────────────▼─────────────────────────┐
 │ Supermercado.Entidades                      │
-│  Dominio, contratos, excepciones            │
+│  Dominio, excepciones y contratos           │
 └─────────────────────────────────────────────┘
 ```
 
 Reglas de dependencia:
 
 1. **Entidades no referencia ningún proyecto.**
-2. **Datos referencia Entidades.** Es el único proyecto que conoce EF Core y SQLite.
-3. **Lógica referencia Datos y Entidades.** La lógica trabaja contra interfaces de repositorio, no contra `SigsDbContext`.
+2. **Datos referencia Entidades.** Es el único proyecto que conoce EF Core y SQLite; declara los contratos de persistencia en el espacio de nombres `Supermercado.Entidades.Contratos`, físicamente en `Datos/*.cs`.
+3. **Lógica referencia Datos y Entidades.** Consume repositorios por módulo y clases concretas de dominio; las interfaces se reservan para límites externos.
 4. **GUI referencia Lógica y Entidades.** No referencia Datos: obtiene todo por `AgregarLogica()`.
-5. **Pruebas referencia Lógica y Entidades.** Usa falsos en memoria; no necesita base de datos.
+5. **Pruebas referencia Lógica y Entidades.** Usa falsos en memoria; no necesita base de datos externa.
 
 ## Composición
 
-`Supermercado.Logica/ExtensionesLogica.cs`:
+`Supermercado.Logica/Composicion.cs`:
 
 ```csharp
-servicios.AgregarDatos(rutaBaseDatos); // DbContext + repositorios
-servicios.AddSingleton<ISesionActual, SesionActual>();
+servicios.AgregarDatos(rutaBaseDatos);
+
+servicios.AddSingleton<SesionActual>();
 servicios.AddSingleton<IHasheadorClave, HasheadorBCrypt>();
-servicios.AddScoped<IEstrategiaSalida, SalidaFefo>();
+servicios.AddScoped<EstrategiaSalida, SalidaFefo>();
 
-// 8 servicios de dominio consolidados con reenvío de contratos especializados:
 servicios.AddScoped<ServicioAuditoria>();
-servicios.AddScoped<IServicioAuditoria>(sp => sp.GetRequiredService<ServicioAuditoria>());
-servicios.AddScoped<IServicioConsultaAuditoria>(sp => sp.GetRequiredService<ServicioAuditoria>());
-
-servicios.AddScoped<IServicioParametros, ServicioParametros>();
-servicios.AddScoped<IServicioAutenticacion, ServicioAutenticacion>();
-servicios.AddScoped<IServicioInicializacion, ServicioInicializacion>();
-
+servicios.AddScoped<ServicioParametros>();
+servicios.AddScoped<ServicioAutenticacion>();
+servicios.AddScoped<ServicioInicializacion>();
 servicios.AddScoped<ServicioPersonal>();
-servicios.AddScoped<IServicioPersonal>(sp => sp.GetRequiredService<ServicioPersonal>());
-servicios.AddScoped<IServicioEmpleados>(sp => sp.GetRequiredService<ServicioPersonal>());
-servicios.AddScoped<IServicioEstructura>(sp => sp.GetRequiredService<ServicioPersonal>());
-servicios.AddScoped<IServicioUsuarios>(sp => sp.GetRequiredService<ServicioPersonal>());
-
 servicios.AddScoped<ServicioProductos>();
-servicios.AddScoped<IServicioProductos>(sp => sp.GetRequiredService<ServicioProductos>());
-servicios.AddScoped<IServicioBusquedaProductos>(sp => sp.GetRequiredService<ServicioProductos>());
-servicios.AddScoped<IServicioMantenimientoProductos>(sp => sp.GetRequiredService<ServicioProductos>());
-servicios.AddScoped<IServicioCatalogos>(sp => sp.GetRequiredService<ServicioProductos>());
-
 servicios.AddScoped<ServicioInventario>();
-servicios.AddScoped<IServicioInventario>(sp => sp.GetRequiredService<ServicioInventario>());
-servicios.AddScoped<IServicioConsultaInventario>(sp => sp.GetRequiredService<ServicioInventario>());
-servicios.AddScoped<IServicioMermas>(sp => sp.GetRequiredService<ServicioInventario>());
-servicios.AddScoped<IServicioAlertasInventario>(sp => sp.GetRequiredService<ServicioInventario>());
-servicios.AddScoped<IServicioReabastecimiento>(sp => sp.GetRequiredService<ServicioInventario>());
-
-servicios.AddScoped<IServicioCaja, ServicioCaja>();
+servicios.AddScoped<ServicioCaja>();
 servicios.AddScoped<ServicioVentas>();
-servicios.AddScoped<IServicioVentas>(sp => sp.GetRequiredService<ServicioVentas>());
-servicios.AddScoped<IServicioVentasEnEspera>(sp => sp.GetRequiredService<ServicioVentas>());
-
 servicios.AddScoped<ServicioFinanzas>();
-servicios.AddScoped<IServicioFinanzas>(sp => sp.GetRequiredService<ServicioFinanzas>());
-servicios.AddScoped<IServicioImpuestos>(sp => sp.GetRequiredService<ServicioFinanzas>());
-servicios.AddScoped<IServicioNomina>(sp => sp.GetRequiredService<ServicioFinanzas>());
-
-servicios.AddScoped<IServicioClientes, ServicioClientes>();
-servicios.AddScoped<IServicioDashboard, ServicioDashboard>();
-// ... clientes externos, reportes QuestPDF, logs y widgets en Widgets.cs
+servicios.AddScoped<ServicioClientes>();
+servicios.AddScoped<ServicioDashboard>();
 ```
 
-`Supermercado.Datos/ExtensionesDatos.cs`:
+Después se registran los límites externos (`ITrmClient`, `IConsultaCodigoBarras`, `IVerificadorCorreo`, `IGeneradorTicket`, `IServicioReportes`, `IServicioRespaldo`, Telegram) y las 10 implementaciones de `IWidget`.
+
+`Supermercado.Datos/Contexto.cs`:
 
 ```csharp
 servicios.AddSingleton(TimeProvider.System);
 servicios.AddDbContext<SigsDbContext>(opciones =>
-{
-    var carpeta = Path.GetDirectoryName(rutaBaseDatos);
-    if (!string.IsNullOrEmpty(carpeta))
-        Directory.CreateDirectory(carpeta);
+    opciones.UseSqlite($"Data Source={rutaBaseDatos}"));
 
-    opciones.UseSqlite($"Data Source={rutaBaseDatos}");
-});
-
-// Repositorios genéricos y específicos agrupados por dominio
-servicios.AddScoped(typeof(IRepositorio<>), typeof(Repositorio<>));
-servicios.AddScoped(typeof(IStockRepositorio<>), typeof(StockRepositorio<>));
-servicios.AddScoped<IUnidadDeTrabajo, UnidadDeTrabajo>();
-servicios.AddScoped<IInicializadorBaseDatos, InicializadorBaseDatos>();
-
+servicios.AddScoped<InicializadorBaseDatos>();
 servicios.AddScoped<IProductoRepositorio, ProductoRepositorio>();
-servicios.AddScoped<ILoteRepositorio, LoteRepositorio>();
-servicios.AddScoped<IMovimientoRepositorio, MovimientoRepositorio>();
-servicios.AddScoped<IReabastecimientoRepositorio, ReabastecimientoRepositorio>();
 servicios.AddScoped<IVentaRepositorio, VentaRepositorio>();
-servicios.AddScoped<IClienteRepositorio, ClienteRepositorio>();
 servicios.AddScoped<ITurnoCajaRepositorio, TurnoCajaRepositorio>();
 servicios.AddScoped<IUsuarioRepositorio, UsuarioRepositorio>();
-servicios.AddScoped<IRolRepositorio, RolRepositorio>();
-servicios.AddScoped<IParametroRepositorio, ParametroRepositorio>();
-servicios.AddScoped<IGastoRepositorio, GastoRepositorio>();
-servicios.AddScoped<IConfiguracionWidgetRepositorio, ConfiguracionWidgetRepositorio>();
+// ... un repositorio por archivo de dominio en Datos/*.cs
 ```
 
-`ExtensionesDatos` utiliza **SQLite local** en la carpeta de datos del usuario (`%LOCALAPPDATA%/SIGS/sigs.db` en Windows o `~/.local/share/SIGS/sigs.db` en Linux) sin configuración previa. La lógica y los ViewModels permanecen desacoplados del motor de persistencia.
+`AgregarDatos` utiliza **SQLite local** en la carpeta de datos del usuario (`%LOCALAPPDATA%/SIGS/sigs.db` en Windows o `~/.local/share/SIGS/sigs.db` en Linux) sin configuración previa. La lógica y los ViewModels permanecen desacoplados del motor de persistencia; cada repositorio hereda el mismo `SigsDbContext` y expone `GuardarAsync`.
 
 ## Flujos principales
 
@@ -141,7 +97,7 @@ GUI
      │   ├─ PlanDeSalida.Repartir
      │   ├─ StockLote.Disminuir
      │   └─ MovimientoInventario(Tipo = Venta, VentaId)
-     └─ trabajo.GuardarAsync   ← una sola transacción
+     └─ ventas.GuardarAsync   ← una sola confirmación del contexto
 ```
 
 ### Anulación con reembolso
@@ -156,7 +112,7 @@ ServicioVentas.AnularVentaAsync
  │   └─ registra MovimientoInventario(Tipo = Devolucion)
  ├─ ventas.Actualizar
  ├─ auditoría(VentaAnulada)
- └─ trabajo.GuardarAsync
+ └─ ventas.GuardarAsync
 ```
 
 El arqueo (`TurnoCaja.CalcularEfectivoEsperado`) suma el efectivo neto de las ventas completadas y **resta** el de las anuladas, para que una venta anulada después del cierre no infle el esperado.
@@ -171,7 +127,7 @@ ServicioCaja.CerrarTurnoAsync(efectivoContado)
  ├─ esperado = TurnoCaja.CalcularEfectivoEsperado(ventas)
  ├─ turno.Cerrar(ahora, esperado, contado)
  ├─ auditoría(CierreTurno, diferencia)
- ├─ trabajo.GuardarAsync
+ ├─ turnos.GuardarAsync
  └─ ResultadoArqueo(DentroDeTolerancia)
 ```
 
@@ -180,7 +136,7 @@ La tolerancia se lee de `caja.tolerancia_arqueo`.
 ### Reabastecimiento
 
 ```text
-ServicioInventario.GenerarSolicitudesAsync (vía IServicioReabastecimiento)
+ServicioInventario.GenerarSolicitudesAsync
  ├─ Exigir(Reabastecer)
  ├─ alertas.ObtenerBajoMinimoAsync
  ├─ crea Reabastecimiento(Pendiente) si no existe uno pendiente
@@ -197,7 +153,7 @@ ServicioInventario.AtenderAsync(id)
 ### Nómina
 
 ```text
-ServicioFinanzas.CalcularAsync(empleadoId, anio, mes) (vía IServicioNomina)
+ServicioFinanzas.CalcularAsync(empleadoId, anio, mes)
  ├─ Exigir(GestionarPersonal)
  ├─ valida mes, año y duplicado del periodo
  ├─ lee parámetros de nómina de Parametro
@@ -217,9 +173,9 @@ ServicioFinanzas.CalcularAsync(empleadoId, anio, mes) (vía IServicioNomina)
 
 ### Transacciones
 
-`UnidadDeTrabajo.GuardarAsync` es un `SaveChangesAsync`. Un caso de uso hace **una sola** llamada al final. Los servicios de dominio modifican entidades y registran movimientos, pero no guardan.
+Cada repositorio por módulo hereda de `RepositorioBase`, que expone `GuardarAsync` como `SaveChangesAsync` sobre el `SigsDbContext` compartido. Un caso de uso hace **una sola** llamada al final, normalmente a través del repositorio que cierra la operación (`ventas`, `turnos`, `clientes`, etcétera). Los servicios de dominio modifican entidades y registran movimientos, pero no abren transacciones propias.
 
-Esto garantiza atomicidad dentro de un proceso local.
+Esto garantiza atomicidad dentro de un proceso local sin una capa adicional de persistencia.
 
 ## Seguridad
 
@@ -227,14 +183,14 @@ Esto garantiza atomicidad dentro de un proceso local.
 - `Exigir(permiso)` falla si no hay sesión, si el empleado está inactivo (y cierra la sesión), si hay cambio de clave pendiente o si falta el permiso.
 - El hash y el PIN usan BCrypt con salt (`HasheadorBCrypt`).
 - El bloqueo cuenta intentos fallidos, incluido el caso de empleado inactivo con usuario existente.
-- La auditoría se escribe en la misma unidad de trabajo que la acción.
+- La auditoría se escribe en la misma confirmación del contexto que la acción.
 - **Hallazgos abiertos:** la escalada de privilegios vía `GestionarPersonal` y la revocación de sesión están documentadas en [`pendientes-ui.md`](pendientes-ui.md). No se consideran cerradas para producción.
 
 ## Interfaz Gráfica (`Supermercado.GUI`)
 
 La interfaz de usuario está construida sobre **Avalonia 12.1.4** y **.NET 10** bajo el patrón **MVVM**:
-- **Inyección de Dependencias:** `App.axaml.cs` inicializa el contenedor con `servicios.AgregarLogica()`, registrando `IImpresorTicket` (`ImpresorTicketEscPos` e `ImpresorTicketPdf`) y los 11 ViewModels en ciclo de vida transitorio para navegación y back-office.
-- **Servicios de Presentación Consolidados:** Agrupados en 3 módulos en `Supermercado.GUI/Servicios/`: `ConfiguracionYTema.cs` (temas y preferencias), `ImpresionTicket.cs` (impresión térmica ESC/POS y PDF) y `PlantillaTicketPos.cs` (tirilla continua de 80mm calibrada).
+- **Inyección de Dependencias:** `App.axaml.cs` inicializa el contenedor con `servicios.AgregarLogica()`, registrando además los servicios de presentación (`IServicioPreferencias`, `IServicioTextosLegales`, `IImpresorTicket` e `ImpresorTicketPdf`) y los ViewModels para navegación y back-office.
+- **Servicios de Presentación Consolidados:** `Supermercado.GUI/ServiciosGui.cs` reúne temas y preferencias (`TemaSigs`, `ServicioPreferencias`), textos legales, impresión térmica ESC/POS y PDF, y la plantilla de tirilla continua de 80mm calibrada.
 - **Tokens y Temas:** Modelo en capas (`Primitives.axaml`, `Semantic.axaml`, `Geometry.axaml`, `Typography.axaml` y `SemiBridge.axaml`) con Claro Cálido (*Warm Light* anti-fatiga visual), Oscuro Slate y Alto Contraste. El tema elegido se persiste por máquina con `IServicioPreferencias` y se aplica antes de crear la ventana.
 - **Configuración:** overlay compartido en `MainWindow.axaml` (`ConfiguracionView`) accesible desde login y shell; apariencia, textos legales empaquetados y versión. Ver ADR-028.
 - **Ergonomía POS:** Atajos físicos `F1`–`F5` / `Escape`, auto-enfoque ininterrumpido en el escáner de código de barras (*keyboard wedge*) e integración automática con balanzas EAN-13 GS1 (`20`–`29`).
@@ -242,30 +198,36 @@ La interfaz de usuario está construida sobre **Avalonia 12.1.4** y **.NET 10** 
 
 ## Dashboards
 
-`IWidget` define `Id`, `Titulo`, `Tamano`, `FrecuenciaActualizacion`, `PermisoRequerido` y `ObtenerDatosAsync`. `ServicioDashboard` filtra por permiso, guarda la disposición por empleado y mantiene posiciones únicas (`Max + 1` al agregar, `0..n-1` al reordenar). Las 9 implementaciones de tarjetas de métricas residen en `Supermercado.Logica/Dashboards/Widgets.cs`.
+`IWidget` define `Id`, `Titulo`, `Grupo`, `Tamano`, `FrecuenciaActualizacion`, `PermisoRequerido` y `ObtenerDatosAsync`. `WidgetBase` concentra la implementación común y `ServicioDashboard` filtra por permiso, guarda la disposición por empleado y mantiene posiciones únicas (`Max + 1` al agregar, `0..n-1` al reordenar). Las 10 tarjetas de métricas residen en `Supermercado.Logica/DashboardWidgets.cs`: `ArqueoTurnoWidget`, `IvaGeneradoWidget`, `LotesPorVencerWidget`, `ReabastecimientosPendientesWidget`, `StockBajoMinimoWidget`, `TrmDelDiaWidget`, `VentasDelDiaWidget`, `ResumenOperativoWidget`, `VentasPorCategoriaWidget` y `MargenPorCategoriaWidget`.
 
 ## Integraciones externas y soporte
 
-Los clientes externos e infraestructura de soporte se organizan en módulos consolidados en `Supermercado.Logica/Servicios/` y `Supermercado.Logica/Reportes/`:
+Los límites externos conservan sus contratos y viven en archivos planos de `Supermercado.Logica/`:
 
-| Interfaz | Implementación por defecto | Módulo fuente | Reemplazo previsto |
-| :-- | :-- | :-- | :-- |
-| `ITrmClient` | `ClienteTrmDatosGov` (activo por defecto; `ClienteTrmNoConfigurado` si se apaga) | `ClientesExternos.cs` | Otra fuente de TRM |
-| `IConsultaCodigoBarras` | `ClienteCodigoBarrasOff` (activo por defecto; `ConsultaCodigoBarrasNula` si se apaga) | `ClientesExternos.cs` | Otro catálogo de productos |
-| `IVerificadorCorreo` | `VerificadorCorreoNulo`; `ClienteVerificadorCorreoHttp` solo con `SIGS_EMAIL_VERIFIER_URL` | `ClientesExternos.cs` | Motor abierto pendiente de elegir |
-| `IServicioRespaldo` | `ServicioRespaldo` (copia atómica en caliente de SQLite vía `VACUUM INTO`) | `ServiciosSoporte.cs` | Almacenamiento en nube / NAS |
-| `IGeneradorTicket` | `GeneradorTicketQuestPdf` (registrado en DI; `GeneradorTicketNulo` para pruebas) | `GeneradorTickets.cs` | QuestPDF |
-| `IServicioReportes` | `ServicioReportesQuestPdf` | `ServicioReportes.cs` | Generador alternativo de PDFs |
+| Contrato | Implementación final registrada | Archivo final |
+| :-- | :-- | :-- |
+| `ITrmClient` | `ClienteTrmDatosGov` | `ClientesExternos.cs` |
+| `IConsultaCodigoBarras` | `ClienteCodigoBarrasOff` | `ClientesExternos.cs` |
+| `IVerificadorCorreo` | `VerificadorCorreoNulo` | `ClientesExternos.cs` |
+| `IServicioRespaldo` | `ServicioRespaldo` (copia atómica en caliente de SQLite vía `VACUUM INTO`) | `Infraestructura.cs` |
+| `IGeneradorTicket` | `GeneradorTicketQuestPdf` | `Reportes.cs` |
+| `IServicioReportes` | `ServicioReportesQuestPdf` | `Reportes.cs` |
+| `IClienteTelegram` | `ClienteTelegramHttp` | `TelegramClientes.cs` |
+| `IClienteGemini` / `IVinculosTelegram` | `ClienteGeminiHttp` / `VinculosTelegram` | `TelegramClientes.cs` / `TelegramSoporte.cs` |
 
-Apagado y URLs: ver ADR-019. `ServicioTrm` aplica timeout, reintentos con espera progresiva (200 ms, 400 ms, … hasta 2 s) y guarda el respaldo en una sola operación atómica.
+Las implementaciones de reserva se registran primero y las implementaciones reales las sustituyen cuando el límite está configurado. Apagado y URLs: ver ADR-019. `ServicioTrm` aplica timeout, reintentos con espera progresiva (200 ms, 400 ms, … hasta 2 s) y guarda el respaldo en una sola operación atómica.
 
 ## Base de datos y evolución
 
 ### Persistencia SQLite autónoma
 
-En la rama principal (`main`), SIGS opera de forma autónoma sobre **SQLite local** con inicialización automática (`InicializadorBaseDatos.CrearYSembrarAsync()`), creando el archivo de base de datos, el esquema completo y la semilla idempotente en el primer arranque sin requerir motores externos ni contenedores.
+SIGS opera de forma autónoma sobre **SQLite local** con inicialización automática desde `Supermercado.Datos/Semillas.cs` (`InicializadorBaseDatos.CrearYSembrarAsync()`) y migración inicial en `Supermercado.Datos/Migraciones/Inicial.cs`, creando el archivo de base de datos, el esquema completo y la semilla idempotente en el primer arranque sin requerir motores externos ni contenedores.
 
 > La versión empresarial extendida (con proveedor dual PostgreSQL 17 + Npgsql, réplica Outbox hacia Supabase, facturación electrónica DIAN UBL 2.1 / CUDE y fidelización por puntos) se conserva íntegra en la rama `completo`.
+
+## Pruebas
+
+La suite xUnit vive en 22 archivos `.cs` en la raíz de `Supermercado.Pruebas/`, sin subcarpetas, con 403 pruebas en verde (319 `Fact` y 16 `Theory`). Los dobles compartidos están en `Falsos.cs` y `TelegramFalsos.cs`, y la compilación de la solución termina con 0 advertencias y 0 errores.
 
 ## Decisiones relacionadas
 
@@ -275,7 +237,7 @@ En la rama principal (`main`), SIGS opera de forma autónoma sobre **SQLite loca
 
 ## Chatbot de Telegram
 
-`TelegramWorker` es un `BackgroundService` hospedado durante la vida de Avalonia y recibe actualizaciones por long polling. Crea un scope por actualización; si falta `SIGS_TELEGRAM_BOT_TOKEN`, queda inactivo sin impedir abrir SIGS. `ClienteTelegramHttp` y `ClienteGeminiHttp` son los límites de red; Gemini solo recibe lenguaje natural y puede llamar las seis herramientas declaradas en `Asistente.cs`, nunca repositorios ni contexto EF.
+`TelegramWorker` es un `BackgroundService` hospedado durante la vida de Avalonia y recibe actualizaciones por long polling. Crea un scope por actualización; si falta `SIGS_TELEGRAM_BOT_TOKEN`, queda inactivo sin impedir abrir SIGS. `ClienteTelegramHttp` y `ClienteGeminiHttp` son los límites de red; Gemini solo recibe lenguaje natural y puede llamar las seis herramientas declaradas en `TelegramSoporte.cs`, nunca repositorios ni contexto EF.
 
 Los comandos `/stock`, `/ventas`, `/caja` y `/resumen` se resuelven localmente y funcionan aunque Gemini no esté configurado. El acceso requiere chat privado vinculado, identidad de Telegram coincidente y límite de 20 mensajes por minuto. `/quien` informa el usuario y rol vinculados sin exponer secretos ni datos personales; `/desvincular` elimina el vínculo y lo audita.
 
