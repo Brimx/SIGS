@@ -2,9 +2,14 @@ using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.DependencyInjection;
+using Supermercado.Entidades.Finanzas;
 using Supermercado.Entidades.Inventario;
+using Supermercado.Entidades.Productos;
+using Supermercado.Entidades.Seguridad;
 using Supermercado.Logica.Comunes;
 using Supermercado.Logica.Inventario;
+using Supermercado.Logica.Productos;
+using Supermercado.Logica.Seguridad;
 
 namespace Supermercado.GUI.ViewModels;
 
@@ -31,15 +36,20 @@ public sealed class ProductoInventarioItemViewModel
 
 public partial class InventarioViewModel : ViewModelBase
 {
-    private readonly IServicioConsultaInventario? _consultaInventario;
-    private readonly IServicioAlertasInventario? _alertasInventario;
-    private readonly IServicioMermas? _servicioMermas;
-    private readonly ITraductorExcepciones? _traductor;
+    private readonly ServicioInventario? _consultaInventario;
+    private readonly ServicioInventario? _alertasInventario;
+    private readonly ServicioInventario? _servicioMermas;
+    private readonly ServicioProductos? _servicioProductos;
+    private readonly SesionActual? _sesion;
+    private readonly TraductorExcepciones? _traductor;
     private readonly IServiceScopeFactory? _scopeFactory;
 
     private readonly List<ProductoInventarioItemViewModel> _todosLosItems = [];
 
     public ObservableCollection<ProductoInventarioItemViewModel> ProductosFiltrados { get; } = [];
+    public ObservableCollection<Categoria> Categorias { get; } = [];
+    public ObservableCollection<Impuesto> Impuestos { get; } = [];
+    public ObservableCollection<Producto> Productos { get; } = [];
 
     [ObservableProperty]
     public partial string FiltroTexto { get; set; } = string.Empty;
@@ -78,24 +88,78 @@ public partial class InventarioViewModel : ViewModelBase
     [ObservableProperty]
     public partial string MotivoMermaInput { get; set; } = "Deterioro perecedero / Fruver";
 
+    [ObservableProperty]
+    public partial bool PuedeGestionarInventario { get; set; }
+
+    [ObservableProperty]
+    public partial bool Guardando { get; set; }
+
+    [ObservableProperty]
+    public partial bool ModalNuevoProductoAbierto { get; set; }
+
+    [ObservableProperty]
+    public partial string NuevoCodigoBarrasInput { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial string NuevoNombreInput { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial Categoria? CategoriaSeleccionada { get; set; }
+
+    [ObservableProperty]
+    public partial long NuevoPrecioInput { get; set; }
+
+    [ObservableProperty]
+    public partial Impuesto? IvaSeleccionado { get; set; }
+
+    [ObservableProperty]
+    public partial int NuevoStockMinimoInput { get; set; }
+
+    [ObservableProperty]
+    public partial bool ModalEntradaBodegaAbierto { get; set; }
+
+    [ObservableProperty]
+    public partial Producto? ProductoSeleccionado { get; set; }
+
+    [ObservableProperty]
+    public partial int CantidadEntradaInput { get; set; } = 1;
+
+    [ObservableProperty]
+    public partial string NumeroLoteInput { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial DateTimeOffset? FechaVencimientoEntradaInput { get; set; }
+
     public InventarioViewModel()
     {
     }
 
-    public InventarioViewModel(IServiceScopeFactory scopeFactory)
-        => _scopeFactory = scopeFactory;
+    public InventarioViewModel(IServiceScopeFactory scopeFactory, SesionActual? sesion = null)
+    {
+        _scopeFactory = scopeFactory;
+        _sesion = sesion;
+        ActualizarPermisos();
+    }
 
     public InventarioViewModel(
-        IServicioConsultaInventario consultaInventario,
-        IServicioAlertasInventario? alertasInventario = null,
-        IServicioMermas? servicioMermas = null,
-        ITraductorExcepciones? traductor = null)
+        ServicioInventario consultaInventario,
+        ServicioInventario? alertasInventario = null,
+        ServicioInventario? servicioMermas = null,
+        TraductorExcepciones? traductor = null,
+        ServicioProductos? servicioProductos = null,
+        SesionActual? sesion = null)
     {
         _consultaInventario = consultaInventario;
         _alertasInventario = alertasInventario;
         _servicioMermas = servicioMermas;
+        _servicioProductos = servicioProductos;
+        _sesion = sesion;
         _traductor = traductor;
+        ActualizarPermisos();
     }
+
+    public void ActualizarPermisos()
+        => PuedeGestionarInventario = _sesion?.Tiene(Permiso.GestionarProductos) ?? false;
 
     partial void OnFiltroTextoChanged(string value) => AplicarFiltros();
     partial void OnSoloStockBajoChanged(bool value) => AplicarFiltros();
@@ -120,9 +184,9 @@ public partial class InventarioViewModel : ViewModelBase
         using var scope = _scopeFactory?.CreateScope();
         var servicios = scope?.ServiceProvider;
         var consulta = _consultaInventario
-            ?? servicios?.GetService<IServicioConsultaInventario>();
+            ?? servicios?.GetService<ServicioInventario>();
         var alertas = _alertasInventario
-            ?? servicios?.GetService<IServicioAlertasInventario>();
+            ?? servicios?.GetService<ServicioInventario>();
         if (consulta is null)
             return;
 
@@ -244,7 +308,7 @@ public partial class InventarioViewModel : ViewModelBase
         using var scope = _scopeFactory?.CreateScope();
         var servicios = scope?.ServiceProvider;
         var servicioMermas = _servicioMermas
-            ?? servicios?.GetService<IServicioMermas>();
+            ?? servicios?.GetService<ServicioInventario>();
         if (servicioMermas is null || ItemSeleccionado is null || CantidadMermaInput <= 0)
             return;
 
@@ -267,8 +331,187 @@ public partial class InventarioViewModel : ViewModelBase
         }
     }
 
+    [RelayCommand]
+    private async Task AbrirModalNuevoProductoAsync()
+    {
+        ActualizarPermisos();
+        if (!PuedeGestionarInventario)
+        {
+            MensajeEstado = "No tiene permiso para crear productos.";
+            return;
+        }
+
+        NuevoCodigoBarrasInput = string.Empty;
+        NuevoNombreInput = string.Empty;
+        CategoriaSeleccionada = null;
+        NuevoPrecioInput = 0;
+        IvaSeleccionado = null;
+        NuevoStockMinimoInput = 0;
+        await CargarDatosFormulariosAsync();
+        ModalNuevoProductoAbierto = true;
+    }
+
+    [RelayCommand]
+    private void CerrarModalNuevoProducto() => ModalNuevoProductoAbierto = false;
+
+    [RelayCommand]
+    private async Task ConfirmarNuevoProductoAsync()
+    {
+        ActualizarPermisos();
+        if (!PuedeGestionarInventario)
+        {
+            MensajeEstado = "No tiene permiso para crear productos.";
+            return;
+        }
+        if (Guardando)
+            return;
+
+        using var scope = _scopeFactory?.CreateScope();
+        var servicios = scope?.ServiceProvider;
+        var catalogos = _servicioProductos ?? servicios?.GetService<ServicioProductos>();
+        if (catalogos is null)
+        {
+            MensajeEstado = "El catálogo de productos no está disponible.";
+            return;
+        }
+
+        Guardando = true;
+        try
+        {
+            var creado = await catalogos.CrearProductoAsync(
+                NuevoCodigoBarrasInput,
+                NuevoNombreInput,
+                CategoriaSeleccionada?.Id ?? 0,
+                NuevoPrecioInput,
+                IvaSeleccionado?.Id ?? 0,
+                NuevoStockMinimoInput);
+
+            ModalNuevoProductoAbierto = false;
+            MensajeEstado = $"Producto {creado.Nombre} creado y auditado.";
+            await ActualizarListadoAsync();
+        }
+        catch (Exception ex)
+        {
+            MensajeEstado = Traducir(servicios, ex);
+        }
+        finally
+        {
+            Guardando = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task AbrirModalEntradaBodegaAsync()
+    {
+        ActualizarPermisos();
+        if (!PuedeGestionarInventario)
+        {
+            MensajeEstado = "No tiene permiso para registrar entradas a bodega.";
+            return;
+        }
+
+        ProductoSeleccionado = null;
+        CantidadEntradaInput = 1;
+        NumeroLoteInput = string.Empty;
+        FechaVencimientoEntradaInput = null;
+        await CargarDatosFormulariosAsync();
+        ModalEntradaBodegaAbierto = true;
+    }
+
+    [RelayCommand]
+    private void CerrarModalEntradaBodega() => ModalEntradaBodegaAbierto = false;
+
+    [RelayCommand]
+    private async Task ConfirmarEntradaBodegaAsync()
+    {
+        ActualizarPermisos();
+        if (!PuedeGestionarInventario)
+        {
+            MensajeEstado = "No tiene permiso para registrar entradas a bodega.";
+            return;
+        }
+        if (Guardando)
+            return;
+        if (ProductoSeleccionado is null)
+        {
+            MensajeEstado = "Seleccione el producto.";
+            return;
+        }
+        if (FechaVencimientoEntradaInput is null)
+        {
+            MensajeEstado = "Seleccione la fecha de vencimiento.";
+            return;
+        }
+
+        using var scope = _scopeFactory?.CreateScope();
+        var servicios = scope?.ServiceProvider;
+        var catalogos = _servicioProductos ?? servicios?.GetService<ServicioProductos>();
+        if (catalogos is null)
+        {
+            MensajeEstado = "El catálogo de productos no está disponible.";
+            return;
+        }
+
+        Guardando = true;
+        try
+        {
+            var vencimiento = DateOnly.FromDateTime(
+                FechaVencimientoEntradaInput.Value.LocalDateTime);
+
+            await catalogos.RegistrarIngresoLoteAsync(
+                ProductoSeleccionado.Id,
+                NumeroLoteInput,
+                vencimiento,
+                CantidadEntradaInput,
+                costoUnitario: 0);
+
+            ModalEntradaBodegaAbierto = false;
+            MensajeEstado = $"Entrada registrada: {CantidadEntradaInput} und del lote {NumeroLoteInput.Trim()} de {ProductoSeleccionado.Nombre}.";
+            await ActualizarListadoAsync();
+        }
+        catch (Exception ex)
+        {
+            MensajeEstado = Traducir(servicios, ex);
+        }
+        finally
+        {
+            Guardando = false;
+        }
+    }
+
+    private async Task CargarDatosFormulariosAsync()
+    {
+        using var scope = _scopeFactory?.CreateScope();
+        var servicios = scope?.ServiceProvider;
+        var catalogos = _servicioProductos ?? servicios?.GetService<ServicioProductos>();
+        if (catalogos is null)
+            return;
+
+        try
+        {
+            var categorias = await catalogos.ObtenerCategoriasAsync();
+            Categorias.Clear();
+            foreach (var categoria in categorias)
+                Categorias.Add(categoria);
+
+            var impuestos = await catalogos.ObtenerImpuestosAsync();
+            Impuestos.Clear();
+            foreach (var impuesto in impuestos)
+                Impuestos.Add(impuesto);
+
+            var productos = await catalogos.ObtenerProductosActivosAsync();
+            Productos.Clear();
+            foreach (var producto in productos)
+                Productos.Add(producto);
+        }
+        catch (Exception ex)
+        {
+            MensajeEstado = Traducir(servicios, ex);
+        }
+    }
+
     private string Traducir(IServiceProvider? servicios, Exception ex)
         => _traductor?.Traducir(ex)
-            ?? servicios?.GetService<ITraductorExcepciones>()?.Traducir(ex)
+            ?? servicios?.GetService<TraductorExcepciones>()?.Traducir(ex)
             ?? ex.Message;
 }

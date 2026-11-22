@@ -5,8 +5,8 @@
 | Métrica | Valor |
 | :-- | :-- |
 | framework | xUnit 2.9 |
-| pruebas | **402** |
-| resultado | 402 correctas, 0 fallidas, 0 omitidas |
+| pruebas | **425** |
+| resultado | 425 correctas, 0 fallidas, 0 omitidas |
 | duración | ~5 s (última ejecución local, 2026-11-22) |
 | cobertura | reglas de negocio, servicios, GUI, PDF e integración SQLite |
 

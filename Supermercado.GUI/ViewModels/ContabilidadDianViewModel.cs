@@ -10,6 +10,7 @@ using Supermercado.GUI.Servicios.Impresion;
 using Supermercado.Logica.Comunes;
 using Supermercado.Logica.Finanzas;
 using Supermercado.Logica.Reportes;
+using Supermercado.Logica.Ventas;
 
 namespace Supermercado.GUI.ViewModels;
 
@@ -55,9 +56,9 @@ public partial class ContabilidadDianViewModel : ViewModelBase
 {
     private static readonly CultureInfo CulturaCo = new("es-CO");
 
-    private readonly IServicioFinanzas? _servicioFinanzas;
+    private readonly ServicioFinanzas? _servicioFinanzas;
     private readonly IServicioReportes? _servicioReportes;
-    private readonly ITraductorExcepciones? _traductor;
+    private readonly TraductorExcepciones? _traductor;
     private readonly IServiceScopeFactory? _scopeFactory;
 
     private IReadOnlyList<Venta> _ultimasVentasConsultadas = [];
@@ -115,9 +116,9 @@ public partial class ContabilidadDianViewModel : ViewModelBase
         => _scopeFactory = scopeFactory;
 
     public ContabilidadDianViewModel(
-        IServicioFinanzas servicioFinanzas,
+        ServicioFinanzas servicioFinanzas,
         IServicioReportes? servicioReportes = null,
-        ITraductorExcepciones? traductor = null)
+        TraductorExcepciones? traductor = null)
     {
         _servicioFinanzas = servicioFinanzas;
         _servicioReportes = servicioReportes;
@@ -132,9 +133,9 @@ public partial class ContabilidadDianViewModel : ViewModelBase
 
         using var scope = _scopeFactory?.CreateScope();
         var servicios = scope?.ServiceProvider;
-        var finanzas = _servicioFinanzas ?? servicios?.GetService<IServicioFinanzas>();
+        var finanzas = _servicioFinanzas ?? servicios?.GetService<ServicioFinanzas>();
         var repoVentas = servicios?.GetService<IVentaRepositorio>();
-        var repoTurnos = servicios?.GetService<ITurnoCajaRepositorio>();
+        var servicioCaja = servicios?.GetService<ServicioCaja>();
 
         Cargando = true;
         TieneError = false;
@@ -161,9 +162,9 @@ public partial class ContabilidadDianViewModel : ViewModelBase
                 ConstruirTablaTarifasIva(ventas);
             }
 
-            if (repoTurnos is not null)
+            if (servicioCaja is not null)
             {
-                var turnos = await repoTurnos.ObtenerTodosAsync();
+                var turnos = await servicioCaja.ObtenerTurnosAsync();
                 HistorialArqueos.Clear();
                 foreach (var t in turnos.OrderByDescending(x => x.FechaApertura).Take(30))
                 {
@@ -221,7 +222,7 @@ public partial class ContabilidadDianViewModel : ViewModelBase
 
         using var scope = _scopeFactory?.CreateScope();
         var servicios = scope?.ServiceProvider;
-        var finanzas = _servicioFinanzas ?? servicios?.GetService<IServicioFinanzas>();
+        var finanzas = _servicioFinanzas ?? servicios?.GetService<ServicioFinanzas>();
         if (finanzas is null)
             return;
 
@@ -316,6 +317,6 @@ public partial class ContabilidadDianViewModel : ViewModelBase
 
     private string Traducir(IServiceProvider? servicios, Exception ex)
         => _traductor?.Traducir(ex)
-           ?? servicios?.GetService<ITraductorExcepciones>()?.Traducir(ex)
+           ?? servicios?.GetService<TraductorExcepciones>()?.Traducir(ex)
            ?? ex.Message;
 }

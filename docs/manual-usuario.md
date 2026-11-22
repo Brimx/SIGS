@@ -34,7 +34,7 @@ La pantalla de login cuenta con accesos directos (*chips*) para autocompletar la
 | Rol | Usuario | Contraseña | PIN Caja / Autorización | Nivel / Pantalla principal |
 | :-- | :-- | :-- | :-- | :-- |
 | **Administrador** | `admin` | `Admin123*` | `1111` | Acceso irrestricto (POS + 5 módulos de Back-Office) |
-| **Cajero** | `cajero` | `Cajero123*` | `1234` | Modo POS exclusivo a pantalla completa (sin barra lateral) |
+| **Cajero** | `cajero` | `Cajero123*` | `1234` | POS, Turno/Arqueo y Clientes desde la barra lateral |
 | **Supervisor** | `supervisor` | `Super123*` | `9988` | POS + PIN de autorización en caja para retiros y anulaciones |
 | **Gerente** | `gerente` | `Gerente123*` | `3344` | Panel Gerencial, Personal, Finanzas y Métricas |
 | **Bodeguero** | `bodega` | `Bodega123*` | `2233` | Inventario FEFO, Mermas y Recepción de Lotes |

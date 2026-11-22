@@ -48,10 +48,10 @@ public sealed class EmpleadoListadoItemViewModel
 
 public partial class PersonalRolesViewModel : ViewModelBase
 {
-    private readonly IServicioEmpleados? _servicioEmpleados;
-    private readonly IServicioEstructura? _servicioEstructura;
-    private readonly IServicioUsuarios? _servicioUsuarios;
-    private readonly ITraductorExcepciones? _traductor;
+    private readonly ServicioPersonal? _servicioEmpleados;
+    private readonly ServicioPersonal? _servicioEstructura;
+    private readonly ServicioPersonal? _servicioUsuarios;
+    private readonly TraductorExcepciones? _traductor;
     private readonly IServiceScopeFactory? _scopeFactory;
 
     public ObservableCollection<EmpleadoListadoItemViewModel> Empleados { get; } = [];
@@ -121,10 +121,10 @@ public partial class PersonalRolesViewModel : ViewModelBase
     }
 
     public PersonalRolesViewModel(
-        IServicioEmpleados servicioEmpleados,
-        IServicioEstructura servicioEstructura,
-        IServicioUsuarios? servicioUsuarios = null,
-        ITraductorExcepciones? traductor = null)
+        ServicioPersonal servicioEmpleados,
+        ServicioPersonal servicioEstructura,
+        ServicioPersonal? servicioUsuarios = null,
+        TraductorExcepciones? traductor = null)
     {
         _servicioEmpleados = servicioEmpleados;
         _servicioEstructura = servicioEstructura;
@@ -191,9 +191,8 @@ public partial class PersonalRolesViewModel : ViewModelBase
 
         using var scope = _scopeFactory?.CreateScope();
         var servicios = scope?.ServiceProvider;
-        var estructura = _servicioEstructura ?? servicios?.GetService<IServicioEstructura>();
-        var servicioUsuarios = _servicioUsuarios ?? servicios?.GetService<IServicioUsuarios>();
-        var repoEmpleados = servicios?.GetService<IRepositorio<Empleado>>();
+        var estructura = _servicioEstructura ?? servicios?.GetService<ServicioPersonal>();
+        var servicioUsuarios = _servicioUsuarios ?? servicios?.GetService<ServicioPersonal>();
         if (estructura is null)
             return;
 
@@ -229,9 +228,9 @@ public partial class PersonalRolesViewModel : ViewModelBase
                 }
             }
 
-            if (repoEmpleados is not null)
+            if (estructura is not null)
             {
-                var todosEmpleados = await repoEmpleados.ObtenerTodosAsync();
+                var todosEmpleados = await estructura.ObtenerEmpleadosAsync();
                 var cargosDict = listaCargos.ToDictionary(x => x.Id);
                 var rolesDict = listaRoles.ToDictionary(x => x.Id);
                 var usuariosPorEmp = usuarios.ToDictionary(u => u.EmpleadoId);
@@ -267,7 +266,7 @@ public partial class PersonalRolesViewModel : ViewModelBase
     {
         using var scope = _scopeFactory?.CreateScope();
         var servicios = scope?.ServiceProvider;
-        var servicioEmpleados = _servicioEmpleados ?? servicios?.GetService<IServicioEmpleados>();
+        var servicioEmpleados = _servicioEmpleados ?? servicios?.GetService<ServicioPersonal>();
         if (servicioEmpleados is null || CargoFormularioSeleccionado is null || RolFormularioSeleccionado is null)
             return;
 
@@ -311,7 +310,7 @@ public partial class PersonalRolesViewModel : ViewModelBase
 
         using var scope = _scopeFactory?.CreateScope();
         var servicios = scope?.ServiceProvider;
-        var servicioEmpleados = _servicioEmpleados ?? servicios?.GetService<IServicioEmpleados>();
+        var servicioEmpleados = _servicioEmpleados ?? servicios?.GetService<ServicioPersonal>();
         if (servicioEmpleados is null)
             return;
 
@@ -345,7 +344,7 @@ public partial class PersonalRolesViewModel : ViewModelBase
 
         using var scope = _scopeFactory?.CreateScope();
         var servicios = scope?.ServiceProvider;
-        var servicioEmpleados = _servicioEmpleados ?? servicios?.GetService<IServicioEmpleados>();
+        var servicioEmpleados = _servicioEmpleados ?? servicios?.GetService<ServicioPersonal>();
         if (servicioEmpleados is null)
             return;
 
@@ -372,7 +371,7 @@ public partial class PersonalRolesViewModel : ViewModelBase
 
         using var scope = _scopeFactory?.CreateScope();
         var servicios = scope?.ServiceProvider;
-        var servicioUsuarios = _servicioUsuarios ?? servicios?.GetService<IServicioUsuarios>();
+        var servicioUsuarios = _servicioUsuarios ?? servicios?.GetService<ServicioPersonal>();
         if (servicioUsuarios is null)
             return;
 
@@ -398,7 +397,7 @@ public partial class PersonalRolesViewModel : ViewModelBase
 
         using var scope = _scopeFactory?.CreateScope();
         var servicios = scope?.ServiceProvider;
-        var servicioUsuarios = _servicioUsuarios ?? servicios?.GetService<IServicioUsuarios>();
+        var servicioUsuarios = _servicioUsuarios ?? servicios?.GetService<ServicioPersonal>();
         if (servicioUsuarios is null)
             return;
 
@@ -424,7 +423,7 @@ public partial class PersonalRolesViewModel : ViewModelBase
 
         using var scope = _scopeFactory?.CreateScope();
         var servicios = scope?.ServiceProvider;
-        var estructura = _servicioEstructura ?? servicios?.GetService<IServicioEstructura>();
+        var estructura = _servicioEstructura ?? servicios?.GetService<ServicioPersonal>();
         if (estructura is null)
             return;
 
@@ -457,7 +456,7 @@ public partial class PersonalRolesViewModel : ViewModelBase
 
         using var scope = _scopeFactory?.CreateScope();
         var servicios = scope?.ServiceProvider;
-        var estructura = _servicioEstructura ?? servicios?.GetService<IServicioEstructura>();
+        var estructura = _servicioEstructura ?? servicios?.GetService<ServicioPersonal>();
         if (estructura is null)
             return;
 
@@ -489,7 +488,7 @@ public partial class PersonalRolesViewModel : ViewModelBase
 
         using var scope = _scopeFactory?.CreateScope();
         var servicios = scope?.ServiceProvider;
-        var estructura = _servicioEstructura ?? servicios?.GetService<IServicioEstructura>();
+        var estructura = _servicioEstructura ?? servicios?.GetService<ServicioPersonal>();
         if (estructura is null)
             return;
 
@@ -510,6 +509,6 @@ public partial class PersonalRolesViewModel : ViewModelBase
 
     private string Traducir(IServiceProvider? servicios, Exception ex)
         => _traductor?.Traducir(ex)
-           ?? servicios?.GetService<ITraductorExcepciones>()?.Traducir(ex)
+           ?? servicios?.GetService<TraductorExcepciones>()?.Traducir(ex)
            ?? ex.Message;
 }

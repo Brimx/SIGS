@@ -1,0 +1,406 @@
+using Supermercado.Entidades.Excepciones;
+using Supermercado.Entidades.Personal;
+using Supermercado.Entidades.Seguridad;
+using Supermercado.Logica.Personal;
+using Supermercado.Logica.Servicios;
+using Supermercado.Pruebas.Falsos;
+using Supermercado.Logica.Seguridad;
+
+namespace Supermercado.Pruebas;
+
+public class ServicioEmpleadosTests
+{
+    private class VerificadorCorreoFalso(bool resultado = true)
+        : IVerificadorCorreo
+    {
+        public Task<bool> VerificarAsync(
+            string correo,
+            CancellationToken ct = default)
+            => Task.FromResult(resultado);
+    }
+
+    private readonly ContextoPruebasSqlite contexto;
+    private readonly EmpleadosEnMemoria empleados;
+    private readonly RolesEnMemoria roles;
+    private readonly UsuariosEnMemoria usuarios = new();
+    private readonly HasheadorFalso hasheador = new();
+    private readonly AuditoriaFalsa auditoria = new();
+    private readonly RelojFijo reloj;
+
+    public ServicioEmpleadosTests()
+    {
+        reloj = new RelojFijo(EscenarioInventario.Ahora);
+        contexto = new ContextoPruebasSqlite(reloj);
+        empleados = new EmpleadosEnMemoria(contexto);
+        roles = new RolesEnMemoria(contexto);
+    }
+
+    private ServicioPersonal CrearServicio(
+        Permiso permisos = Permiso.GestionarPersonal | Permiso.GestionarRoles,
+        bool correoValido = true)
+    {
+        if (roles.Datos.All(r => r.Id != 1))
+            roles.Datos.Add(new Rol
+            {
+                Id = 1,
+                Nombre = "Admin",
+                Permisos = Permiso.GestionarPersonal
+                    | Permiso.GestionarRoles
+                    | Permiso.Vender
+            });
+
+        return new(
+            empleados,
+            cargos: null!,
+            roles: roles,
+            usuarios: usuarios,
+            cajas: null!,
+            verificador: new VerificadorCorreoFalso(correoValido),
+            hasheador: hasheador,
+            auditoria: auditoria,
+            sesion: Sesiones.Con(permisos),
+            reloj: reloj);
+    }
+
+    [Fact]
+    public async Task CrearAsync_ConPermiso_GuardaYAudita()
+    {
+        var servicio = CrearServicio();
+        var emp = new Empleado
+        {
+            Documento = "1010101",
+            Nombres = "Laura",
+            Apellidos = "Gómez",
+            Correo = "laura@sigs.local",
+            SalarioBase = 1500000,
+            RolId = 1,
+            CargoId = 1
+        };
+
+        await servicio.CrearAsync(emp);
+
+        Assert.Single(empleados.Datos);
+        Assert.True(emp.CorreoVerificado);
+        Assert.Contains(AccionAuditoria.EmpleadoCreado, auditoria.Acciones);
+        Assert.Equal(1, empleados.Guardados);
+    }
+
+    [Fact]
+    public async Task CrearAsync_DocumentoDuplicado_LanzaValidacionException()
+    {
+        var servicio = CrearServicio();
+        await empleados.AgregarAsync(new Empleado
+        {
+            Id = 1,
+            Documento = "1010101",
+            Nombres = "Existente"
+        });
+
+        var nuevo = new Empleado
+        {
+            Documento = "1010101",
+            Nombres = "Otro"
+        };
+
+        await Assert.ThrowsAsync<ValidacionException>(
+            () => servicio.CrearAsync(nuevo));
+    }
+
+    [Fact]
+    public async Task CrearAsync_GerenteNoPuedeAsignarRolConMasPermisos()
+    {
+        var servicio = CrearServicio(Permiso.GestionarPersonal);
+        var empleado = new Empleado
+        {
+            Documento = "1010102",
+            Nombres = "Laura",
+            Apellidos = "Pérez",
+            RolId = 1,
+            CargoId = 1
+        };
+
+        await Assert.ThrowsAsync<AccesoDenegadoException>(
+            () => servicio.CrearAsync(empleado));
+        Assert.Empty(empleados.Datos);
+        Assert.Empty(usuarios.Datos);
+    }
+
+    [Fact]
+    public async Task CrearUsuarioAsync_GerenteNoPuedeCrearUsuarioParaAdmin()
+    {
+        var empleado = new Empleado
+        {
+            Id = 5,
+            Documento = "5550555",
+            Nombres = "Administrador",
+            RolId = 1
+        };
+        await empleados.AgregarAsync(empleado);
+        var servicio = CrearServicio(Permiso.GestionarPersonal);
+
+        await Assert.ThrowsAsync<AccesoDenegadoException>(
+            () => servicio.CrearUsuarioAsync(5, "admin-nuevo", "temporal123"));
+
+        Assert.Empty(usuarios.Datos);
+        Assert.Equal(0, usuarios.Guardados);
+    }
+
+    [Fact]
+    public async Task EditarAsync_CambiaRolSinPermisoGestionarRoles_LanzaError()
+    {
+        var emp = new Empleado
+        {
+            Id = 1,
+            Documento = "1010101",
+            Nombres = "Ana",
+            RolId = 1
+        };
+        await empleados.AgregarAsync(emp);
+
+        // Sesión solo con GestionarPersonal, SIN GestionarRoles
+        var servicio = CrearServicio(Permiso.GestionarPersonal);
+
+        var editado = new Empleado
+        {
+            Id = 1,
+            Documento = "1010101",
+            Nombres = "Ana",
+            RolId = 2 // Intenta cambiar rol
+        };
+
+        await Assert.ThrowsAsync<AccesoDenegadoException>(
+            () => servicio.EditarAsync(editado));
+    }
+
+    [Fact]
+    public async Task CambiarRolAsync_ConPermiso_ActualizaYAudita()
+    {
+        var emp = new Empleado
+        {
+            Id = 1,
+            Documento = "1010101",
+            Nombres = "Pedro",
+            RolId = 1
+        };
+        await empleados.AgregarAsync(emp);
+        await roles.AgregarAsync(new Rol { Id = 2, Nombre = "Gerente" });
+
+        var servicio = CrearServicio();
+        await servicio.CambiarRolAsync(1, 2);
+
+        Assert.Equal(2, emp.RolId);
+        Assert.Contains(AccionAuditoria.CambioRol, auditoria.Acciones);
+        Assert.Equal(1, empleados.Guardados);
+    }
+
+    [Fact]
+    public async Task DesactivarAsync_ConPermiso_DesactivaYAudita()
+    {
+        var emp = new Empleado
+        {
+            Id = 1,
+            Documento = "1010101",
+            Nombres = "Marta",
+            Activo = true
+        };
+        await empleados.AgregarAsync(emp);
+
+        var servicio = CrearServicio();
+        await servicio.DesactivarAsync(1);
+
+        Assert.False(emp.Activo);
+        Assert.Contains(
+            AccionAuditoria.EmpleadoDesactivado,
+            auditoria.Acciones);
+        Assert.Equal(1, empleados.Guardados);
+    }
+
+    [Fact]
+    public async Task CrearUsuarioAsync_ConPermiso_GuardaYAudita()
+    {
+        var emp = new Empleado
+        {
+            Id = 5,
+            Documento = "5550555",
+            Nombres = "Usuario",
+            RolId = 1
+        };
+        await empleados.AgregarAsync(emp);
+
+        var servicio = CrearServicio();
+        await servicio.CrearUsuarioAsync(5, "usr5", "temporal123");
+
+        var u = Assert.Single(usuarios.Datos);
+        Assert.Equal("usr5", u.NombreUsuario);
+        Assert.Equal("h:temporal123", u.HashClave);
+        Assert.True(u.DebeCambiarClave);
+        Assert.Contains(AccionAuditoria.UsuarioCreado, auditoria.Acciones);
+        Assert.Equal(1, usuarios.Guardados);
+    }
+
+    [Fact]
+    public async Task CrearUsuarioAsync_ClaveCorta_LanzaValidacionException()
+    {
+        var emp = new Empleado
+        {
+            Id = 5,
+            Documento = "5550555",
+            Nombres = "Usuario",
+            RolId = 1
+        };
+        await empleados.AgregarAsync(emp);
+
+        var servicio = CrearServicio();
+        await Assert.ThrowsAsync<ValidacionException>(
+            () => servicio.CrearUsuarioAsync(5, "usr5", "123")); // < 6 chars
+    }
+}
+
+public class ServicioUsuariosTests
+{
+    private readonly UsuariosEnMemoria usuarios = new();
+    private readonly HasheadorFalso hasheador = new();
+    private readonly AuditoriaFalsa auditoria = new();
+
+    private ServicioPersonal CrearServicio(
+        Permiso permisos = Permiso.GestionarPersonal | Permiso.GestionarRoles)
+        => new(
+            null!,
+            null!,
+            null!,
+            usuarios,
+            null!,
+            null!,
+            hasheador,
+            auditoria,
+            Sesiones.Con(permisos),
+            TimeProvider.System);
+
+    [Fact]
+    public async Task ObtenerTodosAsync_ConPermiso_RetornaUsuarios()
+    {
+        var servicio = CrearServicio();
+        await usuarios.AgregarAsync(new Usuario
+        {
+            Id = 1,
+            NombreUsuario = "u1"
+        });
+        await usuarios.AgregarAsync(new Usuario
+        {
+            Id = 2,
+            NombreUsuario = "u2"
+        });
+
+        var lista = await servicio.ObtenerTodosAsync();
+
+        Assert.Equal(2, lista.Count);
+    }
+
+    [Fact]
+    public async Task ObtenerTodosAsync_SinPermiso_LanzaAccesoDenegado()
+    {
+        var servicio = CrearServicio(Permiso.Vender);
+
+        await Assert.ThrowsAsync<AccesoDenegadoException>(
+            () => servicio.ObtenerTodosAsync());
+    }
+
+    [Fact]
+    public async Task DesbloquearAsync_ConPermiso_DesbloqueaYAudita()
+    {
+        var servicio = CrearServicio();
+        var usuario = new Usuario
+        {
+            Id = 1,
+            NombreUsuario = "bloqueado",
+            Bloqueado = true,
+            IntentosFallidos = 5
+        };
+        await usuarios.AgregarAsync(usuario);
+
+        await servicio.DesbloquearAsync(1);
+
+        Assert.False(usuario.Bloqueado);
+        Assert.Equal(0, usuario.IntentosFallidos);
+        Assert.Contains(
+            AccionAuditoria.UsuarioDesbloqueado,
+            auditoria.Acciones);
+        Assert.Equal(1, usuarios.Guardados);
+    }
+
+    [Fact]
+    public async Task DesbloquearAsync_SinPermiso_LanzaAccesoDenegado()
+    {
+        var servicio = CrearServicio(Permiso.Ninguno);
+
+        await Assert.ThrowsAsync<AccesoDenegadoException>(
+            () => servicio.DesbloquearAsync(1));
+    }
+
+    [Fact]
+    public async Task DesbloquearAsync_UsuarioInexistente_LanzaError()
+    {
+        var servicio = CrearServicio();
+
+        await Assert.ThrowsAsync<ValidacionException>(
+            () => servicio.DesbloquearAsync(999));
+    }
+
+    [Fact]
+    public async Task RestablecerClaveTemporal_AsignaHashObligaCambioYAudita()
+    {
+        var servicio = CrearServicio();
+        var usuario = new Usuario
+        {
+            Id = 1,
+            NombreUsuario = "juan",
+            HashClave = "antiguo",
+            Bloqueado = true,
+            DebeCambiarClave = false
+        };
+        await usuarios.AgregarAsync(usuario);
+
+        var temporal = await servicio.RestablecerClaveTemporalAsync(1);
+
+        Assert.NotEmpty(temporal);
+        Assert.Equal("h:" + temporal, usuario.HashClave);
+        Assert.True(usuario.DebeCambiarClave);
+        Assert.False(usuario.Bloqueado);
+        Assert.Contains(
+            AccionAuditoria.ClaveRestablecida,
+            auditoria.Acciones);
+        Assert.Equal(1, usuarios.Guardados);
+    }
+
+    [Fact]
+    public async Task RestablecerClaveTemporal_SinPermiso_LanzaAccesoDenegado()
+    {
+        var servicio = CrearServicio(Permiso.VerInventario);
+
+        await Assert.ThrowsAsync<AccesoDenegadoException>(
+            () => servicio.RestablecerClaveTemporalAsync(1));
+    }
+
+    [Fact]
+    public async Task RestablecerClaveTemporal_GerenteSinGestionarRoles_LanzaAccesoDenegado()
+    {
+        var usuario = new Usuario { Id = 1, NombreUsuario = "admin" };
+        await usuarios.AgregarAsync(usuario);
+        var servicio = CrearServicio(Permiso.GestionarPersonal);
+
+        await Assert.ThrowsAsync<AccesoDenegadoException>(
+            () => servicio.RestablecerClaveTemporalAsync(1));
+
+        Assert.Equal(string.Empty, usuario.HashClave);
+        Assert.Equal(0, usuarios.Guardados);
+    }
+
+    [Fact]
+    public async Task RestablecerClaveTemporal_Inexistente_LanzaError()
+    {
+        var servicio = CrearServicio();
+
+        await Assert.ThrowsAsync<ValidacionException>(
+            () => servicio.RestablecerClaveTemporalAsync(999));
+    }
+}

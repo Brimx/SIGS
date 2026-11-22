@@ -9,21 +9,32 @@ namespace Supermercado.Pruebas;
 
 public class EstructuraTests
 {
-    private readonly RepositorioEnMemoria<Caja> cajas = new();
-    private readonly RepositorioEnMemoria<Cargo> cargos = new();
-    private readonly RolesEnMemoria roles = new();
+    private readonly ContextoPruebasSqlite contexto = new();
+    private readonly CajasEnMemoria cajas;
+    private readonly CargosEnMemoria cargos;
+    private readonly RolesEnMemoria roles;
     private readonly AuditoriaFalsa auditoria = new();
-    private readonly UnidadDeTrabajoFalsa trabajo = new();
 
-    private ServicioEstructura CrearServicio(
+    public EstructuraTests()
+    {
+        cajas = new CajasEnMemoria(contexto);
+        cargos = new CargosEnMemoria(contexto);
+        roles = new RolesEnMemoria(contexto);
+    }
+
+    private ServicioPersonal CrearServicio(
         Permiso permisos = Permiso.GestionarPersonal | Permiso.GestionarRoles)
         => new(
-            cajas,
-            cargos,
-            roles,
-            auditoria,
-            Sesiones.Con(permisos),
-            trabajo);
+            null!,
+            cargos: cargos,
+            roles: roles,
+            usuarios: null!,
+            cajas: cajas,
+            verificador: null!,
+            hasheador: null!,
+            auditoria: auditoria,
+            sesion: Sesiones.Con(permisos),
+            reloj: TimeProvider.System);
 
     [Fact]
     public async Task CrearCaja_ConPermiso_GuardaYAudita()
@@ -35,7 +46,7 @@ public class EstructuraTests
         Assert.Equal("Caja Rápida", caja.Nombre);
         Assert.Single(cajas.Datos);
         Assert.Contains(AccionAuditoria.CajaCreada, auditoria.Acciones);
-        Assert.Equal(1, trabajo.Guardados);
+        Assert.Equal(1, cajas.Guardados);
     }
 
     [Fact]
@@ -50,7 +61,7 @@ public class EstructuraTests
         Assert.Equal("Caja Principal", caja.Nombre);
         Assert.False(caja.Activa);
         Assert.Contains(AccionAuditoria.CajaModificada, auditoria.Acciones);
-        Assert.Equal(1, trabajo.Guardados);
+        Assert.Equal(1, cajas.Guardados);
     }
 
     [Fact]
@@ -63,7 +74,7 @@ public class EstructuraTests
         Assert.Equal("Auxiliar de Bodega", cargo.Nombre);
         Assert.Single(cargos.Datos);
         Assert.Contains(AccionAuditoria.CargoCreado, auditoria.Acciones);
-        Assert.Equal(1, trabajo.Guardados);
+        Assert.Equal(1, cargos.Guardados);
     }
 
     [Fact]
@@ -77,7 +88,7 @@ public class EstructuraTests
 
         Assert.Equal("Cajero Principal", cargo.Nombre);
         Assert.Contains(AccionAuditoria.CargoModificado, auditoria.Acciones);
-        Assert.Equal(1, trabajo.Guardados);
+        Assert.Equal(1, cargos.Guardados);
     }
 
     [Fact]
@@ -94,7 +105,7 @@ public class EstructuraTests
             Permiso.VerReportes | Permiso.VerInventario,
             rol.Permisos);
         Assert.Contains(AccionAuditoria.RolCreado, auditoria.Acciones);
-        Assert.Equal(1, trabajo.Guardados);
+        Assert.Equal(1, roles.Guardados);
     }
 
     [Fact]
@@ -131,7 +142,7 @@ public class EstructuraTests
             Permiso.VerInventario | Permiso.AjustarInventario,
             rol.Permisos);
         Assert.Contains(AccionAuditoria.RolModificado, auditoria.Acciones);
-        Assert.Equal(1, trabajo.Guardados);
+        Assert.Equal(1, roles.Guardados);
     }
 
     [Fact]

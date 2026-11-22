@@ -3,7 +3,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Supermercado.Entidades.Contratos;
+using Supermercado.Datos;
 using Supermercado.GUI.Servicios.Impresion;
 using Supermercado.GUI.Servicios.Legal;
 using Supermercado.GUI.Servicios.Preferencias;
@@ -37,7 +37,7 @@ public partial class App : Application
         // Asegura esquema y semillas básicas en SQLite o PostgreSQL antes de renderizar vistas
         try
         {
-            var inicializador = _appScope.ServiceProvider.GetRequiredService<IInicializadorBaseDatos>();
+            var inicializador = _appScope.ServiceProvider.GetRequiredService<InicializadorBaseDatos>();
             inicializador.CrearYSembrarAsync().GetAwaiter().GetResult();
         }
         catch (Exception ex)
@@ -51,7 +51,7 @@ public partial class App : Application
             {
                 try
                 {
-                    var demo = _appScope.ServiceProvider.GetRequiredService<IGeneradorDatosDemo>();
+                    var demo = _appScope.ServiceProvider.GetRequiredService<GeneradorDatosDemo>();
                     demo.GenerarAsync().GetAwaiter().GetResult();
                 }
                 catch (Exception ex)
@@ -102,11 +102,12 @@ public partial class App : Application
             sp.GetRequiredService<IServiceScopeFactory>()));
         servicios.AddTransient(sp => new LoginViewModel(
             sp.GetRequiredService<IServiceScopeFactory>(),
-            sp.GetRequiredService<Supermercado.Logica.Seguridad.ISesionActual>()));
+            sp.GetRequiredService<Supermercado.Logica.Seguridad.SesionActual>()));
         servicios.AddTransient(sp => new PosViewModel(
             sp.GetRequiredService<IServiceScopeFactory>()));
         servicios.AddTransient(sp => new InventarioViewModel(
-            sp.GetRequiredService<IServiceScopeFactory>()));
+            sp.GetRequiredService<IServiceScopeFactory>(),
+            sp.GetRequiredService<Supermercado.Logica.Seguridad.SesionActual>()));
         servicios.AddTransient(sp => new CajaTurnoViewModel(
             sp.GetRequiredService<IServiceScopeFactory>()));
         servicios.AddTransient(sp => new DashboardViewModel(
