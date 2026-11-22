@@ -106,7 +106,8 @@ public partial class App : Application
         servicios.AddTransient(sp => new PosViewModel(
             sp.GetRequiredService<IServiceScopeFactory>()));
         servicios.AddTransient(sp => new InventarioViewModel(
-            sp.GetRequiredService<IServiceScopeFactory>()));
+            sp.GetRequiredService<IServiceScopeFactory>(),
+            sp.GetRequiredService<Supermercado.Logica.Seguridad.SesionActual>()));
         servicios.AddTransient(sp => new CajaTurnoViewModel(
             sp.GetRequiredService<IServiceScopeFactory>()));
         servicios.AddTransient(sp => new DashboardViewModel(

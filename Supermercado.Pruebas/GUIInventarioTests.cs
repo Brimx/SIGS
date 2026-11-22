@@ -1,6 +1,14 @@
+using CommunityToolkit.Mvvm.Input;
+using Supermercado.Datos;
+using Supermercado.Entidades.Excepciones;
+using Supermercado.Entidades.Finanzas;
+using Supermercado.Entidades.Inventario;
 using Supermercado.Entidades.Personal;
+using Supermercado.Entidades.Productos;
 using Supermercado.Entidades.Seguridad;
 using Supermercado.GUI.ViewModels;
+using Supermercado.Logica.Inventario;
+using Supermercado.Logica.Productos;
 using Supermercado.Logica.Seguridad;
 using Supermercado.Pruebas.Falsos;
 using Xunit;
@@ -337,5 +345,192 @@ public class InventarioViewModelTests
         Assert.Single(vm.ProductosFiltrados);
         Assert.True(vm.ProductosFiltrados[0].EnAlertaStockBajo);
         Assert.Equal("PRÓXIMO A VENCER", vm.ProductosFiltrados[0].EstadoBadge);
+    }
+}
+
+public sealed class InventarioAltasGuiTests
+{
+    private readonly ProductosEnMemoria productos = new();
+    private readonly LotesEnMemoria lotes = new();
+    private readonly StockBodegaEnMemoria bodega = new();
+    private readonly MovimientosEnMemoria movimientos = new();
+    private readonly CategoriasEnMemoria categorias = new();
+    private readonly ProveedoresEnMemoria proveedores = new();
+    private readonly ImpuestosEnMemoria impuestos = new();
+    private readonly AuditoriaFalsa auditoria = new();
+    private readonly RelojFijo reloj = new(EscenarioInventario.Ahora);
+
+    private ServicioProductos CrearCatalogo(Permiso permisos)
+        => new(
+            productos,
+            lotes,
+            new ServicioInventario(null!, bodega, movimientos, null!, null!, reloj,
+                productos: productos, lotes: lotes),
+            sesion: Sesiones.Con(permisos),
+            reloj: reloj,
+            categorias: categorias,
+            proveedores: proveedores,
+            auditoria: auditoria,
+            impuestos: impuestos);
+
+    private InventarioViewModel CrearVm(Permiso permisos)
+        => new(null!, null!, null!, null!, CrearCatalogo(permisos), Sesiones.Con(permisos));
+
+    [Fact]
+    public void PermisosDeRol_GestionarProductos_SoloAdminYBodeguero()
+    {
+        var roles = ValoresIniciales.Roles();
+
+        Assert.True(roles.Single(r => r.Nombre == NombresRol.Admin).Permisos.HasFlag(Permiso.GestionarProductos));
+        Assert.True(roles.Single(r => r.Nombre == NombresRol.Bodeguero).Permisos.HasFlag(Permiso.GestionarProductos));
+        Assert.False(roles.Single(r => r.Nombre == NombresRol.Gerente).Permisos.HasFlag(Permiso.GestionarProductos));
+        Assert.False(roles.Single(r => r.Nombre == NombresRol.Cajero).Permisos.HasFlag(Permiso.GestionarProductos));
+    }
+
+    [Fact]
+    public void Admin_MuestraAccionesDeAlta()
+    {
+        var vm = CrearVm(Permiso.GestionarProductos);
+
+        Assert.True(vm.PuedeGestionarInventario);
+    }
+
+    [Fact]
+    public void Cajero_OcultaAccionesYRechazaAperturaDeModales()
+    {
+        var vm = CrearVm(Permiso.Vender);
+
+        Assert.False(vm.PuedeGestionarInventario);
+
+        vm.AbrirModalNuevoProductoCommand.Execute(null);
+        vm.AbrirModalEntradaBodegaCommand.Execute(null);
+
+        Assert.False(vm.ModalNuevoProductoAbierto);
+        Assert.False(vm.ModalEntradaBodegaAbierto);
+        Assert.Contains("No tiene permiso", vm.MensajeEstado);
+    }
+
+    [Fact]
+    public async Task ConfirmarNuevoProducto_GuardaProductoYCierraModal()
+    {
+        var vm = CrearVm(Permiso.GestionarProductos);
+        await categorias.AgregarAsync(new Categoria { Id = 1, Nombre = "Granos" });
+        await proveedores.AgregarAsync(new Proveedor { Id = 1, Nombre = "Distribuidora" });
+        await impuestos.AgregarAsync(new Iva { Id = 1, Nombre = "IVA 19 %", PuntosBasicos = 1900 });
+
+        vm.NuevoCodigoBarrasInput = "770123";
+        vm.NuevoNombreInput = "Arroz Diana 1 kg";
+        vm.CategoriaSeleccionada = categorias.Datos[0];
+        vm.NuevoPrecioInput = 4500;
+        vm.IvaSeleccionado = impuestos.Datos[0];
+        vm.NuevoStockMinimoInput = 10;
+        vm.ModalNuevoProductoAbierto = true;
+
+        await vm.ConfirmarNuevoProductoCommand.ExecuteAsync(null);
+
+        Assert.Single(productos.Datos);
+        Assert.Equal("Arroz Diana 1 kg", productos.Datos[0].Nombre);
+        Assert.False(vm.ModalNuevoProductoAbierto);
+        Assert.Contains("creado", vm.MensajeEstado);
+        Assert.Contains(AccionAuditoria.ProductoCreado, auditoria.Acciones);
+    }
+
+    [Fact]
+    public async Task ConfirmarEntradaBodega_CreaLoteConVencimientoYCierraModal()
+    {
+        var vm = CrearVm(Permiso.GestionarProductos);
+        await productos.AgregarAsync(new ProductoUnitario
+        {
+            Id = 5,
+            Nombre = "Arroz",
+            CodigoBarras = "770123",
+            PrecioVenta = 4500,
+            ImpuestoId = 1,
+            ProveedorId = 1
+        });
+
+        vm.ProductoSeleccionado = productos.Datos[0];
+        vm.CantidadEntradaInput = 7;
+        vm.NumeroLoteInput = "L-2026-07";
+        var vencimientoLocal = new DateTime(2027, 5, 1, 12, 0, 0, DateTimeKind.Local);
+        vm.FechaVencimientoEntradaInput = new DateTimeOffset(
+            vencimientoLocal, TimeZoneInfo.Local.GetUtcOffset(vencimientoLocal));
+        vm.ModalEntradaBodegaAbierto = true;
+
+        await vm.ConfirmarEntradaBodegaCommand.ExecuteAsync(null);
+
+        var lote = Assert.Single(lotes.Datos);
+        Assert.Equal("L-2026-07", lote.NumeroLote);
+        Assert.Equal(new DateOnly(2027, 5, 1), lote.FechaVencimiento);
+        Assert.Equal(7, Assert.Single(bodega.Datos).Cantidad);
+        Assert.False(vm.ModalEntradaBodegaAbierto);
+        Assert.Contains("Entrada registrada", vm.MensajeEstado);
+    }
+
+    [Fact]
+    public async Task ConfirmarEntradaBodega_SinVencimiento_MuestraMensajeYNoRegistra()
+    {
+        var vm = CrearVm(Permiso.GestionarProductos);
+        await productos.AgregarAsync(new ProductoUnitario
+        {
+            Id = 5,
+            Nombre = "Arroz",
+            CodigoBarras = "770123",
+            PrecioVenta = 4500,
+            ImpuestoId = 1,
+            ProveedorId = 1
+        });
+
+        vm.ProductoSeleccionado = productos.Datos[0];
+        vm.NumeroLoteInput = "L-2026-07";
+        vm.FechaVencimientoEntradaInput = null;
+
+        await vm.ConfirmarEntradaBodegaCommand.ExecuteAsync(null);
+
+        Assert.Empty(lotes.Datos);
+        Assert.Equal("Seleccione la fecha de vencimiento.", vm.MensajeEstado);
+    }
+
+    [Fact]
+    public async Task CrearProductoAsync_SinPermiso_LanzaAccesoDenegado()
+    {
+        await categorias.AgregarAsync(new Categoria { Id = 1, Nombre = "Granos" });
+        await proveedores.AgregarAsync(new Proveedor { Id = 1, Nombre = "Distribuidora" });
+        await impuestos.AgregarAsync(new Iva { Id = 1, Nombre = "IVA 19 %", PuntosBasicos = 1900 });
+        var servicio = CrearCatalogo(Permiso.Vender);
+
+        await Assert.ThrowsAsync<AccesoDenegadoException>(
+            () => servicio.CrearProductoAsync("770999", "Arroz", 1, 4500, 1, 10));
+
+        Assert.Empty(productos.Datos);
+    }
+
+    [Fact]
+    public async Task EntradaBodega_DatosInvalidos_LanzaValidacionException()
+    {
+        var servicio = CrearCatalogo(Permiso.GestionarProductos);
+        await productos.AgregarAsync(new ProductoUnitario
+        {
+            Id = 5,
+            Nombre = "Arroz",
+            CodigoBarras = "770999",
+            PrecioVenta = 4500,
+            ImpuestoId = 1,
+            ProveedorId = 1
+        });
+
+        var hoy = DateOnly.FromDateTime(reloj.GetLocalNow().DateTime);
+
+        var sinLote = await Assert.ThrowsAsync<ValidacionException>(
+            () => servicio.RegistrarIngresoLoteAsync(5, "  ", hoy.AddDays(10), 10, 0));
+        var cantidadCero = await Assert.ThrowsAsync<ValidacionException>(
+            () => servicio.RegistrarIngresoLoteAsync(5, "L-1", hoy.AddDays(10), 0, 0));
+        var vencida = await Assert.ThrowsAsync<ValidacionException>(
+            () => servicio.RegistrarIngresoLoteAsync(5, "L-1", hoy.AddDays(-1), 10, 0));
+
+        Assert.Equal("Falta el número de lote.", sinLote.Message);
+        Assert.Equal("La cantidad debe ser positiva.", cantidadCero.Message);
+        Assert.Equal("La fecha de vencimiento no puede estar en el pasado.", vencida.Message);
+        Assert.Empty(lotes.Datos);
     }
 }

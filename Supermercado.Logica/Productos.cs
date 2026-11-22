@@ -1,5 +1,6 @@
 using Supermercado.Entidades.Contratos;
 using Supermercado.Entidades.Excepciones;
+using Supermercado.Entidades.Finanzas;
 using Supermercado.Entidades.Productos;
 using Supermercado.Entidades.Seguridad;
 using Supermercado.Logica.Comunes;
@@ -18,7 +19,8 @@ public class ServicioProductos(
     TimeProvider? reloj = null,
     ICategoriaRepositorio? categorias = null,
     IProveedorRepositorio? proveedores = null,
-    ServicioAuditoria? auditoria = null)
+    ServicioAuditoria? auditoria = null,
+    IImpuestoRepositorio? impuestos = null)
 {
     private readonly TimeProvider _reloj = reloj ?? TimeProvider.System;
 
@@ -34,8 +36,79 @@ public class ServicioProductos(
             throw new ValidacionException("Ya existe ese código de barras.");
 
         await productos.AgregarAsync(producto);
+
+        if (auditoria is not null)
+            await auditoria.RegistrarAsync(
+                AccionAuditoria.ProductoCreado,
+                nameof(Producto),
+                producto.Id,
+                $"Producto {producto.Nombre} ({producto.CodigoBarras})");
+
         await productos.GuardarAsync();
     }
+
+    public virtual async Task<Producto> CrearProductoAsync(
+        string codigoBarras,
+        string nombre,
+        int categoriaId,
+        long precioVenta,
+        int impuestoId,
+        int stockMinimoEstante,
+        int proveedorId = 0)
+    {
+        sesion?.Exigir(Permiso.GestionarProductos);
+
+        if (string.IsNullOrWhiteSpace(codigoBarras))
+            throw new ValidacionException("Falta el código de barras.");
+        if (string.IsNullOrWhiteSpace(nombre))
+            throw new ValidacionException("Falta el nombre.");
+        if (categoriaId <= 0)
+            throw new ValidacionException("Falta la categoría.");
+        if (precioVenta <= 0)
+            throw new ValidacionException("El precio debe ser positivo.");
+        if (stockMinimoEstante < 0)
+            throw new ValidacionException("El mínimo no puede ser negativo.");
+        if (impuestoId <= 0)
+            throw new ValidacionException("Falta el IVA.");
+
+        if (proveedorId <= 0 && proveedores is not null)
+        {
+            var disponibles = await proveedores.ObtenerTodosAsync();
+            proveedorId = disponibles.FirstOrDefault()?.Id ?? 0;
+        }
+
+        if (proveedorId <= 0)
+            throw new ValidacionException(
+                "No hay proveedores registrados. Cree uno en Compras y Proveedores antes de dar de alta productos.");
+
+        var producto = new ProductoUnitario
+        {
+            CodigoBarras = codigoBarras.Trim(),
+            Nombre = nombre.Trim(),
+            CategoriaId = categoriaId,
+            PrecioVenta = precioVenta,
+            ImpuestoId = impuestoId,
+            StockMinimoEstante = stockMinimoEstante,
+            ProveedorId = proveedorId,
+            Activo = true
+        };
+
+        await RegistrarAsync(producto);
+        return producto;
+    }
+
+    public virtual async Task<IReadOnlyList<Producto>> ObtenerProductosActivosAsync()
+    {
+        sesion?.Exigir(Permiso.GestionarProductos);
+
+        var todos = await productos.ObtenerTodosAsync();
+        return todos.Where(p => p.Activo).OrderBy(p => p.Nombre).ToList();
+    }
+
+    public virtual Task<IReadOnlyList<Impuesto>> ObtenerImpuestosAsync()
+        => impuestos is not null
+            ? impuestos.ObtenerTodosAsync()
+            : Task.FromResult<IReadOnlyList<Impuesto>>([]);
 
     public virtual Task<Producto?> BuscarPorCodigoBarrasAsync(string codigo)
         => productos.ObtenerPorCodigoBarrasAsync(codigo);
@@ -71,31 +144,61 @@ public class ServicioProductos(
     {
         sesion?.Exigir(Permiso.GestionarProductos);
 
-        if (string.IsNullOrWhiteSpace(numeroLote))
+        var numero = numeroLote?.Trim() ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(numero))
             throw new ValidacionException("Falta el número de lote.");
-        if (cantidad <= 0 || costoUnitario < 0)
-            throw new ValidacionException("Cantidad o costo inválidos.");
+        if (cantidad <= 0)
+            throw new ValidacionException("La cantidad debe ser positiva.");
+        if (costoUnitario < 0)
+            throw new ValidacionException("El costo unitario no puede ser negativo.");
         if (vencimiento < _reloj.HoyLocal())
-            throw new ValidacionException("El lote ya está vencido.");
+            throw new ValidacionException("La fecha de vencimiento no puede estar en el pasado.");
 
         var producto = await productos.ObtenerPorIdAsync(productoId)
             ?? throw new ValidacionException("El producto no existe.");
 
-        var lote = new Lote
-        {
-            ProductoId = producto.Id,
-            NumeroLote = numeroLote,
-            FechaIngreso = _reloj.HoyLocal(),
-            FechaVencimiento = vencimiento,
-            CantidadIngresada = cantidad,
-            CostoUnitario = costoUnitario
-        };
-
+        Lote? lote = null;
         if (lotes is not null)
-            await lotes.AgregarAsync(lote);
+        {
+            var existentes = await lotes.ObtenerTodosAsync();
+            lote = existentes.FirstOrDefault(l =>
+                l.ProductoId == producto.Id
+                && string.Equals(l.NumeroLote, numero, StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (lote is null)
+        {
+            lote = new Lote
+            {
+                ProductoId = producto.Id,
+                NumeroLote = numero,
+                FechaIngreso = _reloj.HoyLocal(),
+                FechaVencimiento = vencimiento,
+                CantidadIngresada = cantidad,
+                CostoUnitario = costoUnitario
+            };
+
+            if (lotes is not null)
+                await lotes.AgregarAsync(lote);
+        }
+        else
+        {
+            if (vencimiento != lote.FechaVencimiento)
+                throw new ValidacionException("Ese número de lote ya existe con otro vencimiento.");
+
+            lote.CantidadIngresada += cantidad;
+            lotes!.Actualizar(lote);
+        }
 
         if (inventario is not null)
             await inventario.RegistrarIngresoAsync(lote, cantidad);
+
+        if (auditoria is not null)
+            await auditoria.RegistrarAsync(
+                AccionAuditoria.IngresoBodegaRegistrado,
+                nameof(Lote),
+                lote.Id,
+                $"Entrada a bodega: {producto.Nombre} | Lote {numero} | {cantidad} und | Vence {vencimiento:yyyy-MM-dd}");
 
         if (lotes is not null)
             await lotes.GuardarAsync();

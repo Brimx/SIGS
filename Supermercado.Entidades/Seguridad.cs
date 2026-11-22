@@ -40,7 +40,9 @@ public enum AccionAuditoria
     RetiroCajaRegistrado,
     VentaSuspendida,
     ReabastecimientoGenerado,
-    VinculoTelegram
+    VinculoTelegram,
+    ProductoCreado,
+    IngresoBodegaRegistrado
 }
 
 [Flags]

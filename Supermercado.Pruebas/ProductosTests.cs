@@ -444,3 +444,150 @@ public class ServicioProductosTests
                 1000));
     }
 }
+
+public class AltaInventarioTests
+{
+    private readonly ProductosEnMemoria productos = new();
+    private readonly LotesEnMemoria lotes = new();
+    private readonly StockBodegaEnMemoria bodega = new();
+    private readonly MovimientosEnMemoria movimientos = new();
+    private readonly CategoriasEnMemoria categorias = new();
+    private readonly ProveedoresEnMemoria proveedores = new();
+    private readonly ImpuestosEnMemoria impuestos = new();
+    private readonly AuditoriaFalsa auditoria = new();
+    private readonly RelojFijo reloj = new(EscenarioInventario.Ahora);
+
+    private ServicioInventario CrearInventario()
+        => new(null!, bodega, movimientos, null!, null!, reloj,
+            productos: productos, lotes: lotes);
+
+    private ServicioProductos CrearCatalogo(Permiso permisos)
+        => new(
+            productos,
+            lotes,
+            CrearInventario(),
+            sesion: Sesiones.Con(permisos),
+            reloj: reloj,
+            categorias: categorias,
+            proveedores: proveedores,
+            auditoria: auditoria,
+            impuestos: impuestos);
+
+    private async Task<(int CategoriaId, int ImpuestoId)> SembrarCatalogo()
+    {
+        var categoria = new Categoria { Id = 1, Nombre = "Granos" };
+        var proveedor = new Proveedor { Id = 1, Nombre = "Distribuidora" };
+        var impuesto = new Iva { Id = 1, Nombre = "IVA 19 %", PuntosBasicos = 1900 };
+
+        await categorias.AgregarAsync(categoria);
+        await proveedores.AgregarAsync(proveedor);
+        await impuestos.AgregarAsync(impuesto);
+
+        return (categoria.Id, impuesto.Id);
+    }
+
+    [Fact]
+    public async Task CrearProductoAsync_ConPermiso_GuardaProductoYAudita()
+    {
+        var (categoriaId, impuestoId) = await SembrarCatalogo();
+        var servicio = CrearCatalogo(Permiso.GestionarProductos);
+
+        var producto = await servicio.CrearProductoAsync(
+            "770999", "Arroz Diana 1 kg", categoriaId, 4500, impuestoId, 10);
+
+        Assert.Single(productos.Datos);
+        Assert.Equal("Arroz Diana 1 kg", producto.Nombre);
+        Assert.Equal(1, producto.ProveedorId);
+        Assert.Contains(AccionAuditoria.ProductoCreado, auditoria.Acciones);
+        Assert.Equal(1, productos.Guardados);
+    }
+
+    [Fact]
+    public async Task CrearProductoAsync_CodigoDuplicado_LanzaValidacionException()
+    {
+        var (categoriaId, impuestoId) = await SembrarCatalogo();
+        var servicio = CrearCatalogo(Permiso.GestionarProductos);
+        await servicio.CrearProductoAsync("770999", "Arroz", categoriaId, 4500, impuestoId, 10);
+
+        await Assert.ThrowsAsync<ValidacionException>(
+            () => servicio.CrearProductoAsync(
+                "770999", "Arroz duplicado", categoriaId, 5000, impuestoId, 5));
+
+        Assert.Single(productos.Datos);
+    }
+
+    [Fact]
+    public async Task EntradaBodega_CreaLoteConVencimientoStockMovimientoYAuditoria()
+    {
+        var servicio = CrearCatalogo(Permiso.GestionarProductos);
+        var producto = new ProductoUnitario
+        {
+            Id = 5,
+            Nombre = "Arroz",
+            CodigoBarras = "770999",
+            PrecioVenta = 4500,
+            ImpuestoId = 1,
+            ProveedorId = 1
+        };
+        await productos.AgregarAsync(producto);
+
+        var vencimiento = DateOnly.FromDateTime(reloj.GetLocalNow().DateTime).AddDays(30);
+        await servicio.RegistrarIngresoLoteAsync(5, "L-2026-01", vencimiento, 25, 3000);
+
+        var lote = Assert.Single(lotes.Datos);
+        Assert.Equal("L-2026-01", lote.NumeroLote);
+        Assert.Equal(vencimiento, lote.FechaVencimiento);
+        Assert.Equal(25, lote.CantidadIngresada);
+        Assert.Equal(25, Assert.Single(bodega.Datos).Cantidad);
+        Assert.Equal(TipoMovimiento.Ingreso, Assert.Single(movimientos.Datos).Tipo);
+        Assert.Contains(AccionAuditoria.IngresoBodegaRegistrado, auditoria.Acciones);
+    }
+
+    [Fact]
+    public async Task EntradaBodega_MismoLote_SumaCantidadSinDuplicarLote()
+    {
+        var servicio = CrearCatalogo(Permiso.GestionarProductos);
+        await productos.AgregarAsync(new ProductoUnitario
+        {
+            Id = 5,
+            Nombre = "Arroz",
+            CodigoBarras = "770999",
+            PrecioVenta = 4500,
+            ImpuestoId = 1,
+            ProveedorId = 1
+        });
+
+        var vencimiento = DateOnly.FromDateTime(reloj.GetLocalNow().DateTime).AddDays(30);
+        await servicio.RegistrarIngresoLoteAsync(5, "L-2026-01", vencimiento, 10, 3000);
+        await servicio.RegistrarIngresoLoteAsync(5, "L-2026-01", vencimiento, 20, 3000);
+
+        Assert.Single(lotes.Datos);
+        Assert.Equal(30, lotes.Datos[0].CantidadIngresada);
+        Assert.Equal(30, Assert.Single(bodega.Datos).Cantidad);
+        Assert.Equal(2, movimientos.Datos.Count);
+    }
+
+    [Fact]
+    public async Task EntradaBodega_SinPermiso_LanzaAccesoDenegado()
+    {
+        var servicio = CrearCatalogo(Permiso.Vender);
+        await productos.AgregarAsync(new ProductoUnitario
+        {
+            Id = 5,
+            Nombre = "Arroz",
+            CodigoBarras = "770999",
+            PrecioVenta = 4500,
+            ImpuestoId = 1,
+            ProveedorId = 1
+        });
+
+        var vencimiento = DateOnly.FromDateTime(reloj.GetLocalNow().DateTime).AddDays(30);
+        await Assert.ThrowsAsync<AccesoDenegadoException>(
+            () => servicio.RegistrarIngresoLoteAsync(5, "L-2026-01", vencimiento, 10, 3000));
+
+        Assert.Empty(lotes.Datos);
+        Assert.Empty(bodega.Datos);
+        Assert.Empty(movimientos.Datos);
+    }
+
+}

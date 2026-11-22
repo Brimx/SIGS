@@ -10,9 +10,9 @@ Inventario curado de módulos, tipos, contratos, constructores, métodos públic
 | `Supermercado.Datos` | 12 archivos `.cs`: `SigsDbContext`, repositorios por módulo, EF Core, SQLite, semilla y migración | Entidades |
 | `Supermercado.Logica` | 21 archivos `.cs`: casos de uso concretos, seguridad, cálculo, integraciones, reportes y dashboards | Datos, Entidades |
 | `Supermercado.GUI` | 33 archivos `.cs`: Avalonia 12.1.4 + MVVM; el POS está repartido en 5 archivos | Lógica, Entidades |
-| `Supermercado.Pruebas` | 22 archivos `.cs` en raíz, sin subcarpetas; 403 pruebas xUnit en verde | Lógica, Entidades, GUI |
+| `Supermercado.Pruebas` | 22 archivos `.cs` en raíz, sin subcarpetas; 419 pruebas xUnit en verde | Lógica, Entidades, GUI |
 
-La compilación de `Supermercado.slnx` termina con 0 advertencias y 0 errores. Ningún archivo supera las 600 líneas físicas; el más largo tiene 484.
+La compilación de `Supermercado.slnx` termina con 0 advertencias y 0 errores. Ningún archivo supera las 600 líneas físicas; el más largo tiene 593.
 
 ## 2. Módulos y servicios consolidados
 
@@ -89,7 +89,7 @@ Todas las entidades son archivos planos en `Supermercado.Entidades/`.
 
 | Archivo | Tipos principales |
 | :-- | :-- |
-| `Entidades/Seguridad.cs` | `Permiso` (`[Flags] long`, 18 valores), `AccionAuditoria`, `RegistroAuditoria`, `IntentoAcceso`, `FiltroAuditoria`, `ResultadoPaginado<T>`, `Parametro`, `ClavesParametro` |
+| `Entidades/Seguridad.cs` | `Permiso` (`[Flags] long`, 18 valores), `AccionAuditoria` (incluye `ProductoCreado` e `IngresoBodegaRegistrado`), `RegistroAuditoria`, `IntentoAcceso`, `FiltroAuditoria`, `ResultadoPaginado<T>`, `Parametro`, `ClavesParametro` |
 | `Entidades/Dashboard.cs` | `TamanoWidget`, `ConfiguracionWidget`, `DisposicionPanel`, `EntradaDisposicion` |
 | `Entidades/Excepciones.cs` | 11 excepciones de dominio, de `ValidacionException` a `VentaInvalidaException` |
 
@@ -130,8 +130,8 @@ Los 21 archivos son planos. Los casos de uso se consumen como clases concretas; 
 | `Comun.cs` | `Validador`, `TraductorExcepciones`, `ExtensionesReloj` |
 | `Seguridad.cs` | `ServicioAutenticacion`, `ServicioInicializacion`, `ServicioAuditoria`, `ServicioParametros`, `SesionActual`, `HasheadorBCrypt` |
 | `Personal.cs` | `ServicioPersonal` |
-| `Productos.cs` | `ServicioProductos` |
-| `Inventario.cs` | `ServicioInventario` |
+| `Productos.cs` | `ServicioProductos`: altas desde GUI (`CrearProductoAsync`, `ObtenerProductosActivosAsync`, `ObtenerImpuestosAsync`), ingreso de lotes reutilizando lote existente y auditoría `ProductoCreado`/`IngresoBodegaRegistrado` |
+| `Inventario.cs` | `ServicioInventario`: `RegistrarIngresoAsync` reutiliza `StockBodega` por lote y registra `TipoMovimiento.Ingreso` |
 | `InventarioSalidas.cs` | `PlanDeSalida`, `EstrategiaSalida`, `SalidaFefo` |
 | `Ventas.cs` | `ServicioVentas` |
 | `Caja.cs` | `ServicioCaja` |
@@ -150,13 +150,13 @@ Los 21 archivos son planos. Los casos de uso se consumen como clases concretas; 
 
 ## 7. Capa de Presentación (`Supermercado.GUI`)
 
-Avalonia 12.1.4, .NET 10 y CommunityToolkit.Mvvm. Los 33 archivos `.cs` se reparten en 4 archivos raíz, 17 ViewModels y 12 code-behind de vistas. `ViewLocator.cs` y el XAML de `Views/` permanecen intactos.
+Avalonia 12.1.4, .NET 10 y CommunityToolkit.Mvvm. Los 33 archivos `.cs` se reparten en 4 archivos raíz, 17 ViewModels y 12 code-behind de vistas. `ViewLocator.cs` permanece intacto; `Views/InventarioView.axaml` incorpora los formularios de nuevo producto y entrada a bodega, y el resto del XAML no cambia.
 
 ### Archivos raíz
 
 | Archivo | Responsabilidad |
 | :-- | :-- |
-| `App.axaml.cs` | Inicializa el contenedor con `AgregarLogica()` y registra los servicios de presentación |
+| `App.axaml.cs` | Inicializa el contenedor con `AgregarLogica()` y registra los servicios de presentación; inyecta `SesionActual` en `InventarioViewModel` |
 | `Program.cs` | Punto de entrada de Avalonia |
 | `ServiciosGui.cs` | `TemaSigs`, `IServicioPreferencias`, `ServicioPreferencias`, `IServicioTextosLegales`, `ServicioTextosLegales`, `IImpresorTicket`, `ImpresorTicketEscPos`, `ImpresorTicketPdf`, `PlantillaTicketPos` |
 | `ViewLocator.cs` | Resolución reflexiva de `ViewModel` a `View` |
@@ -165,7 +165,7 @@ Avalonia 12.1.4, .NET 10 y CommunityToolkit.Mvvm. Los 33 archivos `.cs` se repar
 
 `ViewModelBase`, `MainViewModel`, `LoginViewModel`, `ShellViewModel`, `DashboardViewModel`, `InventarioViewModel`, `CajaTurnoViewModel`, `ComprasProveedoresViewModel`, `ContabilidadDianViewModel`, `PersonalRolesViewModel`, `ConfiguracionViewModel`, `RegistroUsuarioViewModel` y el POS dividido en cinco archivos: `PosViewModel.cs`, `PosViewModel.Carrito.cs`, `PosViewModel.Operaciones.cs`, `PosViewModel.Pagos.cs` y `PosViewModel.Tickets.cs`.
 
-Buenas prácticas aplicadas: `ViewModelBase : ObservableObject`, propiedades `[ObservableProperty]`, comandos `RelayCommand`/`AsyncRelayCommand`, navegación por ViewModels y ninguna referencia desde la GUI a `Supermercado.Datos`.
+Buenas prácticas aplicadas: `ViewModelBase : ObservableObject`, propiedades `[ObservableProperty]`, comandos `RelayCommand`/`AsyncRelayCommand`, navegación por ViewModels y ninguna referencia desde la GUI a `Supermercado.Datos`. `InventarioViewModel` expone `PuedeGestionarInventario` desde `SesionActual.Tiene(Permiso.GestionarProductos)` y los comandos `AbrirModalNuevoProducto`, `CerrarModalNuevoProducto`, `ConfirmarNuevoProducto`, `AbrirModalEntradaBodega`, `CerrarModalEntradaBodega` y `ConfirmarEntradaBodega`.
 
 ## 8. Inyección de dependencias
 
@@ -182,7 +182,7 @@ La GUI solo llama a `ExtensionesLogica.AgregarLogica()` (`Supermercado.Logica/Co
 
 ## 9. Pruebas automatizadas (`Supermercado.Pruebas`)
 
-Suite xUnit construida sobre **403 pruebas en verde** (319 `Fact` y 16 `Theory`, 0 fallos, 0 omitidas). Los 22 archivos están en la raíz del proyecto, sin subcarpetas.
+Suite xUnit construida sobre **419 pruebas en verde** (0 fallos, 0 omitidas). Los 22 archivos están en la raíz del proyecto, sin subcarpetas.
 
 | Archivo | Módulo o regla cubierta |
 | :-- | :-- |
@@ -194,13 +194,13 @@ Suite xUnit construida sobre **403 pruebas en verde** (319 `Fact` y 16 `Theory`,
 | `EstructuraTests.cs` | Altas de caja, cargo y rol con auditoría y una sola confirmación |
 | `Falsos.cs` | Reloj, hash, parámetros, TRM y repositorios en memoria compartidos |
 | `FinanzasTests.cs` | `Dinero`, impuestos, nómina y servicios financieros |
-| `GUIInventarioTests.cs` | Nuevos módulos GUI y `InventarioViewModel` |
+| `GUIInventarioTests.cs` | Nuevos módulos GUI, `InventarioViewModel`, permisos de alta, creación desde GUI y validaciones de entrada |
 | `GUIPosTests.cs` | Escaneo POS, pagos, modales, tirilla y regulación |
 | `GUITests.cs` | Temas, tokens y `DashboardGuiTests` |
 | `InventarioTests.cs` | FEFO, alertas, mermas, traslados y reabastecimiento |
 | `PersonalTests.cs` | Empleados, usuarios, credenciales y permisos |
 | `ProductosDianTests.cs` | Balanzas GS1, conversiones y régimen tributario |
-| `ProductosTests.cs` | Catálogo, mantenimiento, subtotales y `ServicioProductos` |
+| `ProductosTests.cs` | Catálogo, mantenimiento, subtotales, altas de productos, códigos duplicados, lotes y entradas a bodega de `ServicioProductos` |
 | `ReportesTests.cs` | Ticket POS de 80 mm, desprendible de nómina y reportes PDF |
 | `SeguridadTests.cs` | Bloqueo, permisos, autenticación, parámetros y consultas de lectura |
 | `ServicioDashboardTests.cs` | Registro, reordenamiento y consulta de los 10 widgets |

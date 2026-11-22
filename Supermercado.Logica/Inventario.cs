@@ -76,16 +76,31 @@ public class ServicioInventario(
     {
         if (lote.ProductoId <= 0)
             throw new ValidacionException("El lote no está asociado a un producto.");
+        if (cantidad <= 0)
+            throw new ValidacionException("La cantidad debe ser positiva.");
 
-        var fila = new StockBodega
+        var fila = await bodega.ObtenerPorLoteAsync(lote.Id);
+        if (fila is not null && fila.ProductoId != lote.ProductoId)
+            throw new ValidacionException("El lote pertenece a otro producto.");
+
+        if (fila is null)
         {
-            ProductoId = lote.ProductoId,
-            Lote = lote
-        };
+            fila = new StockBodega
+            {
+                ProductoId = lote.ProductoId,
+                LoteId = lote.Id,
+                Lote = lote
+            };
+        }
+
         fila.Aumentar(cantidad);
 
-        await bodega.AgregarAsync(fila);
-        await RegistrarAsync(fila, TipoMovimiento.Ingreso, cantidad);
+        if (fila.Id == 0)
+            await bodega.AgregarAsync(fila);
+        else
+            bodega.Actualizar(fila);
+
+        await RegistrarAsync(fila, TipoMovimiento.Ingreso, cantidad, motivo: "Entrada a bodega");
     }
 
     public virtual async Task RegistrarMermaAsync(
