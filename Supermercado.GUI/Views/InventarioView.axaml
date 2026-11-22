@@ -1,6 +1,8 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:Supermercado.GUI.ViewModels"
+             xmlns:finanzas="using:Supermercado.Entidades.Finanzas"
+             xmlns:productos="using:Supermercado.Entidades.Productos"
              x:Class="Supermercado.GUI.Views.InventarioView"
              x:DataType="vm:InventarioViewModel"
              FontFamily="{StaticResource FontFamilyPlex}">
@@ -41,6 +43,24 @@
                         <StackPanel Orientation="Horizontal" Spacing="6">
                             <LucideIcon Kind="TriangleAlert" Size="16" Foreground="{DynamicResource BrushWarningText}" />
                             <TextBlock Text="Baja por Merma" FontWeight="{StaticResource FontWeightSemiBold}" />
+                        </StackPanel>
+                    </Button>
+
+                    <Button Command="{Binding AbrirModalNuevoProductoCommand}"
+                            IsVisible="{Binding PuedeGestionarInventario}"
+                            MinHeight="38" Margin="0,0,8,8">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <LucideIcon Kind="Plus" Size="16" />
+                            <TextBlock Text="Nuevo producto" FontWeight="{StaticResource FontWeightSemiBold}" />
+                        </StackPanel>
+                    </Button>
+
+                    <Button Command="{Binding AbrirModalEntradaBodegaCommand}"
+                            IsVisible="{Binding PuedeGestionarInventario}"
+                            MinHeight="38" Margin="0,0,8,8">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <LucideIcon Kind="Boxes" Size="16" />
+                            <TextBlock Text="Entrada a bodega" FontWeight="{StaticResource FontWeightSemiBold}" />
                         </StackPanel>
                     </Button>
 
@@ -188,6 +208,145 @@
                         </Button>
                     </StackPanel>
                 </StackPanel>
+            </Border>
+        </Border>
+
+        <Border Classes="Scrim" IsVisible="{Binding ModalNuevoProductoAbierto}">
+            <Border Classes="Tarjeta"
+                    MaxWidth="460" MaxHeight="520"
+                    HorizontalAlignment="Center" VerticalAlignment="Center"
+                    Padding="20">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Spacing="12">
+                        <TextBlock Classes="Titulo" Text="Nuevo producto" />
+                        <TextBlock Classes="Ayuda"
+                                   Text="El alta queda registrada en auditoría. El producto nace sin existencias; use Entrada a bodega para recibirlo."
+                                   TextWrapping="Wrap" />
+
+                        <StackPanel Spacing="4">
+                            <TextBlock Classes="Etiqueta" Text="Código de barras" />
+                            <TextBox Text="{Binding NuevoCodigoBarrasInput}"
+                                     PlaceholderText="Ej. 7701234567890" />
+                        </StackPanel>
+
+                        <StackPanel Spacing="4">
+                            <TextBlock Classes="Etiqueta" Text="Nombre" />
+                            <TextBox Text="{Binding NuevoNombreInput}"
+                                     PlaceholderText="Ej. Arroz Diana 1 kg" />
+                        </StackPanel>
+
+                        <StackPanel Spacing="4">
+                            <TextBlock Classes="Etiqueta" Text="Categoría" />
+                            <ComboBox ItemsSource="{Binding Categorias}"
+                                      SelectedItem="{Binding CategoriaSeleccionada}"
+                                      PlaceholderText="Seleccione una categoría"
+                                      HorizontalAlignment="Stretch">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate DataType="{x:Type productos:Categoria}">
+                                        <TextBlock Text="{Binding Nombre}" />
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                        </StackPanel>
+
+                        <StackPanel Spacing="4">
+                            <TextBlock Classes="Etiqueta" Text="Precio de venta" />
+                            <NumericUpDown Value="{Binding NuevoPrecioInput}"
+                                           Minimum="0" Increment="1"
+                                           FormatString="N0" />
+                        </StackPanel>
+
+                        <StackPanel Spacing="4">
+                            <TextBlock Classes="Etiqueta" Text="IVA" />
+                            <ComboBox ItemsSource="{Binding Impuestos}"
+                                      SelectedItem="{Binding IvaSeleccionado}"
+                                      PlaceholderText="Seleccione el IVA"
+                                      HorizontalAlignment="Stretch">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate DataType="{x:Type finanzas:Impuesto}">
+                                        <TextBlock Text="{Binding Nombre}" />
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                        </StackPanel>
+
+                        <StackPanel Spacing="4">
+                            <TextBlock Classes="Etiqueta" Text="Stock mínimo en estante" />
+                            <NumericUpDown Value="{Binding NuevoStockMinimoInput}"
+                                           Minimum="0" Increment="1" />
+                        </StackPanel>
+
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+                            <Button Command="{Binding CerrarModalNuevoProductoCommand}">
+                                <TextBlock Text="Cancelar" />
+                            </Button>
+                            <Button Command="{Binding ConfirmarNuevoProductoCommand}"
+                                    IsEnabled="{Binding !Guardando}"
+                                    Classes="Primary" Theme="{DynamicResource SolidButton}">
+                                <TextBlock Text="Guardar producto" FontWeight="{StaticResource FontWeightBold}" />
+                            </Button>
+                        </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+        </Border>
+
+        <Border Classes="Scrim" IsVisible="{Binding ModalEntradaBodegaAbierto}">
+            <Border Classes="Tarjeta"
+                    MaxWidth="460" MaxHeight="520"
+                    HorizontalAlignment="Center" VerticalAlignment="Center"
+                    Padding="20">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Spacing="12">
+                        <TextBlock Classes="Titulo" Text="Entrada a bodega" />
+                        <TextBlock Classes="Ayuda"
+                                   Text="Crea o complementa un lote, aumenta el stock de bodega y deja movimiento y auditoría."
+                                   TextWrapping="Wrap" />
+
+                        <StackPanel Spacing="4">
+                            <TextBlock Classes="Etiqueta" Text="Producto" />
+                            <ComboBox ItemsSource="{Binding Productos}"
+                                      SelectedItem="{Binding ProductoSeleccionado}"
+                                      PlaceholderText="Seleccione un producto"
+                                      HorizontalAlignment="Stretch">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate DataType="{x:Type productos:Producto}">
+                                        <TextBlock Text="{Binding Nombre}"
+                                                   TextTrimming="CharacterEllipsis" />
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                        </StackPanel>
+
+                        <StackPanel Spacing="4">
+                            <TextBlock Classes="Etiqueta" Text="Cantidad" />
+                            <NumericUpDown Value="{Binding CantidadEntradaInput}"
+                                           Minimum="1" Increment="1" />
+                        </StackPanel>
+
+                        <StackPanel Spacing="4">
+                            <TextBlock Classes="Etiqueta" Text="Número de lote" />
+                            <TextBox Text="{Binding NumeroLoteInput}"
+                                     PlaceholderText="Ej. LOTE-2026-01" />
+                        </StackPanel>
+
+                        <StackPanel Spacing="4">
+                            <TextBlock Classes="Etiqueta" Text="Fecha de vencimiento" />
+                            <DatePicker SelectedDate="{Binding FechaVencimientoEntradaInput}" />
+                        </StackPanel>
+
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+                            <Button Command="{Binding CerrarModalEntradaBodegaCommand}">
+                                <TextBlock Text="Cancelar" />
+                            </Button>
+                            <Button Command="{Binding ConfirmarEntradaBodegaCommand}"
+                                    IsEnabled="{Binding !Guardando}"
+                                    Classes="Primary" Theme="{DynamicResource SolidButton}">
+                                <TextBlock Text="Registrar entrada" FontWeight="{StaticResource FontWeightBold}" />
+                            </Button>
+                        </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
             </Border>
         </Border>
     </Panel>
