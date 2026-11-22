@@ -18,76 +18,99 @@ namespace Supermercado.Pruebas.GUI;
 
 public class NuevosModulosGuiTests
 {
-    [Fact]
-    public void ShellViewModel_CajeroPuro_ActivaModoPantallaCompletaSinSidebar()
+    private static ShellViewModel CrearShell(string nombreRol, Permiso permisos)
     {
-        var sesionCajero = new SesionActual();
-        var cajero = new Usuario
+        var sesion = new SesionActual();
+        sesion.Iniciar(new Usuario
         {
-            Id = 1,
-            NombreUsuario = "cajero1",
+            NombreUsuario = nombreRol.ToLowerInvariant(),
             Empleado = new Empleado
             {
-                Id = 10,
                 Activo = true,
-                Rol = new Rol
-                {
-                    Nombre = "Cajero",
-                    Permisos = Permiso.Vender | Permiso.AbrirCerrarTurno | Permiso.GestionarClientes
-                }
+                Rol = new Rol { Nombre = nombreRol, Permisos = permisos }
             }
-        };
-        sesionCajero.Iniciar(cajero);
+        });
 
-        var shellVm = new ShellViewModel(sesionCajero, new PosViewModel(), new InventarioViewModel(), new CajaTurnoViewModel(), new DashboardViewModel(), new RegistroUsuarioViewModel());
-        shellVm.AplicarPermisosDeNavegacion(sesionCajero);
+        var shellVm = new ShellViewModel(
+            sesion,
+            new PosViewModel(),
+            new InventarioViewModel(),
+            new CajaTurnoViewModel(),
+            new DashboardViewModel(),
+            new RegistroUsuarioViewModel());
+        shellVm.AplicarPermisosDeNavegacion(sesion);
+        return shellVm;
+    }
 
-        Assert.True(shellVm.PuedeVerPos);
-        Assert.True(shellVm.PuedeVerTurno);
-        Assert.False(shellVm.PuedeVerCompras);
-        Assert.False(shellVm.PuedeVerPersonal);
-        Assert.False(shellVm.PuedeVerContabilidad);
-        Assert.False(shellVm.PuedeVerDashboard);
-
-        // Al ser cajero puro sin módulos de back-office, la barra lateral se oculta
-        Assert.False(shellVm.MostrarBarraLateral);
-        Assert.True(shellVm.EsModoCajeroPantallaCompleta);
-        Assert.Equal(0, shellVm.AnchoColumnaSidebar.Value);
+    private static void AssertVisibilidad(
+        ShellViewModel vm,
+        bool pos,
+        bool turno,
+        bool clientes,
+        bool inventario,
+        bool compras,
+        bool personal,
+        bool contabilidad,
+        bool dashboard,
+        bool barraLateral)
+    {
+        Assert.Equal(pos, vm.PuedeVerPos);
+        Assert.Equal(turno, vm.PuedeVerTurno);
+        Assert.Equal(clientes, vm.PuedeVerClientes);
+        Assert.Equal(inventario, vm.PuedeVerInventario);
+        Assert.Equal(compras, vm.PuedeVerCompras);
+        Assert.Equal(personal, vm.PuedeVerPersonal);
+        Assert.Equal(contabilidad, vm.PuedeVerContabilidad);
+        Assert.Equal(dashboard, vm.PuedeVerDashboard);
+        Assert.Equal(barraLateral, vm.MostrarBarraLateral);
     }
 
     [Fact]
-    public void ShellViewModel_SupervisorYAdmin_MantieneSidebarVisible()
+    public void ShellViewModel_Admin_MuestraTodosLosModulos()
     {
-        var sesionAdmin = new SesionActual();
-        var admin = new Usuario
-        {
-            Id = 2,
-            NombreUsuario = "admin",
-            Empleado = new Empleado
-            {
-                Id = 20,
-                Activo = true,
-                Rol = new Rol
-                {
-                    Nombre = "Admin",
-                    Permisos = Enum.GetValues<Permiso>().Aggregate(Permiso.Ninguno, (acc, p) => acc | p)
-                }
-            }
-        };
-        sesionAdmin.Iniciar(admin);
+        var todos = Enum.GetValues<Permiso>()
+            .Aggregate(Permiso.Ninguno, (acc, p) => acc | p);
 
-        var shellVm = new ShellViewModel(sesionAdmin, new PosViewModel(), new InventarioViewModel(), new CajaTurnoViewModel(), new DashboardViewModel(), new RegistroUsuarioViewModel());
-        shellVm.AplicarPermisosDeNavegacion(sesionAdmin);
+        AssertVisibilidad(CrearShell(NombresRol.Admin, todos),
+            pos: true, turno: true, clientes: true, inventario: true,
+            compras: true, personal: true, contabilidad: true, dashboard: true,
+            barraLateral: true);
+    }
 
-        Assert.True(shellVm.PuedeVerPos);
-        Assert.True(shellVm.PuedeVerCompras);
-        Assert.True(shellVm.PuedeVerPersonal);
-        Assert.True(shellVm.PuedeVerContabilidad);
-        Assert.True(shellVm.PuedeVerDashboard);
+    [Fact]
+    public void ShellViewModel_Gerente_MuestraClientesInventarioPersonalFinanzasYDashboard()
+    {
+        var gerente = Permiso.AnularVenta | Permiso.VerReportes | Permiso.VerFinanzas
+            | Permiso.GestionarPersonal | Permiso.VerInventario
+            | Permiso.GestionarClientes | Permiso.AutorizarOperacionPos;
 
-        Assert.True(shellVm.MostrarBarraLateral);
-        Assert.False(shellVm.EsModoCajeroPantallaCompleta);
-        Assert.Equal(240, shellVm.AnchoColumnaSidebar.Value);
+        AssertVisibilidad(CrearShell(NombresRol.Gerente, gerente),
+            pos: false, turno: false, clientes: true, inventario: true,
+            compras: false, personal: true, contabilidad: true, dashboard: true,
+            barraLateral: true);
+    }
+
+    [Fact]
+    public void ShellViewModel_Cajero_MuestraPosTurnoYClientes()
+    {
+        var cajero = Permiso.Vender | Permiso.AbrirCerrarTurno | Permiso.GestionarClientes;
+
+        AssertVisibilidad(CrearShell(NombresRol.Cajero, cajero),
+            pos: true, turno: true, clientes: true, inventario: false,
+            compras: false, personal: false, contabilidad: false, dashboard: false,
+            barraLateral: true);
+    }
+
+    [Fact]
+    public void ShellViewModel_Bodeguero_MuestraInventarioYCompras()
+    {
+        var bodeguero = Permiso.VerInventario | Permiso.AjustarInventario
+            | Permiso.Reabastecer | Permiso.GestionarProductos | Permiso.GestionarCompras;
+
+        AssertVisibilidad(CrearShell(NombresRol.Bodeguero, bodeguero),
+            pos: false, turno: false, clientes: false, inventario: true,
+            compras: true, personal: false, contabilidad: false, dashboard: false,
+            barraLateral: true);
     }
 
     [Fact]

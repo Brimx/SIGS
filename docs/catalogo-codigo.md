@@ -10,7 +10,7 @@ Inventario curado de módulos, tipos, contratos, constructores, métodos públic
 | `Supermercado.Datos` | 12 archivos `.cs`: `SigsDbContext`, repositorios por módulo, EF Core, SQLite, semilla y migración | Entidades |
 | `Supermercado.Logica` | 21 archivos `.cs`: casos de uso concretos, seguridad, cálculo, integraciones, reportes y dashboards | Datos, Entidades |
 | `Supermercado.GUI` | 33 archivos `.cs`: Avalonia 12.1.4 + MVVM; el POS está repartido en 5 archivos | Lógica, Entidades |
-| `Supermercado.Pruebas` | 22 archivos `.cs` en raíz, sin subcarpetas; 420 pruebas xUnit en verde | Lógica, Entidades, GUI |
+| `Supermercado.Pruebas` | 22 archivos `.cs` en raíz, sin subcarpetas; 422 pruebas xUnit en verde | Lógica, Entidades, GUI |
 
 La compilación de `Supermercado.slnx` termina con 0 advertencias y 0 errores. Ningún archivo supera las 600 líneas físicas; el más largo tiene 593.
 
@@ -182,7 +182,7 @@ La GUI solo llama a `ExtensionesLogica.AgregarLogica()` (`Supermercado.Logica/Co
 
 ## 9. Pruebas automatizadas (`Supermercado.Pruebas`)
 
-Suite xUnit construida sobre **420 pruebas en verde** (0 fallos, 0 omitidas). Los 22 archivos están en la raíz del proyecto, sin subcarpetas.
+Suite xUnit construida sobre **422 pruebas en verde** (0 fallos, 0 omitidas). Los 22 archivos están en la raíz del proyecto, sin subcarpetas.
 
 | Archivo | Módulo o regla cubierta |
 | :-- | :-- |
