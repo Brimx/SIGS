@@ -315,11 +315,11 @@ public sealed class ResumenOperativoWidgetTests
         {
         }
 
-        public override Task<TurnoCaja?> ObtenerTurnoActualAsync() => Task.FromResult<TurnoCaja?>(null);
+        public override Task<TurnoCaja?> ObtenerTurnoActualAsync(int? cajaId = null) => Task.FromResult<TurnoCaja?>(null);
         public override Task<TurnoCaja> AbrirTurnoAsync(int cajaId, long efectivoInicial) => throw new NotSupportedException();
-        public override Task<ResultadoArqueo> CerrarTurnoAsync(long efectivoContado) => throw new NotSupportedException();
-        public override Task<RetiroCaja> RegistrarRetiroAsync(long monto, string motivo, int supervisorId) => throw new NotSupportedException();
-        public override Task<IReadOnlyList<RetiroCaja>> ObtenerRetirosTurnoActualAsync() => throw new NotSupportedException();
+        public override Task<ResultadoArqueo> CerrarTurnoAsync(long efectivoContado, int? cajaId = null) => throw new NotSupportedException();
+        public override Task<RetiroCaja> RegistrarRetiroAsync(long monto, string motivo, int supervisorId, int? cajaId = null) => throw new NotSupportedException();
+        public override Task<IReadOnlyList<RetiroCaja>> ObtenerRetirosTurnoActualAsync(int? cajaId = null) => throw new NotSupportedException();
     }
 
     private sealed class AlertasVacias : ServicioInventario

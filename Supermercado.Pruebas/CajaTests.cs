@@ -70,6 +70,15 @@ public class CajaTests
         Assert.Throws<TurnoInvalidoException>(
             () => turno.Cerrar(Ahora, 0, 0));
     }
+
+    [Fact]
+    public void Esperado_SinMovimientosNiListas_UsaValoresNeutros()
+    {
+        var turno = TurnoCaja.Abrir(1, 1, 50000, Ahora);
+        turno.Retiros = null!;
+
+        Assert.Equal(50000L, turno.CalcularEfectivoEsperado(null));
+    }
 }
 
 public class ServicioCajaTests
@@ -177,5 +186,34 @@ public class ServicioCajaTests
 
         await Assert.ThrowsAsync<TurnoInvalidoException>(
             () => e.Servicio.CerrarTurnoAsync(50000));
+    }
+
+    [Fact]
+    public async Task TurnoActual_PorCaja_DetectaTurnoDeOtroEmpleado()
+    {
+        var e = new Escenario();
+        e.Turnos.Datos.Add(TurnoCaja.Abrir(1, 2, 50000, EscenarioInventario.Ahora.UtcDateTime));
+
+        var turno = await e.Servicio.ObtenerTurnoActualAsync(1);
+
+        Assert.NotNull(turno);
+        Assert.Equal(2, turno.EmpleadoId);
+
+        var ex = await Assert.ThrowsAsync<TurnoInvalidoException>(
+            () => e.Servicio.AbrirTurnoAsync(1, 50000));
+        Assert.Equal("La caja ya tiene un turno abierto.", ex.Message);
+    }
+
+    [Fact]
+    public async Task CerrarTurnoSinMovimientos_PorCaja_CalculaLaBase()
+    {
+        var e = new Escenario();
+        e.Turnos.Datos.Add(TurnoCaja.Abrir(1, 2, 50000, EscenarioInventario.Ahora.UtcDateTime));
+
+        var resultado = await e.Servicio.CerrarTurnoAsync(50000, 1);
+
+        Assert.Equal(50000L, resultado.Esperado);
+        Assert.Equal(0L, resultado.Diferencia);
+        Assert.True(resultado.DentroDeTolerancia);
     }
 }

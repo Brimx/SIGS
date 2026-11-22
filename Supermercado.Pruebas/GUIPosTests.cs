@@ -67,19 +67,19 @@ public class PosViewModelTests
             return Task.FromResult(TurnoCaja.Abrir(cajaId, 1, efectivoInicial, DateTime.UtcNow));
         }
 
-        public override Task<ResultadoArqueo> CerrarTurnoAsync(long efectivoContado)
+        public override Task<ResultadoArqueo> CerrarTurnoAsync(long efectivoContado, int? cajaId = null)
         {
             Abierto = false;
             return Task.FromResult(new ResultadoArqueo(100000, efectivoContado, efectivoContado - 100000, true));
         }
 
-        public override Task<TurnoCaja?> ObtenerTurnoActualAsync()
+        public override Task<TurnoCaja?> ObtenerTurnoActualAsync(int? cajaId = null)
             => Task.FromResult(Abierto ? TurnoCaja.Abrir(1, 1, 100000, DateTime.UtcNow) : null);
 
-        public override Task<RetiroCaja> RegistrarRetiroAsync(long monto, string motivo, int supervisorId)
+        public override Task<RetiroCaja> RegistrarRetiroAsync(long monto, string motivo, int supervisorId, int? cajaId = null)
             => Task.FromResult(new RetiroCaja { Monto = monto, Motivo = motivo, EmpleadoAutorizaId = supervisorId });
 
-        public override Task<IReadOnlyList<RetiroCaja>> ObtenerRetirosTurnoActualAsync()
+        public override Task<IReadOnlyList<RetiroCaja>> ObtenerRetirosTurnoActualAsync(int? cajaId = null)
             => Task.FromResult<IReadOnlyList<RetiroCaja>>([]);
     }
 

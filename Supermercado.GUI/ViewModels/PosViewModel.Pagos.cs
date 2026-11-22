@@ -168,7 +168,8 @@ public partial class PosViewModel : ViewModelBase
                 Lineas: lineas,
                 Pagos: listaPagos,
                 ClienteId: ClienteActual?.Id,
-                ClaveIdempotencia: _claveIdempotenciaCobro ??= Guid.NewGuid().ToString("N"));
+                ClaveIdempotencia: _claveIdempotenciaCobro ??= Guid.NewGuid().ToString("N"),
+                CajaId: CajaActivaId);
 
             var ventaRegistrada = await servicioVentas.RegistrarVentaAsync(solicitud);
 

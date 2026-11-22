@@ -104,7 +104,7 @@ public partial class CajaTurnoViewModel : ViewModelBase
         TieneError = false;
         try
         {
-            var turno = await servicioCaja.ObtenerTurnoActualAsync();
+            var turno = await servicioCaja.ObtenerTurnoActualAsync(CajaSeleccionadaId);
             TurnoAbierto = turno is not null;
             if (turno is not null)
             {
@@ -135,7 +135,7 @@ public partial class CajaTurnoViewModel : ViewModelBase
 
     private async Task CargarRetirosDelTurnoAsync(ServicioCaja servicioCaja)
     {
-        var retiros = await servicioCaja.ObtenerRetirosTurnoActualAsync();
+        var retiros = await servicioCaja.ObtenerRetirosTurnoActualAsync(CajaSeleccionadaId);
         RetirosTurnoActual.Clear();
         long acumulado = 0;
         foreach (var r in retiros)
@@ -205,7 +205,8 @@ public partial class CajaTurnoViewModel : ViewModelBase
             var retiro = await servicioCaja.RegistrarRetiroAsync(
                 MontoRetiroInput,
                 MotivoRetiroInput.Trim(),
-                supervisorId);
+                supervisorId,
+                CajaSeleccionadaId);
 
             PinSupervisorRetiroInput = string.Empty;
             await CargarRetirosDelTurnoAsync(servicioCaja);
@@ -230,7 +231,9 @@ public partial class CajaTurnoViewModel : ViewModelBase
         TieneError = false;
         try
         {
-            var resultado = await servicioCaja.CerrarTurnoAsync(EfectivoContadoInput);
+            var resultado = await servicioCaja.CerrarTurnoAsync(
+                EfectivoContadoInput,
+                CajaSeleccionadaId);
             UltimoArqueo = resultado;
             TurnoAbierto = false;
             MensajeEstado = resultado.DentroDeTolerancia

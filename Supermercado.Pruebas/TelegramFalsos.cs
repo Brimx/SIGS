@@ -253,19 +253,20 @@ public sealed class CajaFalsaTelegram : ServicioCaja
     public override Task<TurnoCaja> AbrirTurnoAsync(int cajaId, long efectivoInicial)
         => throw new NotImplementedException();
 
-    public override Task<ResultadoArqueo> CerrarTurnoAsync(long efectivoContado)
+    public override Task<ResultadoArqueo> CerrarTurnoAsync(long efectivoContado, int? cajaId = null)
         => throw new NotImplementedException();
 
-    public override Task<TurnoCaja?> ObtenerTurnoActualAsync()
+    public override Task<TurnoCaja?> ObtenerTurnoActualAsync(int? cajaId = null)
         => Task.FromResult<TurnoCaja?>(null);
 
     public override Task<RetiroCaja> RegistrarRetiroAsync(
         long monto,
         string motivo,
-        int supervisorId)
+        int supervisorId,
+        int? cajaId = null)
         => throw new NotImplementedException();
 
-    public override Task<IReadOnlyList<RetiroCaja>> ObtenerRetirosTurnoActualAsync()
+    public override Task<IReadOnlyList<RetiroCaja>> ObtenerRetirosTurnoActualAsync(int? cajaId = null)
         => Task.FromResult<IReadOnlyList<RetiroCaja>>(
             Array.Empty<RetiroCaja>());
 }

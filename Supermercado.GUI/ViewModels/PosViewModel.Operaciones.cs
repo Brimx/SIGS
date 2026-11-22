@@ -30,7 +30,7 @@ public partial class PosViewModel : ViewModelBase
 
         try
         {
-            var turno = await servicioCaja.ObtenerTurnoActualAsync();
+            var turno = await servicioCaja.ObtenerTurnoActualAsync(CajaActivaId);
             TieneTurnoAbierto = turno is not null;
             if (turno is not null)
             {

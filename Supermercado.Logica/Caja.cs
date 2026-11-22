@@ -30,10 +30,7 @@ public class ServicioCaja(
         if (!caja.Activa)
             throw new ValidacionException("La caja está inactiva.");
 
-        if (await ObtenerTurnoActualAsync() is not null)
-            throw new TurnoInvalidoException("Ya tienes un turno abierto.");
-
-        if (await turnos.ObtenerAbiertoPorCajaAsync(cajaId) is not null)
+        if (await ObtenerTurnoActualAsync(cajaId) is not null)
             throw new TurnoInvalidoException("La caja ya tiene un turno abierto.");
 
         var turno = TurnoCaja.Abrir(
@@ -46,11 +43,13 @@ public class ServicioCaja(
         return turno;
     }
 
-    public virtual async Task<ResultadoArqueo> CerrarTurnoAsync(long efectivoContado)
+    public virtual async Task<ResultadoArqueo> CerrarTurnoAsync(
+        long efectivoContado,
+        int? cajaId = null)
     {
         sesion.Exigir(Permiso.AbrirCerrarTurno);
 
-        var turno = await ObtenerTurnoActualAsync()
+        var turno = await ObtenerTurnoActualAsync(cajaId)
             ?? throw new TurnoInvalidoException("No hay un turno abierto.");
         var delTurno = await ventas.ObtenerPorTurnoAsync(turno.Id);
         var esperado = turno.CalcularEfectivoEsperado(delTurno);
@@ -76,17 +75,20 @@ public class ServicioCaja(
             Math.Abs(diferencia) <= tolerancia);
     }
 
-    public virtual Task<TurnoCaja?> ObtenerTurnoActualAsync()
-        => turnos.ObtenerAbiertoPorEmpleadoAsync(sesion.EmpleadoId);
+    public virtual Task<TurnoCaja?> ObtenerTurnoActualAsync(int? cajaId = null)
+        => cajaId.HasValue
+            ? turnos.ObtenerAbiertoPorCajaAsync(cajaId.Value)
+            : turnos.ObtenerAbiertoPorEmpleadoAsync(sesion.EmpleadoId);
 
     public virtual async Task<RetiroCaja> RegistrarRetiroAsync(
         long monto,
         string motivo,
-        int supervisorId)
+        int supervisorId,
+        int? cajaId = null)
     {
         sesion.Exigir(Permiso.AbrirCerrarTurno);
 
-        var turno = await ObtenerTurnoActualAsync()
+        var turno = await ObtenerTurnoActualAsync(cajaId)
             ?? throw new TurnoInvalidoException("No hay un turno abierto.");
 
         var retiro = new RetiroCaja
@@ -121,9 +123,10 @@ public class ServicioCaja(
         return retiro;
     }
 
-    public virtual async Task<IReadOnlyList<RetiroCaja>> ObtenerRetirosTurnoActualAsync()
+    public virtual async Task<IReadOnlyList<RetiroCaja>> ObtenerRetirosTurnoActualAsync(
+        int? cajaId = null)
     {
-        var turno = await ObtenerTurnoActualAsync();
+        var turno = await ObtenerTurnoActualAsync(cajaId);
         if (turno is null)
             return [];
 

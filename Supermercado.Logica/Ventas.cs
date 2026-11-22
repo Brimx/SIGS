@@ -37,8 +37,9 @@ public class ServicioVentas(
                 return existente;
         }
 
-        var turno = await turnos
-            .ObtenerAbiertoPorEmpleadoAsync(sesion.EmpleadoId)
+        var turno = await (solicitud.CajaId.HasValue
+                ? turnos.ObtenerAbiertoPorCajaAsync(solicitud.CajaId.Value)
+                : turnos.ObtenerAbiertoPorEmpleadoAsync(sesion.EmpleadoId))
             ?? throw new TurnoInvalidoException("Abre un turno primero.");
         var venta = new Venta
         {
@@ -310,5 +311,6 @@ public record SolicitudVenta(
     IReadOnlyList<LineaVenta> Lineas,
     IReadOnlyList<Pago> Pagos,
     int? ClienteId = null,
-    string? ClaveIdempotencia = null);
+    string? ClaveIdempotencia = null,
+    int? CajaId = null);
 }
