@@ -13,7 +13,7 @@ Punto de venta, inventario dual estante/bodega, caja con arqueo, personal, finan
 
 [![Estado](https://img.shields.io/badge/estado-en%20desarrollo-orange?style=flat-square)](#estado-del-proyecto)
 [![Build](https://img.shields.io/github/actions/workflow/status/Brimx/SIGS/ci.yml?style=flat-square&label=build)](https://github.com/Brimx/SIGS/actions)
-[![Pruebas](https://img.shields.io/badge/pruebas-355%20passing-brightgreen?style=flat-square)](#pruebas)
+[![Pruebas](https://img.shields.io/badge/pruebas-425%20passing-brightgreen?style=flat-square)](#pruebas)
 [![Licencia](https://img.shields.io/github/license/Brimx/SIGS?style=flat-square&label=licencia)](LICENSE)
 [![Último commit](https://img.shields.io/github/last-commit/Brimx/SIGS?style=flat-square&label=%C3%BAltimo%20commit)](https://github.com/Brimx/SIGS/commits)
 
@@ -146,7 +146,7 @@ Configura `SIGS_TELEGRAM_BOT_TOKEN` y, para lenguaje natural, `SIGS_GEMINI_API_K
 dotnet test Supermercado.Pruebas/Supermercado.Pruebas.csproj
 ```
 
-Estado actual: **355 pruebas en verde**. Cubren impuestos, dinero, ventas, FEFO, arqueo, nómina, autenticación, permisos, sesión, parámetros, TRM, clientes, GUI (incluidos gráficos de dashboard), validaciones de formulario, PDF e integración con SQLite. Ver [`docs/plan-pruebas.md`](docs/plan-pruebas.md).
+Estado actual: **425 pruebas en verde**. Cubren impuestos, dinero, ventas, FEFO, arqueo, nómina, autenticación, permisos, sesión, parámetros, TRM, clientes, GUI (incluidos gráficos de dashboard), validaciones de formulario, PDF e integración con SQLite. Ver [`docs/plan-pruebas.md`](docs/plan-pruebas.md).
 
 ## Estructura del repositorio
 
@@ -188,7 +188,7 @@ Detalle y valores iniciales en [`docs/diccionario-datos.md`](docs/diccionario-da
 | Dominio y reglas de negocio | Completo |
 | Persistencia SQLite + semilla | Completo (modo `--demo` disponible) |
 | Seguridad, permisos y auditoría | Implementado con hallazgos abiertos (ver [`docs/pendientes-ui.md`](docs/pendientes-ui.md)) |
-| Pruebas | Completo (355) |
+| Pruebas | Completo (425) |
 | Documentación | Completo |
 | GUI Avalonia | Completo (POS, Turno, Clientes, Inventario, Compras, Personal, Contabilidad, Dashboard con gráficos nativos, Configuración) |
 | PDF con QuestPDF y ESC/POS | Implementado (ticket, nómina y reporte de ventas) |
