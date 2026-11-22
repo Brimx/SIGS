@@ -309,6 +309,34 @@ public class InicializadorBaseDatosTests
 
         Assert.Equal("99", paramDespues.Valor);
     }
+
+    [Fact]
+    public async Task CrearYSembrarAsync_AsignaPermisosFaltantesARolesExistentes()
+    {
+        using var contexto = new ContextoPruebasSqlite();
+        var inicializador = new InicializadorBaseDatos(contexto.Db);
+
+        await inicializador.CrearYSembrarAsync();
+
+        var admin = await contexto.Db.Roles.FirstAsync(r => r.Nombre == NombresRol.Admin);
+        var bodeguero = await contexto.Db.Roles.FirstAsync(r => r.Nombre == NombresRol.Bodeguero);
+        admin.Permisos &= ~Permiso.GestionarProductos;
+        bodeguero.Permisos &= ~Permiso.GestionarProductos;
+        bodeguero.Permisos |= Permiso.VerReportes;
+        await contexto.Db.SaveChangesAsync();
+
+        await inicializador.CrearYSembrarAsync();
+        contexto.Db.ChangeTracker.Clear();
+
+        var adminDespues = await contexto.Db.Roles.FirstAsync(r => r.Nombre == NombresRol.Admin);
+        var bodegueroDespues = await contexto.Db.Roles.FirstAsync(r => r.Nombre == NombresRol.Bodeguero);
+        var gerenteDespues = await contexto.Db.Roles.FirstAsync(r => r.Nombre == NombresRol.Gerente);
+
+        Assert.True(adminDespues.Permisos.HasFlag(Permiso.GestionarProductos));
+        Assert.True(bodegueroDespues.Permisos.HasFlag(Permiso.GestionarProductos));
+        Assert.True(bodegueroDespues.Permisos.HasFlag(Permiso.VerReportes));
+        Assert.False(gerenteDespues.Permisos.HasFlag(Permiso.GestionarProductos));
+    }
 }
 
 public class ClientesSqliteTests

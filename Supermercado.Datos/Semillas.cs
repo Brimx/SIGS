@@ -130,6 +130,7 @@ public class InicializadorBaseDatos(SigsDbContext db)
         await AsegurarColumnasPanelAsync();
 
         await SembrarSiVacioAsync(db.Roles, ValoresIniciales.Roles());
+        await AsegurarPermisosFaltantesAsync();
         await SembrarSiVacioAsync(db.Cargos, ValoresIniciales.Cargos());
         await SembrarSiVacioAsync(db.Impuestos, ValoresIniciales.Impuestos());
         await SembrarSiVacioAsync(db.Cajas, ValoresIniciales.Cajas());
@@ -194,6 +195,30 @@ public class InicializadorBaseDatos(SigsDbContext db)
 
         await conjunto.AddRangeAsync(valores);
         await db.SaveChangesAsync();
+    }
+
+    private async Task AsegurarPermisosFaltantesAsync()
+    {
+        var esperados = ValoresIniciales.Roles()
+            .ToDictionary(r => r.Nombre, r => r.Permisos);
+        var roles = await db.Roles.ToListAsync();
+        var hayCambios = false;
+
+        foreach (var rol in roles)
+        {
+            if (!esperados.TryGetValue(rol.Nombre, out var esperado))
+                continue;
+
+            var resultante = rol.Permisos | esperado;
+            if (resultante == rol.Permisos)
+                continue;
+
+            rol.Permisos = resultante;
+            hayCambios = true;
+        }
+
+        if (hayCambios)
+            await db.SaveChangesAsync();
     }
 
     // Agrega solo los parámetros nuevos; nunca pisa los ya editados.
