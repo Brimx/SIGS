@@ -138,10 +138,12 @@ public class DianYBalanzasTests
     private class EscenarioIntegracion
     {
         public EscenarioInventario Inventario { get; } = new();
-        public ProductosEnMemoria Productos { get; } = new();
+        public ContextoPruebasSqlite Contexto { get; }
+            = new(new RelojFijo(EscenarioInventario.Ahora));
+        public ProductosEnMemoria Productos { get; }
         public VentasEnMemoria Ventas { get; } = new();
-        public TurnosEnMemoria Turnos { get; } = new();
-        public ClientesEnMemoria Clientes { get; } = new();
+        public TurnosEnMemoria Turnos { get; }
+        public ClientesEnMemoria Clientes { get; }
         public ParametrosFalsos Parametros { get; } = new();
         public AuditoriaFalsa Auditoria { get; } = new();
         public ServicioVentas Servicio { get; }
@@ -149,6 +151,9 @@ public class DianYBalanzasTests
 
         public EscenarioIntegracion()
         {
+            Productos = new ProductosEnMemoria(Contexto);
+            Turnos = new TurnosEnMemoria(Contexto);
+            Clientes = new ClientesEnMemoria(Contexto);
             Turnos.Datos.Add(TurnoCaja.Abrir(1, 1, 0, EscenarioInventario.Ahora.UtcDateTime));
             Parametros.Valores[ClavesParametro.ResponsableIva] = "1"; // Por defecto responsable
 

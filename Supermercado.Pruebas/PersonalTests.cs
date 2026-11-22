@@ -19,12 +19,21 @@ public class ServicioEmpleadosTests
             => Task.FromResult(resultado);
     }
 
-    private readonly EmpleadosEnMemoria empleados = new();
-    private readonly RolesEnMemoria roles = new();
+    private readonly ContextoPruebasSqlite contexto;
+    private readonly EmpleadosEnMemoria empleados;
+    private readonly RolesEnMemoria roles;
     private readonly UsuariosEnMemoria usuarios = new();
     private readonly HasheadorFalso hasheador = new();
     private readonly AuditoriaFalsa auditoria = new();
-    private readonly RelojFijo reloj = new(EscenarioInventario.Ahora);
+    private readonly RelojFijo reloj;
+
+    public ServicioEmpleadosTests()
+    {
+        reloj = new RelojFijo(EscenarioInventario.Ahora);
+        contexto = new ContextoPruebasSqlite(reloj);
+        empleados = new EmpleadosEnMemoria(contexto);
+        roles = new RolesEnMemoria(contexto);
+    }
 
     private ServicioPersonal CrearServicio(
         Permiso permisos = Permiso.GestionarPersonal | Permiso.GestionarRoles,

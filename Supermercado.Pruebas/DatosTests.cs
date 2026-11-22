@@ -23,22 +23,24 @@ public class GeneradorDatosDemoTests
 {
     private class EscenarioDemo
     {
-        public CategoriasEnMemoria Categorias { get; } = new();
-        public ProveedoresEnMemoria Proveedores { get; } = new();
-        public ImpuestosEnMemoria Impuestos { get; } = new();
-        public ProductosEnMemoria Productos { get; } = new();
-        public LotesEnMemoria Lotes { get; } = new();
-        public StockEstanteEnMemoria Estantes { get; } = new();
-        public StockBodegaEnMemoria Bodegas { get; } = new();
-        public MovimientosEnMemoria Movimientos { get; } = new();
-        public CargosEnMemoria Cargos { get; } = new();
-        public RolesEnMemoria Roles { get; } = new();
-        public EmpleadosEnMemoria Empleados { get; } = new();
+        public ContextoPruebasSqlite Contexto { get; }
+            = new(new RelojFijo(EscenarioInventario.Ahora));
+        public CategoriasEnMemoria Categorias { get; }
+        public ProveedoresEnMemoria Proveedores { get; }
+        public ImpuestosEnMemoria Impuestos { get; }
+        public ProductosEnMemoria Productos { get; }
+        public LotesEnMemoria Lotes { get; }
+        public StockEstanteEnMemoria Estantes { get; }
+        public StockBodegaEnMemoria Bodegas { get; }
+        public MovimientosEnMemoria Movimientos { get; }
+        public CargosEnMemoria Cargos { get; }
+        public RolesEnMemoria Roles { get; }
+        public EmpleadosEnMemoria Empleados { get; }
         public UsuariosEnMemoria Usuarios { get; } = new();
-        public CajasEnMemoria Cajas { get; } = new();
-        public TurnosEnMemoria Turnos { get; } = new();
+        public CajasEnMemoria Cajas { get; }
+        public TurnosEnMemoria Turnos { get; }
         public VentasEnMemoria Ventas { get; } = new();
-        public GastosEnMemoria Gastos { get; } = new();
+        public GastosEnMemoria Gastos { get; }
         public HasheadorFalso Hasheador { get; } = new();
         public RelojFijo Reloj { get; } = new(EscenarioInventario.Ahora);
 
@@ -46,6 +48,21 @@ public class GeneradorDatosDemoTests
 
         public EscenarioDemo()
         {
+            Categorias = new CategoriasEnMemoria(Contexto);
+            Proveedores = new ProveedoresEnMemoria(Contexto);
+            Impuestos = new ImpuestosEnMemoria(Contexto);
+            Productos = new ProductosEnMemoria(Contexto);
+            Lotes = new LotesEnMemoria(Contexto);
+            Estantes = new StockEstanteEnMemoria(Contexto);
+            Bodegas = new StockBodegaEnMemoria(Contexto);
+            Movimientos = new MovimientosEnMemoria(Contexto);
+            Cargos = new CargosEnMemoria(Contexto);
+            Roles = new RolesEnMemoria(Contexto);
+            Empleados = new EmpleadosEnMemoria(Contexto);
+            Cajas = new CajasEnMemoria(Contexto);
+            Turnos = new TurnosEnMemoria(Contexto);
+            Gastos = new GastosEnMemoria(Contexto);
+
             foreach (var rol in ValoresIniciales.Roles())
                 Roles.Datos.Add(rol);
             foreach (var cargo in ValoresIniciales.Cargos())
@@ -178,7 +195,8 @@ public class RespaldoYErroresTests
             var auditoria = new AuditoriaFalsa();
             var reloj = new RelojFijo(
                 new DateTime(2026, 4, 20, 14, 30, 0, DateTimeKind.Utc));
-            var registros = new RegistrosAuditoriaEnMemoria();
+            using var contexto = new ContextoPruebasSqlite(reloj);
+            var registros = new RegistrosAuditoriaEnMemoria(contexto);
 
             var servicio = new ServicioRespaldo(
                 parametros, sesion, auditoria, registros, reloj);
@@ -207,7 +225,8 @@ public class RespaldoYErroresTests
         var sesionSinPermiso = Sesiones.Con(Permiso.Vender);
         var auditoria = new AuditoriaFalsa();
         var reloj = new RelojFijo(DateTime.UtcNow);
-        var registros = new RegistrosAuditoriaEnMemoria();
+        using var contexto = new ContextoPruebasSqlite(reloj);
+        var registros = new RegistrosAuditoriaEnMemoria(contexto);
 
         var servicioSinPermiso = new ServicioRespaldo(
             parametros, sesionSinPermiso, auditoria, registros, reloj);

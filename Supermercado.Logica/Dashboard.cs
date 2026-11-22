@@ -1,3 +1,4 @@
+using Supermercado.Datos.Repositorios;
 using Supermercado.Entidades.Contratos;
 using Supermercado.Entidades.Dashboards;
 using Supermercado.Entidades.Excepciones;
@@ -10,7 +11,7 @@ namespace Supermercado.Logica.Dashboards
 {
 public class ServicioDashboard(
     IEnumerable<IWidget> widgets,
-    IConfiguracionWidgetRepositorio configuraciones,
+    ConfiguracionWidgetRepositorio configuraciones,
     SesionActual sesion)
 {
     private const int LongitudMaximaTitulo = 60;

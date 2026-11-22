@@ -288,10 +288,12 @@ public class ClientesPuntosTests
     private class Escenario
     {
         public EscenarioInventario Inventario { get; } = new();
-        public ProductosEnMemoria Productos { get; } = new();
+        public ContextoPruebasSqlite Contexto { get; }
+            = new(new RelojFijo(EscenarioInventario.Ahora));
+        public ProductosEnMemoria Productos { get; }
         public VentasEnMemoria Ventas { get; } = new();
-        public TurnosEnMemoria Turnos { get; } = new();
-        public ClientesEnMemoria Clientes { get; } = new();
+        public TurnosEnMemoria Turnos { get; }
+        public ClientesEnMemoria Clientes { get; }
         public ParametrosFalsos Parametros { get; } = new();
         public AuditoriaFalsa Auditoria { get; } = new();
         public Cliente Cliente { get; }
@@ -301,6 +303,9 @@ public class ClientesPuntosTests
         public Escenario(Permiso permisos = Permiso.Vender
             | Permiso.AnularVenta | Permiso.GestionarClientes)
         {
+            Productos = new ProductosEnMemoria(Contexto);
+            Turnos = new TurnosEnMemoria(Contexto);
+            Clientes = new ClientesEnMemoria(Contexto);
             Productos.Datos.Add(new ProductoUnitario
             {
                 Id = 1,

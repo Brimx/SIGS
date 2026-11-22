@@ -1,33 +1,10 @@
 using Microsoft.EntityFrameworkCore;
 using Supermercado.Entidades.Personal;
 
-using Supermercado.Entidades.Contratos;
-
-namespace Supermercado.Entidades.Contratos
-{
-public interface IEmpleadoRepositorio
-{
-    Task<Empleado?> ObtenerPorIdAsync(int id);
-    Task<IReadOnlyList<Empleado>> ObtenerTodosAsync();
-    Task AgregarAsync(Empleado entidad);
-    void Actualizar(Empleado entidad);
-    Task<int> GuardarAsync();
-}
-
-public interface ICargoRepositorio
-{
-    Task<Cargo?> ObtenerPorIdAsync(int id);
-    Task<IReadOnlyList<Cargo>> ObtenerTodosAsync();
-    Task AgregarAsync(Cargo entidad);
-    void Actualizar(Cargo entidad);
-    Task<int> GuardarAsync();
-}
-}
-
 namespace Supermercado.Datos.Repositorios
 {
 public class EmpleadoRepositorio(SigsDbContext db)
-    : RepositorioBase(db), IEmpleadoRepositorio
+    : RepositorioBase(db)
 {
     public async Task<Empleado?> ObtenerPorIdAsync(int id)
         => await Db.Set<Empleado>().FindAsync(id);
@@ -35,7 +12,7 @@ public class EmpleadoRepositorio(SigsDbContext db)
     public async Task<IReadOnlyList<Empleado>> ObtenerTodosAsync()
         => await Db.Set<Empleado>().ToListAsync();
 
-    public async Task AgregarAsync(Empleado entidad)
+    public virtual async Task AgregarAsync(Empleado entidad)
         => await Db.Set<Empleado>().AddAsync(entidad);
 
     public void Actualizar(Empleado entidad)
@@ -43,7 +20,7 @@ public class EmpleadoRepositorio(SigsDbContext db)
 }
 
 public class CargoRepositorio(SigsDbContext db)
-    : RepositorioBase(db), ICargoRepositorio
+    : RepositorioBase(db)
 {
     public async Task<Cargo?> ObtenerPorIdAsync(int id)
         => await Db.Set<Cargo>().FindAsync(id);
@@ -51,7 +28,7 @@ public class CargoRepositorio(SigsDbContext db)
     public async Task<IReadOnlyList<Cargo>> ObtenerTodosAsync()
         => await Db.Set<Cargo>().ToListAsync();
 
-    public async Task AgregarAsync(Cargo entidad)
+    public virtual async Task AgregarAsync(Cargo entidad)
         => await Db.Set<Cargo>().AddAsync(entidad);
 
     public void Actualizar(Cargo entidad) => Db.Set<Cargo>().Update(entidad);

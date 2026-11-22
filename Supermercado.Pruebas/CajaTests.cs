@@ -85,15 +85,19 @@ public class ServicioCajaTests
 {
     private class Escenario
     {
-        public TurnosEnMemoria Turnos { get; } = new();
+        public ContextoPruebasSqlite Contexto { get; }
+            = new(new RelojFijo(EscenarioInventario.Ahora));
+        public TurnosEnMemoria Turnos { get; }
         public VentasEnMemoria Ventas { get; } = new();
-        public CajasEnMemoria Cajas { get; } = new();
+        public CajasEnMemoria Cajas { get; }
         public ParametrosFalsos Parametros { get; } = new();
         public AuditoriaFalsa Auditoria { get; } = new();
         public ServicioCaja Servicio { get; }
 
         public Escenario(bool activa = true, long tolerancia = 1000)
         {
+            Turnos = new TurnosEnMemoria(Contexto);
+            Cajas = new CajasEnMemoria(Contexto);
             Cajas.Datos.Add(
                 new Caja { Id = 1, Nombre = "Caja 1", Activa = activa });
             Parametros.Valores[ClavesParametro.ToleranciaArqueo]

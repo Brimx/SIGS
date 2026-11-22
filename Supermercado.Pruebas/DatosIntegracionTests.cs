@@ -524,36 +524,3 @@ public class MapeoModeloTests
         Assert.Equal(contexto.Reloj.AhoraUtc(), parametro.FechaCreacion);
     }
 }
-
-public sealed class ContextoPruebasSqlite : IDisposable
-{
-    private readonly SqliteConnection conexion;
-
-    public SigsDbContext Db { get; }
-    public RelojFijo Reloj { get; }
-
-    public ContextoPruebasSqlite(RelojFijo? reloj = null)
-    {
-        Reloj = reloj ?? new RelojFijo(
-            new DateTime(2026, 10, 24, 8, 0, 0, DateTimeKind.Utc));
-
-        conexion = new SqliteConnection("DataSource=:memory:");
-        conexion.Open();
-
-        var opciones = new DbContextOptionsBuilder<SigsDbContext>()
-            .UseSqlite(conexion)
-            .Options;
-
-        Db = new SigsDbContext(opciones, Reloj);
-        if (Db.Database.GetMigrations().Any())
-            Db.Database.Migrate();
-        else
-            Db.Database.EnsureCreated();
-    }
-
-    public void Dispose()
-    {
-        Db.Dispose();
-        conexion.Dispose();
-    }
-}

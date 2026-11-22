@@ -193,7 +193,6 @@ public partial class PersonalRolesViewModel : ViewModelBase
         var servicios = scope?.ServiceProvider;
         var estructura = _servicioEstructura ?? servicios?.GetService<ServicioPersonal>();
         var servicioUsuarios = _servicioUsuarios ?? servicios?.GetService<ServicioPersonal>();
-        var repoEmpleados = servicios?.GetService<IEmpleadoRepositorio>();
         if (estructura is null)
             return;
 
@@ -229,9 +228,9 @@ public partial class PersonalRolesViewModel : ViewModelBase
                 }
             }
 
-            if (repoEmpleados is not null)
+            if (estructura is not null)
             {
-                var todosEmpleados = await repoEmpleados.ObtenerTodosAsync();
+                var todosEmpleados = await estructura.ObtenerEmpleadosAsync();
                 var cargosDict = listaCargos.ToDictionary(x => x.Id);
                 var rolesDict = listaRoles.ToDictionary(x => x.Id);
                 var usuariosPorEmp = usuarios.ToDictionary(u => u.EmpleadoId);

@@ -10,6 +10,7 @@ using Supermercado.GUI.Servicios.Impresion;
 using Supermercado.Logica.Comunes;
 using Supermercado.Logica.Finanzas;
 using Supermercado.Logica.Reportes;
+using Supermercado.Logica.Ventas;
 
 namespace Supermercado.GUI.ViewModels;
 
@@ -134,7 +135,7 @@ public partial class ContabilidadDianViewModel : ViewModelBase
         var servicios = scope?.ServiceProvider;
         var finanzas = _servicioFinanzas ?? servicios?.GetService<ServicioFinanzas>();
         var repoVentas = servicios?.GetService<IVentaRepositorio>();
-        var repoTurnos = servicios?.GetService<ITurnoCajaRepositorio>();
+        var servicioCaja = servicios?.GetService<ServicioCaja>();
 
         Cargando = true;
         TieneError = false;
@@ -161,9 +162,9 @@ public partial class ContabilidadDianViewModel : ViewModelBase
                 ConstruirTablaTarifasIva(ventas);
             }
 
-            if (repoTurnos is not null)
+            if (servicioCaja is not null)
             {
-                var turnos = await repoTurnos.ObtenerTodosAsync();
+                var turnos = await servicioCaja.ObtenerTurnosAsync();
                 HistorialArqueos.Clear();
                 foreach (var t in turnos.OrderByDescending(x => x.FechaApertura).Take(30))
                 {

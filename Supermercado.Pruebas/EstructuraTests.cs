@@ -9,10 +9,18 @@ namespace Supermercado.Pruebas;
 
 public class EstructuraTests
 {
-    private readonly CajasEnMemoria cajas = new();
-    private readonly CargosEnMemoria cargos = new();
-    private readonly RolesEnMemoria roles = new();
+    private readonly ContextoPruebasSqlite contexto = new();
+    private readonly CajasEnMemoria cajas;
+    private readonly CargosEnMemoria cargos;
+    private readonly RolesEnMemoria roles;
     private readonly AuditoriaFalsa auditoria = new();
+
+    public EstructuraTests()
+    {
+        cajas = new CajasEnMemoria(contexto);
+        cargos = new CargosEnMemoria(contexto);
+        roles = new RolesEnMemoria(contexto);
+    }
 
     private ServicioPersonal CrearServicio(
         Permiso permisos = Permiso.GestionarPersonal | Permiso.GestionarRoles)

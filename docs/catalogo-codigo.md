@@ -1,6 +1,6 @@
 # Catálogo de código
 
-Inventario curado de módulos, tipos, contratos, constructores, métodos públicos y registro de dependencias tras la simplificación final (`6528d74`). Las rutas son las reales en el árbol de trabajo: no quedan carpetas por dominio dentro de Entidades, Datos ni Lógica.
+Inventario curado de módulos, tipos, contratos, constructores, métodos públicos y registro de dependencias tras la simplificación de datos. Las rutas son las reales en el árbol de trabajo: no quedan carpetas por dominio dentro de Entidades, Datos ni Lógica.
 
 ## 1. Proyectos
 
@@ -12,7 +12,7 @@ Inventario curado de módulos, tipos, contratos, constructores, métodos públic
 | `Supermercado.GUI` | 33 archivos `.cs`: Avalonia 12.1.4 + MVVM; el POS está repartido en 5 archivos | Lógica, Entidades |
 | `Supermercado.Pruebas` | 22 archivos `.cs` en raíz, sin subcarpetas; 425 pruebas xUnit en verde | Lógica, Entidades, GUI |
 
-La compilación de `Supermercado.slnx` termina con 0 advertencias y 0 errores. Ningún archivo supera las 600 líneas físicas; el más largo tiene 597.
+La compilación de `Supermercado.slnx` termina con 0 advertencias y 0 errores. Ningún archivo supera las 900 líneas físicas; el más largo tiene 807 (`Supermercado.Pruebas/Falsos.cs`).
 
 ## 2. Módulos y servicios consolidados
 
@@ -95,19 +95,14 @@ Todas las entidades son archivos planos en `Supermercado.Entidades/`.
 
 ## 4. Contratos
 
-El espacio de nombres `Supermercado.Entidades.Contratos` existe físicamente en los archivos planos de `Supermercado.Datos/`. No hay contrato de repositorio genérico ni abstracción de unidad de trabajo: cada dominio declara sus propias operaciones y todas incluyen `GuardarAsync`.
+El espacio de nombres `Supermercado.Entidades.Contratos` existe físicamente en los archivos planos de `Supermercado.Datos/`, pero ya no abstrae todos los repositorios. Tras la simplificación solo quedan dos contratos de persistencia, con implementación real y falsos propios; el resto se inyecta como clase concreta. Todos incluyen `GuardarAsync` y no hay contrato genérico ni unidad de trabajo.
 
 | Archivo | Contratos declarados | Implementaciones |
 | :-- | :-- | :-- |
-| `Datos/Productos.cs` | `IProductoRepositorio`, `ICategoriaRepositorio`, `IProveedorRepositorio`, `IImpuestoRepositorio` | `ProductoRepositorio`, `CategoriaRepositorio`, `ProveedorRepositorio`, `ImpuestoRepositorio` |
-| `Datos/Inventario.cs` | `ILoteRepositorio`, `IMovimientoRepositorio`, `IReabastecimientoRepositorio`, `IStockEstanteRepositorio`, `IStockBodegaRepositorio`, `IMermaRepositorio` | Repositorios correspondientes |
-| `Datos/Ventas.cs` | `IVentaRepositorio`, `IVentaEnEsperaRepositorio` | `VentaRepositorio`, `VentaEnEsperaRepositorio` |
-| `Datos/Caja.cs` | `ITurnoCajaRepositorio`, `ICajaRepositorio`, `IRetiroCajaRepositorio` | Repositorios correspondientes |
-| `Datos/Clientes.cs` | `IClienteRepositorio` | `ClienteRepositorio` |
-| `Datos/Personal.cs` | `IEmpleadoRepositorio`, `ICargoRepositorio` | `EmpleadoRepositorio`, `CargoRepositorio` |
-| `Datos/Finanzas.cs` | `IGastoRepositorio`, `INominaRepositorio` | `GastoRepositorio`, `NominaRepositorio` |
-| `Datos/Seguridad.cs` | `IUsuarioRepositorio`, `IRolRepositorio`, `IParametroRepositorio`, `IIntentoAccesoRepositorio`, `IRegistroAuditoriaRepositorio` | Repositorios correspondientes |
-| `Datos/Dashboard.cs` | `IConfiguracionWidgetRepositorio` | `ConfiguracionWidgetRepositorio` |
+| `Datos/Ventas.cs` | `IVentaRepositorio` | `VentaRepositorio` |
+| `Datos/Seguridad.cs` | `IUsuarioRepositorio` | `UsuarioRepositorio` |
+
+Los 24 repositorios restantes se registran y consumen como tipos concretos: `ProductoRepositorio`, `CategoriaRepositorio`, `ProveedorRepositorio`, `ImpuestoRepositorio`, `LoteRepositorio`, `MovimientoRepositorio`, `ReabastecimientoRepositorio`, `StockEstanteRepositorio`, `StockBodegaRepositorio`, `MermaRepositorio`, `VentaEnEsperaRepositorio`, `TurnoCajaRepositorio`, `CajaRepositorio`, `RetiroCajaRepositorio`, `ClienteRepositorio`, `EmpleadoRepositorio`, `CargoRepositorio`, `GastoRepositorio`, `NominaRepositorio`, `RolRepositorio`, `ParametroRepositorio`, `IntentoAccesoRepositorio`, `RegistroAuditoriaRepositorio` y `ConfiguracionWidgetRepositorio`.
 
 Todos los repositorios heredan `GuardarAsync` de `RepositorioBase` (`Datos/Contexto.cs`), que delega en `SigsDbContext.SaveChangesAsync`. Un caso de uso realiza una sola llamada al final; el contexto compartido confirma de forma atómica todas las entidades modificadas.
 
@@ -118,11 +113,11 @@ Todos los repositorios heredan `GuardarAsync` de `RepositorioBase` (`Datos/Conte
 | `Contexto.cs` / `SigsDbContext` | DbSets, `ConfiguracionModelo`, `RutasDatos`, asignación de `FechaCreacion`, TPH y registro de `AgregarDatos` con SQLite local |
 | `Semillas.cs` / `ValoresIniciales`, `InicializadorBaseDatos` | Roles, cargos, impuestos, cajas y parámetros idempotentes; `CrearYSembrarAsync` completa los permisos faltantes de roles ya creados |
 | `Migraciones/Inicial.cs` | Migración `20260420000000_Inicial` enlazada a `SigsDbContext` |
-| `Productos.cs`, `Inventario.cs`, `Ventas.cs`, `Caja.cs`, `Clientes.cs`, `Personal.cs`, `Finanzas.cs`, `Seguridad.cs`, `Dashboard.cs` | Contratos y repositorios concretos de cada módulo, en archivos planos |
+| `Productos.cs`, `Inventario.cs`, `Ventas.cs`, `Caja.cs`, `Clientes.cs`, `Personal.cs`, `Finanzas.cs`, `Seguridad.cs`, `Dashboard.cs` | Repositorios concretos de cada módulo, en archivos planos; solo `Ventas.cs` y `Seguridad.cs` conservan interfaces |
 
 ## 6. Capa Lógica (`Supermercado.Logica`)
 
-Los 21 archivos son planos. Los casos de uso se consumen como clases concretas; no existen interfaces internas ni adaptadores entre módulos. Las interfaces que quedan pertenecen a límites externos, persistencia, widgets o presentación.
+Los 21 archivos son planos. Los casos de uso se consumen como clases concretas; no existen interfaces internas ni adaptadores entre módulos. Las interfaces que quedan pertenecen a límites externos, widgets, presentación y los dos contratos de persistencia `IVentaRepositorio` e `IUsuarioRepositorio`.
 
 | Archivo | Contenido principal |
 | :-- | :-- |
@@ -174,7 +169,7 @@ La GUI solo llama a `ExtensionesLogica.AgregarLogica()` (`Supermercado.Logica/Co
 | Ciclo de vida | Registros reales |
 | :-- | :-- |
 | **Singleton** | `TimeProvider.System`, `SesionActual`, `IHasheadorClave → HasheadorBCrypt`, `ILoggerProvider → ProveedorLogArchivo`, `HttpClient`, `OpcionesApisExternas`, `IClienteTelegram → ClienteTelegramHttp`, `IVinculosTelegram → VinculosTelegram`; en GUI, preferencias y textos legales |
-| **Scoped (datos)** | `SigsDbContext`, `InicializadorBaseDatos` y los 26 repositorios por módulo registrados en `Contexto.cs` |
+| **Scoped (datos)** | `SigsDbContext`, `InicializadorBaseDatos`, 24 repositorios concretos y 2 interfaces de repositorio (`IVentaRepositorio`, `IUsuarioRepositorio`) registrados en `Contexto.cs` |
 | **Scoped (dominio)** | `ServicioAuditoria`, `ServicioParametros`, `ServicioAutenticacion`, `ServicioInicializacion`, `ServicioPersonal`, `ServicioProductos`, `ServicioInventario`, `ServicioCaja`, `ServicioVentas`, `ServicioFinanzas`, `ServicioClientes`, `ServicioDashboard`, `EstrategiaSalida → SalidaFefo`, `TraductorExcepciones`, `GeneradorDatosDemo` |
 | **Scoped (externos)** | `IServicioTrm → ServicioTrm`, `IClienteGemini → ClienteGeminiHttp`, `IGeneradorTicket → GeneradorTicketQuestPdf`, `IServicioReportes → ServicioReportesQuestPdf`, `IServicioRespaldo → ServicioRespaldo`; `ITrmClient`, `IConsultaCodigoBarras` e `IVerificadorCorreo` se registran primero en modo reserva y se sustituyen por sus clientes reales cuando el límite está configurado |
 | **Scoped (widgets)** | 10 implementaciones de `IWidget`, una por tarjeta listada en la sección 6 |
@@ -192,7 +187,7 @@ Suite xUnit construida sobre **425 pruebas en verde** (0 fallos, 0 omitidas). Lo
 | `DatosIntegracionTests.cs` | Flujo punta a punta SQLite, idempotencia y mapeo del modelo |
 | `DatosTests.cs` | Datos demo, respaldo, inicialización, SQLite y repositorios |
 | `EstructuraTests.cs` | Altas de caja, cargo y rol con auditoría y una sola confirmación |
-| `Falsos.cs` | Reloj, hash, parámetros, TRM y repositorios en memoria compartidos |
+| `Falsos.cs` | Reloj, hash, parámetros, TRM, `ContextoPruebasSqlite` y repositorios falsos sobre SQLite en memoria |
 | `FinanzasTests.cs` | `Dinero`, impuestos, nómina y servicios financieros |
 | `GUIInventarioTests.cs` | Nuevos módulos GUI, `InventarioViewModel`, permisos de alta, creación desde GUI y validaciones de entrada |
 | `GUIPosTests.cs` | Escaneo POS, pagos, modales, tirilla y regulación |

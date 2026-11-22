@@ -167,18 +167,22 @@ public class NominaTests
 
 public class ServicioFinanzasTests
 {
-    private static ServicioFinanzas Crear(Permiso permisos)
+    private static readonly RelojFijo Reloj = new(EscenarioInventario.Ahora);
+
+    private static ServicioFinanzas Crear(
+        Permiso permisos, ContextoPruebasSqlite contexto)
         => new(
             new VentasEnMemoria(),
-            new GastosEnMemoria(),
+            new GastosEnMemoria(contexto),
             new AuditoriaFalsa(),
             Sesiones.Con(permisos),
-            new RelojFijo(EscenarioInventario.Ahora));
+            Reloj);
 
     [Fact]
     public async Task RegistrarGasto_ExigeVerFinanzas()
     {
-        var servicio = Crear(Permiso.Vender);
+        using var contexto = new ContextoPruebasSqlite(Reloj);
+        var servicio = Crear(Permiso.Vender, contexto);
 
         await Assert.ThrowsAsync<AccesoDenegadoException>(
             () => servicio.RegistrarGastoAsync("aseo", 50000));
@@ -187,14 +191,15 @@ public class ServicioFinanzasTests
     [Fact]
     public async Task RegistrarGasto_ConPermiso_Audita()
     {
+        using var contexto = new ContextoPruebasSqlite(Reloj);
         var auditoria = new AuditoriaFalsa();
-        var gastos = new GastosEnMemoria();
+        var gastos = new GastosEnMemoria(contexto);
         var servicio = new ServicioFinanzas(
             new VentasEnMemoria(),
             gastos,
             auditoria,
             Sesiones.Con(Permiso.VerFinanzas),
-            new RelojFijo(EscenarioInventario.Ahora));
+            Reloj);
 
         await servicio.RegistrarGastoAsync("aseo", 50000);
 
@@ -207,8 +212,14 @@ public class ServicioFinanzasTests
 
 public class ServicioImpuestosTests
 {
-    private readonly ImpuestosEnMemoria impuestos = new();
+    private readonly ContextoPruebasSqlite Contexto = new();
+    private readonly ImpuestosEnMemoria impuestos;
     private readonly AuditoriaFalsa auditoria = new();
+
+    public ServicioImpuestosTests()
+    {
+        impuestos = new ImpuestosEnMemoria(Contexto);
+    }
 
     private ServicioFinanzas CrearServicio(
         Permiso permisos = Permiso.GestionarTarifas)
@@ -286,10 +297,18 @@ public class ServicioImpuestosTests
 
 public class ServicioNominaTests
 {
-    private readonly EmpleadosEnMemoria empleados = new();
-    private readonly NominasEnMemoria nominas = new();
+    private readonly EmpleadosEnMemoria empleados;
+    private readonly NominasEnMemoria nominas;
     private readonly ParametrosFalsos parametros = new();
     private readonly RelojFijo reloj = new(EscenarioInventario.Ahora);
+    private readonly ContextoPruebasSqlite Contexto;
+
+    public ServicioNominaTests()
+    {
+        Contexto = new ContextoPruebasSqlite(reloj);
+        empleados = new EmpleadosEnMemoria(Contexto);
+        nominas = new NominasEnMemoria(Contexto);
+    }
 
     private ServicioFinanzas CrearServicio(
         Permiso permisos = Permiso.GestionarPersonal)

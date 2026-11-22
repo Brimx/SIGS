@@ -26,7 +26,13 @@ public class ServicioDashboardTests
             => Task.FromResult(new DatoWidget([]));
     }
 
-    private readonly ConfiguracionesWidgetEnMemoria configuraciones = new();
+    private readonly ContextoPruebasSqlite Contexto = new();
+    private readonly ConfiguracionesWidgetEnMemoria configuraciones;
+
+    public ServicioDashboardTests()
+    {
+        configuraciones = new ConfiguracionesWidgetEnMemoria(Contexto);
+    }
 
     private ServicioDashboard CrearServicio(
         IEnumerable<IWidget> widgets,
@@ -249,7 +255,7 @@ public class ServicioDashboardTests
         var json = await origen.ExportarAsync();
 
         // Otro empleado importa el mismo archivo
-        var configuracionesDestino = new ConfiguracionesWidgetEnMemoria();
+        var configuracionesDestino = new ConfiguracionesWidgetEnMemoria(Contexto);
         var destino = new ServicioDashboard(
             [Ventas(), Stock()],
             configuracionesDestino,

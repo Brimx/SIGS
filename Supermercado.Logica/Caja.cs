@@ -1,4 +1,5 @@
 using Supermercado.Entidades.Configuracion;
+using Supermercado.Datos.Repositorios;
 using Supermercado.Entidades.Contratos;
 using Supermercado.Entidades.Excepciones;
 using Supermercado.Entidades.Seguridad;
@@ -9,15 +10,18 @@ using Supermercado.Logica.Seguridad;
 namespace Supermercado.Logica.Ventas
 {
 public class ServicioCaja(
-    ITurnoCajaRepositorio turnos,
+    TurnoCajaRepositorio turnos,
     IVentaRepositorio ventas,
-    ICajaRepositorio cajas,
+    CajaRepositorio cajas,
     ServicioParametros parametros,
     ServicioAuditoria auditoria,
     SesionActual sesion,
     TimeProvider reloj,
-    IRetiroCajaRepositorio? retiros = null)
+    RetiroCajaRepositorio? retiros = null)
 {
+    public virtual Task<IReadOnlyList<TurnoCaja>> ObtenerTurnosAsync()
+        => turnos.ObtenerTodosAsync();
+
     public virtual async Task<TurnoCaja> AbrirTurnoAsync(
         int cajaId,
         long efectivoInicial)

@@ -1,5 +1,6 @@
 using Supermercado.Entidades.Base;
 using Supermercado.Entidades.Configuracion;
+using Supermercado.Datos.Repositorios;
 using Supermercado.Entidades.Contratos;
 using Supermercado.Entidades.Excepciones;
 using Supermercado.Entidades.Finanzas;
@@ -13,13 +14,13 @@ namespace Supermercado.Logica.Finanzas
 {
 public class ServicioFinanzas(
     IVentaRepositorio ventas,
-    IGastoRepositorio gastos,
+    GastoRepositorio gastos,
     ServicioAuditoria? auditoria = null,
     SesionActual? sesion = null,
     TimeProvider? reloj = null,
-    IImpuestoRepositorio? impuestos = null,
-    IEmpleadoRepositorio? empleados = null,
-    INominaRepositorio? nominas = null,
+    ImpuestoRepositorio? impuestos = null,
+    EmpleadoRepositorio? empleados = null,
+    NominaRepositorio? nominas = null,
     ServicioParametros? parametros = null)
 {
     private readonly TimeProvider _reloj = reloj ?? TimeProvider.System;

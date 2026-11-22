@@ -1,4 +1,5 @@
 using Supermercado.Entidades.Configuracion;
+using Supermercado.Datos.Repositorios;
 using Supermercado.Entidades.Contratos;
 using Supermercado.Entidades.Excepciones;
 using Supermercado.Entidades.Inventario;
@@ -11,15 +12,15 @@ using Supermercado.Logica.Seguridad;
 namespace Supermercado.Logica.Inventario
 {
 public class ServicioInventario(
-    IStockEstanteRepositorio estante,
-    IStockBodegaRepositorio bodega,
-    IMovimientoRepositorio movimientos,
-    IMermaRepositorio mermas,
+    StockEstanteRepositorio estante,
+    StockBodegaRepositorio bodega,
+    MovimientoRepositorio movimientos,
+    MermaRepositorio mermas,
     EstrategiaSalida estrategia,
     TimeProvider reloj,
-    IProductoRepositorio? productos = null,
-    ILoteRepositorio? lotes = null,
-    IReabastecimientoRepositorio? solicitudes = null,
+    ProductoRepositorio? productos = null,
+    LoteRepositorio? lotes = null,
+    ReabastecimientoRepositorio? solicitudes = null,
     ServicioParametros? parametros = null,
     ServicioAuditoria? auditoria = null,
     SesionActual? sesion = null)

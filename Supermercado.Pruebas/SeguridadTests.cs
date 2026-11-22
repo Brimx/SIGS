@@ -119,6 +119,8 @@ public class ServicioAutenticacionTests
 
     private class Escenario
     {
+        public RelojFijo Reloj { get; } = new(EscenarioInventario.Ahora);
+        public ContextoPruebasSqlite Contexto { get; }
         public UsuariosEnMemoria Usuarios { get; } = new();
         public SesionActual Sesion { get; } = new();
         public ServicioAutenticacion Servicio { get; }
@@ -126,6 +128,7 @@ public class ServicioAutenticacionTests
 
         public Escenario(int maximoIntentos = 3)
         {
+            Contexto = new ContextoPruebasSqlite(Reloj);
             var hasheador = new HasheadorFalso();
             var parametros = new ParametrosFalsos();
             parametros.Valores[ClavesParametro.MaxIntentosFallidos]
@@ -146,12 +149,12 @@ public class ServicioAutenticacionTests
 
             Servicio = new ServicioAutenticacion(
                 Usuarios,
-                new IntentosAccesoEnMemoria(),
+                new IntentosAccesoEnMemoria(Contexto),
                 new AuditoriaFalsa(),
                 parametros,
                 hasheador,
                 Sesion,
-                new RelojFijo(EscenarioInventario.Ahora));
+                Reloj);
         }
     }
 
@@ -249,15 +252,19 @@ public class ServicioParametrosTests
 {
     private class Escenario
     {
-        public ParametrosEnMemoria Parametros { get; } = new();
+        public ContextoPruebasSqlite Contexto { get; } = new();
+        public ParametrosEnMemoria Parametros { get; }
         public AuditoriaFalsa Auditoria { get; } = new();
         public ServicioParametros Servicio { get; }
 
         public Escenario(Permiso permisos = Permiso.GestionarPersonal)
-            => Servicio = new ServicioParametros(
+        {
+            Parametros = new ParametrosEnMemoria(Contexto);
+            Servicio = new ServicioParametros(
                 Parametros,
                 Auditoria,
                 Sesiones.Con(permisos));
+        }
     }
 
     [Fact]
@@ -289,8 +296,9 @@ public class ServicioParametrosTests
     [Fact]
     public async Task GuardarRespaldo_NoExigePermisoNiAudita()
     {
+        using var contexto = new ContextoPruebasSqlite();
         var servicio = new ServicioParametros(
-            new ParametrosEnMemoria(),
+            new ParametrosEnMemoria(contexto),
             new AuditoriaFalsa(),
             new SesionActual());
 
@@ -323,7 +331,8 @@ public class ConsultasLecturaTests
     [Fact]
     public async Task ConsultaAuditoria_FiltraYPagina()
     {
-        var registros = new RegistrosAuditoriaEnMemoria();
+        using var contexto = new ContextoPruebasSqlite();
+        var registros = new RegistrosAuditoriaEnMemoria(contexto);
         var ahora = new DateTime(2026, 10, 24, 10, 0, 0, DateTimeKind.Utc);
 
         await registros.AgregarAsync(new RegistroAuditoria
@@ -369,7 +378,8 @@ public class ConsultasLecturaTests
     [Fact]
     public async Task ConsultaAuditoria_SinPermiso_LanzaAccesoDenegado()
     {
-        var registros = new RegistrosAuditoriaEnMemoria();
+        using var contexto = new ContextoPruebasSqlite();
+        var registros = new RegistrosAuditoriaEnMemoria(contexto);
         var servicio = new ServicioAuditoria(
             registros,
             Sesiones.Con(Permiso.Vender),
@@ -382,11 +392,12 @@ public class ConsultasLecturaTests
     [Fact]
     public async Task ConsultaInventario_Consolidado_CalculaEstanteYBodega()
     {
-        var productos = new ProductosEnMemoria();
-        var lotes = new LotesEnMemoria();
-        var estante = new StockEstanteEnMemoria();
-        var bodega = new StockBodegaEnMemoria();
-        var movs = new MovimientosEnMemoria();
+        using var contexto = new ContextoPruebasSqlite();
+        var productos = new ProductosEnMemoria(contexto);
+        var lotes = new LotesEnMemoria(contexto);
+        var estante = new StockEstanteEnMemoria(contexto);
+        var bodega = new StockBodegaEnMemoria(contexto);
+        var movs = new MovimientosEnMemoria(contexto);
 
         var impuesto = new Iva { Nombre = "IVA 0", PuntosBasicos = 0 };
         var prod = new ProductoUnitario
@@ -438,11 +449,12 @@ public class ConsultasLecturaTests
     [Fact]
     public async Task ConsultaInventario_Kardex_CalculaSaldosCronologicos()
     {
-        var productos = new ProductosEnMemoria();
-        var lotes = new LotesEnMemoria();
-        var estante = new StockEstanteEnMemoria();
-        var bodega = new StockBodegaEnMemoria();
-        var movs = new MovimientosEnMemoria();
+        using var contexto = new ContextoPruebasSqlite();
+        var productos = new ProductosEnMemoria(contexto);
+        var lotes = new LotesEnMemoria(contexto);
+        var estante = new StockEstanteEnMemoria(contexto);
+        var bodega = new StockBodegaEnMemoria(contexto);
+        var movs = new MovimientosEnMemoria(contexto);
 
         var lote = new Lote { Id = 1, NumeroLote = "L1", ProductoId = 1 };
         await lotes.AgregarAsync(lote);
@@ -501,7 +513,8 @@ public class ConsultasLecturaTests
     [Fact]
     public async Task BusquedaProductos_FiltraPorNombreYActivo()
     {
-        var productos = new ProductosEnMemoria();
+        using var contexto = new ContextoPruebasSqlite();
+        var productos = new ProductosEnMemoria(contexto);
         await productos.AgregarAsync(new ProductoUnitario
         {
             Id = 1,

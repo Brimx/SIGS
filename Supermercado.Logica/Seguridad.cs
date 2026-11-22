@@ -1,4 +1,5 @@
 using Supermercado.Datos;
+using Supermercado.Datos.Repositorios;
 using Supermercado.Entidades.Configuracion;
 using Supermercado.Entidades.Contratos;
 using Supermercado.Entidades.Excepciones;
@@ -11,7 +12,7 @@ namespace Supermercado.Logica.Seguridad
 {
 public class ServicioAutenticacion(
     IUsuarioRepositorio usuarios,
-    IIntentoAccesoRepositorio intentos,
+    IntentoAccesoRepositorio intentos,
     ServicioAuditoria auditoria,
     ServicioParametros parametros,
     IHasheadorClave hasheador,
@@ -181,9 +182,9 @@ public class ServicioAutenticacion(
 public class ServicioInicializacion(
     InicializadorBaseDatos baseDatos,
     IUsuarioRepositorio usuarios,
-    IEmpleadoRepositorio empleados,
-    ICargoRepositorio cargos,
-    IRolRepositorio roles,
+    EmpleadoRepositorio empleados,
+    CargoRepositorio cargos,
+    RolRepositorio roles,
     IHasheadorClave hasheador,
     TimeProvider reloj)
 {
@@ -244,7 +245,7 @@ public class HasheadorBCrypt : IHasheadorClave
 }
 
 public class ServicioAuditoria(
-    IRegistroAuditoriaRepositorio registros,
+    RegistroAuditoriaRepositorio registros,
     SesionActual sesion,
     TimeProvider reloj)
 {
@@ -340,7 +341,7 @@ public static class ExtensionesParametros
 }
 
 public class ServicioParametros(
-    IParametroRepositorio parametros,
+    ParametroRepositorio parametros,
     ServicioAuditoria auditoria,
     SesionActual sesion)
 {

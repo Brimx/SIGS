@@ -100,7 +100,6 @@ public partial class ComprasProveedoresViewModel : ViewModelBase
         var servicios = scope?.ServiceProvider;
         var catalogos = _servicioCatalogos ?? servicios?.GetService<ServicioProductos>();
         var reabastecimiento = _servicioReabastecimiento ?? servicios?.GetService<ServicioInventario>();
-        var repoProductos = servicios?.GetService<IProductoRepositorio>();
         if (catalogos is null)
             return;
 
@@ -124,9 +123,8 @@ public partial class ComprasProveedoresViewModel : ViewModelBase
                 try
                 {
                     var pendientes = await reabastecimiento.ObtenerPendientesAsync();
-                    var dictProds = repoProductos is not null
-                        ? (await repoProductos.ObtenerTodosAsync()).ToDictionary(x => x.Id)
-                        : new Dictionary<int, Producto>();
+                    var dictProds = (await catalogos.ObtenerProductosAsync())
+                        .ToDictionary(x => x.Id);
 
                     SolicitudesPendientes.Clear();
                     foreach (var s in pendientes)

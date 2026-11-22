@@ -18,14 +18,6 @@ public interface IVentaRepositorio
     Task<Venta?> ObtenerPorClaveIdempotenciaAsync(string claveIdempotencia);
 }
 
-public interface IVentaEnEsperaRepositorio
-{
-    Task<VentaEnEspera?> ObtenerPorIdAsync(int id);
-    Task<IReadOnlyList<VentaEnEspera>> ObtenerTodosAsync();
-    Task AgregarAsync(VentaEnEspera entidad);
-    void Actualizar(VentaEnEspera entidad);
-    Task<int> GuardarAsync();
-}
 }
 
 namespace Supermercado.Datos.Repositorios
@@ -39,7 +31,7 @@ public class VentaRepositorio(SigsDbContext db)
     public async Task<IReadOnlyList<Venta>> ObtenerTodosAsync()
         => await Db.Set<Venta>().ToListAsync();
 
-    public async Task AgregarAsync(Venta entidad)
+    public virtual async Task AgregarAsync(Venta entidad)
         => await Db.Set<Venta>().AddAsync(entidad);
 
     public void Actualizar(Venta entidad) => Db.Set<Venta>().Update(entidad);
@@ -72,7 +64,7 @@ public class VentaRepositorio(SigsDbContext db)
 }
 
 public class VentaEnEsperaRepositorio(SigsDbContext db)
-    : RepositorioBase(db), IVentaEnEsperaRepositorio
+    : RepositorioBase(db)
 {
     public async Task<VentaEnEspera?> ObtenerPorIdAsync(int id)
         => await Db.Set<VentaEnEspera>().FindAsync(id);
@@ -80,7 +72,7 @@ public class VentaEnEsperaRepositorio(SigsDbContext db)
     public async Task<IReadOnlyList<VentaEnEspera>> ObtenerTodosAsync()
         => await Db.Set<VentaEnEspera>().ToListAsync();
 
-    public async Task AgregarAsync(VentaEnEspera entidad)
+    public virtual async Task AgregarAsync(VentaEnEspera entidad)
         => await Db.Set<VentaEnEspera>().AddAsync(entidad);
 
     public void Actualizar(VentaEnEspera entidad)

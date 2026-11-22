@@ -373,15 +373,28 @@ public class InventarioViewModelTests
 
 public sealed class InventarioAltasGuiTests
 {
-    private readonly ProductosEnMemoria productos = new();
-    private readonly LotesEnMemoria lotes = new();
-    private readonly StockBodegaEnMemoria bodega = new();
-    private readonly MovimientosEnMemoria movimientos = new();
-    private readonly CategoriasEnMemoria categorias = new();
-    private readonly ProveedoresEnMemoria proveedores = new();
-    private readonly ImpuestosEnMemoria impuestos = new();
+    private readonly ContextoPruebasSqlite contexto;
+    private readonly ProductosEnMemoria productos;
+    private readonly LotesEnMemoria lotes;
+    private readonly StockBodegaEnMemoria bodega;
+    private readonly MovimientosEnMemoria movimientos;
+    private readonly CategoriasEnMemoria categorias;
+    private readonly ProveedoresEnMemoria proveedores;
+    private readonly ImpuestosEnMemoria impuestos;
     private readonly AuditoriaFalsa auditoria = new();
     private readonly RelojFijo reloj = new(EscenarioInventario.Ahora);
+
+    public InventarioAltasGuiTests()
+    {
+        contexto = new ContextoPruebasSqlite(reloj);
+        productos = new ProductosEnMemoria(contexto);
+        lotes = new LotesEnMemoria(contexto);
+        bodega = new StockBodegaEnMemoria(contexto);
+        movimientos = new MovimientosEnMemoria(contexto);
+        categorias = new CategoriasEnMemoria(contexto);
+        proveedores = new ProveedoresEnMemoria(contexto);
+        impuestos = new ImpuestosEnMemoria(contexto);
+    }
 
     private ServicioProductos CrearCatalogo(Permiso permisos)
         => new(

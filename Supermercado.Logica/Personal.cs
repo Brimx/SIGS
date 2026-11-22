@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using Supermercado.Datos.Repositorios;
 using Supermercado.Entidades.Contratos;
 using Supermercado.Entidades.Excepciones;
 using Supermercado.Entidades.Personal;
@@ -11,11 +12,11 @@ using Supermercado.Logica.Servicios;
 namespace Supermercado.Logica.Personal
 {
 public class ServicioPersonal(
-    IEmpleadoRepositorio empleados,
-    ICargoRepositorio cargos,
-    IRolRepositorio roles,
+    EmpleadoRepositorio empleados,
+    CargoRepositorio cargos,
+    RolRepositorio roles,
     IUsuarioRepositorio usuarios,
-    ICajaRepositorio cajas,
+    CajaRepositorio cajas,
     IVerificadorCorreo verificador,
     IHasheadorClave hasheador,
     ServicioAuditoria auditoria,
@@ -26,6 +27,9 @@ public class ServicioPersonal(
         "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
 
     // --- Empleados ---
+
+    public virtual Task<IReadOnlyList<Empleado>> ObtenerEmpleadosAsync()
+        => empleados.ObtenerTodosAsync();
 
     public async Task CrearAsync(Empleado empleado)
     {
@@ -238,9 +242,7 @@ public class ServicioPersonal(
         if (string.IsNullOrWhiteSpace(nombre))
             throw new ValidacionException("Falta el nombre del rol.");
 
-        var existente = roles is IRolRepositorio rolRepo
-            ? await rolRepo.ObtenerPorNombreAsync(nombre.Trim())
-            : (await roles.ObtenerTodosAsync()).FirstOrDefault(r => r.Nombre == nombre.Trim());
+        var existente = await roles.ObtenerPorNombreAsync(nombre.Trim());
         if (existente is not null)
             throw new ValidacionException("Ya existe un rol con ese nombre.");
 

@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Supermercado.Entidades.Clientes;
 using Supermercado.Entidades.Configuracion;
+using Supermercado.Datos.Repositorios;
 using Supermercado.Entidades.Contratos;
 using Supermercado.Entidades.Excepciones;
 using Supermercado.Entidades.Productos;
@@ -14,16 +15,16 @@ using Supermercado.Logica.Seguridad;
 namespace Supermercado.Logica.Ventas
 {
 public class ServicioVentas(
-    IProductoRepositorio productos,
+    ProductoRepositorio productos,
     IVentaRepositorio ventas,
-    ITurnoCajaRepositorio turnos,
+    TurnoCajaRepositorio turnos,
     ServicioInventario inventario,
-    IClienteRepositorio clientes,
+    ClienteRepositorio clientes,
     ServicioParametros parametros,
     ServicioAuditoria auditoria,
     SesionActual sesion,
     TimeProvider reloj,
-    IVentaEnEsperaRepositorio? ventasEnEspera = null)
+    VentaEnEsperaRepositorio? ventasEnEspera = null)
 {
     public virtual async Task<Venta> RegistrarVentaAsync(SolicitudVenta solicitud)
     {

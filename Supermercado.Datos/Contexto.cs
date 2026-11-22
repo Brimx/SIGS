@@ -196,38 +196,32 @@ public static class ExtensionesDatos
 
         servicios.AddScoped<InicializadorBaseDatos>();
 
-        servicios.AddScoped<IProductoRepositorio, ProductoRepositorio>();
-        servicios.AddScoped<ICategoriaRepositorio, CategoriaRepositorio>();
-        servicios.AddScoped<IProveedorRepositorio, ProveedorRepositorio>();
-        servicios.AddScoped<IImpuestoRepositorio, ImpuestoRepositorio>();
-        servicios.AddScoped<ILoteRepositorio, LoteRepositorio>();
-        servicios.AddScoped<IMovimientoRepositorio, MovimientoRepositorio>();
-        servicios.AddScoped<IReabastecimientoRepositorio,
-            ReabastecimientoRepositorio>();
-        servicios.AddScoped<IStockEstanteRepositorio,
-            StockEstanteRepositorio>();
-        servicios.AddScoped<IStockBodegaRepositorio, StockBodegaRepositorio>();
-        servicios.AddScoped<IMermaRepositorio, MermaRepositorio>();
+        servicios.AddScoped<ProductoRepositorio>();
+        servicios.AddScoped<CategoriaRepositorio>();
+        servicios.AddScoped<ProveedorRepositorio>();
+        servicios.AddScoped<ImpuestoRepositorio>();
+        servicios.AddScoped<LoteRepositorio>();
+        servicios.AddScoped<MovimientoRepositorio>();
+        servicios.AddScoped<ReabastecimientoRepositorio>();
+        servicios.AddScoped<StockEstanteRepositorio>();
+        servicios.AddScoped<StockBodegaRepositorio>();
+        servicios.AddScoped<MermaRepositorio>();
         servicios.AddScoped<IVentaRepositorio, VentaRepositorio>();
-        servicios.AddScoped<IVentaEnEsperaRepositorio,
-            VentaEnEsperaRepositorio>();
-        servicios.AddScoped<ITurnoCajaRepositorio, TurnoCajaRepositorio>();
-        servicios.AddScoped<ICajaRepositorio, CajaRepositorio>();
-        servicios.AddScoped<IRetiroCajaRepositorio, RetiroCajaRepositorio>();
-        servicios.AddScoped<IClienteRepositorio, ClienteRepositorio>();
-        servicios.AddScoped<IGastoRepositorio, GastoRepositorio>();
-        servicios.AddScoped<INominaRepositorio, NominaRepositorio>();
-        servicios.AddScoped<IConfiguracionWidgetRepositorio,
-            ConfiguracionWidgetRepositorio>();
+        servicios.AddScoped<VentaEnEsperaRepositorio>();
+        servicios.AddScoped<TurnoCajaRepositorio>();
+        servicios.AddScoped<CajaRepositorio>();
+        servicios.AddScoped<RetiroCajaRepositorio>();
+        servicios.AddScoped<ClienteRepositorio>();
+        servicios.AddScoped<GastoRepositorio>();
+        servicios.AddScoped<NominaRepositorio>();
+        servicios.AddScoped<ConfiguracionWidgetRepositorio>();
         servicios.AddScoped<IUsuarioRepositorio, UsuarioRepositorio>();
-        servicios.AddScoped<IRolRepositorio, RolRepositorio>();
-        servicios.AddScoped<IParametroRepositorio, ParametroRepositorio>();
-        servicios.AddScoped<IIntentoAccesoRepositorio,
-            IntentoAccesoRepositorio>();
-        servicios.AddScoped<IRegistroAuditoriaRepositorio,
-            RegistroAuditoriaRepositorio>();
-        servicios.AddScoped<IEmpleadoRepositorio, EmpleadoRepositorio>();
-        servicios.AddScoped<ICargoRepositorio, CargoRepositorio>();
+        servicios.AddScoped<RolRepositorio>();
+        servicios.AddScoped<ParametroRepositorio>();
+        servicios.AddScoped<IntentoAccesoRepositorio>();
+        servicios.AddScoped<RegistroAuditoriaRepositorio>();
+        servicios.AddScoped<EmpleadoRepositorio>();
+        servicios.AddScoped<CargoRepositorio>();
 
         return servicios;
     }
@@ -243,6 +237,6 @@ namespace Supermercado.Datos.Repositorios
 
         protected SigsDbContext Db { get; }
 
-        public Task<int> GuardarAsync() => Db.SaveChangesAsync();
+        public virtual Task<int> GuardarAsync() => Db.SaveChangesAsync();
     }
 }

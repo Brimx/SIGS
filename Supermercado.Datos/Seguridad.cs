@@ -19,45 +19,6 @@ public interface IUsuarioRepositorio
     Task<Usuario?> ObtenerPorNombreAsync(string nombreUsuario);
 }
 
-public interface IRolRepositorio
-{
-    Task<Rol?> ObtenerPorIdAsync(int id);
-    Task<IReadOnlyList<Rol>> ObtenerTodosAsync();
-    Task AgregarAsync(Rol entidad);
-    void Actualizar(Rol entidad);
-    Task<int> GuardarAsync();
-
-    Task<Rol?> ObtenerPorNombreAsync(string nombre);
-}
-
-public interface IParametroRepositorio
-{
-    Task<Parametro?> ObtenerPorIdAsync(int id);
-    Task<IReadOnlyList<Parametro>> ObtenerTodosAsync();
-    Task AgregarAsync(Parametro entidad);
-    void Actualizar(Parametro entidad);
-    Task<int> GuardarAsync();
-
-    Task<Parametro?> ObtenerPorClaveAsync(string clave);
-}
-
-public interface IIntentoAccesoRepositorio
-{
-    Task<IntentoAcceso?> ObtenerPorIdAsync(int id);
-    Task<IReadOnlyList<IntentoAcceso>> ObtenerTodosAsync();
-    Task AgregarAsync(IntentoAcceso entidad);
-    void Actualizar(IntentoAcceso entidad);
-    Task<int> GuardarAsync();
-}
-
-public interface IRegistroAuditoriaRepositorio
-{
-    Task<RegistroAuditoria?> ObtenerPorIdAsync(int id);
-    Task<IReadOnlyList<RegistroAuditoria>> ObtenerTodosAsync();
-    Task AgregarAsync(RegistroAuditoria entidad);
-    void Actualizar(RegistroAuditoria entidad);
-    Task<int> GuardarAsync();
-}
 }
 
 namespace Supermercado.Datos.Repositorios
@@ -71,7 +32,7 @@ public class UsuarioRepositorio(SigsDbContext db)
     public async Task<IReadOnlyList<Usuario>> ObtenerTodosAsync()
         => await Db.Set<Usuario>().ToListAsync();
 
-    public async Task AgregarAsync(Usuario entidad)
+    public virtual async Task AgregarAsync(Usuario entidad)
         => await Db.Set<Usuario>().AddAsync(entidad);
 
     public void Actualizar(Usuario entidad) => Db.Set<Usuario>().Update(entidad);
@@ -83,7 +44,7 @@ public class UsuarioRepositorio(SigsDbContext db)
 }
 
 public class RolRepositorio(SigsDbContext db)
-    : RepositorioBase(db), IRolRepositorio
+    : RepositorioBase(db)
 {
     public async Task<Rol?> ObtenerPorIdAsync(int id)
         => await Db.Set<Rol>().FindAsync(id);
@@ -91,7 +52,7 @@ public class RolRepositorio(SigsDbContext db)
     public async Task<IReadOnlyList<Rol>> ObtenerTodosAsync()
         => await Db.Set<Rol>().ToListAsync();
 
-    public async Task AgregarAsync(Rol entidad)
+    public virtual async Task AgregarAsync(Rol entidad)
         => await Db.Set<Rol>().AddAsync(entidad);
 
     public void Actualizar(Rol entidad) => Db.Set<Rol>().Update(entidad);
@@ -101,7 +62,7 @@ public class RolRepositorio(SigsDbContext db)
 }
 
 public class ParametroRepositorio(SigsDbContext db)
-    : RepositorioBase(db), IParametroRepositorio
+    : RepositorioBase(db)
 {
     public async Task<Parametro?> ObtenerPorIdAsync(int id)
         => await Db.Set<Parametro>().FindAsync(id);
@@ -109,7 +70,7 @@ public class ParametroRepositorio(SigsDbContext db)
     public async Task<IReadOnlyList<Parametro>> ObtenerTodosAsync()
         => await Db.Set<Parametro>().ToListAsync();
 
-    public async Task AgregarAsync(Parametro entidad)
+    public virtual async Task AgregarAsync(Parametro entidad)
         => await Db.Set<Parametro>().AddAsync(entidad);
 
     public void Actualizar(Parametro entidad)
@@ -120,7 +81,7 @@ public class ParametroRepositorio(SigsDbContext db)
 }
 
 public class IntentoAccesoRepositorio(SigsDbContext db)
-    : RepositorioBase(db), IIntentoAccesoRepositorio
+    : RepositorioBase(db)
 {
     public async Task<IntentoAcceso?> ObtenerPorIdAsync(int id)
         => await Db.Set<IntentoAcceso>().FindAsync(id);
@@ -128,7 +89,7 @@ public class IntentoAccesoRepositorio(SigsDbContext db)
     public async Task<IReadOnlyList<IntentoAcceso>> ObtenerTodosAsync()
         => await Db.Set<IntentoAcceso>().ToListAsync();
 
-    public async Task AgregarAsync(IntentoAcceso entidad)
+    public virtual async Task AgregarAsync(IntentoAcceso entidad)
         => await Db.Set<IntentoAcceso>().AddAsync(entidad);
 
     public void Actualizar(IntentoAcceso entidad)
@@ -136,7 +97,7 @@ public class IntentoAccesoRepositorio(SigsDbContext db)
 }
 
 public class RegistroAuditoriaRepositorio(SigsDbContext db)
-    : RepositorioBase(db), IRegistroAuditoriaRepositorio
+    : RepositorioBase(db)
 {
     public async Task<RegistroAuditoria?> ObtenerPorIdAsync(int id)
         => await Db.Set<RegistroAuditoria>().FindAsync(id);
@@ -144,7 +105,7 @@ public class RegistroAuditoriaRepositorio(SigsDbContext db)
     public async Task<IReadOnlyList<RegistroAuditoria>> ObtenerTodosAsync()
         => await Db.Set<RegistroAuditoria>().ToListAsync();
 
-    public async Task AgregarAsync(RegistroAuditoria entidad)
+    public virtual async Task AgregarAsync(RegistroAuditoria entidad)
         => await Db.Set<RegistroAuditoria>().AddAsync(entidad);
 
     public void Actualizar(RegistroAuditoria entidad)

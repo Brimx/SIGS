@@ -75,9 +75,10 @@ public class WidgetsTests
     [Fact]
     public async Task VentasPorCategoriaWidget_AgrupaPorCategoria()
     {
+        using var contexto = new ContextoPruebasSqlite(reloj);
         var ventas = new VentasEnMemoria();
-        var productos = new ProductosEnMemoria();
-        var categorias = new CategoriasEnMemoria();
+        var productos = new ProductosEnMemoria(contexto);
+        var categorias = new CategoriasEnMemoria(contexto);
 
         var catLacteos = new Categoria { Id = 1, Nombre = "Lácteos" };
         var catGranos = new Categoria { Id = 2, Nombre = "Granos" };
@@ -131,11 +132,12 @@ public class WidgetsTests
     [Fact]
     public async Task MargenPorCategoriaWidget_CalculaMargenCorrecto()
     {
+        using var contexto = new ContextoPruebasSqlite(reloj);
         var ventas = new VentasEnMemoria();
-        var movs = new MovimientosEnMemoria();
-        var lotes = new LotesEnMemoria();
-        var productos = new ProductosEnMemoria();
-        var categorias = new CategoriasEnMemoria();
+        var movs = new MovimientosEnMemoria(contexto);
+        var lotes = new LotesEnMemoria(contexto);
+        var productos = new ProductosEnMemoria(contexto);
+        var categorias = new CategoriasEnMemoria(contexto);
 
         var cat = new Categoria { Id = 1, Nombre = "Bebidas" };
         await categorias.AgregarAsync(cat);
@@ -192,11 +194,12 @@ public class WidgetsTests
     [Fact]
     public async Task MargenPorCategoriaWidget_PesadosConvierteYNoDuplicaIngresoPorLote()
     {
+        using var contexto = new ContextoPruebasSqlite(reloj);
         var ventas = new VentasEnMemoria();
-        var movs = new MovimientosEnMemoria();
-        var lotes = new LotesEnMemoria();
-        var productos = new ProductosEnMemoria();
-        var categorias = new CategoriasEnMemoria();
+        var movs = new MovimientosEnMemoria(contexto);
+        var lotes = new LotesEnMemoria(contexto);
+        var productos = new ProductosEnMemoria(contexto);
+        var categorias = new CategoriasEnMemoria(contexto);
         await categorias.AgregarAsync(new Categoria { Id = 1, Nombre = "Fruver" });
 
         await productos.AgregarAsync(new ProductoPesado
@@ -242,7 +245,8 @@ public class WidgetsTests
     [Fact]
     public async Task ArqueoTurnoWidget_ConTurnoAbierto_CalculaEsperado()
     {
-        var turnos = new TurnosEnMemoria();
+        using var contexto = new ContextoPruebasSqlite(reloj);
+        var turnos = new TurnosEnMemoria(contexto);
         var ventas = new VentasEnMemoria();
         var sesion = Sesiones.Con(Permiso.AbrirCerrarTurno);
 

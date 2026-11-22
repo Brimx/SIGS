@@ -1,3 +1,4 @@
+using Supermercado.Datos.Repositorios;
 using Supermercado.Entidades.Contratos;
 using Supermercado.Entidades.Excepciones;
 using Supermercado.Entidades.Finanzas;
@@ -11,16 +12,16 @@ using Supermercado.Logica.Servicios;
 namespace Supermercado.Logica.Productos
 {
 public class ServicioProductos(
-    IProductoRepositorio productos,
-    ILoteRepositorio? lotes = null,
+    ProductoRepositorio productos,
+    LoteRepositorio? lotes = null,
     ServicioInventario? inventario = null,
     IConsultaCodigoBarras? externo = null,
     SesionActual? sesion = null,
     TimeProvider? reloj = null,
-    ICategoriaRepositorio? categorias = null,
-    IProveedorRepositorio? proveedores = null,
+    CategoriaRepositorio? categorias = null,
+    ProveedorRepositorio? proveedores = null,
     ServicioAuditoria? auditoria = null,
-    IImpuestoRepositorio? impuestos = null)
+    ImpuestoRepositorio? impuestos = null)
 {
     private readonly TimeProvider _reloj = reloj ?? TimeProvider.System;
 
@@ -96,6 +97,9 @@ public class ServicioProductos(
         await RegistrarAsync(producto);
         return producto;
     }
+
+    public virtual Task<IReadOnlyList<Producto>> ObtenerProductosAsync()
+        => productos.ObtenerTodosAsync();
 
     public virtual async Task<IReadOnlyList<Producto>> ObtenerProductosActivosAsync()
     {

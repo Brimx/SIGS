@@ -1,4 +1,5 @@
 using Supermercado.Entidades.Clientes;
+using Supermercado.Datos.Repositorios;
 using Supermercado.Entidades.Contratos;
 using Supermercado.Entidades.Excepciones;
 using Supermercado.Entidades.Seguridad;
@@ -8,7 +9,7 @@ using Supermercado.Logica.Seguridad;
 namespace Supermercado.Logica.Clientes
 {
 public class ServicioClientes(
-    IClienteRepositorio clientes,
+    ClienteRepositorio clientes,
     ServicioAuditoria auditoria,
     SesionActual sesion)
 {

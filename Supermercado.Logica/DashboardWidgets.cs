@@ -1,3 +1,4 @@
+using Supermercado.Datos.Repositorios;
 using Supermercado.Entidades.Contratos;
 using Supermercado.Entidades.Dashboards;
 using Supermercado.Entidades.Inventario;
@@ -41,7 +42,7 @@ public abstract class WidgetBase : IWidget
 }
 
 public class ArqueoTurnoWidget(
-    ITurnoCajaRepositorio turnos,
+    TurnoCajaRepositorio turnos,
     IVentaRepositorio ventas,
     SesionActual sesion) : WidgetBase(
         "caja.arqueo_turno",
@@ -119,7 +120,7 @@ public class LotesPorVencerWidget(
 }
 
 public class ReabastecimientosPendientesWidget(
-    IReabastecimientoRepositorio solicitudes) : WidgetBase(
+    ReabastecimientoRepositorio solicitudes) : WidgetBase(
         "inventario.reabastecimientos",
         "Reabastecimientos pendientes",
         GruposWidget.Inventario,
@@ -229,8 +230,8 @@ public sealed class ResumenOperativoWidget(
 
 public class VentasPorCategoriaWidget(
     IVentaRepositorio ventas,
-    IProductoRepositorio productos,
-    ICategoriaRepositorio categorias,
+    ProductoRepositorio productos,
+    CategoriaRepositorio categorias,
     TimeProvider reloj) : WidgetBase(
         "reportes.ventas_categoria",
         "Ventas por categoría",
@@ -278,10 +279,10 @@ public class VentasPorCategoriaWidget(
 
 public class MargenPorCategoriaWidget(
     IVentaRepositorio ventas,
-    IMovimientoRepositorio movimientos,
-    ILoteRepositorio lotes,
-    IProductoRepositorio productos,
-    ICategoriaRepositorio categorias,
+    MovimientoRepositorio movimientos,
+    LoteRepositorio lotes,
+    ProductoRepositorio productos,
+    CategoriaRepositorio categorias,
     TimeProvider reloj) : WidgetBase(
         "finanzas.margen_categoria",
         "Margen por categoría",

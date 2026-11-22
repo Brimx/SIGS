@@ -1,6 +1,6 @@
 # Conceptos aplicados
 
-Referencias verificadas sobre el estado final de la rama (`6528d74`). Cada fila apunta a una ruta y línea reales del repositorio.
+Referencias verificadas sobre el estado final de la rama tras la simplificación de datos. Cada fila apunta a una ruta y línea reales del repositorio.
 
 | Concepto | Ruta:línea | Evidencia |
 | :-- | :-- | :-- |
@@ -21,11 +21,12 @@ Referencias verificadas sobre el estado final de la rama (`6528d74`). Cada fila 
 | Composición real | `Supermercado.Logica/Composicion.cs:32`, `Supermercado.Datos/Contexto.cs:184` | `AgregarLogica()` delega en `AgregarDatos()` y registra servicios concretos, límites externos y widgets. |
 | Servicios de presentación | `Supermercado.GUI/ServiciosGui.cs:20`, `Supermercado.GUI/ServiciosGui.cs:66`, `Supermercado.GUI/ServiciosGui.cs:165`, `Supermercado.GUI/ServiciosGui.cs:282` | Tema, preferencias, impresión y plantilla de tirilla agrupados en un solo archivo de GUI. |
 | MVVM | `Supermercado.GUI/ViewModels/ViewModelBase.cs:5`, `Supermercado.GUI/ViewModels/PosViewModel.cs:96`, `Supermercado.GUI/ViewLocator.cs:15` | `ObservableObject`, ViewModels parciales con `[ObservableProperty]` y resolución de vistas intacta. |
-| Falsos de prueba | `Supermercado.Pruebas/Falsos.cs:26`, `Supermercado.Pruebas/Falsos.cs:53`, `Supermercado.Pruebas/Falsos.cs:88` | Hash, parámetros y TRM falsos sostienen las pruebas sin red ni base de datos externa. |
+| Falsos de prueba | `Supermercado.Pruebas/Falsos.cs:31`, `Supermercado.Pruebas/Falsos.cs:58`, `Supermercado.Pruebas/Falsos.cs:128` | Hash, parámetros, TRM y `ContextoPruebasSqlite` sostienen las pruebas sin red ni base de datos externa. |
+| Inversión de dependencias deliberada | `Supermercado.Datos/Ventas.cs:8`, `Supermercado.Datos/Seguridad.cs:10` | Solo `IVentaRepositorio` e `IUsuarioRepositorio` conservan abstracción; el resto de repositorios se consumen como clases concretas. |
 
 ## Métricas antes/después
 
-| Indicador | Antes (`ba8d926`) | Después (`6528d74`) |
+| Indicador | Antes (`ba8d926`) | Después |
 | :-- | :-- | :-- |
 | `.cs` en Entidades | 58 | 11 |
 | `.cs` en Datos | 13 | 12 |
@@ -33,14 +34,16 @@ Referencias verificadas sobre el estado final de la rama (`6528d74`). Cada fila 
 | `.cs` en GUI | 31 | 33 (POS en 5 archivos) |
 | `.cs` en Pruebas | 67 (22 en subcarpetas) | 22 en raíz |
 | Widgets | 9 | 10 |
-| Pruebas xUnit | 352 | 403 (319 `Fact` + 16 `Theory`) |
-| Archivo más largo | — | 484 líneas físicas (ninguno supera 600) |
+| Interfaces totales | — | 17: Entidades 0, Datos 2, Lógica 12, GUI 3, Pruebas 0 |
+| Interfaces de repositorio | 26 | 2 |
+| Pruebas xUnit | 352 | 425 |
+| Archivo más largo | — | 807 líneas físicas (`Supermercado.Pruebas/Falsos.cs`) |
 
 ## Decisiones de diseño
 
-- Las interfaces permanecen solo en límites externos y de presentación; los casos de uso se consumen como clases concretas.
+- Las interfaces permanecen en límites externos, presentación, widgets y los dos contratos de persistencia con falsos propios; los casos de uso se consumen como clases concretas.
 - No hay abstracción de unidad de trabajo: los repositorios por módulo comparten el contexto y una sola llamada a `GuardarAsync` confirma cada caso de uso.
 - No hay adaptadores internos: la composición directa vive en `Supermercado.Logica/Composicion.cs` y `Supermercado.Datos/Contexto.cs`.
 - Las integraciones conservan sus contratos y rutas finales, con implementaciones de reserva usadas solo cuando el límite está apagado.
-- La suite quedó en 403 pruebas en verde, con falsos compartidos y 22 archivos planos en `Supermercado.Pruebas/`.
+- La suite quedó en 425 pruebas en verde, con falsos sobre SQLite en memoria y 22 archivos planos en `Supermercado.Pruebas/`.
 - `ViewLocator` y el XAML de `Views/` se mantuvieron intactos; los cambios de GUI se concentraron en `ServiciosGui.cs` y `ViewModels/`.

@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
 using Supermercado.Datos;
+using Supermercado.Datos.Repositorios;
 using Supermercado.Entidades.Configuracion;
 using Supermercado.Entidades.Contratos;
 using Supermercado.Entidades.Excepciones;
@@ -21,7 +22,7 @@ public class ServicioRespaldo(
     ServicioParametros parametros,
     SesionActual sesion,
     ServicioAuditoria auditoria,
-    IRegistroAuditoriaRepositorio registros,
+    RegistroAuditoriaRepositorio registros,
     TimeProvider reloj) : IServicioRespaldo
 {
     public async Task<string> CrearRespaldoAsync(string? rutaOrigen = null)

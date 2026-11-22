@@ -1,3 +1,4 @@
+using Supermercado.Datos.Repositorios;
 using Supermercado.Entidades.Excepciones;
 using Supermercado.Entidades.Inventario;
 using Supermercado.Entidades.Productos;
@@ -109,11 +110,20 @@ public class InventarioTests
 
 public class ServicioAlertasInventarioTests
 {
-    private readonly StockEstanteEnMemoria estante = new();
-    private readonly ProductosEnMemoria productos = new();
-    private readonly LotesEnMemoria lotes = new();
+    private readonly ContextoPruebasSqlite contexto;
+    private readonly StockEstanteEnMemoria estante;
+    private readonly ProductosEnMemoria productos;
+    private readonly LotesEnMemoria lotes;
     private readonly ParametrosFalsos parametros = new();
     private readonly RelojFijo reloj = new(EscenarioInventario.Ahora);
+
+    public ServicioAlertasInventarioTests()
+    {
+        contexto = new ContextoPruebasSqlite(reloj);
+        estante = new StockEstanteEnMemoria(contexto);
+        productos = new ProductosEnMemoria(contexto);
+        lotes = new LotesEnMemoria(contexto);
+    }
 
     private ServicioInventario CrearServicio(
         Permiso permisos = Permiso.VerInventario)
@@ -373,12 +383,17 @@ public class ServicioReabastecimientoTests
 
     private class Escenario
     {
-        public ReabastecimientosEnMemoria Solicitudes { get; } = new();
+        public ContextoPruebasSqlite Contexto { get; }
+            = new(new RelojFijo(EscenarioInventario.Ahora));
+        public ReabastecimientosEnMemoria Solicitudes { get; }
         private readonly EstadoReabastecimientoFalso estado = new();
         public RelojFijo Reloj { get; } = new(EscenarioInventario.Ahora);
 
         public AlertasInventarioFalsas Inventario => CrearServicio();
         public AlertasInventarioFalsas Alertas => CrearServicio();
+
+        public Escenario()
+            => Solicitudes = new ReabastecimientosEnMemoria(Contexto);
 
         public AlertasInventarioFalsas CrearServicio(
             Permiso permisos = Permiso.Reabastecer)
@@ -394,7 +409,7 @@ public class ServicioReabastecimientoTests
 
         public AlertasInventarioFalsas(
             EstadoReabastecimientoFalso estado,
-            IReabastecimientoRepositorio solicitudes,
+            ReabastecimientoRepositorio solicitudes,
             SesionActual sesion,
             TimeProvider reloj)
             : base(

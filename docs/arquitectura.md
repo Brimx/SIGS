@@ -29,10 +29,10 @@
 Reglas de dependencia:
 
 1. **Entidades no referencia ningún proyecto.**
-2. **Datos referencia Entidades.** Es el único proyecto que conoce EF Core y SQLite; declara los contratos de persistencia en el espacio de nombres `Supermercado.Entidades.Contratos`, físicamente en `Datos/*.cs`.
-3. **Lógica referencia Datos y Entidades.** Consume repositorios por módulo y clases concretas de dominio; las interfaces se reservan para límites externos.
+2. **Datos referencia Entidades.** Es el único proyecto que conoce EF Core y SQLite; expone repositorios concretos por módulo y solo conserva las interfaces `IVentaRepositorio` e `IUsuarioRepositorio`.
+3. **Lógica referencia Datos y Entidades.** Consume repositorios por módulo y clases concretas de dominio; las interfaces se reservan para límites externos y esos dos contratos de persistencia.
 4. **GUI referencia Lógica y Entidades.** No referencia Datos: obtiene todo por `AgregarLogica()`.
-5. **Pruebas referencia Lógica y Entidades.** Usa falsos en memoria; no necesita base de datos externa.
+5. **Pruebas referencia Lógica y Entidades.** Usa falsos sobre SQLite en memoria para los repositorios migrados; no necesita base de datos externa.
 
 ## Composición
 
@@ -69,11 +69,11 @@ servicios.AddDbContext<SigsDbContext>(opciones =>
     opciones.UseSqlite($"Data Source={rutaBaseDatos}"));
 
 servicios.AddScoped<InicializadorBaseDatos>();
-servicios.AddScoped<IProductoRepositorio, ProductoRepositorio>();
+servicios.AddScoped<ProductoRepositorio>();
 servicios.AddScoped<IVentaRepositorio, VentaRepositorio>();
-servicios.AddScoped<ITurnoCajaRepositorio, TurnoCajaRepositorio>();
+servicios.AddScoped<TurnoCajaRepositorio>();
 servicios.AddScoped<IUsuarioRepositorio, UsuarioRepositorio>();
-// ... un repositorio por archivo de dominio en Datos/*.cs
+// ... el resto de repositorios concretos por archivo de dominio en Datos/*.cs
 ```
 
 `AgregarDatos` utiliza **SQLite local** en la carpeta de datos del usuario (`%LOCALAPPDATA%/SIGS/sigs.db` en Windows o `~/.local/share/SIGS/sigs.db` en Linux) sin configuración previa. La lógica y los ViewModels permanecen desacoplados del motor de persistencia; cada repositorio hereda el mismo `SigsDbContext` y expone `GuardarAsync`.
@@ -227,7 +227,7 @@ SIGS opera de forma autónoma sobre **SQLite local** con inicialización automá
 
 ## Pruebas
 
-La suite xUnit vive en 22 archivos `.cs` en la raíz de `Supermercado.Pruebas/`, sin subcarpetas, con 403 pruebas en verde (319 `Fact` y 16 `Theory`). Los dobles compartidos están en `Falsos.cs` y `TelegramFalsos.cs`, y la compilación de la solución termina con 0 advertencias y 0 errores.
+La suite xUnit vive en 22 archivos `.cs` en la raíz de `Supermercado.Pruebas/`, sin subcarpetas, con 425 pruebas en verde. Los dobles compartidos están en `Falsos.cs` y `TelegramFalsos.cs`; los repositorios migrados usan `ContextoPruebasSqlite` con una base SQLite en memoria por escenario, desactivando FK y dos índices únicos propios del modelo para reproducir el comportamiento de los antiguos falsos en memoria. La compilación de la solución termina con 0 advertencias y 0 errores.
 
 ## Decisiones relacionadas
 

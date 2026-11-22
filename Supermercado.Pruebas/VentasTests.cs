@@ -147,6 +147,8 @@ public class VentasEnEsperaYSupervisionTests
     [Fact]
     public async Task ValidarSupervisor_ConCredencialesYPermisoCorrectos_RetornaEmpleadoSinAfectarSesion()
     {
+        var reloj = new RelojFijo(EscenarioInventario.Ahora);
+        using var contexto = new ContextoPruebasSqlite(reloj);
         var hasheador = new HasheadorFalso();
         var usuarios = new UsuariosEnMemoria();
         var sesionCajero = new SesionActual();
@@ -184,12 +186,12 @@ public class VentasEnEsperaYSupervisionTests
 
         var servicioAuth = new ServicioAutenticacion(
             usuarios,
-            new IntentosAccesoEnMemoria(),
+            new IntentosAccesoEnMemoria(contexto),
             new AuditoriaFalsa(),
             parametros,
             hasheador,
             sesionCajero,
-            new RelojFijo(EscenarioInventario.Ahora));
+            reloj);
 
         var empAutorizado = await servicioAuth.ValidarSupervisorAsync(
             "super1", PinSupervisor, Permiso.AutorizarOperacionPos);
@@ -203,6 +205,8 @@ public class VentasEnEsperaYSupervisionTests
     [Fact]
     public async Task ValidarSupervisor_ConPinInvalido_LanzaCredencialesInvalidas()
     {
+        var reloj = new RelojFijo(EscenarioInventario.Ahora);
+        using var contexto = new ContextoPruebasSqlite(reloj);
         var hasheador = new HasheadorFalso();
         var usuarios = new UsuariosEnMemoria();
         var sesion = new SesionActual();
@@ -225,12 +229,12 @@ public class VentasEnEsperaYSupervisionTests
 
         var servicioAuth = new ServicioAutenticacion(
             usuarios,
-            new IntentosAccesoEnMemoria(),
+            new IntentosAccesoEnMemoria(contexto),
             new AuditoriaFalsa(),
             parametros,
             hasheador,
             sesion,
-            new RelojFijo(EscenarioInventario.Ahora));
+            reloj);
 
         await Assert.ThrowsAsync<CredencialesInvalidasException>(() =>
             servicioAuth.ValidarSupervisorAsync("super1", "0000", Permiso.AutorizarOperacionPos));
@@ -239,6 +243,8 @@ public class VentasEnEsperaYSupervisionTests
     [Fact]
     public async Task ValidarSupervisor_SinPermisoRequerido_LanzaAccesoDenegado()
     {
+        var reloj = new RelojFijo(EscenarioInventario.Ahora);
+        using var contexto = new ContextoPruebasSqlite(reloj);
         var hasheador = new HasheadorFalso();
         var usuarios = new UsuariosEnMemoria();
         var sesion = new SesionActual();
@@ -261,12 +267,12 @@ public class VentasEnEsperaYSupervisionTests
 
         var servicioAuth = new ServicioAutenticacion(
             usuarios,
-            new IntentosAccesoEnMemoria(),
+            new IntentosAccesoEnMemoria(contexto),
             new AuditoriaFalsa(),
             parametros,
             hasheador,
             sesion,
-            new RelojFijo(EscenarioInventario.Ahora));
+            reloj);
 
         await Assert.ThrowsAsync<AccesoDenegadoException>(() =>
             servicioAuth.ValidarSupervisorAsync("super1", PinSupervisor, Permiso.AutorizarOperacionPos));
@@ -275,10 +281,12 @@ public class VentasEnEsperaYSupervisionTests
     [Fact]
     public async Task RegistrarRetiro_ConMontoValido_ReduceEfectivoEsperado()
     {
-        var turnos = new TurnosEnMemoria();
+        var reloj = new RelojFijo(EscenarioInventario.Ahora);
+        using var contexto = new ContextoPruebasSqlite(reloj);
+        var turnos = new TurnosEnMemoria(contexto);
         var ventas = new VentasEnMemoria();
-        var cajas = new CajasEnMemoria();
-        var retiros = new RetirosCajaEnMemoria();
+        var cajas = new CajasEnMemoria(contexto);
+        var retiros = new RetirosCajaEnMemoria(contexto);
         var parametros = new ParametrosFalsos();
         parametros.Valores[ClavesParametro.ToleranciaArqueo] = "1000";
 
@@ -291,7 +299,7 @@ public class VentasEnEsperaYSupervisionTests
             parametros,
             new AuditoriaFalsa(),
             Sesiones.Con(Permiso.AbrirCerrarTurno),
-            new RelojFijo(EscenarioInventario.Ahora),
+            reloj,
             retiros);
 
         var turno = await servicioCaja.AbrirTurnoAsync(1, 200000); // Base $200.000
@@ -311,9 +319,11 @@ public class VentasEnEsperaYSupervisionTests
     [Fact]
     public async Task RegistrarRetiro_MayorAEfectivoDisponible_LanzaValidacionException()
     {
-        var turnos = new TurnosEnMemoria();
+        var reloj = new RelojFijo(EscenarioInventario.Ahora);
+        using var contexto = new ContextoPruebasSqlite(reloj);
+        var turnos = new TurnosEnMemoria(contexto);
         var ventas = new VentasEnMemoria();
-        var cajas = new CajasEnMemoria();
+        var cajas = new CajasEnMemoria(contexto);
         var parametros = new ParametrosFalsos();
         parametros.Valores[ClavesParametro.ToleranciaArqueo] = "1000";
 
@@ -326,7 +336,7 @@ public class VentasEnEsperaYSupervisionTests
             parametros,
             new AuditoriaFalsa(),
             Sesiones.Con(Permiso.AbrirCerrarTurno),
-            new RelojFijo(EscenarioInventario.Ahora));
+            reloj);
 
         await servicioCaja.AbrirTurnoAsync(1, 50000);
 
@@ -337,7 +347,9 @@ public class VentasEnEsperaYSupervisionTests
     [Fact]
     public async Task VentasEnEspera_SuspenderYRecuperar_RestauraLineasCorrectamente()
     {
-        var repo = new VentasEnEsperaEnMemoria();
+        var reloj = new RelojFijo(EscenarioInventario.Ahora);
+        using var contexto = new ContextoPruebasSqlite(reloj);
+        var repo = new VentasEnEsperaEnMemoria(contexto);
         var servicio = new ServicioVentas(
             null!,
             null!,
@@ -347,7 +359,7 @@ public class VentasEnEsperaYSupervisionTests
             null!,
             new AuditoriaFalsa(),
             Sesiones.Con(Permiso.Vender),
-            new RelojFijo(EscenarioInventario.Ahora),
+            reloj,
             repo);
 
         var lineas = new List<LineaVenta>
@@ -388,11 +400,13 @@ public class ServicioVentasTests
 {
     private class Escenario
     {
+        public RelojFijo Reloj { get; } = new(EscenarioInventario.Ahora);
+        public ContextoPruebasSqlite Contexto { get; }
         public EscenarioInventario Inventario { get; } = new();
-        public ProductosEnMemoria Productos { get; } = new();
+        public ProductosEnMemoria Productos { get; }
         public VentasEnMemoria Ventas { get; } = new();
-        public TurnosEnMemoria Turnos { get; } = new();
-        public ClientesEnMemoria Clientes { get; } = new();
+        public TurnosEnMemoria Turnos { get; }
+        public ClientesEnMemoria Clientes { get; }
         public ParametrosFalsos Parametros { get; } = new();
         public AuditoriaFalsa Auditoria { get; } = new();
         public StockEstante Fila { get; }
@@ -400,6 +414,11 @@ public class ServicioVentasTests
 
         public Escenario(Permiso permisos, bool conTurno = true)
         {
+            Contexto = new ContextoPruebasSqlite(Reloj);
+            Productos = new ProductosEnMemoria(Contexto);
+            Turnos = new TurnosEnMemoria(Contexto);
+            Clientes = new ClientesEnMemoria(Contexto);
+
             Productos.Datos.Add(new ProductoUnitario
             {
                 Id = 1,
@@ -422,7 +441,7 @@ public class ServicioVentasTests
                 Parametros,
                 Auditoria,
                 Sesiones.Con(permisos),
-                new RelojFijo(EscenarioInventario.Ahora));
+                Reloj);
         }
     }
 

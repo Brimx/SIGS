@@ -1,4 +1,5 @@
 using Bogus;
+using Supermercado.Datos.Repositorios;
 using Supermercado.Entidades.Contratos;
 using Supermercado.Entidades.Finanzas;
 using Supermercado.Entidades.Inventario;
@@ -11,22 +12,22 @@ using Supermercado.Logica.Seguridad;
 namespace Supermercado.Logica.DatosDemo
 {
 public class GeneradorDatosDemo(
-    ICategoriaRepositorio categorias,
-    IProveedorRepositorio proveedores,
-    IImpuestoRepositorio impuestos,
-    IProductoRepositorio productos,
-    ILoteRepositorio lotes,
-    IStockEstanteRepositorio estantes,
-    IStockBodegaRepositorio bodegas,
-    IMovimientoRepositorio movimientos,
-    ICargoRepositorio cargos,
-    IRolRepositorio roles,
-    IEmpleadoRepositorio empleados,
+    CategoriaRepositorio categorias,
+    ProveedorRepositorio proveedores,
+    ImpuestoRepositorio impuestos,
+    ProductoRepositorio productos,
+    LoteRepositorio lotes,
+    StockEstanteRepositorio estantes,
+    StockBodegaRepositorio bodegas,
+    MovimientoRepositorio movimientos,
+    CargoRepositorio cargos,
+    RolRepositorio roles,
+    EmpleadoRepositorio empleados,
     IUsuarioRepositorio usuarios,
-    ICajaRepositorio cajas,
-    ITurnoCajaRepositorio turnos,
+    CajaRepositorio cajas,
+    TurnoCajaRepositorio turnos,
     IVentaRepositorio ventas,
-    IGastoRepositorio gastos,
+    GastoRepositorio gastos,
     IHasheadorClave hasheador,
     TimeProvider reloj)
 {
