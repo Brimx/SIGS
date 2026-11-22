@@ -399,6 +399,44 @@ public sealed class InventarioAltasGuiTests
     private InventarioViewModel CrearVm(Permiso permisos)
         => new(null!, null!, null!, null!, CrearCatalogo(permisos), Sesiones.Con(permisos));
 
+    private static Usuario UsuarioConRol(string nombreRol) => new()
+    {
+        NombreUsuario = nombreRol.ToLowerInvariant(),
+        Empleado = new Empleado { Activo = true, Rol = ValoresIniciales.Roles().Single(r => r.Nombre == nombreRol) }
+    };
+
+    [Theory]
+    [InlineData(NombresRol.Admin, true)]
+    [InlineData(NombresRol.Bodeguero, true)]
+    [InlineData(NombresRol.Cajero, false)]
+    public async Task AccionesDeAlta_ConSesionInyectadaDespuesDeCrearVm_SiguenALaSesionActual(
+        string nombreRol, bool esperado)
+    {
+        var sesion = new SesionActual();
+        var inventarioVm = new InventarioViewModel(null!, sesion);
+        Assert.False(inventarioVm.PuedeGestionarInventario);
+
+        var notificaciones = new List<string>();
+        inventarioVm.PropertyChanged += (_, args) =>
+        {
+            if (args.PropertyName == nameof(InventarioViewModel.PuedeGestionarInventario)) notificaciones.Add(args.PropertyName!);
+        };
+
+        var shell = new ShellViewModel(
+            sesion, new PosViewModel(), inventarioVm, new CajaTurnoViewModel(),
+            new DashboardViewModel(), new RegistroUsuarioViewModel());
+
+        sesion.Iniciar(UsuarioConRol(nombreRol));
+        await shell.InicializarSesionAsync();
+        await shell.NavegarAsync("Inventario");
+
+        Assert.Equal(esperado, inventarioVm.PuedeGestionarInventario);
+        if (esperado)
+            Assert.Contains(nameof(InventarioViewModel.PuedeGestionarInventario), notificaciones);
+        else
+            Assert.DoesNotContain(nameof(InventarioViewModel.PuedeGestionarInventario), notificaciones);
+    }
+
     [Fact]
     public void PermisosDeRol_GestionarProductos_SoloAdminYBodeguero()
     {

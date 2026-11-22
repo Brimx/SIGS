@@ -186,6 +186,7 @@ public partial class ShellViewModel : ViewModelBase
         }.Count(visible => visible);
 
         MostrarBarraLateral = modulosVisibles > 1;
+        InventarioVm.ActualizarPermisos();
     }
 
     private void HabilitarTodosLosModulos()
@@ -199,6 +200,7 @@ public partial class ShellViewModel : ViewModelBase
         PuedeVerContabilidad = true;
         PuedeVerDashboard = true;
         MostrarBarraLateral = true;
+        InventarioVm.ActualizarPermisos();
     }
 
     private string DeterminarModuloInicial()
@@ -231,6 +233,7 @@ public partial class ShellViewModel : ViewModelBase
             case "Inventario":
                 TituloModulo = "Catálogo e Inventario FEFO";
                 SubtituloModulo = "Control de existencias en estante, bodega, vencimientos y mermas";
+                InventarioVm.ActualizarPermisos();
                 PaginaActual = InventarioVm;
                 await InventarioVm.ActualizarListadoAsync();
                 break;
@@ -295,6 +298,7 @@ public partial class ShellViewModel : ViewModelBase
     private void CerrarSesion()
     {
         _sesion?.Cerrar();
+        InventarioVm.ActualizarPermisos();
         SesionCerrada?.Invoke();
     }
 }

@@ -158,7 +158,7 @@ public partial class InventarioViewModel : ViewModelBase
         ActualizarPermisos();
     }
 
-    private void ActualizarPermisos()
+    public void ActualizarPermisos()
         => PuedeGestionarInventario = _sesion?.Tiene(Permiso.GestionarProductos) ?? false;
 
     partial void OnFiltroTextoChanged(string value) => AplicarFiltros();
