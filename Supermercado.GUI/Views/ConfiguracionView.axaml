@@ -3,14 +3,15 @@
              xmlns:vm="using:Supermercado.GUI.ViewModels"
              x:Class="Supermercado.GUI.Views.ConfiguracionView"
              x:DataType="vm:ConfiguracionViewModel"
-             Width="760"
-             MaxHeight="680">
+              MaxWidth="760"
+              MaxHeight="560"
+              HorizontalAlignment="Stretch">
 
     <Border Background="{DynamicResource BrushSurface}"
             BorderBrush="{DynamicResource BrushBorderSubtle}"
             BorderThickness="1"
             CornerRadius="{StaticResource RadiusLarge}"
-            Padding="24">
+            Padding="{StaticResource PaddingDialog}">
         <Grid RowDefinitions="Auto,*,Auto">
 
             <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
@@ -89,12 +90,16 @@
                             <TextBlock Classes="Ayuda"
                                        Text="Vincula tu chat privado para consultar información y recibir aprobaciones. No compartas el código."
                                        TextWrapping="Wrap" />
-                            <Button Content="Generar código de vinculación"
-                                    HorizontalAlignment="Left"
+                            <Button HorizontalAlignment="Left"
                                     Theme="{DynamicResource OutlineButton}"
-                                    Command="{Binding GenerarCodigoVinculacionCommand}" />
+                                    Command="{Binding GenerarCodigoVinculacionCommand}"
+                                    ToolTip.Tip="Generar código de vinculación">
+                                <TextBlock Text="Generar código de vinculación" TextWrapping="Wrap" />
+                            </Button>
                             <TextBox Text="{Binding InstruccionVinculacion}"
                                      IsReadOnly="True"
+                                     TextWrapping="Wrap"
+                                     ToolTip.Tip="{Binding InstruccionVinculacion}"
                                      PlaceholderText="El código aparecerá aquí" />
                             <TextBlock Classes="Ayuda"
                                        Text="{Binding MensajeVinculacion}"
@@ -107,7 +112,7 @@
                             <TextBlock Classes="Etiqueta" Text="Legal" />
                             <TextBlock Text="Política de privacidad"
                                        FontWeight="{StaticResource FontWeightSemiBold}" />
-                            <ScrollViewer MaxHeight="180">
+                            <ScrollViewer VerticalScrollBarVisibility="Auto">
                                 <SelectableTextBlock Text="{Binding TextoPrivacidad}"
                                                      TextWrapping="Wrap"
                                                      FontSize="{StaticResource FontSizeCaption}"
@@ -115,7 +120,7 @@
                             </ScrollViewer>
                             <TextBlock Text="Términos y condiciones"
                                        FontWeight="{StaticResource FontWeightSemiBold}" />
-                            <ScrollViewer MaxHeight="180">
+                            <ScrollViewer VerticalScrollBarVisibility="Auto">
                                 <SelectableTextBlock Text="{Binding TextoTerminos}"
                                                      TextWrapping="Wrap"
                                                      FontSize="{StaticResource FontSizeCaption}"

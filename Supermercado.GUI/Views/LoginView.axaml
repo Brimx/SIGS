@@ -6,16 +6,21 @@
              Background="{DynamicResource BrushBackground}"
              FontFamily="{StaticResource FontFamilyPlex}">
 
-    <Grid ColumnDefinitions="*,480,*">
-        <Border Grid.Column="1"
-                VerticalAlignment="Center"
-                Margin="16"
+    <Grid>
+        <ScrollViewer Margin="16"
+                      MaxWidth="720"
+                      HorizontalAlignment="Stretch"
+                      VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled">
+        <Border VerticalAlignment="Center"
+                HorizontalAlignment="Stretch"
+                MaxWidth="680"
                 Background="{DynamicResource BrushSurface}"
                 BorderBrush="{DynamicResource BrushBorderSubtle}"
                 BorderThickness="1"
                 CornerRadius="{StaticResource RadiusLarge}"
                 BoxShadow="{StaticResource ShadowElevation2}"
-                Padding="32">
+                Padding="24">
             <StackPanel Spacing="18">
                 <!-- Cabecera de Identidad de Marca -->
                 <StackPanel Spacing="6" HorizontalAlignment="Center">
@@ -133,14 +138,15 @@
                             BorderThickness="1"
                             CornerRadius="{StaticResource RadiusSmall}"
                             Padding="12,8">
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <LucideIcon Kind="CircleAlert" Size="16" Foreground="{DynamicResource BrushErrorText}" />
-                            <TextBlock Text="{Binding MensajeError}"
+                        <Grid ColumnDefinitions="Auto,8,*">
+                            <LucideIcon Grid.Column="0" Kind="CircleAlert" Size="16" Foreground="{DynamicResource BrushErrorText}" />
+                            <TextBlock Grid.Column="2"
+                                       Text="{Binding MensajeError}"
                                        TextWrapping="Wrap"
                                        FontSize="{StaticResource FontSizeBody}"
                                        FontWeight="{StaticResource FontWeightMedium}"
-                                       Foreground="{DynamicResource BrushErrorText}" />
-                        </StackPanel>
+                                        Foreground="{DynamicResource BrushErrorText}" />
+                        </Grid>
                     </Border>
 
                     <!-- Alerta de Éxito / Estado Demo -->
@@ -150,14 +156,15 @@
                             BorderThickness="1"
                             CornerRadius="{StaticResource RadiusSmall}"
                             Padding="12,8">
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <LucideIcon Kind="Check" Size="16" Foreground="{DynamicResource BrushSuccessText}" />
-                            <TextBlock Text="{Binding MensajeExito}"
+                        <Grid ColumnDefinitions="Auto,8,*">
+                            <LucideIcon Grid.Column="0" Kind="Check" Size="16" Foreground="{DynamicResource BrushSuccessText}" />
+                            <TextBlock Grid.Column="2"
+                                       Text="{Binding MensajeExito}"
                                        TextWrapping="Wrap"
                                        FontSize="{StaticResource FontSizeBody}"
                                        FontWeight="{StaticResource FontWeightMedium}"
                                        Foreground="{DynamicResource BrushSuccessText}" />
-                        </StackPanel>
+                        </Grid>
                     </Border>
 
                     <!-- Botón Principal de Ingreso -->
@@ -181,7 +188,8 @@
                             Padding="8,4">
                         <TextBlock Text="Alternar ingreso con Contraseña / Teclado PIN Táctil"
                                    FontSize="{StaticResource FontSizeCaption}"
-                                   Foreground="{DynamicResource BrushTextSecondary}" />
+                                   Foreground="{DynamicResource BrushTextSecondary}"
+                                   TextWrapping="Wrap" />
                     </Button>
 
                     <Separator Background="{DynamicResource BrushBorderSubtle}" Height="1" Margin="0,4" />
@@ -221,7 +229,9 @@
                                         <LucideIcon Kind="Database" Size="16" />
                                         <TextBlock Text="Sembrar Base Demo (4 Roles + Catálogo + Turno)"
                                                    FontWeight="{StaticResource FontWeightSemiBold}"
-                                                   FontSize="{StaticResource FontSizeBody}" />
+                                                   FontSize="{StaticResource FontSizeBody}"
+                                                   TextWrapping="Wrap"
+                                                   ToolTip.Tip="Sembrar Base Demo (4 Roles + Catálogo + Turno)" />
                                     </StackPanel>
                                 </Button>
 
@@ -229,7 +239,7 @@
                                            FontSize="{StaticResource FontSizeCaption}"
                                            Foreground="{DynamicResource BrushTextSecondary}" />
 
-                                <WrapPanel Orientation="Horizontal">
+                                <UniformGrid Columns="2">
                                     <Button Command="{Binding SeleccionarCredencialDemoCommand}" CommandParameter="admin" Margin="2" Padding="6,3" CornerRadius="4">
                                         <TextBlock Text="Admin (1111)" FontSize="{StaticResource FontSizeCaption}" />
                                     </Button>
@@ -242,7 +252,7 @@
                                     <Button Command="{Binding SeleccionarCredencialDemoCommand}" CommandParameter="bodega" Margin="2" Padding="6,3" CornerRadius="4">
                                         <TextBlock Text="Bodeguero (2233)" FontSize="{StaticResource FontSizeCaption}" />
                                     </Button>
-                                </WrapPanel>
+                                </UniformGrid>
                             </StackPanel>
                         </Border>
                     </StackPanel>
@@ -262,5 +272,6 @@
 
             </StackPanel>
         </Border>
+        </ScrollViewer>
     </Grid>
 </UserControl>
