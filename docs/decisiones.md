@@ -259,7 +259,9 @@
 - **Resiliencia:** si se cae internet, la venta local no se detiene ni arroja error;
   el evento queda marcado como no procesado y reintenta con registro de fallas.
   El esquema SQL receptor para Supabase o Neon se suministra listo en
-  `docs/supabase-schema.sql`.
+  `docs/supabase-schema.sql` (rama `completo`).
+
+> **Estado (2026-11):** retirado de `main` en `2c38285`. El Outbox y su esquema se conservan en la rama `completo`; `main` entrega solo SQLite local.
 
 ## ADR-021: Idempotencia en la venta mediante clave única
 
@@ -388,6 +390,8 @@
   - **10 Roles Canónicos:** Modelar en `NombresRol`, `ValoresIniciales` y la matriz de permisos los 10 roles clave con sus 18 permisos atómicos.
   - **Semilla y Login Demo:** Incorporar en `GeneradorDatosDemo` y en la vista de inicio de sesión (`LoginView` / `LoginViewModel`) la siembra automática y acceso rápido a credenciales de prueba para los 10 roles con un solo clic.
 - **Consecuencias:** soporte nativo tanto para entornos de producción LAN multi-terminal con PostgreSQL como para estaciones individuales o desarrollo zero-config con SQLite. El código de la capa lógica y de presentación no tiene acoplamiento con el motor de persistencia subyacente.
+
+> **Estado (2026-11):** el proveedor dual, `docker-compose.yml` y la lectura de `SIGS_POSTGRES_CONNECTION` se retiraron de `main` en `2c38285`. Sigue vigente la cobertura de roles, la semilla y la inicialización automática sobre SQLite.
 
 ## ADR-028: Tokens de dos roles, puente con Semi y temas persistidos por máquina
 

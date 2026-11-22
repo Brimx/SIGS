@@ -102,9 +102,11 @@ Recomendaciones:
 
 - `integraciones.supabase_key`, `integraciones.trm_token`, `integraciones.resend_token` y `dian.clave_tecnica` no van en el repositorio ni en capturas.
 - La base SQLite no está cifrada: si el equipo se comparte, use cifrado de disco y cuentas separadas.
-- En Supabase use solo la clave `anon` en el cliente; **nunca** `service_role`. El esquema de [`supabase-schema.sql`](supabase-schema.sql) debe aplicar RLS de inserción y vistas con `security_invoker=true`.
+- En Supabase use solo la clave `anon` en el cliente; **nunca** `service_role`. El esquema receptor con RLS de inserción y vistas `security_invoker=true` vive en la rama `completo`, no en `main`.
 
 ## 4. Producción multi-terminal (objetivo)
+
+> **Estado:** esta topología no está en `main`. El proveedor PostgreSQL dual, Docker y el Outbox hacia Supabase se retiraron en `2c38285`; el código se conserva en la rama `completo`. Lo que sigue describe esa arquitectura objetivo, no lo que hoy ejecuta la aplicación.
 
 ### Topología
 
@@ -133,11 +135,11 @@ Una réplica de una vía evita el problema: solo un nodo escribe.
 ### Pasos de migración
 
 1. Agregar `Npgsql.EntityFrameworkCore.PostgreSQL`.
-2. Cambiar `UseSqlite` por `UseNpgsql` en `ExtensionesDatos`; es el único punto del proveedor.
+2. Cambiar `UseSqlite` por `UseNpgsql` en `Supermercado.Datos/Contexto.cs`; es el único punto del proveedor.
 3. Mapear `DateTime` a `timestamptz`, `DateOnly` a `date` y dinero a `bigint`.
 4. Generar migraciones EF y probar `MigrateAsync` en una base vacía.
 5. Migrar los datos existentes de SQLite si hay historial que conservar.
-6. Desplegar el esquema receptor de [`supabase-schema.sql`](supabase-schema.sql) con RLS de inserción y vistas `security_invoker=true`; programar el drenaje del Outbox.
+6. Desplegar el esquema receptor (rama `completo`) con RLS de inserción y vistas `security_invoker=true`; programar el drenaje del Outbox.
 7. Configurar la réplica de una vía hacia Supabase (publicación lógica o proceso programado) y usar solo la clave `anon` en el cliente.
 8. Añadir concurrencia (ver siguiente sección) **antes** de habilitar varias cajas.
 

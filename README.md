@@ -91,20 +91,17 @@ Detalle completo en [`docs/arquitectura.md`](docs/arquitectura.md) y decisiones 
 
 ## Paradigmas, SOLID, GRASP y diseño UI
 
-- **Arquitectura y patrones:** 4 capas con Inversión de Dependencias + **MVVM** en GUI; **Repository + Unit of Work** (`Supermercado.Entidades/Contratos/`), **Strategy** (`IEstrategiaSalida` → `Supermercado.Logica/Inventario/SalidaFefo.cs:5`) y **Null Object** (`Supermercado.Logica/ExtensionesLogica.cs:82-84`).
+El mapa verificado de conceptos —entidad base, herencia, polimorfismo, estrategia, widgets, MVVM y composición— está en [`docs/conceptos-aplicados.md`](docs/conceptos-aplicados.md). Cada fila de esa tabla cita `ruta:línea` del estado actual; este README no la duplica.
+
+- **Arquitectura y patrones:** 4 capas con composición explícita (`Supermercado.Logica/Composicion.cs`, `Supermercado.Datos/Contexto.cs`) y **MVVM** en la GUI. **Strategy** en `EstrategiaSalida` (`Supermercado.Logica/InventarioSalidas.cs`) y **Null Object** para las integraciones apagadas.
 - **Paradigmas:**
-  - **POO:** jerarquías polimórficas con invariantes en `Producto`/`ProductoPesado` (`Supermercado.Entidades/Productos/Producto.cs:6`, `ProductoPesado.cs:6-14`), `Pago` y `Impuesto`.
-  - **Funcional / Declarativo:** `record` inmutables (`SolicitudVenta.cs:5-7`, `IWidget.cs:31-36`) y transformaciones LINQ (`Venta.cs:27-35`).
-  - **Reactivo / Eventos:** `[ObservableProperty]` y `[RelayCommand]` (`ShellViewModel.cs:27-39`, `DashboardViewModel.cs:157-202`).
+  - **POO:** herencia TPH y polimorfismo con invariantes en `Producto`/`ProductoPesado` (`Supermercado.Entidades/Productos.cs`), `Pago` e `Impuesto` (`Supermercado.Entidades/Ventas.cs`).
+  - **Funcional / Declarativo:** `record` inmutables (`SolicitudVenta` en `Supermercado.Logica/Ventas.cs`, `IWidget` en `Supermercado.Logica/Dashboard.cs`) y transformaciones LINQ.
+  - **Reactivo / Eventos:** `[ObservableProperty]` y `[RelayCommand]` en los ViewModels del POS y del shell.
   - **Asíncrono (`async`/`await`):** acceso a SQLite, APIs y refresco de interfaz sin bloquear el hilo de UI.
-- **SOLID:**
-  - **S:** responsabilidades aisladas (`Validador`, `SalidaFefo`, `ParserCodigoBalanza`, vistas sin lógica).
-  - **O:** extensibilidad por `IWidget` (`ExtensionesLogica.cs:86-94`) y subclases de `Impuesto`/`Pago`.
-  - **L:** `Venta.AgregarProducto` (`Venta.cs:37-42`) y `TotalPagado` (`Venta.cs:29`) operan sobre abstracciones base sin condicionales de tipo.
-  - **I:** interfaces segregadas por consumidor (`ExtensionesLogica.cs:38-74`, `IContratosInventario.cs:6-29`).
-  - **D:** `Logica` depende de contratos en `Entidades`, y `GUI` de contratos en `Logica`.
-- **GRASP:** *Information Expert* (`Venta.cs:27-35`, `ProductoPesado.cs:12-13`), *Creator* (`Venta.cs:41`), *Controller* (`ServicioVentas`, `PosViewModel`), *Pure Fabrication* (`SalidaFefo`, `HasheadorBCrypt`, `Validador`), *Protected Variations* (`ITrmClient`, `IConsultaCodigoBarras`, `IImpresorTicket`) y *Polymorphism*.
-- **UI (Avalonia 12 + Semi.Avalonia):** bindings compilados (`x:DataType`), `ViewLocator` (`Supermercado.GUI/App.axaml:9-11`), tokens de diseño en 5 diccionarios (`Primitives`, `Geometry`, `Typography`, `Semantic`, `SemiBridge` en `App.axaml:13-22`), scopes aislados por operación vía `IServiceScopeFactory` (`App.axaml.cs:88-98`) y gráficos de barras verticales nativos en `DashboardView.axaml:176-209`.
+- **SOLID en el alcance actual:** cada módulo concentra sus casos de uso y repositorios (S); `WidgetBase`, `EstrategiaSalida`, `Impuesto` y `Pago` se extienden sin tocar a sus consumidores (O); las abstracciones sobreviven donde hay más de una implementación o un falso de prueba (D), y la segregación se aplica a límites externos, presentación y los dos contratos de persistencia que conservan interfaz.
+- **GRASP:** *Information Expert* (`Venta`, `ProductoPesado`), *Creator* (`Venta`), *Controller* (`ServicioVentas`, `PosViewModel`), *Pure Fabrication* (`Validador`, `HasheadorBCrypt`) y *Polymorphism*.
+- **UI (Avalonia 12 + Semi.Avalonia):** bindings compilados (`x:DataType`), `ViewLocator` (`Supermercado.GUI/App.axaml:9-11`), tokens de diseño en 5 diccionarios (`Primitives`, `Geometry`, `Typography`, `Semantic`, `SemiBridge` en `App.axaml:13-22`), servicios de presentación agrupados en `Supermercado.GUI/ServiciosGui.cs` y gráficos de barras verticales nativos en `DashboardView.axaml`.
 
 ## Requisitos
 

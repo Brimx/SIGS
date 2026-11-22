@@ -46,7 +46,7 @@ El dominio se escribe en **español** (`Venta`, `Empleado`, `Reabastecimiento`).
 
 ## Errores
 
-Use el catálogo unificado en `Supermercado.Entidades/Excepciones/ExcepcionesDominio.cs`:
+Use el catálogo unificado en `Supermercado.Entidades/Excepciones.cs`:
 
 | Situación | Excepción |
 | :-- | :-- |
@@ -126,5 +126,5 @@ Prefijos usados: `feat`, `fix`, `refactor`, `test`, `docs`, `ci`, `chore`.
 - Llaves en línea nueva (estilo Allman), como el resto del repositorio.
 - Líneas de hasta ~88 caracteres cuando sea razonable.
 - `var` cuando el tipo es evidente; tipo explícito cuando aclara.
-- Una clase pública por archivo con el mismo nombre del archivo. En contratos de persistencia, implementaciones de repositorios, excepciones de dominio, widgets y módulos de soporte/presentación, se permite y prefiere agrupar tipos estrechamente cohesivos en archivos temáticos unificados (`IContratos*.cs`, `Repositorios*.cs`, `ExcepcionesDominio.cs`, `Widgets.cs`, `ConfiguracionYTema.cs`, `ImpresionTicket.cs`, `ClientesExternos.cs`, `ServiciosSoporte.cs`) para mantener un árbol de proyecto limpio y navegable.
+- Una clase pública por archivo con el mismo nombre del archivo. Excepción: los módulos consolidados agrupan tipos cohesivos en un archivo por dominio (`Ventas.cs`, `Inventario.cs`, `Productos.cs`, `Seguridad.cs` en cada capa) y la presentación usa archivos temáticos (`ServiciosGui.cs`, `Falsos.cs`). Antes de crear un archivo nuevo, compruebe si el módulo ya existe.
 - `sealed` en las hojas de una jerarquía TPH.
