@@ -10,7 +10,7 @@ Inventario curado de módulos, tipos, contratos, constructores, métodos públic
 | `Supermercado.Datos` | `SigsDbContext`, configuraciones EF Core, repositorios, proveedor SQLite local y semilla | Entidades |
 | `Supermercado.Logica` | Casos de uso consolidados, seguridad, cálculo monetario, integraciones, reportes y dashboards | Datos, Entidades |
 | `Supermercado.GUI` | Aplicación de escritorio Avalonia 12.1.4 + MVVM completo (11 módulos operativos y de back-office) | Lógica, Entidades |
-| `Supermercado.Pruebas` | Suite de pruebas unitarias, de integración y GUI con xUnit y falsos en memoria (352 pruebas en verde) | Lógica, Entidades, GUI |
+| `Supermercado.Pruebas` | Suite de pruebas unitarias, de integración y GUI con xUnit y falsos en memoria (402 pruebas en verde) | Lógica, Entidades, GUI |
 
 ## 2. Módulos y servicios consolidados
 
@@ -264,7 +264,7 @@ La composición se realiza a través de `ExtensionesLogica.AgregarLogica()`, la 
 
 ## 9. Pruebas automatizadas (`Supermercado.Pruebas`)
 
-Suite de pruebas unitarias y de integración construida sobre **xUnit 2.9.3**, con un total de **352 pruebas en verde** (0 fallos, 0 omitidas):
+Suite de pruebas unitarias y de integración construida sobre **xUnit 2.9.3**, con un total de **402 pruebas en verde** (0 fallos, 0 omitidas):
 
 | Archivo de prueba | Módulo o regla cubierta |
 | :-- | :-- |
