@@ -95,6 +95,12 @@ public partial class InventarioViewModel : ViewModelBase
     public partial bool Guardando { get; set; }
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(TieneErrorModal))]
+    public partial string ErrorModal { get; set; } = string.Empty;
+
+    public bool TieneErrorModal => !string.IsNullOrWhiteSpace(ErrorModal);
+
+    [ObservableProperty]
     public partial bool ModalNuevoProductoAbierto { get; set; }
 
     [ObservableProperty]
@@ -347,12 +353,17 @@ public partial class InventarioViewModel : ViewModelBase
         NuevoPrecioInput = 0;
         IvaSeleccionado = null;
         NuevoStockMinimoInput = 0;
+        ErrorModal = string.Empty;
         await CargarDatosFormulariosAsync();
         ModalNuevoProductoAbierto = true;
     }
 
     [RelayCommand]
-    private void CerrarModalNuevoProducto() => ModalNuevoProductoAbierto = false;
+    private void CerrarModalNuevoProducto()
+    {
+        ErrorModal = string.Empty;
+        ModalNuevoProductoAbierto = false;
+    }
 
     [RelayCommand]
     private async Task ConfirmarNuevoProductoAsync()
@@ -360,18 +371,19 @@ public partial class InventarioViewModel : ViewModelBase
         ActualizarPermisos();
         if (!PuedeGestionarInventario)
         {
-            MensajeEstado = "No tiene permiso para crear productos.";
+            ErrorModal = MensajeEstado = "No tiene permiso para crear productos.";
             return;
         }
         if (Guardando)
             return;
 
+        ErrorModal = string.Empty;
         using var scope = _scopeFactory?.CreateScope();
         var servicios = scope?.ServiceProvider;
         var catalogos = _servicioProductos ?? servicios?.GetService<ServicioProductos>();
         if (catalogos is null)
         {
-            MensajeEstado = "El catálogo de productos no está disponible.";
+            ErrorModal = MensajeEstado = "El catálogo de productos no está disponible.";
             return;
         }
 
@@ -392,7 +404,7 @@ public partial class InventarioViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            MensajeEstado = Traducir(servicios, ex);
+            ErrorModal = MensajeEstado = Traducir(servicios, ex);
         }
         finally
         {
@@ -414,12 +426,17 @@ public partial class InventarioViewModel : ViewModelBase
         CantidadEntradaInput = 1;
         NumeroLoteInput = string.Empty;
         FechaVencimientoEntradaInput = null;
+        ErrorModal = string.Empty;
         await CargarDatosFormulariosAsync();
         ModalEntradaBodegaAbierto = true;
     }
 
     [RelayCommand]
-    private void CerrarModalEntradaBodega() => ModalEntradaBodegaAbierto = false;
+    private void CerrarModalEntradaBodega()
+    {
+        ErrorModal = string.Empty;
+        ModalEntradaBodegaAbierto = false;
+    }
 
     [RelayCommand]
     private async Task ConfirmarEntradaBodegaAsync()
@@ -427,28 +444,29 @@ public partial class InventarioViewModel : ViewModelBase
         ActualizarPermisos();
         if (!PuedeGestionarInventario)
         {
-            MensajeEstado = "No tiene permiso para registrar entradas a bodega.";
+            ErrorModal = MensajeEstado = "No tiene permiso para registrar entradas a bodega.";
             return;
         }
         if (Guardando)
             return;
         if (ProductoSeleccionado is null)
         {
-            MensajeEstado = "Seleccione el producto.";
+            ErrorModal = MensajeEstado = "Seleccione el producto.";
             return;
         }
         if (FechaVencimientoEntradaInput is null)
         {
-            MensajeEstado = "Seleccione la fecha de vencimiento.";
+            ErrorModal = MensajeEstado = "Seleccione la fecha de vencimiento.";
             return;
         }
 
+        ErrorModal = string.Empty;
         using var scope = _scopeFactory?.CreateScope();
         var servicios = scope?.ServiceProvider;
         var catalogos = _servicioProductos ?? servicios?.GetService<ServicioProductos>();
         if (catalogos is null)
         {
-            MensajeEstado = "El catálogo de productos no está disponible.";
+            ErrorModal = MensajeEstado = "El catálogo de productos no está disponible.";
             return;
         }
 
@@ -471,7 +489,7 @@ public partial class InventarioViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            MensajeEstado = Traducir(servicios, ex);
+            ErrorModal = MensajeEstado = Traducir(servicios, ex);
         }
         finally
         {

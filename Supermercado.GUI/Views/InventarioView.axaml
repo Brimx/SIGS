@@ -276,6 +276,18 @@
                                            Minimum="0" Increment="1" />
                         </StackPanel>
 
+                        <Border IsVisible="{Binding TieneErrorModal}"
+                                Background="{DynamicResource BrushErrorSubtle}"
+                                BorderBrush="{DynamicResource BrushErrorText}"
+                                BorderThickness="1"
+                                CornerRadius="{StaticResource RadiusSmall}"
+                                Padding="10,8">
+                            <TextBlock Text="{Binding ErrorModal}"
+                                       Foreground="{DynamicResource BrushErrorText}"
+                                       TextWrapping="Wrap"
+                                       FontSize="{StaticResource FontSizeCaption}" />
+                        </Border>
+
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
                             <Button Command="{Binding CerrarModalNuevoProductoCommand}">
                                 <TextBlock Text="Cancelar" />
@@ -334,6 +346,18 @@
                             <TextBlock Classes="Etiqueta" Text="Fecha de vencimiento" />
                             <DatePicker SelectedDate="{Binding FechaVencimientoEntradaInput}" />
                         </StackPanel>
+
+                        <Border IsVisible="{Binding TieneErrorModal}"
+                                Background="{DynamicResource BrushErrorSubtle}"
+                                BorderBrush="{DynamicResource BrushErrorText}"
+                                BorderThickness="1"
+                                CornerRadius="{StaticResource RadiusSmall}"
+                                Padding="10,8">
+                            <TextBlock Text="{Binding ErrorModal}"
+                                       Foreground="{DynamicResource BrushErrorText}"
+                                       TextWrapping="Wrap"
+                                       FontSize="{StaticResource FontSizeCaption}" />
+                        </Border>
 
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
                             <Button Command="{Binding CerrarModalEntradaBodegaCommand}">
