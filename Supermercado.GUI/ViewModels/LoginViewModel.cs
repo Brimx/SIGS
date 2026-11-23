@@ -12,7 +12,7 @@ namespace Supermercado.GUI.ViewModels;
 public partial class LoginViewModel : ViewModelBase
 {
     private readonly IServiceScopeFactory? _scopeFactory;
-    private readonly ISesionActual? _sesion;
+    private readonly SesionActual? _sesion;
 
     [ObservableProperty]
     public partial string NombreUsuario { get; set; } = string.Empty;
@@ -58,7 +58,7 @@ public partial class LoginViewModel : ViewModelBase
         RegistroOnboarding.ConfigurarModo(ModoRegistroUsuario.OnboardingAdmin);
     }
 
-    public LoginViewModel(IServiceScopeFactory scopeFactory, ISesionActual sesion)
+    public LoginViewModel(IServiceScopeFactory scopeFactory, SesionActual sesion)
     {
         _scopeFactory = scopeFactory;
         _sesion = sesion;
@@ -137,7 +137,7 @@ public partial class LoginViewModel : ViewModelBase
         try
         {
             var autenticacion = scope.ServiceProvider
-                .GetRequiredService<IServicioAutenticacion>();
+                .GetRequiredService<ServicioAutenticacion>();
             if (ModoPin)
             {
                 await autenticacion.IniciarSesionConPinAsync(NombreUsuario.Trim(), PinAcceso.Trim());
@@ -164,7 +164,7 @@ public partial class LoginViewModel : ViewModelBase
         {
             TieneError = true;
             MensajeError = scope.ServiceProvider
-                .GetRequiredService<ITraductorExcepciones>().Traducir(ex);
+                .GetRequiredService<TraductorExcepciones>().Traducir(ex);
         }
         finally
         {
@@ -241,7 +241,7 @@ public partial class LoginViewModel : ViewModelBase
         try
         {
             using var scope = _scopeFactory.CreateScope();
-            var generador = scope.ServiceProvider.GetRequiredService<IGeneradorDatosDemo>();
+            var generador = scope.ServiceProvider.GetRequiredService<GeneradorDatosDemo>();
             await generador.GenerarAsync();
 
             TieneExito = true;

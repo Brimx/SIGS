@@ -26,8 +26,13 @@ public class ServicioDashboardTests
             => Task.FromResult(new DatoWidget([]));
     }
 
-    private readonly ConfiguracionesWidgetEnMemoria configuraciones = new();
-    private readonly UnidadDeTrabajoFalsa trabajo = new();
+    private readonly ContextoPruebasSqlite Contexto = new();
+    private readonly ConfiguracionesWidgetEnMemoria configuraciones;
+
+    public ServicioDashboardTests()
+    {
+        configuraciones = new ConfiguracionesWidgetEnMemoria(Contexto);
+    }
 
     private ServicioDashboard CrearServicio(
         IEnumerable<IWidget> widgets,
@@ -35,8 +40,7 @@ public class ServicioDashboardTests
         => new(
             widgets,
             configuraciones,
-            Sesiones.Con(permisos),
-            trabajo);
+            Sesiones.Con(permisos));
 
     private static WidgetPrueba Ventas()
         => new("w1", "Ventas", Permiso.VerReportes);
@@ -90,7 +94,7 @@ public class ServicioDashboardTests
         Assert.Single(configuraciones.Datos);
         Assert.True(configuraciones.Datos[0].Visible);
         Assert.Equal("w1", configuraciones.Datos[0].WidgetId);
-        Assert.Equal(1, trabajo.Guardados);
+        Assert.Equal(1, configuraciones.Guardados);
     }
 
     [Fact]
@@ -113,7 +117,7 @@ public class ServicioDashboardTests
         await servicio.QuitarAsync("w1");
 
         Assert.False(configuraciones.Datos[0].Visible);
-        Assert.Equal(2, trabajo.Guardados);
+        Assert.Equal(2, configuraciones.Guardados);
     }
 
     [Fact]
@@ -251,12 +255,11 @@ public class ServicioDashboardTests
         var json = await origen.ExportarAsync();
 
         // Otro empleado importa el mismo archivo
-        var configuracionesDestino = new ConfiguracionesWidgetEnMemoria();
+        var configuracionesDestino = new ConfiguracionesWidgetEnMemoria(Contexto);
         var destino = new ServicioDashboard(
             [Ventas(), Stock()],
             configuracionesDestino,
-            Sesiones.Con(Permiso.VerReportes),
-            new UnidadDeTrabajoFalsa());
+            Sesiones.Con(Permiso.VerReportes));
 
         var resultado = await destino.ImportarAsync(json);
         var panel = await destino.ObtenerPanelAsync();

@@ -1,299 +1,205 @@
 # Catálogo de código
 
-Inventario curado de módulos, tipos, contratos, constructores, métodos públicos y registro de dependencias tras la consolidación arquitectónica del sistema.
+Inventario curado de módulos, tipos, contratos, constructores, métodos públicos y registro de dependencias tras la simplificación de datos. Las rutas son las reales en el árbol de trabajo: no quedan carpetas por dominio dentro de Entidades, Datos ni Lógica.
 
 ## 1. Proyectos
 
 | Proyecto | Responsabilidad | Referencias |
 | :-- | :-- | :-- |
-| `Supermercado.Entidades` | Dominio puro, modelos, enums, excepciones de dominio y contratos | Ninguna |
-| `Supermercado.Datos` | `SigsDbContext`, configuraciones EF Core, repositorios, proveedor SQLite local y semilla | Entidades |
-| `Supermercado.Logica` | Casos de uso consolidados, seguridad, cálculo monetario, integraciones, reportes y dashboards | Datos, Entidades |
-| `Supermercado.GUI` | Aplicación de escritorio Avalonia 12.1.4 + MVVM completo (11 módulos operativos y de back-office) | Lógica, Entidades |
-| `Supermercado.Pruebas` | Suite de pruebas unitarias, de integración y GUI con xUnit y falsos en memoria (352 pruebas en verde) | Lógica, Entidades, GUI |
+| `Supermercado.Entidades` | Dominio puro: 11 archivos `.cs` con modelos, enums y excepciones | Ninguna |
+| `Supermercado.Datos` | 12 archivos `.cs`: `SigsDbContext`, repositorios por módulo, EF Core, SQLite, semilla y migración | Entidades |
+| `Supermercado.Logica` | 21 archivos `.cs`: casos de uso concretos, seguridad, cálculo, integraciones, reportes y dashboards | Datos, Entidades |
+| `Supermercado.GUI` | 33 archivos `.cs`: Avalonia 12.1.4 + MVVM; el POS está repartido en 5 archivos | Lógica, Entidades |
+| `Supermercado.Pruebas` | 29 archivos `.cs`: 22 en raíz y 7 en `GUI/`; suite xUnit en verde (conteo en `plan-pruebas.md`) | Lógica, Entidades, GUI |
+
+La compilación de `Supermercado.slnx` termina con 0 advertencias y 0 errores. Ningún archivo supera las 900 líneas físicas; el más largo tiene 807 (`Supermercado.Pruebas/Falsos.cs`).
 
 ## 2. Módulos y servicios consolidados
 
-| Módulo | Carpetas clave | Servicios de dominio consolidados |
+Los módulos se identifican por archivo, no por carpeta. Cada dominio tiene su archivo en Entidades, su archivo de repositorios en Datos y su caso de uso en Lógica.
+
+| Módulo | Archivos reales | Tipos principales |
 | :-- | :-- | :-- |
-| **Productos** | `Entidades/Productos`, `Logica/Productos` | `ServicioProductos` (consolida altas, búsqueda de catálogo, mantenimiento y categorización; integra `ParserCodigoBalanza` y `ConversorUnidades`) |
-| **Inventario** | `Entidades/Inventario`, `Logica/Inventario` | `ServicioInventario` (consolida salidas FEFO, reintegros, traslados bodega→estante, ingresos, mermas, alertas de stock mínimo/vencimiento, kardex consolidado y reabastecimiento; usa `SalidaFefo` y `PlanDeSalida`) |
-| **Ventas y caja** | `Entidades/Ventas`, `Logica/Ventas` | `ServicioVentas` (orquesta ventas, pagos mixtos, Habeas Data y ventas en espera) y `ServicioCaja` (apertura de turno, retiros parciales a caja fuerte, arqueo ciego y Cierre Z) |
-| **Clientes** | `Entidades/Clientes`, `Logica/Clientes` | `ServicioClientes` (gestión de adquirentes, búsqueda por documento y consentimiento legal) |
-| **Personal** | `Entidades/Personal`, `Logica/Personal` | `ServicioPersonal` (consolida empleados, usuarios temporales, cargos, cajas, roles y matriz de permisos) |
-| **Finanzas** | `Entidades/Finanzas`, `Logica/Finanzas` | `ServicioFinanzas` (consolida gastos operativos, resumen financiero con cálculo de márgenes, tarifas de impuestos y liquidación mensual de nómina) |
-| **Seguridad** | `Entidades/Seguridad`, `Logica/Seguridad` | `ServicioAutenticacion` (login con clave/PIN, bloqueo, cambio de credenciales), `ServicioInicializacion`, `ServicioAuditoria` (registro y consultas paginadas), `ServicioParametros`, `SesionActual` y `HasheadorBCrypt` |
-| **Dashboards** | `Entidades/Dashboards`, `Logica/Dashboards` | `ServicioDashboard` + 9 widgets de métricas consolidados en `Widgets.cs` |
-| **Integraciones y soporte** | `Logica/Servicios` | En `ClientesExternos.cs` (`ServicioTrm`, `ClienteTrmDatosGov`, `ClienteCodigoBarrasOff`, `ClienteVerificadorCorreoHttp`) y en `ServiciosSoporte.cs` (`ServicioRespaldo`, `LoggerArchivo`, `ProveedorLogArchivo`) |
-| **Reportes** | `Logica/Reportes` | En `GeneradorTickets.cs` (`GeneradorTicketQuestPdf`, `GeneradorTicketNulo`) y `ServicioReportes.cs` (`ServicioReportesQuestPdf`) |
-| **Comunes** | `Entidades/Base`, `Logica/Comunes` | `Dinero` (en `EntidadBase.cs`), `ExtensionesReloj`, `Validador`, `TraductorExcepciones` |
+| **Productos** | `Entidades/Productos.cs`, `Datos/Productos.cs`, `Logica/Productos.cs` | `ServicioProductos`, `ProductoRepositorio`, `CategoriaRepositorio`, `ProveedorRepositorio`, `ImpuestoRepositorio` |
+| **Inventario** | `Entidades/Inventario.cs`, `Datos/Inventario.cs`, `Logica/Inventario.cs`, `Logica/InventarioSalidas.cs` | `ServicioInventario`, `EstrategiaSalida`, `SalidaFefo`, `PlanDeSalida`, repositorios de lotes, movimientos, stocks, mermas y reabastecimientos |
+| **Ventas y caja** | `Entidades/Ventas.cs`, `Entidades/Caja.cs`, `Datos/Ventas.cs`, `Datos/Caja.cs`, `Logica/Ventas.cs`, `Logica/Caja.cs` | `ServicioVentas`, `ServicioCaja`, repositorios de ventas, ventas en espera, turnos, cajas y retiros |
+| **Clientes** | `Entidades/Clientes.cs`, `Datos/Clientes.cs`, `Logica/Clientes.cs` | `ServicioClientes`, `ClienteRepositorio` |
+| **Personal** | `Entidades/Personal.cs`, `Datos/Personal.cs`, `Logica/Personal.cs` | `ServicioPersonal`, `EmpleadoRepositorio`, `CargoRepositorio` |
+| **Finanzas** | `Entidades/Finanzas.cs`, `Datos/Finanzas.cs`, `Logica/Finanzas.cs` | `ServicioFinanzas`, `GastoRepositorio`, `NominaRepositorio` |
+| **Seguridad** | `Entidades/Seguridad.cs`, `Datos/Seguridad.cs`, `Logica/Seguridad.cs` | `ServicioAutenticacion`, `ServicioInicializacion`, `ServicioAuditoria`, `ServicioParametros`, `SesionActual`, `HasheadorBCrypt` |
+| **Dashboards** | `Entidades/Dashboard.cs`, `Datos/Dashboard.cs`, `Logica/Dashboard.cs`, `Logica/DashboardWidgets.cs` | `ServicioDashboard`, `IWidget`, `WidgetBase` y 10 widgets |
+| **Integraciones** | `Logica/ClientesExternos.cs`, `Logica/Infraestructura.cs`, `Logica/Reportes.cs`, `Logica/Telegram*.cs` | `ServicioTrm`, `ServicioRespaldo`, `GeneradorTicketQuestPdf`, `ServicioReportesQuestPdf`, `ProcesadorTelegram` |
+| **Comunes y composición** | `Entidades/Base.cs`, `Entidades/Excepciones.cs`, `Logica/Comun.cs`, `Logica/DatosDemo.cs`, `Logica/Composicion.cs` | `EntidadBase`, `Dinero`, `PersonaBase`, `Validador`, `TraductorExcepciones`, `GeneradorDatosDemo` |
+| **Persistencia transversal** | `Datos/Contexto.cs`, `Datos/Semillas.cs`, `Datos/Migraciones/Inicial.cs` | `SigsDbContext`, `ConfiguracionModelo`, `RutasDatos`, `InicializadorBaseDatos` |
 
 ## 3. Entidades
 
-### Base (`Supermercado.Entidades/Base`)
+Todas las entidades son archivos planos en `Supermercado.Entidades/`.
+
+### Base (`Entidades/Base.cs`)
 
 | Tipo | Responsabilidad | Miembros clave |
 | :-- | :-- | :-- |
 | `EntidadBase` (abstracta) | Identidad y auditoría de creación | `Id`, `FechaCreacion` |
-| `Dinero` (estática, en `EntidadBase.cs`) | Aritmética monetaria entera en pesos | `PuntosBasicosCien = 10000`, `DividirRedondeando`, `Porcentaje` |
+| `Dinero` (estática) | Aritmética monetaria entera en pesos | `PuntosBasicosCien`, `DividirRedondeando`, `Porcentaje` |
+| `PersonaBase` (abstracta) | Datos comunes de personas | `Documento`, `Nombres`, `Apellidos`, `Correo`, `Activo`, `NombreCompleto` |
 
-### Productos (`Supermercado.Entidades/Productos`)
+### Productos (`Entidades/Productos.cs`)
 
 | Tipo | Responsabilidad | Miembros clave |
 | :-- | :-- | :-- |
 | `Producto` (abstracta) | Producto vendible con precio, impuesto y mínimos | `CalcularSubtotal`, `UnidadMedida`, FKs `CategoriaId`, `ProveedorId`, `ImpuestoId` |
-| `ProductoUnitario` (sealed) | Precio × cantidad | `CalcularSubtotal`; `UnidadMedida = "und"` |
-| `ProductoPesado` (sealed) | Precio por kilo, cantidad en gramos | `GramosPorKilo = 1000`; redondeo con `Dinero` |
-| `Categoria` | Agrupación de productos | `Nombre` |
-| `Proveedor` | Datos del proveedor | `Nombre`, `Nit`, `Telefono`, `Correo` |
+| `ProductoPesado` (sealed) | Precio por kilo, cantidad en gramos | `GramosPorKilo = 1000`, redondeo con `Dinero` |
+| `ProductoUnitario` (sealed) | Precio × cantidad | `CalcularSubtotal` directo |
+| `Categoria`, `Proveedor` | Catálogo y proveeduría | `Nombre`; `Nit`, `Telefono`, `Correo` |
 | `Lote` | Mercancía con vencimiento y costo | `EstaVencido`, `DiasParaVencer`, `NumeroLote`, `CostoUnitario` |
 
-### Inventario (`Supermercado.Entidades/Inventario`)
+### Inventario (`Entidades/Inventario.cs`)
 
 | Tipo | Responsabilidad | Miembros clave |
 | :-- | :-- | :-- |
 | `StockLote` (abstracta) | Cantidad por lote con invariantes | `Aumentar`, `Disminuir`; `Cantidad` privada |
-| `StockEstante` (sealed) | Stock disponible para venta | Hereda `StockLote` |
-| `StockBodega` (sealed) | Stock de reserva | Hereda `StockLote` |
-| `StockConsolidado` | Resumen de existencias por producto | `ProductoId`, `Nombre`, `CodigoBarras`, `TotalEstante`, `TotalBodega`, `TotalGeneral` |
-| `KardexMovimiento` | Trazabilidad detallada de movimientos | `Fecha`, `Tipo`, `Cantidad`, `Lote`, `Ubicacion`, `Motivo` |
-| `MovimientoInventario` | Bitácora de entradas y salidas | `Tipo`, `Cantidad`, `LoteId`, `VentaId`, `Motivo` |
-| `Merma` | Pérdida de mercancía | `ProductoId`, `LoteId`, `Cantidad`, `Motivo` |
-| `Reabastecimiento` | Solicitud de reposición bodega→estante | `Atender(DateTime)`, `Cancelar()`, `Estado` |
-| `TipoMovimiento` | Sentido del movimiento | `Ingreso`, `Traslado`, `Venta`, `Devolucion`, `Merma`, `Ajuste` |
-| `UbicacionStock` | Ubicación física | `Estante`, `Bodega` |
-| `EstadoReabastecimiento` | Ciclo de la solicitud | `Pendiente`, `Atendido`, `Cancelado` |
+| `StockEstante`, `StockBodega` (sealed) | Existencias disponibles y de reserva | Heredan `StockLote`; EF las mapea en tablas separadas |
+| `StockConsolidado`, `KardexMovimiento` | Resumen y trazabilidad | Totales por ubicación; `SaldoPosterior` |
+| `MovimientoInventario`, `Merma` | Bitácora y pérdidas | `Tipo`, `Cantidad`, `LoteId`, `VentaId`, `Motivo` |
+| `Reabastecimiento` | Solicitud bodega→estante | `Atender(DateTime)`, `Cancelar()`, `Estado` |
+| `TipoMovimiento`, `UbicacionStock`, `EstadoReabastecimiento` | Enums de dominio | `Ingreso`, `Traslado`, `Venta`, `Devolucion`, `Merma`, `Ajuste` |
 
-### Ventas y caja (`Supermercado.Entidades/Ventas`)
+### Ventas y caja (`Entidades/Ventas.cs`, `Entidades/Caja.cs`)
 
 | Tipo | Responsabilidad | Miembros clave |
 | :-- | :-- | :-- |
-| `Venta` | Transacción con detalles, pagos y estado | `AgregarProducto`, `AgregarPago`, `Cerrar`, `Anular`; `Total`, `TotalIva`, `Cambio`, `EfectivoNeto`; `ClienteId`, `ClaveIdempotencia` |
+| `Venta` | Transacción con detalles, pagos y estado | `AgregarProducto`, `AgregarPago`, `Cerrar`, `Anular`; `Total`, `TotalIva`, `Cambio`, `EfectivoNeto`, `ClaveIdempotencia` |
 | `DetalleVenta` | Línea con precio e IVA congelados | `Crear(Producto, int)`, `Subtotal`, `Iva` |
 | `Pago` (abstracta) | Base de método de pago | `Monto`, `Metodo`, `Validar` |
-| `PagoEfectivo` (sealed) | Pago en efectivo | `Metodo = "Efectivo"` |
-| `PagoTarjeta` (sealed) | Pago con tarjeta | `UltimosDigitos`, `DigitosRequeridos = 4` |
-| `PagoTransferencia` (sealed) | Transferencia bancaria | `Referencia` |
-| `VentaEnEspera` | Venta aparcada temporalmente | `Codigo`, `FechaCreacion`, `JsonContenido`, `Total` |
-| `Caja` | Terminal física de atención | `Nombre`, `Activa` |
-| `TurnoCaja` | Turno de cajero con arqueo | `Abrir`, `CalcularEfectivoEsperado`, `Cerrar`; `Diferencia` |
-| `RetiroCaja` | Retiro parcial a caja fuerte durante el turno | `TurnoCajaId`, `Monto`, `Fecha`, `Motivo`, `AutorizadoPorEmpleadoId` |
-| `EstadoVenta` | Ciclo de la venta | `Abierta`, `Completada`, `Anulada` |
-| `EstadoTurno` | Ciclo del turno | `Abierto`, `Cerrado` |
+| `PagoEfectivo`, `PagoTarjeta`, `PagoTransferencia` (sealed) | Medios de pago | `Efectivo`, `UltimosDigitos`, `Referencia` |
+| `VentaEnEspera` | Venta aparcada | `IdentificadorCliente`, `LineasJson`, `TotalEstimado`, `Recuperada` |
+| `TurnoCaja`, `Caja`, `RetiroCaja` | Turno, terminal y retiro a caja fuerte | `Abrir`, `CalcularEfectivoEsperado`, `Cerrar`; `Diferencia`, `EmpleadoAutorizaId` |
+| `EstadoVenta`, `EstadoTurno` | Enums de ciclo | `Abierta`, `Completada`, `Anulada`; `Abierto`, `Cerrado` |
 
-### Clientes (`Supermercado.Entidades/Clientes`)
+### Clientes, personal y finanzas
 
-| Tipo | Ubicación | Responsabilidad | Miembros clave |
-| :-- | :-- | :-- | :-- |
-| `Cliente` | `Entidades/Clientes` | Datos del cliente y Habeas Data | `Documento`, `AutorizarHabeasData`, `RevocarHabeasData`; `AutorizaTratamientoDatos` |
-
-### Personal (`Supermercado.Entidades/Personal`)
-
-| Tipo | Responsabilidad | Miembros clave |
-| :-- | :-- | :-- |
-| `Empleado` | Persona con cargo, rol y salario | `NombreCompleto`, `Documento`, `SalarioBase`, `Desactivar()` |
-| `Cargo` | Cargo organizacional | `Nombre` |
-| `Rol` | Perfil con máscara de permisos | `Tiene(Permiso)`; `Permisos` es `[Flags]` |
-| `Usuario` | Credenciales de acceso y bloqueo | `RegistrarFallo`, `RegistrarExito`, `Desbloquear`, `CambiarClave`, `AsignarPin` |
-| `NombresRol` (estática) | Nombres canónicos de roles | `Admin`, `Gerente`, `Cajero`, `Bodeguero` |
-
-### Finanzas (`Supermercado.Entidades/Finanzas`)
-
-| Tipo | Responsabilidad | Miembros clave |
-| :-- | :-- | :-- |
-| `Impuesto` (abstracta) | Tarifa tributaria parametrizable | `PuntosBasicos`, `Porcentaje`, `Calcular` |
-| `Iva` (sealed) | Impuesto de valor agregado (incluido en precio) | `Calcular` extrae el gravamen |
-| `Retencion` (sealed) | Retención en la fuente con base mínima | `BaseMinima`, `Calcular` |
-| `Gasto` | Egreso operativo auditado | `Descripcion`, `Monto`, `RegistradoPorEmpleadoId` |
-| `Nomina` | Liquidación básica mensual de nómina | `Calcular(...)` estático; valida año, mes y deducciones |
-| `ParametrosNomina` (record) | Parámetros legales de nómina colombiana | `SalarioMinimo`, `AuxilioTransporte`, `TopeAuxilioEnSmmlv`, `SaludPuntosBasicos`, `PensionPuntosBasicos` |
-
-### Seguridad y configuración
-
-| Tipo | Ubicación | Responsabilidad | Miembros clave |
-| :-- | :-- | :-- | :-- |
-| `Permiso` (`[Flags] long`) | `Entidades/Seguridad` | 18 permisos del sistema | `Vender`, `AnularVenta`, `AbrirCerrarTurno`, `VerInventario`, `AjustarInventario`, `Reabastecer`, `GestionarProductos`, `VerReportes`, `VerFinanzas`, `GestionarPersonal`, `GestionarRoles`, `GestionarTarifas`, `VerAuditoria`, `GestionarClientes`, etc. |
-| `AccionAuditoria` | `Entidades/Seguridad` | Acciones auditables | 32 valores tipados (login, venta anulada, gasto, retiro de caja, parámetro, cliente, etc.) |
-| `RegistroAuditoria` | `Entidades/Seguridad` | Registro cronológico inmutable | `Fecha`, `EmpleadoId`, `Accion`, `Entidad`, `EntidadId`, `Detalle` |
-| `IntentoAcceso` | `Entidades/Seguridad` | Registro de intentos de autenticación | `NombreUsuario`, `Exitoso`, `UsoPin`, `Fecha` |
-| `FiltroAuditoria` / `ResultadoPaginado` | `Entidades/Seguridad` | Criterios de consulta y paginación | `Desde`, `Hasta`, `EmpleadoId`, `Accion`, `Pagina`, `TamanoPagina` |
-| `Parametro` | `Entidades/Configuracion/Parametro.cs` | Parámetro operativo clave/valor | `Clave`, `Valor`, `Descripcion` |
-| `ClavesParametro` (estática) | `Entidades/Configuracion/Parametro.cs` | Constantes de claves | Constantes de seguridad, nómina, integraciones, balanzas y negocio |
-| `ConfiguracionWidget` | `Entidades/Dashboards/ConfiguracionWidget.cs` | Preferencia de widget por usuario | `EmpleadoId`, `WidgetId`, `Posicion`, `Visible`, `Tamano` |
-| `TamanoWidget` / `DisposicionPanel` | `Entidades/Dashboards/ConfiguracionWidget.cs` | Tamaño de tarjeta y layout | `Pequeno`, `Mediano`, `Grande` |
-
-### Excepciones de dominio (`Supermercado.Entidades/Excepciones/ExcepcionesDominio.cs`)
-
-Todas las excepciones del dominio se encuentran agrupadas en un único archivo cohesivo:
-
-| Excepción | Cuándo se lanza |
+| Archivo | Tipos principales |
 | :-- | :-- |
-| `ValidacionException` | Regla o invariante de negocio incumplida |
-| `VentaInvalidaException` | Venta, detalle, pago o anulación inconsistente |
-| `StockInsuficienteException` | Stock insuficiente en estante/bodega o lote inexistente |
-| `TurnoInvalidoException` | Apertura o cierre de turno fuera de estado permitido |
-| `AccesoDenegadoException` | El usuario carece del permiso requerido |
-| `CredencialesInvalidasException` | Nombre de usuario, contraseña o PIN incorrectos |
-| `CuentaBloqueadaException` | Cuenta bloqueada tras superar intentos fallidos |
-| `SesionNoIniciadaException` | Invocación de operación protegida sin sesión activa |
-| `DebeCambiarClaveException` | Acceso con cambio obligatorio de contraseña pendiente |
-| `ParametroFaltanteException` | Clave de configuración no encontrada o valor malformado |
-| `ServicioNoConfiguradoException` | Cliente externo invocado sin servicio configurado |
+| `Entidades/Clientes.cs` | `Cliente : PersonaBase`, Habeas Data (`AutorizarHabeasData`, `RevocarHabeasData`) |
+| `Entidades/Personal.cs` | `Empleado : PersonaBase`, `Usuario`, `Cargo`, `Rol`, `NombresRol` |
+| `Entidades/Finanzas.cs` | `Impuesto`, `Iva`, `Retencion`, `Gasto`, `Nomina`, `ParametrosNomina` |
 
-## 4. Contratos (`Supermercado.Entidades/Contratos`)
+### Seguridad, dashboards y excepciones
 
-Los contratos de persistencia y ciclo de vida se agrupan en 4 archivos temáticos cohesivos por dominio y 3 contratos base:
+| Archivo | Tipos principales |
+| :-- | :-- |
+| `Entidades/Seguridad.cs` | `Permiso` (`[Flags] long`, 18 valores), `AccionAuditoria` (incluye `ProductoCreado` e `IngresoBodegaRegistrado`), `RegistroAuditoria`, `IntentoAcceso`, `FiltroAuditoria`, `ResultadoPaginado<T>`, `Parametro`, `ClavesParametro` |
+| `Entidades/Dashboard.cs` | `TamanoWidget`, `ConfiguracionWidget`, `DisposicionPanel`, `EntradaDisposicion` |
+| `Entidades/Excepciones.cs` | 11 excepciones de dominio, de `ValidacionException` a `VentaInvalidaException` |
 
-| Archivo | Interfaz | Implementación | Métodos clave |
-| :-- | :-- | :-- | :-- |
-| `IRepositorio.cs` | `IRepositorio<T>` | `Repositorio<T>` | `ObtenerPorIdAsync`, `ObtenerTodosAsync`, `AgregarAsync`, `Actualizar` |
-| `IUnidadDeTrabajo.cs` | `IUnidadDeTrabajo` | `UnidadDeTrabajo` | `GuardarAsync` |
-| `IInicializadorBaseDatos.cs` | `IInicializadorBaseDatos` | `InicializadorBaseDatos` | `CrearYSembrarAsync` |
-| `IContratosInventario.cs` | `IStockRepositorio<T>` | `StockRepositorio<T>` | `ObtenerPorProductoAsync`, `ObtenerPorLoteAsync`, `ObtenerTotalesPorProductoAsync` |
-| | `ILoteRepositorio` | `LoteRepositorio` | `ObtenerPorVencerAsync` |
-| | `IMovimientoRepositorio` | `MovimientoRepositorio` | `ObtenerSalidasDeVentaAsync` |
-| | `IReabastecimientoRepositorio` | `ReabastecimientoRepositorio` | `ObtenerPendientesAsync` |
-| `IContratosVentas.cs` | `IVentaRepositorio` | `VentaRepositorio` | `ObtenerPorTurnoAsync`, `ObtenerPorRangoAsync`, `ObtenerPorClaveIdempotenciaAsync` |
-| | `ITurnoCajaRepositorio` | `TurnoCajaRepositorio` | `ObtenerAbiertoPorEmpleadoAsync`, `ObtenerAbiertoPorCajaAsync` |
-| `IContratosSeguridad.cs` | `IUsuarioRepositorio` | `UsuarioRepositorio` | `ObtenerPorNombreAsync` (incluye `Empleado.Rol`) |
-| | `IRolRepositorio` | `RolRepositorio` | `ObtenerPorNombreAsync` |
-| | `IParametroRepositorio` | `ParametroRepositorio` | `ObtenerPorClaveAsync` |
-| `IContratosNegocio.cs` | `IProductoRepositorio` | `ProductoRepositorio` | `ObtenerPorCodigoBarrasAsync` |
-| | `IClienteRepositorio` | `ClienteRepositorio` | `ObtenerPorDocumentoAsync` |
-| | `IGastoRepositorio` | `GastoRepositorio` | `ObtenerPorRangoAsync` |
-| | `IConfiguracionWidgetRepositorio` | `ConfiguracionWidgetRepositorio` | `ObtenerPorEmpleadoAsync` |
+## 4. Contratos
+
+El espacio de nombres `Supermercado.Entidades.Contratos` existe físicamente en los archivos planos de `Supermercado.Datos/`, pero ya no abstrae todos los repositorios. Tras la simplificación solo quedan dos contratos de persistencia, con implementación real y falsos propios; el resto se inyecta como clase concreta. Todos incluyen `GuardarAsync` y no hay contrato genérico ni unidad de trabajo.
+
+| Archivo | Contratos declarados | Implementaciones |
+| :-- | :-- | :-- |
+| `Datos/Ventas.cs` | `IVentaRepositorio` | `VentaRepositorio` |
+| `Datos/Seguridad.cs` | `IUsuarioRepositorio` | `UsuarioRepositorio` |
+
+Los 24 repositorios restantes se registran y consumen como tipos concretos: `ProductoRepositorio`, `CategoriaRepositorio`, `ProveedorRepositorio`, `ImpuestoRepositorio`, `LoteRepositorio`, `MovimientoRepositorio`, `ReabastecimientoRepositorio`, `StockEstanteRepositorio`, `StockBodegaRepositorio`, `MermaRepositorio`, `VentaEnEsperaRepositorio`, `TurnoCajaRepositorio`, `CajaRepositorio`, `RetiroCajaRepositorio`, `ClienteRepositorio`, `EmpleadoRepositorio`, `CargoRepositorio`, `GastoRepositorio`, `NominaRepositorio`, `RolRepositorio`, `ParametroRepositorio`, `IntentoAccesoRepositorio`, `RegistroAuditoriaRepositorio` y `ConfiguracionWidgetRepositorio`.
+
+Todos los repositorios heredan `GuardarAsync` de `RepositorioBase` (`Datos/Contexto.cs`), que delega en `SigsDbContext.SaveChangesAsync`. Un caso de uso realiza una sola llamada al final; el contexto compartido confirma de forma atómica todas las entidades modificadas.
 
 ## 5. Capa Datos (`Supermercado.Datos`)
 
 | Archivo / Tipo | Responsabilidad |
 | :-- | :-- |
-| `SigsDbContext.cs` | DbSets de entidades, configuración del modelo y asignación automática de `FechaCreacion` en `SaveChanges`/`SaveChangesAsync` |
-| `ConfiguracionModelo.cs` | Mapeo TPH, índices únicos (idempotencia, documento, código de barras) y `DeleteBehavior.Restrict` (en raíz de `Supermercado.Datos/`) |
-| `ValoresIniciales.cs` | Semilla idempotente de los 4 roles canónicos (`Admin`, `Gerente`, `Cajero`, `Bodeguero`), cargos, impuestos, cajas y parámetros de arranque (en raíz de `Supermercado.Datos/`) |
-| `ExtensionesDatos.cs` | Configuración de SQLite local autónomo, registro de repositorios y unidad de trabajo |
-| `RutasDatos.cs` | Resolución de ruta de base de datos local `%LOCALAPPDATA%/SIGS/sigs.db` (Windows) o `~/.local/share/SIGS/sigs.db` (Linux) |
-| `InicializadorBaseDatos.cs` | `Migrate` si existen migraciones EF; `EnsureCreated` y siembra idempotente si arranca en frío |
-
-### Implementación de repositorios (`Supermercado.Datos/Repositorios/`)
-
-Los 15 repositorios se agrupan en 5 archivos por área de dominio:
-
-| Archivo | Clases contenidas |
-| :-- | :-- |
-| `RepositorioGenerico.cs` | `Repositorio<T>` (CRUD EF genérico) y `UnidadDeTrabajo` (`SaveChangesAsync` atómico) |
-| `RepositoriosInventario.cs` | `StockRepositorio<T>`, `LoteRepositorio`, `MovimientoRepositorio`, `ReabastecimientoRepositorio` |
-| `RepositoriosVentas.cs` | `VentaRepositorio`, `TurnoCajaRepositorio` |
-| `RepositoriosSeguridad.cs` | `UsuarioRepositorio`, `RolRepositorio`, `ParametroRepositorio` |
-| `RepositoriosNegocio.cs` | `ProductoRepositorio`, `ClienteRepositorio`, `GastoRepositorio`, `ConfiguracionWidgetRepositorio` |
+| `Contexto.cs` / `SigsDbContext` | DbSets, `ConfiguracionModelo`, `RutasDatos`, asignación de `FechaCreacion`, TPH y registro de `AgregarDatos` con SQLite local |
+| `Semillas.cs` / `ValoresIniciales`, `InicializadorBaseDatos` | Roles, cargos, impuestos, cajas y parámetros idempotentes; `CrearYSembrarAsync` completa los permisos faltantes de roles ya creados |
+| `Migraciones/Inicial.cs` | Migración `20260420000000_Inicial` enlazada a `SigsDbContext` |
+| `Productos.cs`, `Inventario.cs`, `Ventas.cs`, `Caja.cs`, `Clientes.cs`, `Personal.cs`, `Finanzas.cs`, `Seguridad.cs`, `Dashboard.cs` | Repositorios concretos de cada módulo, en archivos planos; solo `Ventas.cs` y `Seguridad.cs` conservan interfaces |
 
 ## 6. Capa Lógica (`Supermercado.Logica`)
 
-### Los 8 Servicios de Dominio Consolidados
+Los 21 archivos son planos. Los casos de uso se consumen como clases concretas; no hay interfaces para casos de uso internos ni adaptadores entre módulos. En total hay 17 interfaces: 2 en Datos (`IVentaRepositorio`, `IUsuarioRepositorio`), 12 en Lógica (límites externos, widgets y `IHasheadorClave`) y 3 en GUI (preferencias, textos legales e impresión).
 
-| Servicio consolidado | Archivo de implementación | Interfaces implementadas | Responsabilidad unificada |
-| :-- | :-- | :-- | :-- |
-| `ServicioProductos` | `Productos/ServicioProductos.cs` | `IServicioProductos`, `IServicioBusquedaProductos`, `IServicioMantenimientoProductos`, `IServicioCatalogos` | Registro de productos unitarios/pesados, búsqueda reactiva, modificación de precios/catálogos, activación/desactivación y gestión de proveedores y categorías. |
-| `ServicioInventario` | `Inventario/ServicioInventario.cs` | `IServicioInventario`, `IServicioConsultaInventario`, `IServicioMermas`, `IServicioAlertasInventario`, `IServicioReabastecimiento` | Descuento FEFO por venta, reintegro por anulación, traslados bodega→estante, ingresos de lotes, registro de mermas, alertas de stock mínimo/vencimiento, kardex y solicitudes de reposición. |
-| `ServicioVentas` | `Ventas/ServicioVentas.cs` | `IServicioVentas`, `IServicioVentasEnEspera` | Orquestación completa de venta con comprobación de turno y stock, desglose de IVA (0%, 5%, 19%), Habeas Data, anulación y venta en espera. |
-| `ServicioCaja` | `Ventas/ServicioCaja.cs` | `IServicioCaja` | Apertura de turno con fondo inicial, retiros parciales a caja fuerte auditados, cálculo de efectivo esperado, arqueo ciego y Cierre Z con tolerancia. |
-| `ServicioClientes` | `Clientes/ServicioClientes.cs` | `IServicioClientes` | Altas, edición, búsqueda y desactivación de clientes con verificación de formato y consentimiento legal. |
-| `ServicioPersonal` | `Personal/ServicioPersonal.cs` | `IServicioPersonal`, `IServicioEmpleados`, `IServicioEstructura`, `IServicioUsuarios` | Administración integral de empleados, usuarios y contraseñas temporales, cargos, cajas, roles y matriz de 18 permisos con prevención de auto-escalada. |
-| `ServicioFinanzas` | `Finanzas/ServicioFinanzas.cs` | `IServicioFinanzas`, `IServicioImpuestos`, `IServicioNomina` | Registro de gastos auditados, resumen financiero de ingresos/egresos/márgenes, mantenimiento de tarifas tributarias y liquidación mensual de nómina según legislación colombiana. |
-| `ServicioAutenticacion` | `Seguridad/ServicioAutenticacion.cs` | `IServicioAutenticacion`, `IServicioUsuarios` (parcial), contiene `ServicioInicializacion` | Autenticación mediante usuario/contraseña o PIN táctil de 4 dígitos, bloqueo temporal por intentos fallidos, cambio de contraseña, asignación de PIN y semilla administrativa de arranque. |
-
-### Servicios de Soporte, Integración y Seguridad Interna
-
-| Clase / Tipo | Archivo | Responsabilidad |
-| :-- | :-- | :-- |
-| `SesionActual` (singleton) | `Seguridad/SesionActual.cs` | `ISesionActual`: mantiene el contexto del usuario autenticado en el hilo de ejecución; `Tiene()`, `Exigir()`, `Iniciar()`, `Cerrar()`. |
-| `HasheadorBCrypt` | `Seguridad/HasheadorClave.cs` | `IHasheadorClave`: hasheo y verificación segura de credenciales mediante algoritmo BCrypt. |
-| `ServicioParametros` | `Seguridad/ServicioParametros.cs` | `IServicioParametros`: lectura/escritura de parámetros del sistema con auditoría; `ExtensionesParametros.ObtenerBoolAsync` para interruptores. |
-| `ServicioAuditoria` | `Seguridad/ServicioAuditoria.cs` | `IServicioAuditoria`, `IServicioConsultaAuditoria`: registro inmutable en base de datos y consultas paginadas con filtros. |
-| `ServicioDashboard` | `Dashboards/ServicioDashboard.cs` | `IServicioDashboard`: orquestación de widgets, persistencia de disposiciones por empleado y filtrado por permisos. |
-| `Widgets` (9 clases) | `Dashboards/Widgets.cs` | `ArqueoTurnoWidget`, `IvaGeneradoWidget`, `LotesPorVencerWidget`, `MargenPorCategoriaWidget`, `ReabastecimientosPendientesWidget`, `StockBajoMinimoWidget`, `TrmDelDiaWidget`, `VentasDelDiaWidget`, `VentasPorCategoriaWidget`. |
-| `ServicioTrm` y Clientes API | `Servicios/ClientesExternos.cs` | Clientes HTTP con fallback local y tolerancia a fallos: `ClienteTrmDatosGov` (datos.gov.co), `ClienteCodigoBarrasOff` (Open Food Facts), `ClienteVerificadorCorreoHttp`. |
-| `ServicioRespaldo` y Logs | `Servicios/ServiciosSoporte.cs` | `IServicioRespaldo` (copia de seguridad en caliente de SQLite con `VACUUM INTO`), `LoggerArchivo` y `ProveedorLogArchivo`. |
-| `GeneradorTickets` | `Reportes/GeneradorTickets.cs` | `IGeneradorTicket`, `GeneradorTicketQuestPdf`, `GeneradorTicketNulo`. |
-| `ServicioReportes` | `Reportes/ServicioReportes.cs` | `IServicioReportes`, `ServicioReportesQuestPdf` (generación de desprendibles de nómina y reportes de ventas en PDF). |
-| `Validador` (estática) | `Comunes/Validador.cs` | Reglas de formato puro compartidas con la UI: validación de NIT con Módulo 11 oficial, cédulas, correos, nombres y teléfonos. |
-| `ParserCodigoBalanza` | `Productos/ParserCodigoBalanza.cs` | Interpretación de códigos de balanza EAN-13 GS1 (prefijos 20 a 29) con extracción de PLU y gramos. |
-| `ConversorUnidades` | `Productos/ConversorUnidades.cs` | Factores de conversión estándar para compras: bultos de 50kg, arrobas, libras, kilos y gramos. |
+| Archivo | Contenido principal |
+| :-- | :-- |
+| `Composicion.cs` | `ExtensionesLogica.AgregarLogica`, `AgregarClientesExternos` |
+| `Comun.cs` | `Validador`, `TraductorExcepciones`, `ExtensionesReloj` |
+| `Seguridad.cs` | `ServicioAutenticacion`, `ServicioInicializacion`, `ServicioAuditoria`, `ServicioParametros`, `SesionActual`, `HasheadorBCrypt` |
+| `Personal.cs` | `ServicioPersonal` |
+| `Productos.cs` | `ServicioProductos`: altas desde GUI (`CrearProductoAsync`, `ObtenerProductosActivosAsync`, `ObtenerImpuestosAsync`), ingreso de lotes reutilizando lote existente y auditoría `ProductoCreado`/`IngresoBodegaRegistrado` |
+| `Inventario.cs` | `ServicioInventario`: `RegistrarIngresoAsync` reutiliza `StockBodega` por lote y registra `TipoMovimiento.Ingreso` |
+| `InventarioSalidas.cs` | `PlanDeSalida`, `EstrategiaSalida`, `SalidaFefo` |
+| `Ventas.cs` | `ServicioVentas` |
+| `Caja.cs` | `ServicioCaja` |
+| `Clientes.cs` | `ServicioClientes` |
+| `Finanzas.cs` | `ServicioFinanzas` |
+| `Dashboard.cs` | `ServicioDashboard`, `IWidget`, `WidgetEnPanel`, `DatoWidget` |
+| `DashboardWidgets.cs` | `WidgetBase` y 10 widgets: `ArqueoTurnoWidget`, `IvaGeneradoWidget`, `LotesPorVencerWidget`, `ReabastecimientosPendientesWidget`, `StockBajoMinimoWidget`, `TrmDelDiaWidget`, `VentasDelDiaWidget`, `ResumenOperativoWidget`, `VentasPorCategoriaWidget`, `MargenPorCategoriaWidget` |
+| `ClientesExternos.cs` | `ITrmClient`, `IConsultaCodigoBarras`, `IVerificadorCorreo`, `ServicioTrm` y clientes HTTP |
+| `Infraestructura.cs` | `IServicioRespaldo`, `ServicioRespaldo`, `ProveedorLogArchivo`, `LoggerArchivo` |
+| `Reportes.cs` | `IServicioReportes`, `ServicioReportesQuestPdf`, `IGeneradorTicket`, `GeneradorTicketQuestPdf` |
+| `Telegram.cs` | `ProcesadorTelegram` (comandos y actualizaciones) |
+| `TelegramAprobaciones.cs` | `ProcesadorTelegram` (aprobaciones y callbacks) |
+| `TelegramClientes.cs` | `IClienteTelegram`, `ClienteTelegramHttp`, `ClienteGeminiHttp` |
+| `TelegramSoporte.cs` | `IClienteGemini`, `Asistente`, `IVinculosTelegram`, `VinculosTelegram`, `TelegramWorker` |
+| `DatosDemo.cs` | `GeneradorDatosDemo` |
 
 ## 7. Capa de Presentación (`Supermercado.GUI`)
 
-Interfaz gráfica de escritorio para Windows y Linux desarrollada en **Avalonia 12.1.4** y **.NET 10** bajo el patrón **MVVM** con **CommunityToolkit.Mvvm**:
+Avalonia 12.1.4, .NET 10 y CommunityToolkit.Mvvm. Los 33 archivos `.cs` se reparten en 4 archivos raíz, 17 ViewModels y 12 code-behind de vistas. `ViewLocator.cs` permanece intacto; `Views/InventarioView.axaml` incorpora los formularios de nuevo producto y entrada a bodega, y el resto del XAML no cambia.
+
+### Archivos raíz
+
+| Archivo | Responsabilidad |
+| :-- | :-- |
+| `App.axaml.cs` | Inicializa el contenedor con `AgregarLogica()` y registra los servicios de presentación; inyecta `SesionActual` en `InventarioViewModel` |
+| `Program.cs` | Punto de entrada de Avalonia |
+| `ServiciosGui.cs` | `TemaSigs`, `IServicioPreferencias`, `ServicioPreferencias`, `IServicioTextosLegales`, `ServicioTextosLegales`, `IImpresorTicket`, `ImpresorTicketEscPos`, `ImpresorTicketPdf`, `PlantillaTicketPos` |
+| `ViewLocator.cs` | Resolución reflexiva de `ViewModel` a `View` |
 
 ### ViewModels (`Supermercado.GUI/ViewModels/`)
 
-1. `ViewModelBase`: Base observable con propagación de propiedades.
-2. `MainViewModel`: Conmutador maestro de nivel raíz entre la pantalla de autenticación (`LoginViewModel`) y el entorno operativo (`ShellViewModel`).
-3. `LoginViewModel`: Autenticación con contraseña o PIN numérico rápido de caja, detección de primer arranque (onboarding con creación de admin) y botones de acceso rápido de demostración para los 4 roles (`Admin`, `Gerente`, `Cajero`, `Bodeguero`).
-4. `ShellViewModel`: Shell adaptativa RBAC con menú lateral condicional según los 18 permisos del usuario autenticado, conmutador de temas en caliente y transiciones `CrossFade 150ms`.
-5. `PosViewModel`: Punto de venta de alta velocidad optimizado para escáner continuo (*keyboard wedge*), soporte de balanzas GS1 (`20`–`29`), atajos de teclado `F1`–`F5` / `Escape`, visor de total a 32px, discriminación tributaria (C/M/J) y modales integrados (cobro, búsqueda, Habeas Data, ticket).
-6. `InventarioViewModel`: Catálogo visual con `DataGrid` reactivo, filtros en tiempo real, alertas de stock mínimo y lotes por vencer, y diálogo de bajas por merma con auditoría.
-7. `CajaTurnoViewModel`: Gestión integral de caja: apertura con base inicial, retiros parciales a caja fuerte, arqueo ciego con cálculo automático de sobrante/faltante y generación de Cierre Z.
-8. `DashboardViewModel`: Tablero operativo modular con tarjetas de métricas, drag & drop interactivo para reorganizar la disposición del usuario y refresco periódico.
-9. `ComprasProveedoresViewModel`: Directorio de proveedores con NIT, registro de compras y sugeridos de reabastecimiento basados en algoritmos FEFO.
-10. `ContabilidadDianViewModel`: Desglose contable de ventas e IVA generado por tarifas (0%, 5%, 19%), cierres Z y exportación de reportes.
-11. `PersonalRolesViewModel`: Administración de empleados, credenciales de acceso, asignación de PIN, cargos y matriz completa de permisos por rol.
-12. `ConfiguracionViewModel`: Panel de preferencias visuales (Claro Cálido, Oscuro Slate, Alto Contraste), visualizador de documentos legales empaquetados y créditos.
-13. `RegistroUsuarioViewModel`: Formulario modular de registro con validación de Dígito de Verificación Módulo 11 (`Validador`) y consentimiento de Habeas Data (Ley 1581 de 2012).
+`ViewModelBase`, `MainViewModel`, `LoginViewModel`, `ShellViewModel`, `DashboardViewModel`, `InventarioViewModel`, `CajaTurnoViewModel`, `ComprasProveedoresViewModel`, `ContabilidadDianViewModel`, `PersonalRolesViewModel`, `ConfiguracionViewModel`, `RegistroUsuarioViewModel` y el POS dividido en cinco archivos: `PosViewModel.cs`, `PosViewModel.Carrito.cs`, `PosViewModel.Operaciones.cs`, `PosViewModel.Pagos.cs` y `PosViewModel.Tickets.cs`.
 
-### Servicios de Presentación (`Supermercado.GUI/Servicios/`)
-
-Aplanados y consolidados en 3 archivos principales:
-
-| Archivo | Tipos contenidos | Responsabilidad |
-| :-- | :-- | :-- |
-| `ConfiguracionYTema.cs` | `TemaSigs`, `IServicioPreferencias`, `ServicioPreferencias`, `IServicioTextosLegales`, `ServicioTextosLegales` | Gestión de temas visuales (`ThemeVariant`), persistencia local en `preferencias.json` y lectura offline de textos legales desde recursos empaquetados `avares://Assets/Legal/`. |
-| `ImpresionTicket.cs` | `IImpresorTicket`, `ImpresorTicketEscPos`, `ImpresorTicketPdf` | Generación de comandos crudos ESC/POS para impresoras térmicas de 80mm (corte de papel `\x1D\x56\x00` y pulso de gaveta `\x1B\x70\x00\x19\xFA`) y exportación alternativa a documento PDF con QuestPDF. |
-| `PlantillaTicketPos.cs` | `PlantillaTicketPos` | Formateador de tirilla continua de 80mm (48 columnas) con discriminación tributaria de IVA (0%, 5%, 19%) y resumen de medios de pago. |
+Buenas prácticas aplicadas: `ViewModelBase : ObservableObject`, propiedades `[ObservableProperty]`, comandos `RelayCommand`/`AsyncRelayCommand`, navegación por ViewModels y ninguna referencia desde la GUI a `Supermercado.Datos`. `InventarioViewModel` expone `PuedeGestionarInventario` desde `SesionActual.Tiene(Permiso.GestionarProductos)` y los comandos `AbrirModalNuevoProducto`, `CerrarModalNuevoProducto`, `ConfirmarNuevoProducto`, `AbrirModalEntradaBodega`, `CerrarModalEntradaBodega` y `ConfirmarEntradaBodega`.
 
 ## 8. Inyección de dependencias
 
-La composición se realiza a través de `ExtensionesLogica.AgregarLogica()`, la cual invoca internamente a `ExtensionesDatos.AgregarDatos()`:
+La GUI solo llama a `ExtensionesLogica.AgregarLogica()` (`Supermercado.Logica/Composicion.cs`), que a su vez invoca `AgregarDatos()` en `Supermercado.Datos/Contexto.cs`. No hay otra composición oculta.
 
-| Ciclo de vida | Tipos registrados |
+| Ciclo de vida | Registros reales |
 | :-- | :-- |
-| **Singleton** | `TimeProvider.System`, `ISesionActual → SesionActual`, `IHasheadorClave → HasheadorBCrypt`, `ILoggerProvider → ProveedorLogArchivo`, `HttpClient`, `OpcionesApisExternas`, `IServicioPreferencias → ServicioPreferencias` (GUI), `IServicioTextosLegales → ServicioTextosLegales` (GUI) |
-| **Scoped (datos)** | `SigsDbContext`, `IRepositorio<> → Repositorio<>`, `IStockRepositorio<> → StockRepositorio<>`, `IUnidadDeTrabajo → UnidadDeTrabajo`, `IInicializadorBaseDatos → InicializadorBaseDatos`, repositorios específicos de `IContratos*` implementados en `Repositorios*` |
-| **Scoped (servicios)** | `ServicioAuditoria` (`IServicioAuditoria`, `IServicioConsultaAuditoria`), `IServicioParametros → ServicioParametros`, `IServicioAutenticacion → ServicioAutenticacion`, `IServicioInicializacion → ServicioInicializacion`, `ServicioPersonal` (`IServicioPersonal`, `IServicioEmpleados`, `IServicioEstructura`, `IServicioUsuarios`), `ServicioProductos` (`IServicioProductos`, `IServicioBusquedaProductos`, `IServicioMantenimientoProductos`, `IServicioCatalogos`), `ServicioInventario` (`IServicioInventario`, `IServicioConsultaInventario`, `IServicioMermas`, `IServicioAlertasInventario`, `IServicioReabastecimiento`), `IServicioCaja → ServicioCaja`, `ServicioVentas` (`IServicioVentas`, `IServicioVentasEnEspera`), `ServicioFinanzas` (`IServicioFinanzas`, `IServicioImpuestos`, `IServicioNomina`), `IServicioClientes → ServicioClientes`, `IServicioDashboard → ServicioDashboard`, `IServicioTrm → ServicioTrm`, `IGeneradorDatosDemo → GeneradorDatosDemo`, `IServicioRespaldo → ServicioRespaldo`, `ITraductorExcepciones → TraductorExcepciones`, `IEstrategiaSalida → SalidaFefo`, `IImpresorTicket → ImpresorTicketEscPos` (GUI), `ImpresorTicketPdf` (GUI) |
-| **Scoped (externos)** | `ITrmClient → ClienteTrmDatosGov` (o `ClienteTrmNoConfigurado`), `IConsultaCodigoBarras → ClienteCodigoBarrasOff` (o `ConsultaCodigoBarrasNula`), `IVerificadorCorreo → VerificadorCorreoNulo` (o `ClienteVerificadorCorreoHttp`), `IGeneradorTicket → GeneradorTicketQuestPdf`, `IServicioReportes → ServicioReportesQuestPdf` |
-| **Scoped (widgets)** | 9 implementaciones de `IWidget` (`ArqueoTurnoWidget`, `IvaGeneradoWidget`, `LotesPorVencerWidget`, `MargenPorCategoriaWidget`, `ReabastecimientosPendientesWidget`, `StockBajoMinimoWidget`, `TrmDelDiaWidget`, `VentasDelDiaWidget`, `VentasPorCategoriaWidget`) |
-| **Transient (GUI)** | Todos los ViewModels (`MainViewModel`, `LoginViewModel`, `ShellViewModel`, `PosViewModel`, `InventarioViewModel`, `CajaTurnoViewModel`, `DashboardViewModel`, `ComprasProveedoresViewModel`, `ContabilidadDianViewModel`, `PersonalRolesViewModel`, `ConfiguracionViewModel`, `RegistroUsuarioViewModel`) |
+| **Singleton** | `TimeProvider.System`, `SesionActual`, `IHasheadorClave → HasheadorBCrypt`, `ILoggerProvider → ProveedorLogArchivo`, `HttpClient`, `OpcionesApisExternas`, `IClienteTelegram → ClienteTelegramHttp`, `IVinculosTelegram → VinculosTelegram`; en GUI, preferencias y textos legales |
+| **Scoped (datos)** | `SigsDbContext`, `InicializadorBaseDatos`, 24 repositorios concretos y 2 interfaces de repositorio (`IVentaRepositorio`, `IUsuarioRepositorio`) registrados en `Contexto.cs` |
+| **Scoped (dominio)** | `ServicioAuditoria`, `ServicioParametros`, `ServicioAutenticacion`, `ServicioInicializacion`, `ServicioPersonal`, `ServicioProductos`, `ServicioInventario`, `ServicioCaja`, `ServicioVentas`, `ServicioFinanzas`, `ServicioClientes`, `ServicioDashboard`, `EstrategiaSalida → SalidaFefo`, `TraductorExcepciones`, `GeneradorDatosDemo` |
+| **Scoped (externos)** | `IServicioTrm → ServicioTrm`, `IClienteGemini → ClienteGeminiHttp`, `IGeneradorTicket → GeneradorTicketQuestPdf`, `IServicioReportes → ServicioReportesQuestPdf`, `IServicioRespaldo → ServicioRespaldo`; `ITrmClient`, `IConsultaCodigoBarras` e `IVerificadorCorreo` se registran primero en modo reserva y se sustituyen por sus clientes reales cuando el límite está configurado |
+| **Scoped (widgets)** | 10 implementaciones de `IWidget`, una por tarjeta listada en la sección 6 |
+| **Hosted / GUI** | `TelegramWorker` como `BackgroundService`; en `App.axaml.cs`, `IServicioPreferencias`, `IServicioTextosLegales`, `IImpresorTicket → ImpresorTicketEscPos` e `ImpresorTicketPdf` |
 
 ## 9. Pruebas automatizadas (`Supermercado.Pruebas`)
 
-Suite de pruebas unitarias y de integración construida sobre **xUnit 2.9.3**, con un total de **352 pruebas en verde** (0 fallos, 0 omitidas):
+Suite xUnit en verde (0 fallos, 0 omitidas); el conteo vigente está en [`plan-pruebas.md`](plan-pruebas.md). Los 29 archivos `.cs`: 22 en raíz y 7 en `GUI/`. Los 7 de `GUI/` son `AccesoGuiTests.cs`, `CajaTurnoGuiTests.cs`, `ComprasContabilidadGuiTests.cs`, `MensajesGuiTests.cs`, `PersonalDashboardGuiTests.cs`, `PosGuiTests.cs` y `ShellConfiguracionGuiTests.cs`.
 
-| Archivo de prueba | Módulo o regla cubierta |
+| Archivo | Módulo o regla cubierta |
 | :-- | :-- |
-| `DineroTests.cs` | Aritmética entera, redondeos comerciales y porcentajes en puntos básicos |
-| `ImpuestosTests.cs` | Extracción de IVA incluido y retención en la fuente con base mínima |
-| `ProductoTests.cs` | Subtotales para productos unitarios y pesados por gramos, invariantes |
-| `VentasTests.cs` | Totales, congelación de precio/IVA en detalle, pagos combinados y anulación |
-| `CajaTests.cs` | Apertura de turno, cálculo de efectivo esperado descontando ventas anuladas y arqueo |
-| `InventarioTests.cs` | Algoritmo FEFO, partición de stock no negativo, transferencias y solicitudes |
-| `ServicioInventarioTests.cs` | Descuento automático por FEFO, reintegro de venta, traslados, mermas y alertas |
-| `ServicioVentasTests.cs` | Flujo completo de venta, validación de stock, medios de pago, idempotencia y doble anulación |
-| `ServicioCajaTests.cs` | Validación de caja activa, retiros parciales, arqueos y tolerancias |
-| `NominaTests.cs` | Cálculo de devengados, auxilio de transporte y deducciones de salud/pensión (norma colombiana) |
-| `SeguridadTests.cs` | Bloqueo por intentos, verificación de permisos por flags, aislamiento de sesión y BCrypt |
-| `ServicioAutenticacionTests.cs` | Login con contraseña o PIN, bloqueo, empleado inactivo y cambio de clave |
-| `ServicioParametrosTests.cs` | Permisos administrativos, auditoría de cambios y respaldo atómico |
-| `ServicioFinanzasTests.cs` | Registro de gastos auditados y cálculo de márgenes operativos |
-| `ServicioTrmTests.cs` | Respaldo, degradación limpia ante desconexión e interruptor de TRM |
-| `ValidadorTests.cs` | Formato de nombres, teléfonos, correos y Dígito de Verificación Módulo 11 |
-| `ClientesPuntosTests.cs` | Gestión de clientes, consentimiento Habeas Data (Ley 1581) y reemplazo por consumidor final |
-| `ApisPorDefectoTests.cs` | Clientes externos activos por defecto y apagado controlado por variables de entorno |
-| `ClientesSqliteTests.cs` | Persistencia de clientes, unicidad de documento y discriminador TPH en SQLite |
-| `EventoOutboxSqliteTests.cs` | Idempotencia de ventas contra SQLite local |
-| `DianYBalanzasTests.cs` | Parsing de balanzas GS1 (`20`–`29`), conversor de unidades mayoristas y régimen tributario |
-| `ReportesPdfTests.cs` | Generación de ticket POS de 80mm, desprendible de nómina y reporte de ventas con QuestPDF |
-| `FlujoPuntaAPuntaSqliteTests.cs` | Escenario transaccional completo de supermercado sobre base de datos SQLite real |
-| `GeneradorDatosDemoTests.cs` | Poblado sintético de datos de demostración |
-| `ServicioDashboardTests.cs` | Registro, reordenamiento y consulta de los 9 widgets |
-| `GUI/PosViewModelTests.cs` | Escaneo en POS, interpretación de stickers GS1, cálculo de cambio y modales |
-| `GUI/InventarioViewModelTests.cs` | Búsqueda reactiva, filtros de stock bajo/por vencer y bajas por merma |
-| `GUI/PlantillaYRegulacionGuiTests.cs` | Formato de tirilla 48 cols, Módulo 11 NIT y consentimiento Ley 1581 |
-| `GUI/DashboardGuiTests.cs` | Integración gráfica y ciclo de vida de widgets en el tablero |
+| `CajaTests.cs` | Apertura de turno, retiros, arqueo y `ServicioCaja` |
+| `ClientesTests.cs` | Clientes, Habeas Data, validadores, TRM y clientes externos por defecto |
+| `DashboardTests.cs` | Widgets, disposición, filtrado por permiso y exportación/importación |
+| `DatosIntegracionTests.cs` | Flujo punta a punta SQLite, idempotencia y mapeo del modelo |
+| `DatosTests.cs` | Datos demo, respaldo, inicialización, SQLite y repositorios |
+| `EstructuraTests.cs` | Altas de caja, cargo y rol con auditoría y una sola confirmación |
+| `Falsos.cs` | Reloj, hash, parámetros, TRM, `ContextoPruebasSqlite` y repositorios falsos sobre SQLite en memoria |
+| `FinanzasTests.cs` | `Dinero`, impuestos, nómina y servicios financieros |
+| `GUIInventarioTests.cs` | Nuevos módulos GUI, `InventarioViewModel`, permisos de alta, creación desde GUI y validaciones de entrada |
+| `GUIPosTests.cs` | Escaneo POS, pagos, modales, tirilla y regulación |
+| `GUITests.cs` | Temas, tokens y `DashboardGuiTests` |
+| `InventarioTests.cs` | FEFO, alertas, mermas, traslados y reabastecimiento |
+| `PersonalTests.cs` | Empleados, usuarios, credenciales y permisos |
+| `ProductosDianTests.cs` | Balanzas GS1, conversiones y régimen tributario |
+| `ProductosTests.cs` | Catálogo, mantenimiento, subtotales, altas de productos, códigos duplicados, lotes y entradas a bodega de `ServicioProductos` |
+| `ReportesTests.cs` | Ticket POS de 80 mm, desprendible de nómina y reportes PDF |
+| `SeguridadTests.cs` | Bloqueo, permisos, autenticación, parámetros y consultas de lectura |
+| `ServicioDashboardTests.cs` | Registro, reordenamiento y consulta de los 10 widgets |
+| `TelegramComandosTests.cs` | Comandos, composición, permisos, revinculación y sesión aislada |
+| `TelegramFalsos.cs` | Escenario Telegram, reloj variable y dobles de red y repositorios |
+| `TelegramTests.cs` | `Asistente` y herramientas de lenguaje natural |
+| `VentasTests.cs` | Totales, pagos, anulación, ventas en espera y `ServicioVentas` |

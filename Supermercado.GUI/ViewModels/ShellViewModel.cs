@@ -12,7 +12,7 @@ namespace Supermercado.GUI.ViewModels;
 
 public partial class ShellViewModel : ViewModelBase
 {
-    private readonly ISesionActual? _sesion;
+    private readonly SesionActual? _sesion;
     private readonly IServicioPreferencias? _preferencias;
 
     public PosViewModel PosVm { get; }
@@ -118,7 +118,7 @@ public partial class ShellViewModel : ViewModelBase
     }
 
     public ShellViewModel(
-        ISesionActual sesion,
+        SesionActual sesion,
         PosViewModel posVm,
         InventarioViewModel inventarioVm,
         CajaTurnoViewModel cajaTurnoVm,
@@ -163,22 +163,30 @@ public partial class ShellViewModel : ViewModelBase
         await NavegarAsync(moduloInicial);
     }
 
-    public void AplicarPermisosDeNavegacion(ISesionActual sesion)
+    public void AplicarPermisosDeNavegacion(SesionActual sesion)
     {
         PuedeVerPos = sesion.Tiene(Permiso.Vender);
         PuedeVerTurno = sesion.Tiene(Permiso.AbrirCerrarTurno);
-        PuedeVerClientes = sesion.Tiene(Permiso.GestionarClientes) || sesion.Tiene(Permiso.Vender);
-        PuedeVerInventario = sesion.Tiene(Permiso.VerInventario) || sesion.Tiene(Permiso.AjustarInventario);
-        PuedeVerCompras = sesion.Tiene(Permiso.GestionarCompras) || sesion.Tiene(Permiso.Reabastecer) || sesion.Tiene(Permiso.GestionarProductos);
-        PuedeVerPersonal = sesion.Tiene(Permiso.GestionarPersonal) || sesion.Tiene(Permiso.GestionarRoles);
-        PuedeVerContabilidad = sesion.Tiene(Permiso.GestionarContabilidad) || sesion.Tiene(Permiso.VerFinanzas) || sesion.Tiene(Permiso.VerAuditoria);
-        PuedeVerDashboard = sesion.Tiene(Permiso.VerReportes) || sesion.Tiene(Permiso.VerFinanzas) || sesion.Tiene(Permiso.VerAuditoria);
+        PuedeVerClientes = sesion.Tiene(Permiso.GestionarClientes);
+        PuedeVerInventario = sesion.Tiene(Permiso.VerInventario);
+        PuedeVerCompras = sesion.Tiene(Permiso.GestionarCompras)
+            || sesion.Tiene(Permiso.Reabastecer)
+            || sesion.Tiene(Permiso.GestionarProductos);
+        PuedeVerPersonal = sesion.Tiene(Permiso.GestionarPersonal)
+            || sesion.Tiene(Permiso.GestionarRoles);
+        PuedeVerContabilidad = sesion.Tiene(Permiso.GestionarContabilidad)
+            || sesion.Tiene(Permiso.VerFinanzas);
+        PuedeVerDashboard = sesion.Tiene(Permiso.VerReportes)
+            || sesion.Tiene(Permiso.VerFinanzas);
 
-        var tieneModulosBackOffice = PuedeVerInventario || PuedeVerCompras || PuedeVerPersonal || PuedeVerContabilidad || PuedeVerDashboard;
-        var esCajeroPuro = PuedeVerPos && !tieneModulosBackOffice && !sesion.Tiene(Permiso.AutorizarOperacionPos);
+        var modulosVisibles = new[]
+        {
+            PuedeVerPos, PuedeVerTurno, PuedeVerClientes, PuedeVerInventario,
+            PuedeVerCompras, PuedeVerPersonal, PuedeVerContabilidad, PuedeVerDashboard
+        }.Count(visible => visible);
 
-        // Si el rol es Cajero puro, se oculta la barra lateral y opera en pantalla completa POS
-        MostrarBarraLateral = !esCajeroPuro;
+        MostrarBarraLateral = modulosVisibles > 1;
+        InventarioVm.ActualizarPermisos();
     }
 
     private void HabilitarTodosLosModulos()
@@ -192,6 +200,7 @@ public partial class ShellViewModel : ViewModelBase
         PuedeVerContabilidad = true;
         PuedeVerDashboard = true;
         MostrarBarraLateral = true;
+        InventarioVm.ActualizarPermisos();
     }
 
     private string DeterminarModuloInicial()
@@ -203,6 +212,7 @@ public partial class ShellViewModel : ViewModelBase
         if (PuedeVerDashboard) return "Dashboard";
         if (PuedeVerPersonal) return "Personal";
         if (PuedeVerTurno) return "Turno";
+        if (PuedeVerClientes) return "Clientes";
         return "POS";
     }
 
@@ -223,6 +233,7 @@ public partial class ShellViewModel : ViewModelBase
             case "Inventario":
                 TituloModulo = "Catálogo e Inventario FEFO";
                 SubtituloModulo = "Control de existencias en estante, bodega, vencimientos y mermas";
+                InventarioVm.ActualizarPermisos();
                 PaginaActual = InventarioVm;
                 await InventarioVm.ActualizarListadoAsync();
                 break;
@@ -287,6 +298,7 @@ public partial class ShellViewModel : ViewModelBase
     private void CerrarSesion()
     {
         _sesion?.Cerrar();
+        InventarioVm.ActualizarPermisos();
         SesionCerrada?.Invoke();
     }
 }

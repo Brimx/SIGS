@@ -13,7 +13,7 @@ Punto de venta, inventario dual estante/bodega, caja con arqueo, personal, finan
 
 [![Estado](https://img.shields.io/badge/estado-en%20desarrollo-orange?style=flat-square)](#estado-del-proyecto)
 [![Build](https://img.shields.io/github/actions/workflow/status/Brimx/SIGS/ci.yml?style=flat-square&label=build)](https://github.com/Brimx/SIGS/actions)
-[![Pruebas](https://img.shields.io/badge/pruebas-402%20passing-brightgreen?style=flat-square)](#pruebas)
+[![Pruebas](https://img.shields.io/badge/pruebas-ver%20plan--pruebas.md-brightgreen?style=flat-square)](#pruebas)
 [![Licencia](https://img.shields.io/github/license/Brimx/SIGS?style=flat-square&label=licencia)](LICENSE)
 [![Último commit](https://img.shields.io/github/last-commit/Brimx/SIGS?style=flat-square&label=%C3%BAltimo%20commit)](https://github.com/Brimx/SIGS/commits)
 
@@ -86,25 +86,27 @@ Detalle completo en [`docs/arquitectura.md`](docs/arquitectura.md) y decisiones 
 ### Base de datos: hoy y alcance de `main`
 
 - **Hoy (`main`):** SQLite local embebido, un archivo por equipo, alineado al alcance de la propuesta académica.
-- **Versión extendida:** la variante con PostgreSQL dual, réplica Outbox hacia Supabase, motor DIAN UBL 2.1 y fidelización por puntos se conserva respaldada en la rama `completo`.
+- **Objetivo futuro (rama `completo`):** la variante con PostgreSQL dual, réplica Outbox hacia Supabase, motor DIAN UBL 2.1 y fidelización por puntos se conserva respaldada en esa rama, fuera del alcance de `main`. En `main` solo hay consolidado fiscal calculado en `ContabilidadDianViewModel` y exportación CSV/PDF, sin emisión ni transmisión de facturas electrónicas.
 - **Concurrencia multi-terminal:** deuda técnica conocida para despliegues con varias cajas; documentada en [`docs/decisiones.md`](docs/decisiones.md) y [`docs/despliegue.md`](docs/despliegue.md).
 
 ## Paradigmas, SOLID, GRASP y diseño UI
 
-- **Arquitectura y patrones:** 4 capas con Inversión de Dependencias + **MVVM** en GUI; **Repository + Unit of Work** (`Supermercado.Entidades/Contratos/`), **Strategy** (`IEstrategiaSalida` → `Supermercado.Logica/Inventario/SalidaFefo.cs:5`), **Null Object** (`Supermercado.Logica/ExtensionesLogica.cs:82-84`) y **Background Worker / Adapter** (`TelegramWorker` + `IClienteTelegram` / `IClienteGemini` en `Supermercado.Logica/Servicios/`).
+El mapa verificado de conceptos —entidad base, herencia, polimorfismo, estrategia, widgets, MVVM y composición— está en [`docs/conceptos-aplicados.md`](docs/conceptos-aplicados.md). Cada fila de esa tabla cita `ruta:línea` del estado actual; este README no la duplica.
+
+- **Arquitectura y patrones:** 4 capas con composición explícita (`Supermercado.Logica/Composicion.cs`, `Supermercado.Datos/Contexto.cs`) y **MVVM** en la GUI. **Strategy** en `EstrategiaSalida` (`Supermercado.Logica/InventarioSalidas.cs`), **Null Object** para integraciones apagadas y **Background Worker / Adapter** para el bot de Telegram + Gemini (`TelegramWorker`, `IClienteTelegram`, `IClienteGemini`).
 - **Paradigmas:**
-  - **POO:** jerarquías polimórficas con invariantes en `Producto`/`ProductoPesado` (`Supermercado.Entidades/Productos/Producto.cs:6`, `ProductoPesado.cs:6-14`), `Pago` y `Impuesto`.
-  - **Funcional / Declarativo:** `record` inmutables (`SolicitudVenta.cs:5-7`, `IWidget.cs:31-36`, `Asistente.cs:13-16`) y transformaciones LINQ (`Venta.cs:27-35`).
-  - **Reactivo / Eventos:** `[ObservableProperty]` y `[RelayCommand]` (`ShellViewModel.cs:27-39`, `DashboardViewModel.cs:157-202`).
-  - **Asíncrono y concurrencia aislada (`async`/`await` + `AsyncLocal`):** acceso a SQLite, APIs y long polling de Telegram sin bloquear UI; `SesionActual.UsarUsuario` (`Supermercado.Logica/Seguridad/SesionActual.cs:22,57-62`) aísla la identidad de cada mensaje de Telegram sin pisar la sesión del escritorio.
-- **SOLID:**
-  - **S:** responsabilidades aisladas (`Validador`, `SalidaFefo`, `ParserCodigoBalanza`, `Asistente`, `VinculosTelegram`, vistas sin lógica).
-  - **O:** extensibilidad por `IWidget` (`ExtensionesLogica.cs:86-94`), herramientas cerradas en `Asistente.cs:3-11` y subclases de `Impuesto`/`Pago`.
-  - **L:** `Venta.AgregarProducto` (`Venta.cs:37-42`) y `TotalPagado` (`Venta.cs:29`) operan sobre abstracciones base sin condicionales de tipo.
-  - **I:** interfaces segregadas por consumidor (`ExtensionesLogica.cs:38-74`, `IContratosInventario.cs:6-29`, `IClienteGemini`/`IAsistente`/`IVinculosTelegram`).
-  - **D:** `Logica` depende de contratos en `Entidades`, y `GUI` de contratos en `Logica`.
-- **GRASP:** *Information Expert* (`Venta.cs:27-35`, `ProductoPesado.cs:12-13`), *Creator* (`Venta.cs:41`), *Controller* (`ServicioVentas`, `ProcesadorTelegram`, `PosViewModel`), *Pure Fabrication* (`SalidaFefo`, `HasheadorBCrypt`, `Validador`, `VinculosTelegram`), *Protected Variations* (`ITrmClient`, `IConsultaCodigoBarras`, `IImpresorTicket`, `IClienteTelegram`, `IClienteGemini`) y *Polymorphism*.
-- **UI (Avalonia 12 + Semi.Avalonia):** bindings compilados (`x:DataType`), `ViewLocator` (`Supermercado.GUI/App.axaml:9-11`), tokens de diseño en 5 diccionarios (`Primitives`, `Geometry`, `Typography`, `Semantic`, `SemiBridge` en `App.axaml:13-22`), scopes aislados por operación vía `IServiceScopeFactory` (`App.axaml.cs:88-98`), vinculación de Telegram en `ConfiguracionView.axaml` y gráficos de barras verticales nativos en `DashboardView.axaml:176-209`.
+  - **POO:** herencia TPH y polimorfismo con invariantes en `Producto`/`ProductoPesado` (`Supermercado.Entidades/Productos.cs`), `Pago` e `Impuesto` (`Supermercado.Entidades/Ventas.cs`).
+  - **Funcional / Declarativo:** `record` inmutables (`SolicitudVenta` en `Supermercado.Logica/Ventas.cs`, `IWidget` en `Supermercado.Logica/Dashboard.cs`) y transformaciones LINQ.
+  - **Reactivo / Eventos:** `[ObservableProperty]` y `[RelayCommand]` en los ViewModels del POS y del shell.
+  - **Asíncrono y concurrencia aislada (`async`/`await` + `AsyncLocal`):** acceso a SQLite, APIs y long polling de Telegram sin bloquear UI; `SesionActual.UsarUsuario` aísla la identidad de cada mensaje de Telegram sin pisar la sesión del escritorio.
+- **SOLID en el alcance actual:**
+  - **S:** cada módulo concentra sus casos de uso y su repositorio (`Supermercado.Logica/Ventas.cs`, `Supermercado.Datos/Ventas.cs`); las vistas no tienen lógica.
+  - **O:** se extiende sin modificar a los consumidores con `WidgetBase` (`Supermercado.Logica/DashboardWidgets.cs:16`), `EstrategiaSalida`/`SalidaFefo` (`Supermercado.Logica/InventarioSalidas.cs`) y las jerarquías `Producto` y `Pago`.
+  - **L:** `ProductoPesado` y `ProductoUnitario` sustituyen a `Producto` sin cambiar el contrato de `CalcularSubtotal` (`Supermercado.Entidades/Productos.cs:49`, `:59`); `PagoEfectivo`, `PagoTarjeta` y `PagoTransferencia` hacen lo propio sobre `Pago` (`Supermercado.Entidades/Ventas.cs:154`, `:159`, `:176`).
+  - **I:** las interfaces son estrechas y por consumidor (`IWidget`, `IVentaRepositorio`, `IUsuarioRepositorio`, servicios de presentación en `ServiciosGui.cs` y clientes de Telegram/Gemini). No se crea interfaz sin un segundo consumidor o un falso de prueba.
+  - **D:** la lógica depende de los límites externos (`ITrmClient`, `IConsultaCodigoBarras`, `IImpresorTicket`, `IClienteTelegram`, `IClienteGemini`) y la composición vive en `Supermercado.Logica/Composicion.cs` y `Supermercado.Datos/Contexto.cs`.
+- **GRASP:** *Information Expert* (`Venta`, `ProductoPesado`), *Creator* (`Venta`), *Controller* (`ServicioVentas`, `ProcesadorTelegram`, `PosViewModel`), *Pure Fabrication* (`Validador`, `HasheadorBCrypt`, `VinculosTelegram`) y *Polymorphism*.
+- **UI (Avalonia 12 + Semi.Avalonia):** bindings compilados (`x:DataType`), `ViewLocator` (`Supermercado.GUI/App.axaml:9-11`), tokens de diseño en 5 diccionarios (`Primitives`, `Geometry`, `Typography`, `Semantic`, `SemiBridge` en `App.axaml:13-22`), servicios de presentación agrupados en `Supermercado.GUI/ServiciosGui.cs`, vinculación de Telegram en `ConfiguracionView.axaml` y gráficos de barras verticales nativos en `DashboardView.axaml`.
 
 ## Requisitos
 
@@ -146,7 +148,7 @@ Configura `SIGS_TELEGRAM_BOT_TOKEN` y, para lenguaje natural, `SIGS_GEMINI_API_K
 dotnet test Supermercado.Pruebas/Supermercado.Pruebas.csproj
 ```
 
-Estado actual: **402 pruebas en verde**. Cubren impuestos, dinero, ventas, FEFO, arqueo, nómina, autenticación, permisos, sesión (`AsyncLocal`), parámetros, TRM, clientes, GUI (incluidos gráficos de dashboard, inventario y configuración de Telegram), chatbot Telegram + Gemini (vinculación, permisos, aprobaciones y comandos), validaciones de formulario, PDF e integración con SQLite. Ver [`docs/plan-pruebas.md`](docs/plan-pruebas.md).
+Estado actual: **suite completa en verde**. El conteo vigente y su fecha están en [`docs/plan-pruebas.md`](docs/plan-pruebas.md). Cubren impuestos, dinero, ventas, FEFO, arqueo, nómina, autenticación, permisos, sesión (`AsyncLocal`), parámetros, TRM, clientes, GUI (incluidos gráficos de dashboard, inventario y configuración de Telegram), chatbot Telegram + Gemini, validaciones de formulario, PDF e integración con SQLite.
 
 ## Estructura del repositorio
 
@@ -177,7 +179,7 @@ La matriz completa, incluida la verificación por método, está en [`docs/matri
 
 Los valores operativos viven en la tabla `Parametro` y se editan desde la aplicación:
 
-`seguridad.max_intentos`, `inventario.dias_alerta`, `caja.tolerancia_arqueo`, `nomina.*`, `integraciones.*`, `puntos.*`, `tributario.responsable_iva` y `dian.*`.
+`seguridad.max_intentos`, `inventario.dias_alerta`, `caja.tolerancia_arqueo`, `nomina.*`, `integraciones.*` y `tributario.responsable_iva`.
 
 Detalle y valores iniciales en [`docs/diccionario-datos.md`](docs/diccionario-datos.md#tabla-parametro).
 
@@ -188,7 +190,7 @@ Detalle y valores iniciales en [`docs/diccionario-datos.md`](docs/diccionario-da
 | Dominio y reglas de negocio | Completo |
 | Persistencia SQLite + semilla | Completo (modo `--demo` disponible) |
 | Seguridad, permisos y auditoría | Implementado con hallazgos abiertos (ver [`docs/pendientes-ui.md`](docs/pendientes-ui.md)) |
-| Pruebas | Completo (402) |
+| Pruebas | Completo |
 | Documentación | Completo |
 | GUI Avalonia | Completo (POS, Turno, Clientes, Inventario, Compras, Personal, Contabilidad, Dashboard con gráficos nativos, Configuración con código Telegram) |
 | Chatbot Telegram + Gemini | Implementado (comandos locales, lenguaje natural con herramientas cerradas, confirmación y auditoría) |
@@ -201,7 +203,7 @@ Requisito por requisito en [`docs/requisitos-trazabilidad.md`](docs/requisitos-t
 
 1. Migraciones EF incrementales y endurecimiento de concurrencia/secretos para entornos multi-terminal (ver [`docs/pendientes-ui.md`](docs/pendientes-ui.md)).
 2. Verificación de correo con un proveedor real (Reacher u homólogo).
-3. Funcionalidades empresariales (DIAN UBL 2.1, Outbox/Supabase, PostgreSQL dual y puntos) disponibles en la rama `completo`.
+3. Funcionalidades empresariales (DIAN UBL 2.1, Outbox/Supabase, PostgreSQL dual y puntos) como objetivo futuro en la rama `completo`.
 
 ## Documentación
 
@@ -217,7 +219,7 @@ Requisito por requisito en [`docs/requisitos-trazabilidad.md`](docs/requisitos-t
 | [Trazabilidad](docs/requisitos-trazabilidad.md) | RF-01…RF-24 y requisitos no funcionales |
 | [Manual de usuario](docs/manual-usuario.md) | Operación por perfil y primer arranque |
 | [Plan de pruebas](docs/plan-pruebas.md) | Cobertura actual y pendientes |
-| [Despliegue](docs/despliegue.md) | Desarrollo con SQLite y producción con PostgreSQL |
+| [Despliegue](docs/despliegue.md) | Desarrollo y una terminal con SQLite; objetivo futuro multi-terminal |
 | [Decisiones](docs/decisiones.md) | ADR del proyecto |
 | [Pendientes UI](docs/pendientes-ui.md) | Handoff backend → interfaz y contrato de integración |
 | [Actualización de la propuesta](docs/actualizacion-propuesta.md) | Texto listo para el documento y las slides |

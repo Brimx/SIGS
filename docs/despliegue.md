@@ -8,8 +8,10 @@
 | :-- | :-- | :-- | :-- |
 | Desarrollo | SQLite local | **Implementado** | Un programador, pruebas y demo |
 | Producción de una terminal | SQLite local | **Implementado** | Un solo equipo |
-| Producción multi-terminal | PostgreSQL local + réplica Supabase | **Documentado, no implementado** | Varias cajas en la misma red |
-| Nube | Supabase como fuente | **Descartado** | Latencia y dependencia de internet |
+| Producción multi-terminal | PostgreSQL local + réplica Supabase | **Objetivo futuro, no implementado en `main`** | Varias cajas en la misma red; arquitectura extendida conservada en la rama `completo` |
+| Nube | Supabase como fuente | **Objetivo futuro, no implementado en `main`** | Arquitectura extendida conservada en la rama `completo`; latencia y dependencia de internet desaconsejan su operación |
+
+En `main` el único proveedor es SQLite (`UseSqlite` en `Supermercado.Datos/Contexto.cs`): no hay Npgsql, Docker, Outbox ni parámetros `dian.*`. Los escenarios de la sección 4 son objetivo futuro fuera del alcance de esta entrega.
 
 ## 2. Desarrollo
 
@@ -68,23 +70,24 @@ El ejecutable no requiere el runtime instalado. La base sigue en la carpeta de d
 2. Copie la carpeta publicada al equipo.
 3. Ejecute una vez para crear la base.
 4. Inicialice el administrador con una clave temporal; el sistema obliga a cambiarla.
-5. Configure los parámetros del negocio: intentos, días de alerta, tolerancia, nómina, integraciones, puntos, `tributario.responsable_iva` y `dian.*`.
-6. Revise la resolución DIAN: prefijo, rango, vigencia y clave técnica. Si no va a emitir, ponga `dian.habilitado = 0`.
-7. Programe respaldos con `VACUUM INTO` y pruebe la restauración.
-8. Si usa réplica, configure `integraciones.supabase_*` y verifique que el Outbox drena; no comparta `service_role`.
+5. Configure los parámetros vigentes: `seguridad.max_intentos`, `inventario.dias_alerta`, `caja.tolerancia_arqueo`, `nomina.*`, `integraciones.*` (timeout, reintentos, TRM, código de barras y tokens de TRM/Resend) y `tributario.responsable_iva`.
+6. Confirme `negocio.nombre`, `negocio.nit`, `negocio.direccion` y `negocio.telefono` para el ticket, y `sistema.carpeta_respaldos` como destino de respaldos.
+7. Programe el respaldo con `ServicioRespaldo` y pruebe la restauración (ver «Respaldo»).
+
+> Puntos, `dian.*`, resolución DIAN, Supabase y Outbox no forman parte de esta entrega: son objetivo futuro fuera del alcance de `main`, conservada la arquitectura extendida en la rama `completo`.
 
 ### Respaldo
 
-No copie el archivo con `cp`/`Copy-Item` mientras la aplicación escribe: una copia a mitad de transacción puede quedar inconsistente. Use la API de respaldo de SQLite (`VACUUM INTO`) o cierre la aplicación.
+`ServicioRespaldo` (`Supermercado.Logica/Infraestructura.cs`) copia el archivo con `File.Copy` a `sistema.carpeta_respaldos` y registra auditoría; no implementa `VACUUM INTO`. Para una copia consistente, copie con la aplicación cerrada o use la herramienta `sqlite3` con `VACUUM INTO` como recomendación operativa de SQLite, no como una función del sistema.
 
 ```bash
-# Linux, con la aplicación cerrada o desde una conexión de solo lectura
+# Linux, opcional: herramienta externa sqlite3, con la aplicación cerrada
 sqlite3 ~/.local/share/SIGS/sigs.db \
   "VACUUM INTO '$HOME/respaldos/sigs-$(date +%F).db';"
 ```
 
 ```powershell
-# Windows PowerShell, con la aplicación cerrada
+# Windows PowerShell, opcional: herramienta externa sqlite3, con la aplicación cerrada
 $origen = "$env:LOCALAPPDATA\SIGS\sigs.db"
 $destino = "$env:USERPROFILE\respaldos\sigs-$(Get-Date -Format yyyy-MM-dd).db"
 sqlite3 $origen "VACUUM INTO '$destino';"
@@ -100,11 +103,14 @@ Recomendaciones:
 
 ### Secretos y datos personales
 
-- `integraciones.supabase_key`, `integraciones.trm_token`, `integraciones.resend_token` y `dian.clave_tecnica` no van en el repositorio ni en capturas.
+- `integraciones.trm_token` e `integraciones.resend_token` no van en el repositorio ni en capturas.
 - La base SQLite no está cifrada: si el equipo se comparte, use cifrado de disco y cuentas separadas.
-- En Supabase use solo la clave `anon` en el cliente; **nunca** `service_role`. El esquema de [`supabase-schema.sql`](supabase-schema.sql) debe aplicar RLS de inserción y vistas con `security_invoker=true`.
+
+> Los secretos de la arquitectura extendida (`integraciones.supabase_key`, `dian.clave_tecnica`) y la recomendación sobre `service_role` pertenecen al objetivo futuro de la sección 4; no se configuran en `main`.
 
 ## 4. Producción multi-terminal (objetivo)
+
+> **Estado:** objetivo futuro fuera del alcance de `main`, no una guía operativa de esta entrega. Esta topología no está implementada: `main` solo usa SQLite (`UseSqlite` en `Supermercado.Datos/Contexto.cs`) y no contiene Npgsql, Docker, Outbox ni `dian.*`. El proveedor PostgreSQL dual, Docker y el Outbox hacia Supabase se retiraron en `2c38285`; el código se conserva en la rama `completo`. Los secretos `integraciones.supabase_key` y `dian.clave_tecnica` pertenecen a esa arquitectura objetivo. Lo que sigue describe esa arquitectura, no lo que hoy ejecuta la aplicación.
 
 ### Topología
 
@@ -133,11 +139,11 @@ Una réplica de una vía evita el problema: solo un nodo escribe.
 ### Pasos de migración
 
 1. Agregar `Npgsql.EntityFrameworkCore.PostgreSQL`.
-2. Cambiar `UseSqlite` por `UseNpgsql` en `ExtensionesDatos`; es el único punto del proveedor.
+2. Cambiar `UseSqlite` por `UseNpgsql` en `Supermercado.Datos/Contexto.cs`; es el único punto del proveedor.
 3. Mapear `DateTime` a `timestamptz`, `DateOnly` a `date` y dinero a `bigint`.
 4. Generar migraciones EF y probar `MigrateAsync` en una base vacía.
 5. Migrar los datos existentes de SQLite si hay historial que conservar.
-6. Desplegar el esquema receptor de [`supabase-schema.sql`](supabase-schema.sql) con RLS de inserción y vistas `security_invoker=true`; programar el drenaje del Outbox.
+6. Desplegar el esquema receptor (rama `completo`) con RLS de inserción y vistas `security_invoker=true`; programar el drenaje del Outbox.
 7. Configurar la réplica de una vía hacia Supabase (publicación lógica o proceso programado) y usar solo la clave `anon` en el cliente.
 8. Añadir concurrencia (ver siguiente sección) **antes** de habilitar varias cajas.
 
@@ -159,7 +165,7 @@ Además:
 - `ConflictoConcurrenciaException` clara al agotar reintentos.
 - Pruebas de integración contra PostgreSQL, opcionales si no hay servidor.
 
-Nada de esto está implementado en esta entrega. Ver ADR-010 en [`decisiones.md`](decisiones.md).
+Nada de esto está implementado en `main` ni entra en el alcance de esta entrega: es objetivo futuro conservado en la rama `completo`. Ver ADR-010 en [`decisiones.md`](decisiones.md).
 
 ## 5. Integración continua
 
@@ -177,14 +183,13 @@ El pipeline falla si el build tiene errores o alguna prueba falla. Las advertenc
 ## 6. Checklist de entrega
 
 - [ ] `dotnet build` sin errores ni advertencias.
-- [ ] `dotnet test` en verde (329).
+- [ ] `dotnet test` en verde.
 - [ ] CI en verde en `main`.
-- [ ] Base creada y semilla aplicada en un equipo limpio.
+- [ ] Base SQLite creada con la semilla de 4 roles en un equipo limpio.
 - [ ] Login de admin con cambio de clave obligatorio.
-- [ ] Parámetros del negocio cargados (incluidos puntos y `tributario.responsable_iva`).
-- [ ] Resolución DIAN revisada o `dian.habilitado = 0` si no se emitirá.
-- [ ] Respaldo con `VACUUM INTO` probado y restauración verificada.
-- [ ] Outbox configurado y probado si hay réplica; clave `anon`, nunca `service_role`.
+- [ ] Parámetros vigentes cargados (`negocio.*`, `tributario.responsable_iva`, `integraciones.*`, `nomina.*` y `sistema.carpeta_respaldos`).
+- [ ] Consolidado fiscal y desglose de IVA revisados en la pantalla de contabilidad.
+- [ ] Respaldo con `ServicioRespaldo` probado y restauración verificada.
 - [ ] Rutas de datos confirmadas en Windows y Linux.
 - [ ] Documentación actualizada (`README`, diccionario, matriz de permisos).
 
@@ -196,5 +201,5 @@ El pipeline falla si el build tiene errores o alguna prueba falla. Las advertenc
 | La base se recrea vacía | Ruta distinta o carpeta sin permisos | Revisar `RutasDatos` y permisos |
 | `ServicioNoConfiguradoException` | Se pidió una integración con su cliente nulo | Activar la API o registrar la implementación real después de `AgregarLogica()` |
 | `ParametroFaltanteException` | Falta una clave | Insertar el parámetro con `GuardarAsync` |
-| Build falla por SDK | Versión distinta de .NET | Instalar .NET 10 y revisar `global.json` si existe |
+| Build falla por SDK | Versión distinta de .NET | Instalar .NET 10 y confirmar la versión con `dotnet --version` |
 | CI no encuentra el proyecto | Ruta o nombre cambiado | Actualizar `.github/workflows/ci.yml` |
