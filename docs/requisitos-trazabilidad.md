@@ -56,11 +56,12 @@ Fuente: propuesta del proyecto (§6 y §7). Estado a la fecha de esta entrega.
 | .NET Framework 4.8 vs .NET 10 | **Resuelto en el código** | El repositorio usa .NET 10; falta confirmar con la rúbrica |
 | Framework de interfaz | **Resuelto en el código** | Avalonia 12; falta confirmar restricción docente |
 | Reacher en el primer demo | **Pendiente** | Se deja `VerificadorCorreoNulo`; el alta continúa sin verificar |
-| Base de datos central | **Decidido, no implementado** | PostgreSQL local + Supabase réplica de una vía |
-| Concurrencia multi-terminal | **Deuda documentada** | `xmin`, bloqueos y reintentos planificados |
+| Base de datos central | **Retirado de `main`; objetivo futuro en rama `completo`** | `main` solo usa SQLite; no hay Npgsql/`UseNpgsql`, Supabase ni Docker (ADR-008 y ADR-027) |
+| Concurrencia multi-terminal | **Deuda documentada** | `xmin`, bloqueos y reintentos planificados sobre el objetivo futuro de PostgreSQL en rama `completo` (ADR-010) |
 
 ## Cómo mantener esta tabla
 
 1. Al cerrar un RF, cambie el estado y el archivo de referencia.
 2. Si un RF se parte, cree una fila hija (`RF-07a`, etc.) en una revisión del documento fuente.
 3. No marque “Implementado” un requisito que dependa de una integración nula o de una pantalla inexistente.
+4. Los requisitos retirados se conservan con el estado indicado en el cuadro; no se borren.

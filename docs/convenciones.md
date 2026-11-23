@@ -66,9 +66,8 @@ No capture `Exception` genérica salvo en la frontera de una integración, y sol
 
 - No imprima datos del cliente si `AutorizaTratamientoDatos` es falso; use `Venta.DocumentoConsumidorFinal` y `NombreConsumidorFinal`.
 - La autorización se registra con fecha y terminal (`AutorizarHabeasData`); la revocación no borra el historial.
-- Los secretos de integración (`supabase_key`, `trm_token`, `resend_token`, `dian.clave_tecnica`) no se versionan; van en configuración o parámetros locales.
-- Los campos DIAN (`Cude`, `XmlUbl`, `CadenaQr`) se generan localmente; no los trate como comprobante válido hasta completar transmisión y firma.
-- El avance del consecutivo DIAN debe quedar en la misma transacción que la venta; hoy es una deuda conocida (ADR-022).
+- Los secretos de integración (`trm_token`, `resend_token`) no se versionan; van en configuración o parámetros locales.
+- La emisión electrónica DIAN está fuera del alcance de `main`: es objetivo futuro conservado en rama `completo`. En `main` queda el consolidado fiscal de `ContabilidadDianViewModel` (`Supermercado.GUI/ViewModels/ContabilidadDianViewModel.cs:55`), con desglose de IVA C/M/J y exportación CSV/PDF; las tarifas se resuelven con `PlantillaTicketPos.ObtenerCodigoTarifa` (`Supermercado.GUI/ServiciosGui.cs:287`).
 
 ## Pruebas
 
@@ -105,7 +104,7 @@ Formato convencional, en español, imperativo y corto:
 feat(ventas): reembolsar anuladas en el arqueo
 fix(inventario): impedir stock negativo en el reparto
 test(seguridad): cubrir bloqueo por empleado inactivo
-docs(adr): documentar PostgreSQL local y Supabase
+docs(adr): documentar el consolidado fiscal
 ci: compilar y probar en GitHub Actions
 ```
 

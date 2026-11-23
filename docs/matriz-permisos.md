@@ -79,7 +79,6 @@ Notas:
 | `ServicioConsultaAuditoria` | `ObtenerAsync` | `VerAuditoria` | `AccesoDenegado` |
 | `ServicioRespaldo` | `CrearRespaldoAsync` | `GestionarRoles` | `AccesoDenegado` |
 | `ServicioReportesQuestPdf` | `GenerarDesprendibleNominaAsync` / `GenerarReporteVentasAsync` / `GenerarReporteInventarioAsync` / `GenerarReporteArqueoAsync` | `GestionarPersonal` / `VerReportes` / `VerInventario` / `AbrirCerrarTurno` | `AccesoDenegado` |
-| `ServicioDian` | `EmitirDocumentoPosAsync` / `ConsultarEstadoResolucionAsync` | Invocado por ventas; no exige permiso propio | — |
 | `ServicioDashboard` | `ObtenerDisponibles` / `ObtenerDisposicionAsync` / `AgregarAsync` / `QuitarAsync` / `ReordenarAsync` | Filtra por `PermisoRequerido` de cada widget | — |
 | `VentasDelDiaWidget` | `ObtenerDatosAsync` | `VerReportes` | No se muestra |
 | `ReabastecimientosPendientesWidget` | `ObtenerDatosAsync` | `VerInventario` | No se muestra |
@@ -122,6 +121,6 @@ El **Gerente** tiene `VerInventario`, `VerReportes` y `VerFinanzas` en la semill
 | :-- | :-- | :-- | :-- |
 | `ServicioClientes` | `CrearAsync` / `EditarAsync` / `DesactivarAsync` / `ObtenerTodosAsync` | `GestionarClientes` | `AccesoDenegado` |
 | `ServicioClientes` | `BuscarPorDocumentoAsync` | `Vender` o `GestionarClientes` | `AccesoDenegado` |
-| `ServicioVentas` | `RegistrarVentaAsync` con `ClienteId` / `PuntosARedimir` | `Vender` | `AccesoDenegado` |
+| `ServicioVentas` | `RegistrarVentaAsync` con `ClienteId` | `Vender` | `AccesoDenegado` |
 
-La semilla solo inserta roles faltantes: una base creada antes de `GestionarClientes` debe añadirlo a Gerente y Cajero desde la gestión de roles.
+La semilla agrega los permisos faltantes a los roles existentes (`AsegurarPermisosFaltantesAsync`, `Supermercado.Datos/Semillas.cs:200`), sin sobrescribir los editados.

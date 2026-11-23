@@ -41,14 +41,14 @@ En CI se ejecuta en `Release` y se publica el `.trx` como artefacto.
 | `InventarioTests` | FEFO, desempate por lote, vencidos, reparto y stock no negativo |
 | `ServicioInventarioTests` | Descuento, reintegro, traslado, merma, lote de otro producto, ingreso inválido |
 | `ValidadorTests` | Nombres sin números, documento, NIT, teléfono y correo |
-| `ClientesPuntosTests` | Acumulación, redención, rechazos sin efectos, anulación, permisos y alta de clientes |
+| `ClientesPuntosTests` | Clientes: permisos, alta y validaciones; no comprueba saldo de puntos (no existe en el modelo) |
 | `ApisPorDefectoTests` | APIs activas por defecto, interruptores de entorno y de parámetro |
-| `ClientesSqliteTests` | Persistencia de `Cliente`, índice único y TPH de `PagoPuntos` |
-| `EventoOutboxSqliteTests` | Outbox e idempotencia contra SQLite |
-| `OutboxYSincronizacionTests` | Payload de venta/anulación, despacho y reintentos |
+| `ClientesSqliteTests` | Persistencia de `Cliente` y su índice único |
+| `EventoOutboxSqliteTests` | Idempotencia de venta por `ClaveIdempotencia` contra SQLite |
 | `ReportesPdfTests` | Ticket, desprendible de nómina y reporte de ventas |
-| `FlujoPuntaAPuntaSqliteTests` | Venta, stock, outbox y persistencia en un archivo temporal |
-| `DianYBalanzasTests` | Módulo 11 NIT DIAN, parser de balanzas GS1 (prefijo 20-29), conversión de unidades, CUDE SHA-384, XML UBL 2.1, control de resolución DIAN, Habeas Data (consumidor final) y switch régimen tributario |
+| `FlujoPuntaAPuntaSqliteTests` | Venta, stock y persistencia en SQLite |
+| `DianYBalanzasTests` | Dígito de verificación de NIT DIAN, parser de balanzas GS1 (prefijo 20-29), conversión de unidades, Habeas Data (consumidor final) y switch régimen tributario |
+| `ProductosDianTests` | Dígito de verificación de NIT y tarifas de productos |
 | `ServicioVentasTests` | Venta completa, stock insuficiente, permisos, tarjeta, transferencia, doble anulación |
 | `ServicioCajaTests` | Caja inexistente, caja inactiva, tolerancia dentro y fuera |
 | `NominaTests` | Cálculo, tope de auxilio, año/mes inválido, parámetros negativos |
@@ -99,11 +99,10 @@ En CI se ejecuta en `Release` y se publica el `.trx` como artefacto.
 
 | Área | Qué falta | Prioridad |
 | :-- | :-- | :-- |
-| Idempotencia | Índice único y prueba de dos solicitudes concurrentes | Alta |
-| DIAN | CUDE/UBL contra el anexo técnico, rango agotado y resolución vencida | Alta |
-| Seguridad | Escalada de privilegios y `PagoPuntos` fabricado (ver `pendientes-ui.md`) | Alta |
-| GUI | Pruebas de ViewModels y flujos de pantalla | Media |
-| Concurrencia | Pruebas contra PostgreSQL con dos sesiones y bloqueo | Media (requiere PostgreSQL) |
+| Idempotencia | Prueba de dos solicitudes concurrentes con la misma `ClaveIdempotencia` (el índice único ya existe) | Alta |
+| Seguridad | Escalada de privilegios por rol (ver `pendientes-ui.md`) | Alta |
+| GUI | Ampliar las pruebas de `GUI/` a más ViewModels y flujos de pantalla | Media |
+| Concurrencia | Pruebas con dos sesiones sobre SQLite y bloqueo de turno (ADR-010) | Media |
 | Carga | Venta y descuento de stock < 1 s | Baja |
 | APIs reales | Clientes de TRM, código de barras y correo con servidor simulado | Baja |
 

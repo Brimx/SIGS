@@ -86,7 +86,7 @@ Detalle completo en [`docs/arquitectura.md`](docs/arquitectura.md) y decisiones 
 ### Base de datos: hoy y alcance de `main`
 
 - **Hoy (`main`):** SQLite local embebido, un archivo por equipo, alineado al alcance de la propuesta académica.
-- **Versión extendida:** la variante con PostgreSQL dual, réplica Outbox hacia Supabase, motor DIAN UBL 2.1 y fidelización por puntos se conserva respaldada en la rama `completo`.
+- **Objetivo futuro (rama `completo`):** la variante con PostgreSQL dual, réplica Outbox hacia Supabase, motor DIAN UBL 2.1 y fidelización por puntos se conserva respaldada en esa rama, fuera del alcance de `main`. En `main` solo hay consolidado fiscal calculado en `ContabilidadDianViewModel` y exportación CSV/PDF, sin emisión ni transmisión de facturas electrónicas.
 - **Concurrencia multi-terminal:** deuda técnica conocida para despliegues con varias cajas; documentada en [`docs/decisiones.md`](docs/decisiones.md) y [`docs/despliegue.md`](docs/despliegue.md).
 
 ## Paradigmas, SOLID, GRASP y diseño UI
@@ -179,7 +179,7 @@ La matriz completa, incluida la verificación por método, está en [`docs/matri
 
 Los valores operativos viven en la tabla `Parametro` y se editan desde la aplicación:
 
-`seguridad.max_intentos`, `inventario.dias_alerta`, `caja.tolerancia_arqueo`, `nomina.*`, `integraciones.*`, `puntos.*`, `tributario.responsable_iva` y `dian.*`.
+`seguridad.max_intentos`, `inventario.dias_alerta`, `caja.tolerancia_arqueo`, `nomina.*`, `integraciones.*` y `tributario.responsable_iva`.
 
 Detalle y valores iniciales en [`docs/diccionario-datos.md`](docs/diccionario-datos.md#tabla-parametro).
 
@@ -202,7 +202,7 @@ Requisito por requisito en [`docs/requisitos-trazabilidad.md`](docs/requisitos-t
 
 1. Migraciones EF incrementales y endurecimiento de concurrencia/secretos para entornos multi-terminal (ver [`docs/pendientes-ui.md`](docs/pendientes-ui.md)).
 2. Verificación de correo con un proveedor real (Reacher u homólogo).
-3. Funcionalidades empresariales (DIAN UBL 2.1, Outbox/Supabase, PostgreSQL dual y puntos) disponibles en la rama `completo`.
+3. Funcionalidades empresariales (DIAN UBL 2.1, Outbox/Supabase, PostgreSQL dual y puntos) como objetivo futuro en la rama `completo`.
 
 ## Documentación
 
@@ -218,7 +218,7 @@ Requisito por requisito en [`docs/requisitos-trazabilidad.md`](docs/requisitos-t
 | [Trazabilidad](docs/requisitos-trazabilidad.md) | RF-01…RF-24 y requisitos no funcionales |
 | [Manual de usuario](docs/manual-usuario.md) | Operación por perfil y primer arranque |
 | [Plan de pruebas](docs/plan-pruebas.md) | Cobertura actual y pendientes |
-| [Despliegue](docs/despliegue.md) | Desarrollo con SQLite y producción con PostgreSQL |
+| [Despliegue](docs/despliegue.md) | Desarrollo y una terminal con SQLite; objetivo futuro multi-terminal |
 | [Decisiones](docs/decisiones.md) | ADR del proyecto |
 | [Pendientes UI](docs/pendientes-ui.md) | Handoff backend → interfaz y contrato de integración |
 | [Actualización de la propuesta](docs/actualizacion-propuesta.md) | Texto listo para el documento y las slides |
