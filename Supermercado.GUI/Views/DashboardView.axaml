@@ -14,79 +14,63 @@
                 BorderThickness="1"
                 CornerRadius="{StaticResource RadiusMedium}"
                 Padding="16,12">
-            <StackPanel Spacing="12">
-                <StackPanel Spacing="2">
+            <Grid ColumnDefinitions="*,Auto">
+                <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
                     <TextBlock Text="{Binding MensajeEstado}"
                                TextWrapping="Wrap"
-                               ToolTip.Tip="{Binding MensajeEstado}"
                                FontWeight="{StaticResource FontWeightMedium}" />
                     <TextBlock Classes="Ayuda"
                                IsVisible="{Binding EnEdicion}"
-                               TextWrapping="Wrap"
                                Text="El panel se guarda por usuario: agregar, quitar, reordenar, renombrar y tamaño." />
                 </StackPanel>
 
-                <WrapPanel>
-                    <Button Margin="0,0,8,8"
-                            Click="OnImportar"
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                    <Button Click="OnImportar"
                             IsVisible="{Binding EnEdicion}"
                             Theme="{DynamicResource OutlineButton}"
-                            MinHeight="{StaticResource SizeTouchTarget}"
                             ToolTip.Tip="Cargar una disposición exportada">
                         <StackPanel Orientation="Horizontal" Spacing="6">
                             <LucideIcon Kind="Upload" Size="16" />
                             <TextBlock Text="Importar" />
                         </StackPanel>
                     </Button>
-                    <Button Margin="0,0,8,8"
-                            Click="OnExportar"
+                    <Button Click="OnExportar"
                             Theme="{DynamicResource OutlineButton}"
-                            MinHeight="{StaticResource SizeTouchTarget}"
                             ToolTip.Tip="Guardar la disposición del panel en un archivo">
                         <StackPanel Orientation="Horizontal" Spacing="6">
                             <LucideIcon Kind="Download" Size="16" />
                             <TextBlock Text="Exportar" />
                         </StackPanel>
                     </Button>
-                    <Button Margin="0,0,8,8"
-                            Command="{Binding RestablecerCommand}"
+                    <Button Command="{Binding RestablecerCommand}"
                             IsVisible="{Binding EnEdicion}"
                             Theme="{DynamicResource OutlineButton}"
-                            MinHeight="{StaticResource SizeTouchTarget}"
                             ToolTip.Tip="Volver a la disposición por defecto del rol">
                         <StackPanel Orientation="Horizontal" Spacing="6">
                             <LucideIcon Kind="RotateCcw" Size="16" />
                             <TextBlock Text="Restablecer" />
                         </StackPanel>
                     </Button>
-                    <Button Margin="0,0,8,8"
-                            Command="{Binding AlternarEdicionCommand}"
-                            Theme="{DynamicResource OutlineButton}"
-                            MinHeight="{StaticResource SizeTouchTarget}">
+                    <Button Command="{Binding AlternarEdicionCommand}"
+                            Theme="{DynamicResource OutlineButton}">
                         <StackPanel Orientation="Horizontal" Spacing="6">
                             <LucideIcon Kind="Settings2" Size="16" IsVisible="{Binding !EnEdicion}" />
                             <LucideIcon Kind="Check" Size="16" IsVisible="{Binding EnEdicion}" />
-                            <TextBlock Text="{Binding EtiquetaModoEdicion}" TextWrapping="Wrap" />
+                            <TextBlock Text="{Binding EtiquetaModoEdicion}" />
                         </StackPanel>
                     </Button>
-                    <Button Margin="0,0,8,8"
-                            Command="{Binding ActualizarDashboardCommand}"
-                            Classes="Primary" Theme="{DynamicResource SolidButton}"
-                            MinHeight="{StaticResource SizeTouchTarget}">
+                    <Button Command="{Binding ActualizarDashboardCommand}"
+                            Classes="Primary" Theme="{DynamicResource SolidButton}">
                         <StackPanel Orientation="Horizontal" Spacing="6">
                             <LucideIcon Kind="RefreshCw" Size="16" />
-                            <TextBlock Text="Refrescar Indicadores" FontWeight="{StaticResource FontWeightSemiBold}" TextWrapping="Wrap" />
+                            <TextBlock Text="Refrescar Indicadores" FontWeight="{StaticResource FontWeightSemiBold}" />
                         </StackPanel>
                     </Button>
-                </WrapPanel>
-            </StackPanel>
+                </StackPanel>
+            </Grid>
         </Border>
 
-        <Grid Grid.Row="2">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" MinWidth="280" />
-                <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
+        <Grid Grid.Row="2" ColumnDefinitions="*,Auto">
 
             <!-- PANEL DE WIDGETS -->
             <ScrollViewer Grid.Column="0">
@@ -119,13 +103,9 @@
                                         BorderBrush="{DynamicResource BrushBorderSubtle}"
                                         BorderThickness="1"
                                         CornerRadius="{StaticResource RadiusLarge}"
-                                         Width="{Binding Ancho}"
-                                         Height="{Binding Alto}"
-                                         MaxWidth="360"
-                                         MaxHeight="340"
-                                         MinWidth="220"
-                                         MinHeight="160"
-                                         Margin="0,0,16,16"
+                                        Width="{Binding Ancho}"
+                                        Height="{Binding Alto}"
+                                        Margin="0,0,16,16"
                                         Padding="16"
                                         DragDrop.AllowDrop="True"
                                         DragDrop.DragOver="OnTarjetaOver"
@@ -140,35 +120,33 @@
                                                            FontFamily="{StaticResource FontFamilyStackSans}"
                                                            FontSize="{StaticResource FontSizeBody}"
                                                            FontWeight="{StaticResource FontWeightSemiBold}"
-                                                            Foreground="{DynamicResource BrushTextSecondary}"
-                                                            TextTrimming="CharacterEllipsis"
-                                                            ToolTip.Tip="{Binding Titulo}" />
-                                                 <TextBlock Text="{Binding Subtitulo}"
-                                                            FontSize="{StaticResource FontSizeCaption}"
-                                                            Foreground="{DynamicResource BrushTextMuted}"
-                                                            TextTrimming="CharacterEllipsis"
-                                                            ToolTip.Tip="{Binding Subtitulo}" />
+                                                           Foreground="{DynamicResource BrushTextSecondary}"
+                                                           TextTrimming="CharacterEllipsis" />
+                                                <TextBlock Text="{Binding Subtitulo}"
+                                                           FontSize="{StaticResource FontSizeCaption}"
+                                                           Foreground="{DynamicResource BrushTextMuted}"
+                                                           TextTrimming="CharacterEllipsis" />
                                             </StackPanel>
 
                                             <StackPanel Grid.Column="1"
                                                         Orientation="Horizontal"
                                                         Spacing="2"
                                                         IsVisible="{Binding $parent[UserControl].((vm:DashboardViewModel)DataContext).EnEdicion}">
-                                                <Button Classes="Icono" MinWidth="{StaticResource SizeTouchTarget}" MinHeight="{StaticResource SizeTouchTarget}"
+                                                <Button Classes="Icono"
                                                         Theme="{DynamicResource BorderlessButton}"
                                                         ToolTip.Tip="Mover a la izquierda"
                                                         Command="{Binding $parent[UserControl].((vm:DashboardViewModel)DataContext).MoverIzquierdaCommand}"
                                                         CommandParameter="{Binding}">
                                                     <LucideIcon Kind="ChevronLeft" Size="16" />
                                                 </Button>
-                                                <Button Classes="Icono" MinWidth="{StaticResource SizeTouchTarget}" MinHeight="{StaticResource SizeTouchTarget}"
+                                                <Button Classes="Icono"
                                                         Theme="{DynamicResource BorderlessButton}"
                                                         ToolTip.Tip="Mover a la derecha"
                                                         Command="{Binding $parent[UserControl].((vm:DashboardViewModel)DataContext).MoverDerechaCommand}"
                                                         CommandParameter="{Binding}">
                                                     <LucideIcon Kind="ChevronRight" Size="16" />
                                                 </Button>
-                                                <Button Classes="Icono" MinWidth="{StaticResource SizeTouchTarget}" MinHeight="{StaticResource SizeTouchTarget}"
+                                                <Button Classes="Icono"
                                                         Theme="{DynamicResource BorderlessButton}"
                                                         ToolTip.Tip="Cambiar tamaño"
                                                         Command="{Binding $parent[UserControl].((vm:DashboardViewModel)DataContext).CambiarTamanoCommand}"
@@ -190,57 +168,52 @@
                                             <TextBlock Text="{Binding ValorPrincipal}"
                                                        IsVisible="{Binding !TieneVariasFilas}"
                                                        VerticalAlignment="Center"
-                                                        FontFamily="{StaticResource FontFamilyPlexCondensed}"
-                                                        FontSize="{StaticResource FontSizeHeadline}"
-                                                        FontWeight="{StaticResource FontWeightBold}"
-                                                        Foreground="{DynamicResource BrushPrimaryText}"
-                                                        TextTrimming="CharacterEllipsis"
-                                                        ToolTip.Tip="{Binding ValorPrincipal}" />
+                                                       FontFamily="{StaticResource FontFamilyPlexCondensed}"
+                                                       FontSize="{StaticResource FontSizeHeadline}"
+                                                       FontWeight="{StaticResource FontWeightBold}"
+                                                       Foreground="{DynamicResource BrushPrimaryText}" />
 
                                             <Border IsVisible="{Binding TieneGrafico}"
                                                     BorderBrush="{DynamicResource BrushBorderSubtle}"
                                                     BorderThickness="0,0,0,1"
                                                     Padding="4,4,4,0">
-                                                <ScrollViewer HorizontalScrollBarVisibility="Auto"
-                                                              VerticalScrollBarVisibility="Disabled">
-                                                    <ItemsControl ItemsSource="{Binding Filas}">
-                                                        <ItemsControl.ItemsPanel>
-                                                            <ItemsPanelTemplate>
-                                                                <UniformGrid Rows="1" />
-                                                            </ItemsPanelTemplate>
-                                                        </ItemsControl.ItemsPanel>
-                                                        <ItemsControl.ItemTemplate>
-                                                            <DataTemplate x:DataType="vm:FilaDatoViewModel">
-                                                                <Grid RowDefinitions="*,Auto"
-                                                                      Margin="3,0"
-                                                                      ToolTip.Tip="{Binding ResumenTooltip}">
-                                                                    <StackPanel Grid.Row="0"
-                                                                                VerticalAlignment="Bottom"
-                                                                                Spacing="2">
-                                                                        <TextBlock Text="{Binding Valor}"
-                                                                                   HorizontalAlignment="Center"
-                                                                                   FontFamily="{StaticResource FontFamilyPlexCondensed}"
-                                                                                   FontSize="10"
-                                                                                   Foreground="{DynamicResource BrushTextMuted}"
-                                                                                   TextTrimming="CharacterEllipsis" />
-                                                                        <Border Width="22"
-                                                                                Height="{Binding AlturaBarra}"
-                                                                                HorizontalAlignment="Center"
-                                                                                CornerRadius="4,4,0,0"
-                                                                                Background="{DynamicResource BrushPrimary}" />
-                                                                    </StackPanel>
-                                                                    <TextBlock Grid.Row="1"
-                                                                               Text="{Binding EtiquetaCorta}"
+                                                <ItemsControl ItemsSource="{Binding Filas}">
+                                                    <ItemsControl.ItemsPanel>
+                                                        <ItemsPanelTemplate>
+                                                            <UniformGrid Rows="1" />
+                                                        </ItemsPanelTemplate>
+                                                    </ItemsControl.ItemsPanel>
+                                                    <ItemsControl.ItemTemplate>
+                                                        <DataTemplate x:DataType="vm:FilaDatoViewModel">
+                                                            <Grid RowDefinitions="*,Auto"
+                                                                  Margin="3,0"
+                                                                  ToolTip.Tip="{Binding ResumenTooltip}">
+                                                                <StackPanel Grid.Row="0"
+                                                                            VerticalAlignment="Bottom"
+                                                                            Spacing="2">
+                                                                    <TextBlock Text="{Binding Valor}"
                                                                                HorizontalAlignment="Center"
-                                                                               Margin="0,4,0,2"
+                                                                               FontFamily="{StaticResource FontFamilyPlexCondensed}"
                                                                                FontSize="10"
-                                                                               Foreground="{DynamicResource BrushTextSecondary}"
+                                                                               Foreground="{DynamicResource BrushTextMuted}"
                                                                                TextTrimming="CharacterEllipsis" />
-                                                                </Grid>
-                                                            </DataTemplate>
-                                                        </ItemsControl.ItemTemplate>
-                                                    </ItemsControl>
-                                                </ScrollViewer>
+                                                                    <Border Width="22"
+                                                                            Height="{Binding AlturaBarra}"
+                                                                            HorizontalAlignment="Center"
+                                                                            CornerRadius="4,4,0,0"
+                                                                            Background="{DynamicResource BrushPrimary}" />
+                                                                </StackPanel>
+                                                                <TextBlock Grid.Row="1"
+                                                                           Text="{Binding EtiquetaCorta}"
+                                                                           HorizontalAlignment="Center"
+                                                                           Margin="0,4,0,2"
+                                                                           FontSize="10"
+                                                                           Foreground="{DynamicResource BrushTextSecondary}"
+                                                                           TextTrimming="CharacterEllipsis" />
+                                                            </Grid>
+                                                        </DataTemplate>
+                                                    </ItemsControl.ItemTemplate>
+                                                </ItemsControl>
                                             </Border>
                                         </Grid>
 
@@ -256,7 +229,7 @@
                                                      KeyDown="OnTituloTecla"
                                                      LostFocus="OnTituloPerdido" />
                                             <Button Grid.Column="1"
-                                                    Classes="Icono" MinWidth="{StaticResource SizeTouchTarget}" MinHeight="{StaticResource SizeTouchTarget}"
+                                                    Classes="Icono"
                                                     Margin="6,0,0,0"
                                                     Theme="{DynamicResource BorderlessButton}"
                                                     ToolTip.Tip="Guardar título"
@@ -274,8 +247,7 @@
 
             <!-- CATÁLOGO DE WIDGETS -->
             <Border Grid.Column="1"
-                    MaxWidth="260"
-                    MinWidth="200"
+                    Width="300"
                     Margin="16,0,0,0"
                     IsVisible="{Binding EnEdicion}"
                     Background="{DynamicResource BrushSurface}"
@@ -293,22 +265,12 @@
 
                     <ScrollViewer Grid.Row="1" Margin="0,12,0,0">
                         <ItemsControl ItemsSource="{Binding Catalogo}">
-                            <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <VirtualizingStackPanel />
-                                </ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate x:DataType="vm:GrupoCatalogoViewModel">
                                     <StackPanel Margin="0,0,0,14">
                                         <TextBlock Classes="Etiqueta" Text="{Binding Nombre}" />
 
                                         <ItemsControl ItemsSource="{Binding Widgets}">
-                                            <ItemsControl.ItemsPanel>
-                                                <ItemsPanelTemplate>
-                                                    <VirtualizingStackPanel />
-                                                </ItemsPanelTemplate>
-                                            </ItemsControl.ItemsPanel>
                                             <ItemsControl.ItemTemplate>
                                                 <DataTemplate x:DataType="vm:WidgetCatalogoViewModel">
                                                     <Grid ColumnDefinitions="*,Auto" Margin="0,4,0,0">
@@ -317,7 +279,7 @@
                                                                    VerticalAlignment="Center"
                                                                    TextTrimming="CharacterEllipsis" />
                                                         <Button Grid.Column="1"
-                                                                Classes="Icono" MinWidth="{StaticResource SizeTouchTarget}" MinHeight="{StaticResource SizeTouchTarget}"
+                                                                Classes="Icono"
                                                                 Theme="{DynamicResource BorderlessButton}"
                                                                 ToolTip.Tip="Agregar al panel"
                                                                 IsVisible="{Binding DisponibleParaAgregar}"
@@ -326,7 +288,7 @@
                                                             <LucideIcon Kind="Plus" Size="16" />
                                                         </Button>
                                                         <Button Grid.Column="1"
-                                                                Classes="Icono" MinWidth="{StaticResource SizeTouchTarget}" MinHeight="{StaticResource SizeTouchTarget}"
+                                                                Classes="Icono"
                                                                 Theme="{DynamicResource BorderlessButton}"
                                                                 ToolTip.Tip="Quitar del panel"
                                                                 IsVisible="{Binding EnPanel}"

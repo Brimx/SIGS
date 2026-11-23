@@ -149,8 +149,11 @@
                     BorderThickness="1"
                     CornerRadius="{StaticResource RadiusSmall}"
                     Padding="12,8">
-                <Grid ColumnDefinitions="Auto">
+                <Grid ColumnDefinitions="*,Auto">
                     <TextBlock Grid.Column="0"
+                               Text="{Binding MensajeEstado}"
+                               FontWeight="{StaticResource FontWeightMedium}" />
+                    <TextBlock Grid.Column="1"
                                Text="{Binding TotalRegistros, StringFormat='Total lotes consolidados: {0}'}"
                                FontFamily="{StaticResource FontFamilyPlexCondensed}"
                                FontWeight="{StaticResource FontWeightBold}"

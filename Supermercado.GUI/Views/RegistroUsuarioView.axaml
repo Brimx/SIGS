@@ -12,9 +12,6 @@
             Padding="{StaticResource PaddingDialog}"
             MaxWidth="640"
             HorizontalAlignment="Stretch">
-        <ScrollViewer VerticalScrollBarVisibility="Auto"
-                      HorizontalScrollBarVisibility="Disabled"
-                      MaxHeight="460">
         <StackPanel Spacing="16">
             <!-- Encabezado -->
             <StackPanel Spacing="4">
@@ -24,28 +21,17 @@
                                FontFamily="{StaticResource FontFamilyStackSans}"
                                FontSize="{StaticResource FontSizeTitle}"
                                FontWeight="{StaticResource FontWeightBold}"
-                               Foreground="{DynamicResource BrushTextPrimary}"
-                               TextTrimming="CharacterEllipsis"
-                               ToolTip.Tip="{Binding TituloFormulario}" />
+                               Foreground="{DynamicResource BrushTextPrimary}" />
                 </StackPanel>
                 <TextBlock Text="{Binding SubtituloFormulario}"
                            FontSize="{StaticResource FontSizeBody}"
-                           Foreground="{DynamicResource BrushTextSecondary}"
-                           TextTrimming="CharacterEllipsis"
-                           ToolTip.Tip="{Binding SubtituloFormulario}" />
+                           Foreground="{DynamicResource BrushTextSecondary}" />
             </StackPanel>
 
             <Separator Background="{DynamicResource BrushBorderSubtle}" Height="1" />
 
             <!-- Campos de Cliente / Personal -->
-            <Grid RowDefinitions="Auto,12,Auto,12,Auto">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="140" MinWidth="120" />
-                    <ColumnDefinition Width="12" />
-                    <ColumnDefinition Width="*" MinWidth="160" />
-                    <ColumnDefinition Width="12" />
-                    <ColumnDefinition Width="100" MinWidth="90" />
-                </Grid.ColumnDefinitions>
+            <Grid ColumnDefinitions="140,12,*,12,90" RowDefinitions="Auto,12,Auto,12,Auto">
                 <!-- Tipo Documento -->
                 <StackPanel Grid.Row="0" Grid.Column="0" Spacing="4">
                     <TextBlock Text="Tipo Doc."
@@ -98,8 +84,7 @@
                                FontSize="{StaticResource FontSizeBody}"
                                Foreground="{DynamicResource BrushTextSecondary}" />
                     <TextBox Text="{Binding Apellidos}"
-                             PlaceholderText="Opcional NIT"
-                             ToolTip.Tip="Apellidos (opcional para NIT)" />
+                             PlaceholderText="Opcional NIT" />
                 </StackPanel>
 
                 <!-- Teléfono y Correo -->
@@ -148,8 +133,7 @@
                     <TextBlock Text="{Binding AvisoHabeasData}"
                                FontSize="{StaticResource FontSizeCaption}"
                                FontWeight="{StaticResource FontWeightSemiBold}"
-                               Foreground="{DynamicResource BrushPrimaryText}"
-                               TextWrapping="Wrap" />
+                               Foreground="{DynamicResource BrushPrimaryText}" />
                 </StackPanel>
             </Border>
 
@@ -181,6 +165,5 @@
                 </Button>
             </StackPanel>
         </StackPanel>
-        </ScrollViewer>
     </Border>
 </UserControl>

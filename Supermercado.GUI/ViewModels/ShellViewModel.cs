@@ -1,4 +1,3 @@
-using System.ComponentModel;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Styling;
@@ -27,43 +26,6 @@ public partial class ShellViewModel : ViewModelBase
 
     [ObservableProperty]
     public partial ViewModelBase PaginaActual { get; set; }
-
-    [ObservableProperty]
-    public partial string MensajeEstado { get; set; } = string.Empty;
-
-    private INotifyPropertyChanged? _paginaEstadoSource;
-
-    partial void OnPaginaActualChanged(ViewModelBase value)
-    {
-        if (_paginaEstadoSource is not null)
-            _paginaEstadoSource.PropertyChanged -= Pagina_PropertyChanged;
-
-        _paginaEstadoSource = value;
-        _paginaEstadoSource.PropertyChanged += Pagina_PropertyChanged;
-        CopiarMensajeEstado(value);
-    }
-
-    private void Pagina_PropertyChanged(object? sender, PropertyChangedEventArgs e)
-    {
-        if (e.PropertyName == nameof(MensajeEstado))
-            CopiarMensajeEstado(PaginaActual);
-    }
-
-    private void CopiarMensajeEstado(ViewModelBase pagina)
-    {
-        MensajeEstado = pagina switch
-        {
-            PosViewModel x => x.MensajeEstado ?? string.Empty,
-            InventarioViewModel x => x.MensajeEstado ?? string.Empty,
-            CajaTurnoViewModel x => x.MensajeEstado ?? string.Empty,
-            DashboardViewModel x => x.MensajeEstado ?? string.Empty,
-            RegistroUsuarioViewModel x => x.MensajeEstado ?? string.Empty,
-            PersonalRolesViewModel x => x.MensajeEstado ?? string.Empty,
-            ComprasProveedoresViewModel x => x.MensajeEstado ?? string.Empty,
-            ContabilidadDianViewModel x => x.MensajeEstado ?? string.Empty,
-            _ => string.Empty
-        };
-    }
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(EsModuloPos))]

@@ -95,6 +95,5 @@
     </Style>
     <Style Selector="Border.Scrim">
         <Setter Property="Background" Value="{DynamicResource BrushOverlayScrim}" />
-        <Setter Property="Padding" Value="{StaticResource Space16}" />
     </Style>
 </Styles>
