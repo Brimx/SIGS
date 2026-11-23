@@ -24,8 +24,8 @@ En CI se ejecuta en `Release` y se publica el `.trx` como artefacto.
 ## 2. Estrategia
 
 - **Unitaria pura:** entidades y cálculos sin dependencias (`Dinero`, `Impuesto`, `Nomina`, `Venta`).
-- **Unitaria con falsos:** servicios con repositorios en memoria, `RelojFijo`, auditoría falsa y unidad de trabajo falsa.
-- **Integración SQLite:** archivos temporales para verificar el modelo EF, índices, TPH y el flujo punta a punta; nunca tocan la base del usuario.
+- **Unitaria con falsos:** servicios con repositorios en memoria, `RelojFijo`, `HasheadorFalso` y `ParametrosFalsos`.
+- **Integración SQLite:** base en memoria para verificar el modelo EF, índices, TPH y el flujo punta a punta; nunca toca la base del usuario.
 - **PDF:** se genera el documento en memoria y se verifica que sea un PDF válido.
 - **Determinista:** no depende de la hora, del orden ni de internet.
 - **Regresión:** cada bug relevante agrega una prueba que lo reproduce.
@@ -78,7 +78,7 @@ Las pruebas de GUI están en `Supermercado.Pruebas/GUI/` (18 casos en 7 archivos
 | Login con empleado inactivo | `CredencialesInvalidasException` y un intento fallido |
 | Cambio de clave pendiente | `DebeCambiarClaveException` |
 | Guardar parámetro sin permiso | `AccesoDenegadoException`, sin escritura |
-| Respaldo de TRM | Se guarda sin permiso y en una sola unidad de trabajo |
+| Respaldo de TRM | Se guarda sin permiso y con una sola escritura |
 | TRM con API caída | Reintenta y devuelve el último respaldo |
 | Reabastecimiento cerrado | `ValidacionException` al atender o cancelar de nuevo |
 
@@ -89,9 +89,9 @@ Las pruebas de GUI están en `Supermercado.Pruebas/GUI/` (18 casos en 7 archivos
 | `RepositorioEnMemoria<T>` | `IRepositorio<T>`; `Actualizar` valida existencia |
 | `StockEnMemoria<T>` | `IStockRepositorio<T>`; rechaza lote duplicado |
 | `ProductosEnMemoria`, `VentasEnMemoria`, `TurnosEnMemoria`, etc. | Repositorios específicos |
-| `ParametrosFalsos` | `IServicioParametros` con `ParametroFaltanteException` |
+| `ParametrosFalsos` | Parámetros de `ServicioParametros`, con `ParametroFaltanteException` |
 | `ParametrosEnMemoria`, `GastosEnMemoria` | Repositorios de configuración y finanzas |
-| `UnidadDeTrabajoFalsa` | Cuenta guardados sin persistir |
+| `ContextoPruebasSqlite` | Contexto EF en memoria para integración SQLite |
 | `AuditoriaFalsa` | Acumula acciones para asserciones |
 | `HasheadorFalso` | Hash determinista `h:secreto` |
 | `RelojFijo` | `TimeProvider` con hora y zona UTC |

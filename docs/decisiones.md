@@ -27,6 +27,8 @@
 
 ## ADR-004: Los servicios de dominio no guardan
 
+> **Estado (2026-11): retirado de `main`.** El cuerpo cita `IUnidadDeTrabajo.GuardarAsync`, que no existe en el código actual. El guardado real es `RepositorioBase.GuardarAsync` (`Db.SaveChangesAsync`) y no hay unidad de trabajo. Se conserva como historia; no describe el estado actual.
+
 - **Contexto:** la propuesta exige que venta y stock se actualicen juntos
   o no se actualicen.
 - **Decisión:** `ServicioInventario` modifica entidades y registra
@@ -107,15 +109,23 @@
 
 - **Contexto:** la propuesta exige inversión de dependencias y pruebas sin
   base de datos.
-- **Decisión:** los casos de uso trabajan contra interfaces declaradas en
-  `Entidades`; `Lógica` referencia `Datos` solo para la composición
-  (`AgregarLogica` llama a `AgregarDatos`). Ningún archivo de `Lógica`
-  importa `Microsoft.EntityFrameworkCore`.
-- **Consecuencias:** las pruebas usan repositorios en memoria y el
-  proveedor se cambia en un solo archivo; a cambio, la composición obliga
-  a que `Lógica` conozca el proyecto `Datos`.
+- **Decisión:** los casos de uso trabajan con repositorios concretos de
+  `Supermercado.Datos.Repositorios` (por ejemplo `UsuarioRepositorio`,
+  `VentaRepositorio`, `StockEstanteRepositorio` y `StockBodegaRepositorio`),
+  con dos contratos residuales: `IUsuarioRepositorio` y `IVentaRepositorio`.
+  Ambos están en el espacio de nombres `Supermercado.Entidades.Contratos`,
+  pero sus archivos reales son `Supermercado.Datos/Seguridad.cs` y
+  `Supermercado.Datos/Ventas.cs`. No hay una interfaz general de
+  repositorio ni unidad de trabajo. `Lógica` referencia `Datos` solo para
+  la composición (`AgregarLogica` delega en `AgregarDatos`). Ningún archivo
+  de `Lógica` importa `Microsoft.EntityFrameworkCore`.
+- **Consecuencias:** las pruebas usan repositorios concretos o falsos
+  puntuales, y el proveedor se configura en `AgregarDatos`; a cambio, la
+  composición obliga a que `Lógica` conozca el proyecto `Datos`.
 
 ## ADR-010: Concurrencia multi-terminal como deuda técnica
+
+> **Nota (2026-11):** la migración a PostgreSQL se conserva como objetivo futuro en la rama `completo`; `main` usa solo SQLite. Esta deuda no está resuelta en la entrega actual.
 
 - **Contexto:** con varias cajas, el patrón `leer → validar → escribir`
   permite vender dos veces la última unidad, anular dos veces o abrir dos
@@ -132,12 +142,15 @@
 
 - **Contexto:** los parámetros se editan desde la aplicación, pero la TRM
   necesita guardar su último valor aunque no haya sesión ni permiso.
-- **Decisión:** `IServicioParametros` separa `GuardarAsync` (exige
-  `GestionarPersonal`, audita y guarda) de `GuardarRespaldoAsync`
-  (interno, sin permiso ni auditoría, atómico para varias claves).
-- **Consecuencias:** un proceso de infraestructura no puede saltarse la
-  autorización, y el respaldo de la TRM no ensucia la auditoría de
-  cambios administrativos.
+- **Decisión:** `ServicioParametros` (clase concreta en
+  `Supermercado.Logica/Seguridad.cs`) separa `GuardarAsync` (exige
+  `GestionarPersonal`, audita y guarda) de `GuardarRespaldoAsync` (sin
+  permiso ni auditoría; aplica varias claves y guarda una sola vez con
+  `ParametroRepositorio.GuardarAsync`). No existe `IServicioParametros`;
+  las pruebas usan `ParametrosFalsos`, que hereda de la clase concreta.
+- **Consecuencias:** la separación está en los métodos de la clase, no en
+  dos contratos; el respaldo de la TRM no ensucia la auditoría de cambios
+  administrativos.
 
 ## ADR-012: Reintentos de TRM con espera progresiva y reloj inyectado
 

@@ -168,7 +168,7 @@ Mientras `DebeCambiarClave` esté activo, cualquier operación protegida lanza `
 
 ## 9. Parámetros
 
-Los valores se editan desde la aplicación con permiso `GestionarPersonal`. El guardado administrativo exige permiso y deja auditoría; el respaldo interno (TRM) es atómico y no exige permiso.
+Los valores se gestionan desde los servicios con permiso `GestionarPersonal`. El guardado administrativo exige permiso y deja auditoría; el respaldo interno (TRM) es atómico y no exige permiso.
 
 | Clave | Uso |
 | :-- | :-- |

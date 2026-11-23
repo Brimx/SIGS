@@ -67,7 +67,7 @@ Reglas:
 - Dinero en `long` (pesos); porcentajes en `int` (puntos básicos).
 - Excepciones del catálogo, no `Exception` genérica.
 - Comentarios en español y solo para explicar el **por qué**.
-- Los servicios de dominio no guardan: el caso de uso llama `IUnidadDeTrabajo.GuardarAsync` una vez.
+- Cada caso de uso confirma sus cambios con `GuardarAsync` del repositorio correspondiente (`RepositorioBase.GuardarAsync` en `Supermercado.Datos/Contexto.cs`); no hay unidad de trabajo en `main`.
 
 ## 6. Pruebas
 

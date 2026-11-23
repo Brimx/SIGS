@@ -25,9 +25,9 @@ El dominio se escribe en **español** (`Venta`, `Empleado`, `Reabastecimiento`).
 1. **Entidades no conocen EF Core, Avalonia ni servicios.** Solo dominio y validaciones propias.
 2. **Nada de lógica de negocio en la GUI.** La vista llama a un servicio de Lógica.
 3. **La GUI no referencia Datos.** Solo `AgregarLogica()`.
-4. **Los servicios de dominio no guardan.** El caso de uso llama `IUnidadDeTrabajo.GuardarAsync` una sola vez.
+4. **Los servicios de dominio no guardan.** El caso de uso guarda una sola vez con `RepositorioBase.GuardarAsync` (`Supermercado.Datos/Contexto.cs:240`) o `SigsDbContext.SaveChangesAsync`.
 5. **Los permisos se verifican en Lógica**, no ocultando botones.
-6. **Las APIs externas viven tras una interfaz.** Las fuentes abiertas sin credenciales (TRM, código de barras) se activan por defecto y se pueden apagar; las que requieren secreto o proveedor (correo, Supabase) solo se registran si están configuradas.
+6. **Las APIs externas viven tras una interfaz.** Las fuentes abiertas sin credenciales (TRM, código de barras) se activan por defecto y se pueden apagar; las que requieren secreto o proveedor (correo) solo se registran si están configuradas.
 
 ## Dinero y porcentajes
 

@@ -68,7 +68,7 @@ La entrega actual incluye el dominio, la persistencia, la lógica de negocio y l
 | Proyecto | Responsabilidad | Referencia a |
 | :-- | :-- | :-- |
 | `Supermercado.Entidades` (Domain) | Entidades, enumeraciones, excepciones y contratos de repositorio | Ninguno |
-| `Supermercado.Datos` (Data) | `SigsDbContext`, configuraciones EF Core, repositorios, unidad de trabajo y semilla | Entidades |
+| `Supermercado.Datos` (Data) | `SigsDbContext`, configuraciones EF Core, repositorios y semilla | Entidades |
 | `Supermercado.Logica` (Business) | Casos de uso, permisos, auditoría, cálculo, dashboards y clientes de APIs | Datos, Entidades |
 | `Supermercado.GUI` (UI) | Avalonia con MVVM | Lógica, Entidades |
 | `Supermercado.Pruebas` | Pruebas unitarias con falsos en memoria | Lógica, Entidades |
@@ -222,7 +222,7 @@ Consume Lógica y usa Entidades para los modelos. No referencia Datos.
 Casos de uso, permisos, arqueo, IVA, nómina, inventario y dashboards. Trabaja contra interfaces de repositorio; no usa EF Core.
 
 **DATA — EF Core + SQLite**
-`SigsDbContext`, configuraciones, repositorios, unidad de trabajo y semilla. Es el único punto que elige el proveedor.
+`SigsDbContext`, configuraciones, repositorios y semilla. Es el único punto que elige el proveedor.
 
 **DOMAIN — Entidades**
 Producto, Lote, Venta, Empleado, Turno, contratos y excepciones. Sin dependencias externas.
