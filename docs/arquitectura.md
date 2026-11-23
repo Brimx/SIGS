@@ -32,7 +32,7 @@ Reglas de dependencia:
 2. **Datos referencia Entidades.** Es el único proyecto que conoce EF Core y SQLite; expone repositorios concretos por módulo y solo conserva las interfaces `IVentaRepositorio` e `IUsuarioRepositorio`.
 3. **Lógica referencia Datos y Entidades.** Consume repositorios por módulo y clases concretas de dominio; las interfaces se reservan para límites externos y esos dos contratos de persistencia.
 4. **GUI referencia Lógica y Entidades.** No referencia Datos: obtiene todo por `AgregarLogica()`.
-5. **Pruebas referencia Lógica y Entidades.** Usa falsos sobre SQLite en memoria para los repositorios migrados; no necesita base de datos externa.
+5. **Pruebas referencia Lógica, Entidades y GUI** (7 archivos `.cs` en `Supermercado.Pruebas/GUI/`). Usa falsos sobre SQLite en memoria para los repositorios migrados; no necesita base de datos externa.
 
 ## Composición
 
@@ -223,11 +223,11 @@ Las implementaciones de reserva se registran primero y las implementaciones real
 
 SIGS opera de forma autónoma sobre **SQLite local** con inicialización automática desde `Supermercado.Datos/Semillas.cs` (`InicializadorBaseDatos.CrearYSembrarAsync()`) y migración inicial en `Supermercado.Datos/Migraciones/Inicial.cs`, creando el archivo de base de datos, el esquema completo y la semilla idempotente en el primer arranque sin requerir motores externos ni contenedores.
 
-> La versión empresarial extendida (con proveedor dual PostgreSQL 17 + Npgsql, réplica Outbox hacia Supabase, facturación electrónica DIAN UBL 2.1 / CUDE y fidelización por puntos) se conserva íntegra en la rama `completo`.
+> Objetivo futuro fuera del alcance de `main`: la versión empresarial extendida en la rama `completo` contempla proveedor dual PostgreSQL 17 + Npgsql, réplica Outbox hacia Supabase, facturación electrónica DIAN UBL 2.1 / CUDE y fidelización por puntos. En `main` no hay emisión ni transmisión DIAN ni puntos de cliente.
 
 ## Pruebas
 
-La suite xUnit vive en 22 archivos `.cs` en la raíz de `Supermercado.Pruebas/`, sin subcarpetas, con 425 pruebas en verde. Los dobles compartidos están en `Falsos.cs` y `TelegramFalsos.cs`; los repositorios migrados usan `ContextoPruebasSqlite` con una base SQLite en memoria por escenario, desactivando FK y dos índices únicos propios del modelo para reproducir el comportamiento de los antiguos falsos en memoria. La compilación de la solución termina con 0 advertencias y 0 errores.
+La suite xUnit vive en 29 archivos `.cs` en `Supermercado.Pruebas/`: 22 en raíz y 7 en `GUI/`, con la suite en verde (conteo vigente en [`plan-pruebas.md`](plan-pruebas.md)). Los dobles compartidos están en `Falsos.cs` y `TelegramFalsos.cs`; los repositorios migrados usan `ContextoPruebasSqlite` con una base SQLite en memoria por escenario, desactivando FK y dos índices únicos propios del modelo para reproducir el comportamiento de los antiguos falsos en memoria. La compilación de la solución termina con 0 advertencias y 0 errores.
 
 ## Decisiones relacionadas
 

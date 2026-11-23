@@ -27,6 +27,8 @@
 
 ## ADR-004: Los servicios de dominio no guardan
 
+> **Estado (2026-11): retirado de `main`.** El cuerpo cita `IUnidadDeTrabajo.GuardarAsync`, que no existe en el código actual. El guardado real es `RepositorioBase.GuardarAsync` (`Db.SaveChangesAsync`) y no hay unidad de trabajo. Se conserva como historia; no describe el estado actual.
+
 - **Contexto:** la propuesta exige que venta y stock se actualicen juntos
   o no se actualicen.
 - **Decisión:** `ServicioInventario` modifica entidades y registra
@@ -59,24 +61,40 @@
 
 ## ADR-006b: Permisos como banderas dentro de `Rol`
 
-- **Contexto:** la propuesta define roles con permisos verificados en la
-  capa de lógica.
+- **Contexto:** el sistema define cuatro roles (`Admin`, `Gerente`, `Cajero`,
+  `Bodeguero`) con permisos verificados en la capa de lógica.
 - **Decisión:** `Permiso` es un enum de banderas guardado como entero en
-  `Rol`; `ISesionActual.Exigir` lo verifica al inicio de cada caso de uso.
+  `Rol`: 19 valores en total, `Ninguno` más 18 banderas (entre ellas
+  `GestionarClientes`, `AutorizarOperacionPos`, `GestionarCompras`,
+  `GestionarContabilidad` y `MantenimientoSistema`). `SesionActual.Exigir`
+  verifica el permiso al inicio del caso de uso; no existe `ISesionActual`.
 - **Consecuencias:** no hace falta una tabla de permisos; la matriz
   inicial de roles es una carga editable, no una regla del código.
+  «Supervisor» no es un rol: es una autorización puntual
+  (`ValidarSupervisorAsync`).
 
 ## ADR-007: APIs externas tras interfaces, con respaldo
 
 - **Contexto:** TRM, códigos de barras y verificación de correo no deben
   bloquear una operación si fallan.
-- **Decisión:** cada API vive tras una interfaz en `Logica/Servicios`; por
-  defecto se registran versiones nulas. `ServicioTrm` aplica tiempo
-  máximo, reintentos y último valor guardado.
-- **Consecuencias:** el sistema funciona sin internet; falta elegir las
-  APIs reales y escribir sus clientes.
+- **Decisión:** cada API vive tras una interfaz en
+  `Supermercado.Logica/ClientesExternos.cs` (`ITrmClient`, `IConsultaCodigoBarras`,
+  `IVerificadorCorreo`; `IServicioTrm` también está en ese archivo).
+  `AgregarLogica` registra primero implementaciones nulas
+  (`ClienteTrmNoConfigurado`, `ConsultaCodigoBarrasNula`,
+  `VerificadorCorreoNulo`) y después `AgregarClientesExternos` registra las
+  reales cuando hay URL configurada (`ClienteTrmDatosGov`,
+  `ClienteCodigoBarrasOff` y, solo con `SIGS_EMAIL_VERIFIER_URL`,
+  `ClienteVerificadorCorreoHttp`). Los interruptores
+  `SIGS_APIS_HABILITADAS`, `SIGS_TRM_HABILITADA` y `SIGS_OFF_HABILITADA`
+  se leen en `OpcionesApisExternas.DesdeEntorno()`. `ServicioTrm` aplica
+  tiempo máximo, reintentos y último valor guardado.
+- **Consecuencias:** el sistema funciona sin internet; las implementaciones
+  reales ya están registradas y los clientes HTTP son configurables.
 
 ## ADR-008: SQLite en esta entrega y PostgreSQL local como objetivo
+
+> **Estado (2026-11): retirado de `main`; conservado como historia y objetivo futuro en la rama `completo`.** `main` solo usa SQLite (`UseSqlite` en `Supermercado.Datos/Contexto.cs`); no hay Npgsql/`UseNpgsql`, Supabase, Docker ni `SIGS_POSTGRES_CONNECTION`. El cuerpo describe una propuesta histórica, no el estado actual.
 
 - **Contexto:** el proyecto necesita funcionar sin servidor para el demo,
   pero varias cajas no pueden compartir un archivo SQLite.
@@ -91,15 +109,23 @@
 
 - **Contexto:** la propuesta exige inversión de dependencias y pruebas sin
   base de datos.
-- **Decisión:** los casos de uso trabajan contra interfaces declaradas en
-  `Entidades`; `Lógica` referencia `Datos` solo para la composición
-  (`AgregarLogica` llama a `AgregarDatos`). Ningún archivo de `Lógica`
-  importa `Microsoft.EntityFrameworkCore`.
-- **Consecuencias:** las pruebas usan repositorios en memoria y el
-  proveedor se cambia en un solo archivo; a cambio, la composición obliga
-  a que `Lógica` conozca el proyecto `Datos`.
+- **Decisión:** los casos de uso trabajan con repositorios concretos de
+  `Supermercado.Datos.Repositorios` (por ejemplo `UsuarioRepositorio`,
+  `VentaRepositorio`, `StockEstanteRepositorio` y `StockBodegaRepositorio`),
+  con dos contratos residuales: `IUsuarioRepositorio` y `IVentaRepositorio`.
+  Ambos están en el espacio de nombres `Supermercado.Entidades.Contratos`,
+  pero sus archivos reales son `Supermercado.Datos/Seguridad.cs` y
+  `Supermercado.Datos/Ventas.cs`. No hay una interfaz general de
+  repositorio ni unidad de trabajo. `Lógica` referencia `Datos` solo para
+  la composición (`AgregarLogica` delega en `AgregarDatos`). Ningún archivo
+  de `Lógica` importa `Microsoft.EntityFrameworkCore`.
+- **Consecuencias:** las pruebas usan repositorios concretos o falsos
+  puntuales, y el proveedor se configura en `AgregarDatos`; a cambio, la
+  composición obliga a que `Lógica` conozca el proyecto `Datos`.
 
 ## ADR-010: Concurrencia multi-terminal como deuda técnica
+
+> **Nota (2026-11):** la migración a PostgreSQL se conserva como objetivo futuro en la rama `completo`; `main` usa solo SQLite. Esta deuda no está resuelta en la entrega actual.
 
 - **Contexto:** con varias cajas, el patrón `leer → validar → escribir`
   permite vender dos veces la última unidad, anular dos veces o abrir dos
@@ -116,12 +142,15 @@
 
 - **Contexto:** los parámetros se editan desde la aplicación, pero la TRM
   necesita guardar su último valor aunque no haya sesión ni permiso.
-- **Decisión:** `IServicioParametros` separa `GuardarAsync` (exige
-  `GestionarPersonal`, audita y guarda) de `GuardarRespaldoAsync`
-  (interno, sin permiso ni auditoría, atómico para varias claves).
-- **Consecuencias:** un proceso de infraestructura no puede saltarse la
-  autorización, y el respaldo de la TRM no ensucia la auditoría de
-  cambios administrativos.
+- **Decisión:** `ServicioParametros` (clase concreta en
+  `Supermercado.Logica/Seguridad.cs`) separa `GuardarAsync` (exige
+  `GestionarPersonal`, audita y guarda) de `GuardarRespaldoAsync` (sin
+  permiso ni auditoría; aplica varias claves y guarda una sola vez con
+  `ParametroRepositorio.GuardarAsync`). No existe `IServicioParametros`;
+  las pruebas usan `ParametrosFalsos`, que hereda de la clase concreta.
+- **Consecuencias:** la separación está en los métodos de la clase, no en
+  dos contratos; el respaldo de la TRM no ensucia la auditoría de cambios
+  administrativos.
 
 ## ADR-012: Reintentos de TRM con espera progresiva y reloj inyectado
 
@@ -200,6 +229,8 @@
 
 ## ADR-018: Programa de puntos de clientes
 
+> **Estado (2026-11): retirado de `main`; conservado como historia en la rama `completo`.** No existen `PagoPuntos`, `PuntosAcumulados`, `PuntosGanados`, `PuntosRedimidos` ni parámetros `puntos.*`. El permiso `GestionarClientes` sí existe, pero el programa de puntos no. El cuerpo no describe el estado actual.
+
 - **Contexto:** muchos supermercados fidelizan clientes con puntos. Debe ser
   opcional: la venta a «consumidor final» no cambia.
 - **Decisión:** entidad `Cliente` (documento único, saldo `PuntosAcumulados`),
@@ -248,6 +279,8 @@
 
 ## ADR-020: Patrón Outbox para réplica asíncrona hacia Supabase o Neon
 
+> **Estado (2026-11): retirado de `main`; conservado como historia en la rama `completo`.** El Outbox y la sincronización con Supabase/Neon no están en `main`: no hay `EventosOutbox`, `ClienteSincronizacionSupabase`, `IClienteSincronizacionSupabase` ni unidad de trabajo. La clase `EventoOutboxSqliteTests` que queda solo prueba idempotencia de venta. El cuerpo no describe el estado actual.
+
 - **Contexto:** las ventas locales en LAN deben funcionar sin depender de internet.
   Sin embargo, el supermercado requiere consultar reportes de ventas y auditoría
   desde la nube (Supabase o Neon) de forma asíncrona y segura.
@@ -259,7 +292,7 @@
 - **Resiliencia:** si se cae internet, la venta local no se detiene ni arroja error;
   el evento queda marcado como no procesado y reintenta con registro de fallas.
   El esquema SQL receptor para Supabase o Neon se suministra listo en
-  `docs/supabase-schema.sql`.
+  la rama `completo`.
 
 ## ADR-021: Idempotencia en la venta mediante clave única
 
@@ -269,13 +302,15 @@
 - **Decisión:** `SolicitudVenta` incluye `ClaveIdempotencia` opcional. `ServicioVentas`
   consulta `ventas.ObtenerPorClaveIdempotenciaAsync` antes de iniciar la venta. Si ya
   existe una venta completada con dicha clave, la devuelve de inmediato sin descontar
-  stock ni alterar saldos de puntos nuevamente.
+  stock ni repetir los efectos de la venta.
 - **Estado (2026-11-02):** el índice es único; SQLite permite múltiples valores `NULL`.
   El arranque comprueba duplicados históricos antes de crear el índice. La GUI conserva
   la misma clave al reintentar el mismo cobro. Si una carrera pierde el insert, falla sin
   duplicar la venta y el siguiente reintento encuentra la venta existente.
 
 ## ADR-022: Documento Equivalente Electrónico POS DIAN (Resolución 000165 de 2023)
+
+> **Estado (2026-11): retirado de `main`; conservado como historia en la rama `completo`.** No hay emisión DIAN: no existen `IServicioDian`, `ServicioDian`, `GeneradorCudeDian`, `GeneradorUblDian`, CUDE, XML UBL, QR ni parámetros `dian.*`. En `main` queda cálculo local y consolidado fiscal (`ContabilidadDianViewModel`, desglose IVA C/M/J, CSV/PDF, `PlantillaTicketPos.ObtenerCodigoTarifa`, DV de NIT en `Validador.CalcularDigitoVerificacionNit`, textos legales y datos de adquirente), sin emisión, firma ni transmisión. El cuerpo no describe el estado actual.
 
 - **Contexto:** la DIAN exige para los sujetos obligados a facturar la emisión del
   Documento Equivalente Electrónico tiquete de máquina registradora con sistema POS
@@ -319,6 +354,8 @@
 
 ## ADR-024: Habeas Data (Ley 1581 de 2012) y Consumidor Final DIAN
 
+> **Nota (2026-11):** `Venta.ClienteId`, `Venta.DocumentoAdquirente` y `Venta.NombreAdquirente` existen en el modelo actual, pero son datos de adquirente para el consolidado fiscal local, no campos de facturación electrónica. No hay emisión DIAN (CUDE/UBL/QR/resolución); el permiso vigente es `GestionarClientes`.
+
 - **Contexto:** la Ley Estatutaria 1581 de 2012 de Colombia exige autorización previa, expresa
   e informada del titular para recolectar y almacenar sus datos personales. Si un cliente
   no autoriza o revoca el consentimiento, no se pueden registrar sus datos en la base ni en la factura.
@@ -333,6 +370,8 @@
   y compatibilidad con los estándares de adquirente de la DIAN.
 
 ## ADR-025: Switch de Régimen Tributario (Responsable vs No Responsable de IVA)
+
+> **Nota (2026-11):** `detalle.PuntosBasicosIva` y `detalle.Iva` existen y `tributario.responsable_iva` sigue siendo el parámetro del switch local, pero no hay emisión DIAN. El consolidado fiscal y el desglose IVA C/M/J son cálculo local en CSV/PDF, sin CUDE, UBL, QR ni transmisión.
 
 - **Contexto:** en Colombia coexisten personas jurídicas y naturales que operan supermercados
   bajo régimen común/ordinario (responsables de IVA) o bajo régimen de no responsables
@@ -383,11 +422,13 @@
   - **Proveedor Dual en `Supermercado.Datos`:** Integrar `Npgsql.EntityFrameworkCore.PostgreSQL` (10.0.3) junto al proveedor SQLite existente.
     - Si la variable de entorno `SIGS_POSTGRES_CONNECTION` (o configuración explícita) está provista, `SigsDbContext` se inicializa con `opciones.UseNpgsql(...)`.
     - Si no está provista, se inicializa automáticamente con `opciones.UseSqlite(...)` apuntando a `~/.local/share/SIGS/sigs.db`.
-  - **Orquestación Local:** Incluir `docker-compose.yml` en la raíz del repositorio con la imagen oficial `postgres:17-alpine`, base de datos `sigs`, usuario `sigs_user` y puerto `5432`.
+  - **Orquestación Local:** Incluir el archivo de composición Docker en la raíz del repositorio con la imagen oficial `postgres:17-alpine`, base de datos `sigs`, usuario `sigs_user` y puerto `5432`.
   - **Inicialización Automática:** En `App.axaml.cs`, invocar `IInicializadorBaseDatos.CrearYSembrarAsync()` al arrancar para asegurar esquema, tablas, índices únicos de idempotencia y semillas mínimas sin importar el motor activo.
   - **10 Roles Canónicos:** Modelar en `NombresRol`, `ValoresIniciales` y la matriz de permisos los 10 roles clave con sus 18 permisos atómicos.
   - **Semilla y Login Demo:** Incorporar en `GeneradorDatosDemo` y en la vista de inicio de sesión (`LoginView` / `LoginViewModel`) la siembra automática y acceso rápido a credenciales de prueba para los 10 roles con un solo clic.
 - **Consecuencias:** soporte nativo tanto para entornos de producción LAN multi-terminal con PostgreSQL como para estaciones individuales o desarrollo zero-config con SQLite. El código de la capa lógica y de presentación no tiene acoplamiento con el motor de persistencia subyacente.
+
+> **Estado (2026-11): retirado de `main`; conservado como historia en la rama `completo`.** El proveedor dual (Npgsql/PostgreSQL), Docker y `SIGS_POSTGRES_CONNECTION` no existen en `main`; solo SQLite (`UseSqlite` en `Supermercado.Datos/Contexto.cs`). La sección «10 Roles Canónicos» también es historia: hoy hay 4 roles (`Admin`, `Gerente`, `Cajero`, `Bodeguero`) en `Supermercado.Entidades/Personal.cs` y en la semilla `Supermercado.Datos/Semillas.cs`. «Supervisor» es solo autorización (`ValidarSupervisorAsync`); «Compras» es el permiso `GestionarCompras` más un módulo de GUI. Sí siguen vigentes la semilla de roles y el uso de SQLite.
 
 ## ADR-028: Tokens de dos roles, puente con Semi y temas persistidos por máquina
 

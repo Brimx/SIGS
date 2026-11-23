@@ -25,9 +25,9 @@ El dominio se escribe en **español** (`Venta`, `Empleado`, `Reabastecimiento`).
 1. **Entidades no conocen EF Core, Avalonia ni servicios.** Solo dominio y validaciones propias.
 2. **Nada de lógica de negocio en la GUI.** La vista llama a un servicio de Lógica.
 3. **La GUI no referencia Datos.** Solo `AgregarLogica()`.
-4. **Los servicios de dominio no guardan.** El caso de uso llama `IUnidadDeTrabajo.GuardarAsync` una sola vez.
+4. **Los servicios de dominio no guardan.** El caso de uso guarda una sola vez con `RepositorioBase.GuardarAsync` (`Supermercado.Datos/Contexto.cs:240`) o `SigsDbContext.SaveChangesAsync`.
 5. **Los permisos se verifican en Lógica**, no ocultando botones.
-6. **Las APIs externas viven tras una interfaz.** Las fuentes abiertas sin credenciales (TRM, código de barras) se activan por defecto y se pueden apagar; las que requieren secreto o proveedor (correo, Supabase) solo se registran si están configuradas.
+6. **Las APIs externas viven tras una interfaz.** Las fuentes abiertas sin credenciales (TRM, código de barras) se activan por defecto y se pueden apagar; las que requieren secreto o proveedor (correo) solo se registran si están configuradas.
 
 ## Dinero y porcentajes
 
@@ -46,7 +46,7 @@ El dominio se escribe en **español** (`Venta`, `Empleado`, `Reabastecimiento`).
 
 ## Errores
 
-Use el catálogo unificado en `Supermercado.Entidades/Excepciones/ExcepcionesDominio.cs`:
+Use el catálogo unificado en `Supermercado.Entidades/Excepciones.cs`:
 
 | Situación | Excepción |
 | :-- | :-- |
@@ -66,9 +66,8 @@ No capture `Exception` genérica salvo en la frontera de una integración, y sol
 
 - No imprima datos del cliente si `AutorizaTratamientoDatos` es falso; use `Venta.DocumentoConsumidorFinal` y `NombreConsumidorFinal`.
 - La autorización se registra con fecha y terminal (`AutorizarHabeasData`); la revocación no borra el historial.
-- Los secretos de integración (`supabase_key`, `trm_token`, `resend_token`, `dian.clave_tecnica`) no se versionan; van en configuración o parámetros locales.
-- Los campos DIAN (`Cude`, `XmlUbl`, `CadenaQr`) se generan localmente; no los trate como comprobante válido hasta completar transmisión y firma.
-- El avance del consecutivo DIAN debe quedar en la misma transacción que la venta; hoy es una deuda conocida (ADR-022).
+- Los secretos de integración (`trm_token`, `resend_token`) no se versionan; van en configuración o parámetros locales.
+- La emisión electrónica DIAN está fuera del alcance de `main`: es objetivo futuro conservado en rama `completo`. En `main` queda el consolidado fiscal de `ContabilidadDianViewModel` (`Supermercado.GUI/ViewModels/ContabilidadDianViewModel.cs:55`), con desglose de IVA C/M/J y exportación CSV/PDF; las tarifas se resuelven con `PlantillaTicketPos.ObtenerCodigoTarifa` (`Supermercado.GUI/ServiciosGui.cs:287`).
 
 ## Pruebas
 
@@ -105,7 +104,7 @@ Formato convencional, en español, imperativo y corto:
 feat(ventas): reembolsar anuladas en el arqueo
 fix(inventario): impedir stock negativo en el reparto
 test(seguridad): cubrir bloqueo por empleado inactivo
-docs(adr): documentar PostgreSQL local y Supabase
+docs(adr): documentar el consolidado fiscal
 ci: compilar y probar en GitHub Actions
 ```
 
@@ -126,5 +125,5 @@ Prefijos usados: `feat`, `fix`, `refactor`, `test`, `docs`, `ci`, `chore`.
 - Llaves en línea nueva (estilo Allman), como el resto del repositorio.
 - Líneas de hasta ~88 caracteres cuando sea razonable.
 - `var` cuando el tipo es evidente; tipo explícito cuando aclara.
-- Una clase pública por archivo con el mismo nombre del archivo. En contratos de persistencia, implementaciones de repositorios, excepciones de dominio, widgets y módulos de soporte/presentación, se permite y prefiere agrupar tipos estrechamente cohesivos en archivos temáticos unificados (`IContratos*.cs`, `Repositorios*.cs`, `ExcepcionesDominio.cs`, `Widgets.cs`, `ConfiguracionYTema.cs`, `ImpresionTicket.cs`, `ClientesExternos.cs`, `ServiciosSoporte.cs`) para mantener un árbol de proyecto limpio y navegable.
+- Una clase pública por archivo con el mismo nombre del archivo. Excepción: los módulos consolidados agrupan tipos cohesivos en un archivo por dominio (`Ventas.cs`, `Inventario.cs`, `Productos.cs`, `Seguridad.cs` en cada capa) y la presentación usa archivos temáticos (`ServiciosGui.cs`, `Falsos.cs`). Antes de crear un archivo nuevo, compruebe si el módulo ya existe.
 - `sealed` en las hojas de una jerarquía TPH.

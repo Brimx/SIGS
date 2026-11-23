@@ -5,10 +5,13 @@
 | Métrica | Valor |
 | :-- | :-- |
 | framework | xUnit 2.9 |
-| pruebas | **425** |
-| resultado | 425 correctas, 0 fallidas, 0 omitidas |
+| pruebas | **443** |
+| desglose | 356 `[Fact]` + 87 `[InlineData]`; 425 en la raíz y 18 en `GUI/` (29 archivos: 22 + 7) |
+| resultado | 443 correctas, 0 fallidas, 0 omitidas |
 | duración | ~5 s (última ejecución local, 2026-11-22) |
 | cobertura | reglas de negocio, servicios, GUI, PDF e integración SQLite |
+
+Este archivo es el **único lugar** donde se registra el conteo de pruebas: el resto de la documentación remite aquí. Actualícelo con la salida real de `dotnet test` y la fecha de la medición.
 
 Comando:
 
@@ -21,8 +24,8 @@ En CI se ejecuta en `Release` y se publica el `.trx` como artefacto.
 ## 2. Estrategia
 
 - **Unitaria pura:** entidades y cálculos sin dependencias (`Dinero`, `Impuesto`, `Nomina`, `Venta`).
-- **Unitaria con falsos:** servicios con repositorios en memoria, `RelojFijo`, auditoría falsa y unidad de trabajo falsa.
-- **Integración SQLite:** archivos temporales para verificar el modelo EF, índices, TPH y el flujo punta a punta; nunca tocan la base del usuario.
+- **Unitaria con falsos:** servicios con repositorios en memoria, `RelojFijo`, `HasheadorFalso` y `ParametrosFalsos`.
+- **Integración SQLite:** base en memoria para verificar el modelo EF, índices, TPH y el flujo punta a punta; nunca toca la base del usuario.
 - **PDF:** se genera el documento en memoria y se verifica que sea un PDF válido.
 - **Determinista:** no depende de la hora, del orden ni de internet.
 - **Regresión:** cada bug relevante agrega una prueba que lo reproduce.
@@ -39,14 +42,14 @@ En CI se ejecuta en `Release` y se publica el `.trx` como artefacto.
 | `InventarioTests` | FEFO, desempate por lote, vencidos, reparto y stock no negativo |
 | `ServicioInventarioTests` | Descuento, reintegro, traslado, merma, lote de otro producto, ingreso inválido |
 | `ValidadorTests` | Nombres sin números, documento, NIT, teléfono y correo |
-| `ClientesPuntosTests` | Acumulación, redención, rechazos sin efectos, anulación, permisos y alta de clientes |
+| `ClientesPuntosTests` | Clientes: permisos, alta y validaciones; no comprueba saldo de puntos (no existe en el modelo) |
 | `ApisPorDefectoTests` | APIs activas por defecto, interruptores de entorno y de parámetro |
-| `ClientesSqliteTests` | Persistencia de `Cliente`, índice único y TPH de `PagoPuntos` |
-| `EventoOutboxSqliteTests` | Outbox e idempotencia contra SQLite |
-| `OutboxYSincronizacionTests` | Payload de venta/anulación, despacho y reintentos |
+| `ClientesSqliteTests` | Persistencia de `Cliente` y su índice único |
+| `EventoOutboxSqliteTests` | Idempotencia de venta por `ClaveIdempotencia` contra SQLite |
 | `ReportesPdfTests` | Ticket, desprendible de nómina y reporte de ventas |
-| `FlujoPuntaAPuntaSqliteTests` | Venta, stock, outbox y persistencia en un archivo temporal |
-| `DianYBalanzasTests` | Módulo 11 NIT DIAN, parser de balanzas GS1 (prefijo 20-29), conversión de unidades, CUDE SHA-384, XML UBL 2.1, control de resolución DIAN, Habeas Data (consumidor final) y switch régimen tributario |
+| `FlujoPuntaAPuntaSqliteTests` | Venta, stock y persistencia en SQLite |
+| `DianYBalanzasTests` | Dígito de verificación de NIT DIAN, parser de balanzas GS1 (prefijo 20-29), conversión de unidades, Habeas Data (consumidor final) y switch régimen tributario |
+| `ProductosDianTests` | Dígito de verificación de NIT y tarifas de productos |
 | `ServicioVentasTests` | Venta completa, stock insuficiente, permisos, tarjeta, transferencia, doble anulación |
 | `ServicioCajaTests` | Caja inexistente, caja inactiva, tolerancia dentro y fuera |
 | `NominaTests` | Cálculo, tope de auxilio, año/mes inválido, parámetros negativos |
@@ -55,6 +58,8 @@ En CI se ejecuta en `Release` y se publica el `.trx` como artefacto.
 | `ServicioParametrosTests` | Permiso, auditoría, respaldo atómico, parámetro faltante |
 | `ServicioFinanzasTests` | Permiso y auditoría de gastos |
 | `ServicioTrmTests` | Respaldo, reintentos, espera con reloj, ausencia total de datos |
+
+Las pruebas de GUI están en `Supermercado.Pruebas/GUI/` (18 casos en 7 archivos). El consolidado fiscal DIAN se cubre desde la GUI de contabilidad, además de `DianYBalanzasTests` y `ProductosDianTests`.
 
 ## 4. Casos críticos y resultado esperado
 
@@ -73,7 +78,7 @@ En CI se ejecuta en `Release` y se publica el `.trx` como artefacto.
 | Login con empleado inactivo | `CredencialesInvalidasException` y un intento fallido |
 | Cambio de clave pendiente | `DebeCambiarClaveException` |
 | Guardar parámetro sin permiso | `AccesoDenegadoException`, sin escritura |
-| Respaldo de TRM | Se guarda sin permiso y en una sola unidad de trabajo |
+| Respaldo de TRM | Se guarda sin permiso y con una sola escritura |
 | TRM con API caída | Reintenta y devuelve el último respaldo |
 | Reabastecimiento cerrado | `ValidacionException` al atender o cancelar de nuevo |
 
@@ -84,9 +89,9 @@ En CI se ejecuta en `Release` y se publica el `.trx` como artefacto.
 | `RepositorioEnMemoria<T>` | `IRepositorio<T>`; `Actualizar` valida existencia |
 | `StockEnMemoria<T>` | `IStockRepositorio<T>`; rechaza lote duplicado |
 | `ProductosEnMemoria`, `VentasEnMemoria`, `TurnosEnMemoria`, etc. | Repositorios específicos |
-| `ParametrosFalsos` | `IServicioParametros` con `ParametroFaltanteException` |
+| `ParametrosFalsos` | Parámetros de `ServicioParametros`, con `ParametroFaltanteException` |
 | `ParametrosEnMemoria`, `GastosEnMemoria` | Repositorios de configuración y finanzas |
-| `UnidadDeTrabajoFalsa` | Cuenta guardados sin persistir |
+| `ContextoPruebasSqlite` | Contexto EF en memoria para integración SQLite |
 | `AuditoriaFalsa` | Acumula acciones para asserciones |
 | `HasheadorFalso` | Hash determinista `h:secreto` |
 | `RelojFijo` | `TimeProvider` con hora y zona UTC |
@@ -97,11 +102,10 @@ En CI se ejecuta en `Release` y se publica el `.trx` como artefacto.
 
 | Área | Qué falta | Prioridad |
 | :-- | :-- | :-- |
-| Idempotencia | Índice único y prueba de dos solicitudes concurrentes | Alta |
-| DIAN | CUDE/UBL contra el anexo técnico, rango agotado y resolución vencida | Alta |
-| Seguridad | Escalada de privilegios y `PagoPuntos` fabricado (ver `pendientes-ui.md`) | Alta |
-| GUI | Pruebas de ViewModels y flujos de pantalla | Media |
-| Concurrencia | Pruebas contra PostgreSQL con dos sesiones y bloqueo | Media (requiere PostgreSQL) |
+| Idempotencia | Prueba de dos solicitudes concurrentes con la misma `ClaveIdempotencia` (el índice único ya existe) | Alta |
+| Seguridad | Escalada de privilegios por rol (ver `pendientes-ui.md`) | Alta |
+| GUI | Ampliar las pruebas de `GUI/` a más ViewModels y flujos de pantalla | Media |
+| Concurrencia | Pruebas con dos sesiones sobre SQLite y bloqueo de turno (ADR-010) | Media |
 | Carga | Venta y descuento de stock < 1 s | Baja |
 | APIs reales | Clientes de TRM, código de barras y correo con servidor simulado | Baja |
 

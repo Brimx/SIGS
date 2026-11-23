@@ -1,48 +1,28 @@
 # Manual de usuario y operación
 
-> **Estado de la interfaz.** La GUI Avalonia ya incluye login, POS, turnos, clientes, inventario y dashboard. Gestión de personal, configuración de integraciones y respaldos todavía no tienen pantalla. Hay hallazgos de seguridad e integridad abiertos (ver [`pendientes-ui.md`](pendientes-ui.md)); no distribuya ni opere con dinero real hasta cerrarlos. Este manual describe la operación de los módulos disponibles y, donde no hay pantalla, las reglas del servicio.
+> **Estado de la interfaz.** La GUI Avalonia incluye login, POS, turnos, clientes, inventario, compras, contabilidad, personal, dashboard y configuración. Los parámetros de negocio y los respaldos se gestionan desde los servicios, no desde una pantalla dedicada. Hay hallazgos de seguridad e integridad abiertos (ver [`pendientes-ui.md`](pendientes-ui.md)); no distribuya ni opere con dinero real hasta cerrarlos. Este manual describe la operación de los módulos disponibles y, donde no hay pantalla, las reglas del servicio.
 
 ## 1. Primer arranque
 
 1. Instale el .NET SDK 10.
-2. Clone el repositorio y elija el modo de persistencia:
-   - **Modo SQLite local (predeterminado / zero-config):**
-     Ejecute directamente `dotnet run --project Supermercado.GUI`.
-     La base se crea sola en:
-     - Windows: `%LOCALAPPDATA%\SIGS\sigs.db`
-     - Linux: `~/.local/share/SIGS/sigs.db`
-   - **Modo PostgreSQL central (LAN / multi-caja):**
-     Inicie el contenedor de PostgreSQL con `docker compose up -d`.
-     Para crear las tablas exactas y cargar la semilla demo completa (catálogo retail con precios reales de Éxito/Olímpica, inventario FEFO, 10 empleados con credenciales y ventas DIAN), aplique el script canónico:
-     ```bash
-     docker compose exec -T postgres psql -U sigs_user -d sigs < docs/postgresql-schema.sql
-     # O directamente con el cliente psql:
-     psql -h localhost -U sigs_user -d sigs -f docs/postgresql-schema.sql
-     ```
-     Defina la variable de entorno y ejecute:
-     ```bash
-     export SIGS_POSTGRES_CONNECTION="Host=localhost;Port=5432;Database=sigs;Username=sigs_user;Password=sigs_password;"
-     dotnet run --project Supermercado.GUI
-     ```
-3. La inicialización crea las tablas, los índices únicos de idempotencia y siembra roles, cargos, impuestos, una caja y los parámetros iniciales en el motor seleccionado.
-4. Para cargar un catálogo completo de prueba, inventario, un turno abierto y las cuentas de prueba para los 10 roles, presione el botón **«Cuentas de Prueba y Base Demo (10 Roles)»** en la pantalla inicial de inicio de sesión y luego **«Sembrar Base Demo»**.
+2. Clone el repositorio y ejecute `dotnet run --project Supermercado.GUI`. La persistencia es SQLite local (*zero-config*): no se instala ni se configura ningún motor externo. La base se crea sola en:
+   - Windows: `%LOCALAPPDATA%\SIGS\sigs.db`
+   - Linux: `~/.local/share/SIGS/sigs.db`
+3. La inicialización crea las tablas, los índices únicos de idempotencia y siembra los 4 roles, cargos, impuestos, una caja y los parámetros iniciales en SQLite.
+4. Para cargar el catálogo de prueba, inventario, un turno abierto y las cuentas demo, abra el panel de cuentas de prueba en la pantalla de inicio de sesión y presione **«Sembrar Base Demo (4 Roles + Catálogo + Turno)»**.
 
-### Cuentas y credenciales demo (10 roles)
+### Cuentas y credenciales demo (4 roles)
 
 La pantalla de login cuenta con accesos directos (*chips*) para autocompletar las credenciales de cada rol con un solo clic:
 
 | Rol | Usuario | Contraseña | PIN Caja / Autorización | Nivel / Pantalla principal |
 | :-- | :-- | :-- | :-- | :-- |
-| **Administrador** | `admin` | `Admin123*` | `1111` | Acceso irrestricto (POS + 5 módulos de Back-Office) |
+| **Admin (Administrador)** | `admin` | `Admin123*` | `1111` | Administración general y parámetros |
 | **Cajero** | `cajero` | `Cajero123*` | `1234` | POS, Turno/Arqueo y Clientes desde la barra lateral |
-| **Supervisor** | `supervisor` | `Super123*` | `9988` | POS + PIN de autorización en caja para retiros y anulaciones |
 | **Gerente** | `gerente` | `Gerente123*` | `3344` | Panel Gerencial, Personal, Finanzas y Métricas |
 | **Bodeguero** | `bodega` | `Bodega123*` | `2233` | Inventario FEFO, Mermas y Recepción de Lotes |
-| **Compras** | `compras` | `Compras123*` | `4455` | Compras, Proveedores (NIT Módulo 11) y Reabastecimiento |
-| **Contador** | `contador` | `Conta123*` | `5566` | Contabilidad DIAN, Desglose IVA (0%/5%/19%) y Cierres Z |
-| **Soporte Técnico** | `soporte` | `Soporte123*` | `6677` | Auditoría del sistema, diagnósticos y parámetros técnicos |
-| **Atención al Cliente** | `atencion` | `Atencion123*` | `7788` | Gestión de Clientes, Habeas Data y Fidelización |
-| **Analista de Datos / BI** | `analista` | `Analista123*` | `8899` | Reportes, auditoría y métricas operativas |
+
+> **Objetivo futuro fuera del alcance de `main`.** La arquitectura extendida (PostgreSQL central, Docker, Supabase/Outbox y facturación electrónica) se conserva en la rama `completo`; no son funcionalidades de esta entrega. Los roles adicionales (Supervisor, Compras, Contador, Soporte, Atención al Cliente y Analista de Datos) no existen: «Supervisor» es un mecanismo de autorización (`ValidarSupervisorAsync`), no un rol; «Compras» es un permiso (`GestionarCompras`) y un módulo de la GUI.
 
 ### Cambio obligatorio de clave
 
@@ -85,11 +65,11 @@ Mientras `DebeCambiarClave` esté activo, cualquier operación protegida lanza `
 2. Agregue líneas por código de barras. Los productos pesados se ingresan en gramos; los unitarios, en unidades. Los códigos EAN-13 de balanza con prefijo 20–29 se interpretan como PLU + gramos.
 3. El sistema valida que el producto exista, esté activo, tenga impuesto y haya stock en estante.
 4. El descuento es FEFO: primero el lote que vence antes; los vencidos no se venden.
-5. Si el cliente está registrado, asígnelo por documento para acumular o redimir puntos (ver sección 5).
-6. Registre uno o varios pagos: efectivo, tarjeta (últimos 4 dígitos), transferencia (referencia) o puntos.
+5. Si el cliente está registrado, asígnelo por documento para identificar la venta (ver sección 5).
+6. Registre uno o varios pagos: efectivo, tarjeta (últimos 4 dígitos) o transferencia (referencia).
 7. Si el pago supera el total, el sistema calcula el cambio. La venta se completa cuando los pagos cubren el total.
-8. Si la DIAN está habilitada, se genera el Documento Equivalente POS local (CUDE, XML y QR). **No se transmite a la DIAN.**
-9. Venta, puntos, documento y movimientos de stock se guardan en una sola transacción.
+8. El ticket incluye el código de tarifa del IVA según la línea (`PlantillaTicketPos.ObtenerCodigoTarifa`). **No se emite documento electrónico ni se transmite a la DIAN.**
+9. Venta y movimientos de stock se guardan en una sola transacción.
 
 ### Anular
 
@@ -136,14 +116,14 @@ Mientras `DebeCambiarClave` esté activo, cualquier operación protegida lanza `
 - **Atender:** marca la solicitud como `Atendido` y traslada de bodega a estante.
 - **Cancelar:** disponible solo mientras esté `Pendiente`; una solicitud cerrada no se reabre.
 
-## 5. Clientes y puntos
+## 5. Clientes
 
 - **Alta:** documento único (5–15 dígitos), nombres, apellidos, teléfono y correo; el backend valida el formato.
-- **Habeas Data:** el cliente autoriza o revoca el tratamiento de datos. Sin autorización, el documento DIAN se emite como «Consumidor Final» y no se imprimen sus datos.
-- **Acumulación:** se gana `floor(base / puntos.pesos_por_punto)`, donde `base = total − pagos con puntos`. Un valor `0` desactiva la acumulación.
-- **Redención:** cada punto vale `puntos.valor_punto_pesos`; no se puede redimir más que el saldo ni más que el total. Un valor `0` desactiva la redención.
-- **Anulación:** revierte los puntos ganados y devuelve los redimidos; el saldo nunca queda negativo.
-- **Permisos:** gestionar clientes exige `GestionarClientes`; el cajero puede buscar por documento con `Vender`.
+- **Habeas Data:** el cliente autoriza o revoca el tratamiento de datos. Sin autorización, la venta registra «Consumidor Final» (`Venta.DocumentoAdquirente` / `NombreAdquirente`) y no se imprimen sus datos.
+- **Venta:** el cajero puede buscar al cliente por documento con permiso `Vender`.
+- **Permisos:** gestionar clientes exige `GestionarClientes`.
+
+> **Objetivo futuro fuera del alcance de `main`.** La fidelización con puntos (saldo, acumulación y redención) y los parámetros `puntos.*` se conservan en la rama `completo`; no están disponibles en esta entrega.
 
 ## 6. Personal y roles
 
@@ -188,7 +168,7 @@ Mientras `DebeCambiarClave` esté activo, cualquier operación protegida lanza `
 
 ## 9. Parámetros
 
-Los valores se editan desde la aplicación con permiso `GestionarPersonal`. El guardado administrativo exige permiso y deja auditoría; el respaldo interno (TRM) es atómico y no exige permiso.
+Los valores se gestionan desde los servicios con permiso `GestionarPersonal`. El guardado administrativo exige permiso y deja auditoría; el respaldo interno (TRM) es atómico y no exige permiso.
 
 | Clave | Uso |
 | :-- | :-- |
@@ -196,14 +176,15 @@ Los valores se editan desde la aplicación con permiso `GestionarPersonal`. El g
 | `inventario.dias_alerta` | Ventana de vencimiento |
 | `caja.tolerancia_arqueo` | Diferencia aceptada en pesos |
 | `nomina.*` | Salario mínimo, auxilio y deducciones |
-| `integraciones.*` | Timeout, reintentos, respaldo de TRM e interruptores `trm_habilitada` / `codigo_barras_habilitado` (`1` activo, `0` apagado) |
-| `puntos.pesos_por_punto` | Pesos de compra por punto ganado (`0` desactiva la acumulación) |
-| `puntos.valor_punto_pesos` | Valor en pesos de un punto al redimir (`0` desactiva la redención) |
+| `integraciones.timeout_seg` / `integraciones.reintentos` | Consulta de TRM |
+| `integraciones.trm_centavos` / `integraciones.trm_fecha` | Último valor de TRM guardado como respaldo |
+| `integraciones.trm_habilitada` / `integraciones.codigo_barras_habilitado` | Interruptores (`1` activo, `0` apagado) |
+| `integraciones.trm_token` / `integraciones.resend_token` / `integraciones.resend_remitente` | Integraciones vigentes |
 | `tributario.responsable_iva` | `1` extrae IVA; `0` lo desactiva (régimen no responsable) |
-| `dian.habilitado` | `1` genera el Documento Equivalente POS; `0` lo apaga |
-| `dian.resolucion_*`, `dian.prefijo`, `dian.rango_*`, `dian.clave_tecnica`, `dian.siguiente_consecutivo`, `dian.tipo_ambiente` | Datos de la resolución y numeración DIAN |
-| `integraciones.supabase_url` / `_key` / `_habilitado` | Réplica Outbox hacia Supabase/Neon; use solo la clave `anon` |
-| `negocio.nombre` / `nit` / `direccion` / `telefono` | Datos del emisor en ticket y XML |
+| `negocio.nombre` / `nit` / `direccion` / `telefono` | Datos del emisor en el ticket |
+| `sistema.carpeta_respaldos` | Destino de los respaldos |
+
+Estas son las claves definidas en `ClavesParametro` (`Supermercado.Entidades/Seguridad.cs`). No existen claves `puntos.*`, `dian.*` ni `integraciones.supabase_*` en `main`.
 
 Un parámetro ausente **no** tiene valor por defecto silencioso: lanza `ParametroFaltanteException`. Excepción: los interruptores `integraciones.*_habilitad*` se consideran activos si faltan.
 
@@ -215,17 +196,19 @@ Un parámetro ausente **no** tiene valor por defecto silencioso: lanza `Parametr
 - Si todos los intentos fallan, se usa el último respaldo. Si nunca hubo uno, devuelve `null`.
 - Se puede apagar con `SIGS_TRM_HABILITADA=0` o con `integraciones.trm_habilitada=0`; en ese caso solo se usa el respaldo.
 
-## 11. Documento Equivalente POS DIAN
+## 11. Contabilidad fiscal (sin emisión DIAN)
 
-- Se genera localmente al cerrar la venta si `dian.habilitado = 1`.
-- Incluye CUDE (SHA-384), XML UBL 2.1, prefijo, consecutivo y cadena QR.
-- El adquirente es el cliente solo si autorizó el tratamiento de datos; si no, «Consumidor Final».
-- **No transmite, no firma y no maneja contingencia.** El documento no tiene validez fiscal hasta completar ese circuito.
-- La resolución vencida o el rango agotado bloquean la venta con `ValidacionException`; revise `dian.*`.
+- La pantalla de contabilidad calcula el consolidado fiscal y el desglose de IVA por tarifa (`C` / `M` / `J`, según `PlantillaTicketPos.ObtenerCodigoTarifa`).
+- Exporta el consolidado a CSV (`Declaracion_Fiscal_DIAN_*.csv`) y genera un PDF de ventas (`ContabilidadDianViewModel`).
+- El ticket usa los datos de `negocio.*`, el código de tarifa y `Venta.DocumentoAdquirente` / `NombreAdquirente`, con constantes de consumidor final; la validación del NIT dispone de `Validador.CalcularDigitoVerificacionNit`.
+- Los textos legales de la aplicación citan la Resolución 000165 como referencia, sin certificar emisión.
+- **No emite documento electrónico ni transmite a la DIAN.** No hay CUDE, XML UBL, QR ni consecutivos en `main`.
+
+> **Objetivo futuro fuera del alcance de `main`.** La emisión, firma y transmisión de documentos electrónicos, los parámetros `dian.*` y la gestión de resolución/vigencia/folios se conservan en la rama `completo`.
 
 ## 12. Reportes PDF
 
-- Ticket POS de 80 mm con totales, pagos, puntos y datos DIAN si existen.
+- Ticket POS de 80 mm con totales, pagos y datos del emisor y del adquirente; incluye el código de tarifa del IVA.
 - Desprendible de nómina (permiso `GestionarPersonal`).
 - Reporte de ventas por rango (permiso `VerReportes`).
 - Se generan con QuestPDF; no requieren conexión.
@@ -241,8 +224,6 @@ Un parámetro ausente **no** tiene valor por defecto silencioso: lanza `Parametr
 | «La caja está inactiva» | `Caja.Activa = false` | Activar la caja |
 | «La solicitud ya se cerró» | Reabastecimiento atendido o cancelado | Crear una solicitud nueva |
 | «Falta el parámetro …» | Clave ausente en `Parametro` | Cargar el parámetro |
-| «La resolución DIAN venció» | `dian.resolucion_vigencia_hasta` superada | Actualizar la resolución o apagar `dian.habilitado` |
-| «Se agotó el rango autorizado» | `dian.siguiente_consecutivo` supera `dian.rango_hasta` | Solicitar nueva numeración a la DIAN |
 | La base no aparece | Ruta de datos distinta | Revisar `RutasDatos.BaseDatosPorDefecto()` |
 
 ## 14. Buenas prácticas de operación
@@ -250,10 +231,10 @@ Un parámetro ausente **no** tiene valor por defecto silencioso: lanza `Parametr
 - Cierre el turno antes de cambiar de cajero; no comparta usuarios.
 - Registre la merma en el momento; no la acumule para el cierre.
 - No edite la base directamente: use los servicios para conservar auditoría.
-- Programe respaldos con `VACUUM INTO` o la API de respaldo de SQLite, no con una copia en caliente (ver [`despliegue.md`](despliegue.md)).
-- Revise los parámetros de nómina al inicio de cada año y los de la DIAN antes de que venza la resolución.
+- Use `ServicioRespaldo` (copia con `File.Copy` y deja auditoría): copie con la aplicación cerrada o use la herramienta `sqlite3` con `VACUUM INTO` como recomendación operativa de SQLite, no como una función del sistema (ver [`despliegue.md`](despliegue.md)).
+- Revise los parámetros de nómina al inicio de cada año y los datos de `negocio.*` antes de imprimir tickets.
 - Trate los datos del cliente como información personal: no los exporte ni los comparta sin autorización (Ley 1581).
-- Use solo la clave `anon` de Supabase en el cliente; nunca `service_role`.
+- No comparta los tokens de integración (`integraciones.trm_token`, `integraciones.resend_token`).
 
 ## 15. Configuración: apariencia, textos legales y Acerca de
 

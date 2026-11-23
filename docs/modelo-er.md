@@ -111,6 +111,10 @@ erDiagram
     Venta ||--o{ Pago : cobra
     Cliente |o--o{ Venta : "compra (opcional)"
     Producto ||--o{ DetalleVenta : vendido
+    Caja ||--o{ VentaEnEspera : "guarda"
+    Empleado ||--o{ VentaEnEspera : "inicia"
+    TurnoCaja ||--o{ RetiroCaja : "registra retiros"
+    Empleado ||--o{ RetiroCaja : "autoriza"
 
     Caja {
         int Id PK
@@ -135,17 +139,9 @@ erDiagram
         smallint Estado
         string MotivoAnulacion
         int ClienteId FK "nulo = consumidor final"
-        int PuntosGanados
-        int PuntosRedimidos
         string ClaveIdempotencia "único cuando no nulo"
         string DocumentoAdquirente
         string NombreAdquirente
-        string Cude
-        string CadenaQr
-        string PrefijoDian
-        long ConsecutivoDian
-        datetime FechaValidacionDian
-        string XmlUbl
     }
     Cliente {
         int Id PK
@@ -155,7 +151,6 @@ erDiagram
         string Telefono
         string Correo
         bool Activo
-        int PuntosAcumulados
         bool AutorizaTratamientoDatos
         datetime FechaAutorizacion
         string TerminalAutorizacion
@@ -177,11 +172,29 @@ erDiagram
         string Discriminator
         string UltimosDigitos
         string Referencia
-        int Puntos "solo PagoPuntos"
+    }
+    VentaEnEspera {
+        int Id PK
+        int CajaId
+        int EmpleadoId
+        string IdentificadorCliente
+        int ClienteId "nulo = sin cliente"
+        string LineasJson
+        long TotalEstimado
+        string Nota
+        bool Recuperada
+    }
+    RetiroCaja {
+        int Id PK
+        int TurnoCajaId
+        long Monto
+        string Motivo
+        int EmpleadoAutorizaId
+        datetime Fecha
     }
 ```
 
-`Pago` es TPH: `PagoEfectivo`, `PagoTarjeta`, `PagoTransferencia` y `PagoPuntos` comparten la tabla `Pago`. `DetalleVenta` congela precio, subtotal y puntos básicos de IVA al momento de la venta.
+`Pago` es TPH: `PagoEfectivo`, `PagoTarjeta` y `PagoTransferencia` comparten la tabla `Pago`. `DetalleVenta` congela precio, subtotal y puntos básicos de IVA al momento de la venta. `VentaEnEspera` guarda las líneas en `LineasJson`; `RetiroCaja` registra el monto, el motivo y quién autoriza el retiro del turno.
 
 ## Personal y seguridad
 
@@ -305,45 +318,26 @@ erDiagram
 
 `(EmpleadoId, WidgetId)` es único. `Parametro` es una tabla clave-valor sin FK; su significado vive en `ClavesParametro`.
 
-## Sincronización
-
-```mermaid
-erDiagram
-    EventoOutbox {
-        int Id PK
-        string TipoEvento
-        string EntidadId
-        string PayloadJson
-        bool Procesado
-        datetime FechaProcesado
-        int Reintentos
-        string UltimoError
-        datetime FechaCreacion
-    }
-```
-
-`EventosOutbox` no tiene FK: guarda el evento serializado y el identificador de la entidad local. `(Procesado, Id)` ordena los pendientes; no es un índice único.
-
 ## Correspondencia entidad → tabla
 
 | Entidad | Tabla | TPH |
 | :-- | :-- | :-- |
 | `Producto` / `ProductoUnitario` / `ProductoPesado` | `Productos` | Sí |
 | `Impuesto` / `Iva` / `Retencion` | `Impuestos` | Sí |
-| `Pago` / `PagoEfectivo` / `PagoTarjeta` / `PagoTransferencia` / `PagoPuntos` | `Pago` | Sí |
+| `Pago` / `PagoEfectivo` / `PagoTarjeta` / `PagoTransferencia` | `Pago` | Sí |
 | `Cliente` | `Clientes` | No |
-| `EventoOutbox` | `EventosOutbox` | No |
+| `VentaEnEspera` | `VentasEnEspera` | No |
+| `RetiroCaja` | `RetirosCaja` | No |
 | `StockEstante` / `StockBodega` | Tablas propias | No |
 | Resto de entidades | Nombre del DbSet | No |
 
 ## Brechas del modelo
 
 1. **Sin FK en identificadores sueltos:** `ProductoId` en `StockEstante`, `StockBodega`, `MovimientoInventario`, `Merma` y `Reabastecimiento`; `EmpleadoId` en `Gasto`, `RegistroAuditoria`, `Nomina`, `IntentoAcceso` y `ConfiguracionWidget`. Se validan en servicios.
-2. **Sin token de concurrencia:** no hay `xmin` ni `RowVersion` en stock, venta ni turno.
+2. **Sin token de concurrencia:** no hay tokens de concurrencia en stock, venta ni turno; su incorporación es objetivo futuro conservado en la rama `completo`.
 3. **Sin índice parcial de turno abierto:** la regla “una caja, un turno abierto” se valida en `ServicioCaja`, no en la base.
 4. **`Venta.TurnoCajaId` sin navegación:** se guarda el identificador, pero no hay FK configurada.
 5. **`Venta.ClaveIdempotencia`** tiene índice único; el arranque detecta claves duplicadas previas y no las borra automáticamente (ADR-021).
-6. **DIAN sin transmisión:** los campos `Cude`, `XmlUbl` y `CadenaQr` se generan localmente; no hay firma ni envío.
-7. **SQLite no impone longitudes ni tipos.** El esquema objetivo de PostgreSQL está en [`diccionario-datos.md`](diccionario-datos.md).
+6. **SQLite no impone longitudes ni tipos.** El esquema extendido está en la rama `completo`, objetivo futuro fuera del alcance de `main`.
 
-Estas brechas son deuda técnica documentada; las tres primeras se abordan en la migración a PostgreSQL descrita en [`arquitectura.md`](arquitectura.md#concurrencia-multi-terminal-deuda-técnica).
+Estas brechas son deuda técnica documentada; su evolución (concurrencia, tipos y longitudes) se conserva como objetivo futuro en la rama `completo`.
