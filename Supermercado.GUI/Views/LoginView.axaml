@@ -19,16 +19,10 @@
             <StackPanel Spacing="18">
                 <!-- Cabecera de Identidad de Marca -->
                 <StackPanel Spacing="6" HorizontalAlignment="Center">
-                    <Border Background="{DynamicResource BrushPrimarySubtle}"
-                            CornerRadius="{StaticResource RadiusMedium}"
-                            Width="48" Height="48"
-                            HorizontalAlignment="Center">
-                        <LucideIcon Kind="Store"
-                                    Size="24"
-                                    Foreground="{DynamicResource BrushPrimaryText}"
-                                    HorizontalAlignment="Center"
-                                    VerticalAlignment="Center" />
-                    </Border>
+                    <Image Source="avares://Supermercado.GUI/Assets/sigs-logo-circulo.png"
+                           Width="96" Height="96"
+                           RenderOptions.BitmapInterpolationMode="HighQuality"
+                           HorizontalAlignment="Center" />
                     <TextBlock Text="SIGS · POS &amp; Gestión"
                                HorizontalAlignment="Center"
                                FontFamily="{StaticResource FontFamilyStackSans}"
