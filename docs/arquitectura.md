@@ -227,7 +227,7 @@ SIGS opera de forma autónoma sobre **SQLite local** con inicialización automá
 
 ## Pruebas
 
-La suite xUnit vive en 22 archivos `.cs` en la raíz de `Supermercado.Pruebas/`, sin subcarpetas, con 425 pruebas en verde. Los dobles compartidos están en `Falsos.cs` y `TelegramFalsos.cs`; los repositorios migrados usan `ContextoPruebasSqlite` con una base SQLite en memoria por escenario, desactivando FK y dos índices únicos propios del modelo para reproducir el comportamiento de los antiguos falsos en memoria. La compilación de la solución termina con 0 advertencias y 0 errores.
+La suite xUnit vive en 22 archivos `.cs` en la raíz de `Supermercado.Pruebas/`, sin subcarpetas, con la suite en verde (conteo vigente en [`plan-pruebas.md`](plan-pruebas.md)). Los dobles compartidos están en `Falsos.cs` y `TelegramFalsos.cs`; los repositorios migrados usan `ContextoPruebasSqlite` con una base SQLite en memoria por escenario, desactivando FK y dos índices únicos propios del modelo para reproducir el comportamiento de los antiguos falsos en memoria. La compilación de la solución termina con 0 advertencias y 0 errores.
 
 ## Decisiones relacionadas
 

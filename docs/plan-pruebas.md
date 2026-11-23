@@ -5,10 +5,12 @@
 | Métrica | Valor |
 | :-- | :-- |
 | framework | xUnit 2.9 |
-| pruebas | **425** |
-| resultado | 425 correctas, 0 fallidas, 0 omitidas |
+| pruebas | **443** |
+| resultado | 443 correctas, 0 fallidas, 0 omitidas |
 | duración | ~5 s (última ejecución local, 2026-11-22) |
 | cobertura | reglas de negocio, servicios, GUI, PDF e integración SQLite |
+
+Este archivo es el **único lugar** donde se registra el conteo de pruebas: el resto de la documentación remite aquí. Actualícelo con la salida real de `dotnet test` y la fecha de la medición.
 
 Comando:
 

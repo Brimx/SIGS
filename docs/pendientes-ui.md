@@ -1,6 +1,6 @@
 # Pendientes de interfaz (handoff backend → UI)
 
-Contrato backend→GUI y auditoría posterior a la implementación de la interfaz. La GUI ya tiene POS, turnos, inventario, dashboard, clientes y login; la revisión del **2026-11-02** encontró riesgos nuevos y controles de backend aún abiertos. La suite tiene **425 pruebas en verde**. Esta nota no certifica preparación para producción.
+Contrato backend→GUI y auditoría posterior a la implementación de la interfaz. La GUI ya tiene POS, turnos, inventario, dashboard, clientes y login; la revisión del **2026-11-02** encontró riesgos nuevos y controles de backend aún abiertos. La suite está en verde; el conteo vigente y su fecha están en [`plan-pruebas.md`](plan-pruebas.md). Esta nota no certifica preparación para producción.
 
 ## 1. Validación de formularios
 
@@ -152,7 +152,7 @@ Esta revisión se actualizó después de aplicar correcciones de producción. «
 | **P2** | Migración inicial no incremental | **Sigue abierto.** La migración genera el DDL desde el modelo actual al ejecutarse; bases instaladas con esquema anterior no reciben alteraciones incrementales. | `Migraciones/Inicial.cs:11-18`; `InicializadorBaseDatos.cs:10-15`. |
 | **P2** | Validación de formularios | **Parcial.** Hay verificación de DV NIT y validación final en backend, pero en el formulario de cliente la GUI solo valida documento/nombre no vacíos; no valida por campo con las mismas reglas ni normaliza antes de enviar. | `RegistroUsuarioViewModel.cs:230-260`; `Validador.cs`; `ValidadorDian.cs`. |
 
-**Conclusión de riesgo:** el acceso demo, los dos P0 de pagos/privilegios, el reintento, el scope DI, los traslados vencidos y el cálculo del margen quedaron corregidos y probados. Aún no recomiendo producción: continúan cifrado/gestión de secretos, concurrencia entre terminales, sesión que no se revalida ante cambios externos, migración incremental y otros P2 listados en esta sección. La suite actual tiene 425 pruebas; su conteo por sí solo no certifica todos los controles.
+**Conclusión de riesgo:** el acceso demo, los dos P0 de pagos/privilegios, el reintento, el scope DI, los traslados vencidos y el cálculo del margen quedaron corregidos y probados. Aún no recomiendo producción: continúan cifrado/gestión de secretos, concurrencia entre terminales, sesión que no se revalida ante cambios externos, migración incremental y otros P2 listados en esta sección. La suite actual está en verde; su conteo por sí solo no certifica todos los controles.
 
 ## 9. Pendientes de la pantalla de Configuración (2026-11-02)
 

@@ -26,7 +26,7 @@ Referencias verificadas sobre el estado final de la rama tras la simplificación
 
 ## Métricas antes/después
 
-| Indicador | Antes (`ba8d926`) | Después |
+| Indicador | Antes (`ba8d926`) | Después (cierre del refactor) |
 | :-- | :-- | :-- |
 | `.cs` en Entidades | 58 | 11 |
 | `.cs` en Datos | 13 | 12 |
@@ -45,5 +45,5 @@ Referencias verificadas sobre el estado final de la rama tras la simplificación
 - No hay abstracción de unidad de trabajo: los repositorios por módulo comparten el contexto y una sola llamada a `GuardarAsync` confirma cada caso de uso.
 - No hay adaptadores internos: la composición directa vive en `Supermercado.Logica/Composicion.cs` y `Supermercado.Datos/Contexto.cs`.
 - Las integraciones conservan sus contratos y rutas finales, con implementaciones de reserva usadas solo cuando el límite está apagado.
-- La suite quedó en 425 pruebas en verde, con falsos sobre SQLite en memoria y 22 archivos planos en `Supermercado.Pruebas/`.
+- La suite quedó en verde al cierre del refactor, con falsos sobre SQLite en memoria y 22 archivos planos en `Supermercado.Pruebas/`.
 - `ViewLocator` y el XAML de `Views/` se mantuvieron intactos; los cambios de GUI se concentraron en `ServiciosGui.cs` y `ViewModels/`.
