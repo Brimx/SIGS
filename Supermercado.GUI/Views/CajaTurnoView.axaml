@@ -6,9 +6,7 @@
              x:DataType="vm:CajaTurnoViewModel"
              FontFamily="{StaticResource FontFamilyPlex}">
 
-    <ScrollViewer Margin="16"
-                  VerticalScrollBarVisibility="Auto"
-                  HorizontalScrollBarVisibility="Auto">
+    <ScrollViewer Margin="16">
         <StackPanel Spacing="16" MaxWidth="960">
             <!-- Estado Actual del Turno -->
             <Border Background="{DynamicResource BrushSurface}"
@@ -36,7 +34,7 @@
                         <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding TotalRetirosFormateado}" FontFamily="{StaticResource FontFamilyPlexCondensed}" FontWeight="{StaticResource FontWeightBold}" Foreground="{DynamicResource BrushWarningText}" />
 
                         <TextBlock Grid.Row="6" Grid.Column="0" Text="Apertura:" Foreground="{DynamicResource BrushTextSecondary}" />
-                        <TextBlock Grid.Row="6" Grid.Column="1" Text="{Binding FechaAperturaTexto}" FontFamily="{StaticResource FontFamilyPlexCondensed}" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding FechaAperturaTexto}" />
+                        <TextBlock Grid.Row="6" Grid.Column="1" Text="{Binding FechaAperturaTexto}" FontFamily="{StaticResource FontFamilyPlexCondensed}" />
                     </Grid>
 
                     <TextBlock Text="{Binding MensajeEstado}"
@@ -135,9 +133,9 @@
                                FontSize="{StaticResource FontSizeBody}"
                                Foreground="{DynamicResource BrushTextSecondary}" />
 
-                    <WrapPanel>
-                        <StackPanel Width="180" Margin="0,0,12,8" Spacing="4">
-                            <TextBlock Text="Monto a Retirar (COP)" FontSize="{StaticResource FontSizeCaption}" FontWeight="{StaticResource FontWeightSemiBold}" Foreground="{DynamicResource BrushTextSecondary}" TextWrapping="Wrap" />
+                    <Grid ColumnDefinitions="190,12,*,12,170,12,170,12,Auto">
+                        <StackPanel Grid.Column="0" Spacing="4">
+                            <TextBlock Text="Monto a Retirar (COP)" FontSize="{StaticResource FontSizeCaption}" FontWeight="{StaticResource FontWeightSemiBold}" Foreground="{DynamicResource BrushTextSecondary}" />
                             <NumericUpDown Value="{Binding MontoRetiroInput}"
                                            Minimum="1000"
                                            Increment="10000"
@@ -147,23 +145,22 @@
                                            MinHeight="40" />
                         </StackPanel>
 
-                        <StackPanel Width="220" Margin="0,0,12,8" Spacing="4">
-                            <TextBlock Text="Motivo / Concepto de Recogida" FontSize="{StaticResource FontSizeCaption}" FontWeight="{StaticResource FontWeightSemiBold}" Foreground="{DynamicResource BrushTextSecondary}" TextWrapping="Wrap" />
+                        <StackPanel Grid.Column="2" Spacing="4">
+                            <TextBlock Text="Motivo / Concepto de Recogida" FontSize="{StaticResource FontSizeCaption}" FontWeight="{StaticResource FontWeightSemiBold}" Foreground="{DynamicResource BrushTextSecondary}" />
                             <TextBox Text="{Binding MotivoRetiroInput}"
                                      PlaceholderText="Ej. Recogida de seguridad caja fuerte"
-                                     ToolTip.Tip="Motivo / Concepto de Recogida"
                                      MinHeight="40" />
                         </StackPanel>
 
-                        <StackPanel Width="150" Margin="0,0,12,8" Spacing="4">
-                            <TextBlock Text="Usuario Supervisor" FontSize="{StaticResource FontSizeCaption}" FontWeight="{StaticResource FontWeightSemiBold}" Foreground="{DynamicResource BrushTextSecondary}" TextWrapping="Wrap" />
+                        <StackPanel Grid.Column="4" Spacing="4">
+                            <TextBlock Text="Usuario Supervisor" FontSize="{StaticResource FontSizeCaption}" FontWeight="{StaticResource FontWeightSemiBold}" Foreground="{DynamicResource BrushTextSecondary}" />
                             <TextBox Text="{Binding UsuarioSupervisorRetiroInput}"
                                      PlaceholderText="Ej. super1"
                                      MinHeight="40" />
                         </StackPanel>
 
-                        <StackPanel Width="140" Margin="0,0,12,8" Spacing="4">
-                            <TextBlock Text="PIN Supervisor" FontSize="{StaticResource FontSizeCaption}" FontWeight="{StaticResource FontWeightSemiBold}" Foreground="{DynamicResource BrushTextSecondary}" TextWrapping="Wrap" />
+                        <StackPanel Grid.Column="6" Spacing="4">
+                            <TextBlock Text="PIN Supervisor" FontSize="{StaticResource FontSizeCaption}" FontWeight="{StaticResource FontWeightSemiBold}" Foreground="{DynamicResource BrushTextSecondary}" />
                             <TextBox Text="{Binding PinSupervisorRetiroInput}"
                                      PasswordChar="•"
                                      PlaceholderText="PIN / Clave"
@@ -171,10 +168,10 @@
                                      MinHeight="40" />
                         </StackPanel>
 
-                        <Button Command="{Binding RegistrarRetiroEfectivoCommand}"
+                        <Button Grid.Column="8"
+                                Command="{Binding RegistrarRetiroEfectivoCommand}"
                                 IsEnabled="{Binding TurnoAbierto}"
                                 VerticalAlignment="Bottom"
-                                Margin="0,0,0,8"
                                 Classes="Primary" Theme="{DynamicResource SolidButton}"
                                 MinHeight="40"
                                 Padding="16,0">
@@ -183,19 +180,11 @@
                                 <TextBlock Text="Registrar Retiro" FontWeight="{StaticResource FontWeightBold}" />
                             </StackPanel>
                         </Button>
-                    </WrapPanel>
+                    </Grid>
 
                     <!-- Historial de Retiros del Turno Actual -->
-                    <ListBox ItemsSource="{Binding RetirosTurnoActual}"
-                             Background="Transparent"
-                             BorderThickness="0"
-                             MaxHeight="240">
-                        <ListBox.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <VirtualizingStackPanel />
-                            </ItemsPanelTemplate>
-                        </ListBox.ItemsPanel>
-                        <ListBox.ItemTemplate>
+                    <ItemsControl ItemsSource="{Binding RetirosTurnoActual}">
+                        <ItemsControl.ItemTemplate>
                             <DataTemplate x:DataType="ventas:RetiroCaja">
                                 <Border Background="{DynamicResource BrushSurfaceSubtle}"
                                         BorderBrush="{DynamicResource BrushBorderSubtle}"
@@ -208,9 +197,7 @@
                                         <TextBlock Grid.Column="2"
                                                    Text="{Binding Motivo}"
                                                    FontWeight="{StaticResource FontWeightMedium}"
-                                                   VerticalAlignment="Center"
-                                                   TextTrimming="CharacterEllipsis"
-                                                   ToolTip.Tip="{Binding Motivo}" />
+                                                   VerticalAlignment="Center" />
                                         <TextBlock Grid.Column="3"
                                                    Text="{Binding Monto, StringFormat='- $ {0:N0}'}"
                                                    FontFamily="{StaticResource FontFamilyPlexCondensed}"
@@ -220,8 +207,8 @@
                                     </Grid>
                                 </Border>
                             </DataTemplate>
-                        </ListBox.ItemTemplate>
-                    </ListBox>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
                 </StackPanel>
             </Border>
         </StackPanel>
