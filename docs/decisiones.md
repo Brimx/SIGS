@@ -259,7 +259,7 @@
 - **Resiliencia:** si se cae internet, la venta local no se detiene ni arroja error;
   el evento queda marcado como no procesado y reintenta con registro de fallas.
   El esquema SQL receptor para Supabase o Neon se suministra listo en
-  `docs/supabase-schema.sql` (rama `completo`).
+  la rama `completo`.
 
 > **Estado (2026-11):** retirado de `main` en `2c38285`. El Outbox y su esquema se conservan en la rama `completo`; `main` entrega solo SQLite local.
 
@@ -385,13 +385,13 @@
   - **Proveedor Dual en `Supermercado.Datos`:** Integrar `Npgsql.EntityFrameworkCore.PostgreSQL` (10.0.3) junto al proveedor SQLite existente.
     - Si la variable de entorno `SIGS_POSTGRES_CONNECTION` (o configuración explícita) está provista, `SigsDbContext` se inicializa con `opciones.UseNpgsql(...)`.
     - Si no está provista, se inicializa automáticamente con `opciones.UseSqlite(...)` apuntando a `~/.local/share/SIGS/sigs.db`.
-  - **Orquestación Local:** Incluir `docker-compose.yml` en la raíz del repositorio con la imagen oficial `postgres:17-alpine`, base de datos `sigs`, usuario `sigs_user` y puerto `5432`.
+  - **Orquestación Local:** Incluir el archivo de composición Docker en la raíz del repositorio con la imagen oficial `postgres:17-alpine`, base de datos `sigs`, usuario `sigs_user` y puerto `5432`.
   - **Inicialización Automática:** En `App.axaml.cs`, invocar `IInicializadorBaseDatos.CrearYSembrarAsync()` al arrancar para asegurar esquema, tablas, índices únicos de idempotencia y semillas mínimas sin importar el motor activo.
   - **10 Roles Canónicos:** Modelar en `NombresRol`, `ValoresIniciales` y la matriz de permisos los 10 roles clave con sus 18 permisos atómicos.
   - **Semilla y Login Demo:** Incorporar en `GeneradorDatosDemo` y en la vista de inicio de sesión (`LoginView` / `LoginViewModel`) la siembra automática y acceso rápido a credenciales de prueba para los 10 roles con un solo clic.
 - **Consecuencias:** soporte nativo tanto para entornos de producción LAN multi-terminal con PostgreSQL como para estaciones individuales o desarrollo zero-config con SQLite. El código de la capa lógica y de presentación no tiene acoplamiento con el motor de persistencia subyacente.
 
-> **Estado (2026-11):** el proveedor dual, `docker-compose.yml` y la lectura de `SIGS_POSTGRES_CONNECTION` se retiraron de `main` en `2c38285`. Sigue vigente la cobertura de roles, la semilla y la inicialización automática sobre SQLite.
+> **Estado (2026-11):** el proveedor dual, el archivo de composición Docker y la lectura de `SIGS_POSTGRES_CONNECTION` se retiraron de `main` en `2c38285`. Sigue vigente la cobertura de roles, la semilla y la inicialización automática sobre SQLite.
 
 ## ADR-028: Tokens de dos roles, puente con Semi y temas persistidos por máquina
 

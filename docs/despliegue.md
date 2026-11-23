@@ -198,5 +198,5 @@ El pipeline falla si el build tiene errores o alguna prueba falla. Las advertenc
 | La base se recrea vacía | Ruta distinta o carpeta sin permisos | Revisar `RutasDatos` y permisos |
 | `ServicioNoConfiguradoException` | Se pidió una integración con su cliente nulo | Activar la API o registrar la implementación real después de `AgregarLogica()` |
 | `ParametroFaltanteException` | Falta una clave | Insertar el parámetro con `GuardarAsync` |
-| Build falla por SDK | Versión distinta de .NET | Instalar .NET 10 y revisar `global.json` si existe |
+| Build falla por SDK | Versión distinta de .NET | Instalar .NET 10 y confirmar la versión con `dotnet --version` |
 | CI no encuentra el proyecto | Ruta o nombre cambiado | Actualizar `.github/workflows/ci.yml` |
