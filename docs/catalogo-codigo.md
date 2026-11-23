@@ -10,7 +10,7 @@ Inventario curado de módulos, tipos, contratos, constructores, métodos públic
 | `Supermercado.Datos` | 12 archivos `.cs`: `SigsDbContext`, repositorios por módulo, EF Core, SQLite, semilla y migración | Entidades |
 | `Supermercado.Logica` | 21 archivos `.cs`: casos de uso concretos, seguridad, cálculo, integraciones, reportes y dashboards | Datos, Entidades |
 | `Supermercado.GUI` | 33 archivos `.cs`: Avalonia 12.1.4 + MVVM; el POS está repartido en 5 archivos | Lógica, Entidades |
-| `Supermercado.Pruebas` | 22 archivos `.cs` en raíz, sin subcarpetas; suite xUnit en verde (conteo en `plan-pruebas.md`) | Lógica, Entidades, GUI |
+| `Supermercado.Pruebas` | 29 archivos `.cs`: 22 en raíz y 7 en `GUI/`; suite xUnit en verde (conteo en `plan-pruebas.md`) | Lógica, Entidades, GUI |
 
 La compilación de `Supermercado.slnx` termina con 0 advertencias y 0 errores. Ningún archivo supera las 900 líneas físicas; el más largo tiene 807 (`Supermercado.Pruebas/Falsos.cs`).
 
@@ -117,7 +117,7 @@ Todos los repositorios heredan `GuardarAsync` de `RepositorioBase` (`Datos/Conte
 
 ## 6. Capa Lógica (`Supermercado.Logica`)
 
-Los 21 archivos son planos. Los casos de uso se consumen como clases concretas; no existen interfaces internas ni adaptadores entre módulos. Las interfaces que quedan pertenecen a límites externos, widgets, presentación y los dos contratos de persistencia `IVentaRepositorio` e `IUsuarioRepositorio`.
+Los 21 archivos son planos. Los casos de uso se consumen como clases concretas; no hay interfaces para casos de uso internos ni adaptadores entre módulos. En total hay 17 interfaces: 2 en Datos (`IVentaRepositorio`, `IUsuarioRepositorio`), 12 en Lógica (límites externos, widgets y `IHasheadorClave`) y 3 en GUI (preferencias, textos legales e impresión).
 
 | Archivo | Contenido principal |
 | :-- | :-- |
@@ -177,7 +177,7 @@ La GUI solo llama a `ExtensionesLogica.AgregarLogica()` (`Supermercado.Logica/Co
 
 ## 9. Pruebas automatizadas (`Supermercado.Pruebas`)
 
-Suite xUnit en verde (0 fallos, 0 omitidas); el conteo vigente está en [`plan-pruebas.md`](plan-pruebas.md). Los 22 archivos están en la raíz del proyecto, sin subcarpetas.
+Suite xUnit en verde (0 fallos, 0 omitidas); el conteo vigente está en [`plan-pruebas.md`](plan-pruebas.md). Los 29 archivos `.cs`: 22 en raíz y 7 en `GUI/`. Los 7 de `GUI/` son `AccesoGuiTests.cs`, `CajaTurnoGuiTests.cs`, `ComprasContabilidadGuiTests.cs`, `MensajesGuiTests.cs`, `PersonalDashboardGuiTests.cs`, `PosGuiTests.cs` y `ShellConfiguracionGuiTests.cs`.
 
 | Archivo | Módulo o regla cubierta |
 | :-- | :-- |

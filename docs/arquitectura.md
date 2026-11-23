@@ -32,7 +32,7 @@ Reglas de dependencia:
 2. **Datos referencia Entidades.** Es el único proyecto que conoce EF Core y SQLite; expone repositorios concretos por módulo y solo conserva las interfaces `IVentaRepositorio` e `IUsuarioRepositorio`.
 3. **Lógica referencia Datos y Entidades.** Consume repositorios por módulo y clases concretas de dominio; las interfaces se reservan para límites externos y esos dos contratos de persistencia.
 4. **GUI referencia Lógica y Entidades.** No referencia Datos: obtiene todo por `AgregarLogica()`.
-5. **Pruebas referencia Lógica y Entidades.** Usa falsos sobre SQLite en memoria para los repositorios migrados; no necesita base de datos externa.
+5. **Pruebas referencia Lógica, Entidades y GUI** (7 archivos `.cs` en `Supermercado.Pruebas/GUI/`). Usa falsos sobre SQLite en memoria para los repositorios migrados; no necesita base de datos externa.
 
 ## Composición
 

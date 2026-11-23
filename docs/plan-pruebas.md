@@ -6,6 +6,7 @@
 | :-- | :-- |
 | framework | xUnit 2.9 |
 | pruebas | **443** |
+| desglose | 356 `[Fact]` + 87 `[InlineData]`; 425 en la raíz y 18 en `GUI/` (29 archivos: 22 + 7) |
 | resultado | 443 correctas, 0 fallidas, 0 omitidas |
 | duración | ~5 s (última ejecución local, 2026-11-22) |
 | cobertura | reglas de negocio, servicios, GUI, PDF e integración SQLite |
@@ -57,6 +58,8 @@ En CI se ejecuta en `Release` y se publica el `.trx` como artefacto.
 | `ServicioParametrosTests` | Permiso, auditoría, respaldo atómico, parámetro faltante |
 | `ServicioFinanzasTests` | Permiso y auditoría de gastos |
 | `ServicioTrmTests` | Respaldo, reintentos, espera con reloj, ausencia total de datos |
+
+Las pruebas de GUI están en `Supermercado.Pruebas/GUI/` (18 casos en 7 archivos). El consolidado fiscal DIAN se cubre desde la GUI de contabilidad, además de `DianYBalanzasTests` y `ProductosDianTests`.
 
 ## 4. Casos críticos y resultado esperado
 

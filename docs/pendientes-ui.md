@@ -1,8 +1,8 @@
 # Pendientes de interfaz (handoff backend → UI)
 
-Auditoría backend→GUI del **2026-11-02**, revisada el **2026-11-22** tras la simplificación de datos y de servicios. La GUI ya tiene POS, turnos, inventario, dashboard, personal, compras, contabilidad y login; esta nota conserva los riesgos vigentes y marca los cerrados. La suite está en verde; el conteo vigente y su fecha están en [`plan-pruebas.md`](plan-pruebas.md). Esta nota no certifica preparación para producción.
+Auditoría backend→GUI del **2026-11-02**, revisada el **2026-11-22** tras la simplificación de datos y de servicios. La GUI ya tiene POS, turnos, inventario, dashboard, personal, compras, contabilidad y login; esta nota conserva los riesgos vigentes y marca los cerrados. La matriz cubre cuatro roles (`Admin`, `Gerente`, `Cajero`, `Bodeguero`; `Supermercado.Datos/Semillas.cs:18-43`); «Supervisor» es autorización POS (`ValidarSupervisorAsync`, `Supermercado.Logica/Seguridad.cs:61-106`), no un rol. La suite está en verde (443 pruebas; el conteo vigente y su fecha están en [`plan-pruebas.md`](plan-pruebas.md)). Esta nota no certifica preparación para producción.
 
-> **Cambios del refactor que afectan este documento:** los servicios se consolidaron por módulo (ver tabla siguiente), se retiraron el proveedor PostgreSQL dual, Supabase y el Outbox (`2c38285`), se eliminó el programa de puntos y con él `PagoPuntos`, y la GUI pasó a filtrar el menú por rol.
+> **Cambios del refactor que afectan este documento:** los servicios se consolidaron por módulo (ver tabla siguiente). PostgreSQL dual, Supabase, el Outbox y el programa de puntos (`PagoPuntos`) quedan fuera del alcance de `main`: son objetivo futuro conservado en rama `completo` (`2c38285`). La GUI pasó a filtrar el menú por rol.
 
 | Antes | Hoy |
 | :-- | :-- |
@@ -86,7 +86,7 @@ Las claves viven en `ClavesParametro` (`Supermercado.Logica/Seguridad.cs:120-147
 
 ## 5. Otros pendientes que tocan UI
 
-- Impresión física: hoy solo hay PDF (`IGeneradorTicket` en `Reportes.cs:287`). Si se implementa ESC/POS, la UI necesitará elegir impresora y probar impresión.
+- Impresión física: hoy hay `IGeneradorTicket` (`Reportes.cs:287`) e `IImpresorTicket` (`Supermercado.GUI/ServiciosGui.cs:165`). Si se implementa ESC/POS, la UI necesitará elegir impresora y probar impresión.
 - Dashboard: no hay widget de clientes; añadirlo si se desea.
 - Respaldos: avisar que el archivo `.db` contiene hashes, tokens de integración y datos personales; no guardarlo en carpetas sincronizadas a la nube sin cifrado. El respaldo actual usa `File.Copy` sobre SQLite vivo (`Infraestructura.cs:53`), lo que puede producir copias inconsistentes.
 - Datos demo: `GeneradorDatosDemo` está registrado siempre (`Composicion.cs:60`) y crea usuarios con claves conocidas (`DatosDemo.cs:296-320`). La UI no debe exponer «generar datos demo» en producción; el backend debe condicionarlo al entorno.

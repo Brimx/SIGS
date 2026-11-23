@@ -42,59 +42,59 @@ Convenciones generales:
 | `ConfiguracionWidget` | `Widgets` | Único por `(EmpleadoId, WidgetId)` |
 | `Parametro` | `Parametros` | Único por `Clave` |
 
-Total: **27 tablas**.
+Total: **28 tablas** (las que declara `SigsDbContext` en `Supermercado.Datos/Contexto.cs:23-50`).
 
 ## Productos
 
 ### `Productos`
 
-| Campo | SQLite | PostgreSQL previsto | Obligatorio | Regla |
-| :-- | :-- | :-- | :--: | :-- |
-| `Id` | INTEGER | `integer identity` | Sí | PK |
-| `Nombre` | TEXT | `text` | Sí | |
-| `CodigoBarras` | TEXT | `text` | Sí | Índice único |
-| `PrecioVenta` | INTEGER | `bigint` | Sí | Incluye IVA; en pesados es precio por kilo |
-| `StockMinimoEstante` | INTEGER | `integer` | Sí | Dispara alerta de reabastecimiento |
-| `Activo` | INTEGER | `boolean` | Sí | Una venta rechaza productos inactivos |
-| `CategoriaId` | INTEGER | `integer` | Sí | FK `Categorias` (Restrict) |
-| `ProveedorId` | INTEGER | `integer` | Sí | FK `Proveedores` (Restrict) |
-| `ImpuestoId` | INTEGER | `integer` | Sí | FK `Impuestos` (Restrict) |
-| `Discriminator` | TEXT | `text` | Sí | `ProductoUnitario` o `ProductoPesado` |
-| `FechaCreacion` | TEXT | `timestamptz` | Sí | UTC |
+| Campo | SQLite | Obligatorio | Regla |
+| :-- | :-- | :--: | :-- |
+| `Id` | INTEGER | Sí | PK |
+| `Nombre` | TEXT | Sí | |
+| `CodigoBarras` | TEXT | Sí | Índice único |
+| `PrecioVenta` | INTEGER | Sí | Incluye IVA; en pesados es precio por kilo |
+| `StockMinimoEstante` | INTEGER | Sí | Dispara alerta de reabastecimiento |
+| `Activo` | INTEGER | Sí | Una venta rechaza productos inactivos |
+| `CategoriaId` | INTEGER | Sí | FK `Categorias` (Restrict) |
+| `ProveedorId` | INTEGER | Sí | FK `Proveedores` (Restrict) |
+| `ImpuestoId` | INTEGER | Sí | FK `Impuestos` (Restrict) |
+| `Discriminator` | TEXT | Sí | `ProductoUnitario` o `ProductoPesado` |
+| `FechaCreacion` | TEXT | Sí | UTC |
 
 Reglas: `ProductoUnitario.CalcularSubtotal` multiplica precio × cantidad; `ProductoPesado` divide por 1000 con redondeo al peso (`GramosPorKilo`). El impuesto es obligatorio al crear el detalle de venta.
 
 ### `Categorias`
 
-| Campo | SQLite | PostgreSQL previsto | Obligatorio |
-| :-- | :-- | :-- | :--: |
-| `Id` | INTEGER | `integer identity` | Sí |
-| `Nombre` | TEXT | `text` | Sí |
-| `FechaCreacion` | TEXT | `timestamptz` | Sí |
+| Campo | SQLite | Obligatorio |
+| :-- | :-- | :--: |
+| `Id` | INTEGER | Sí |
+| `Nombre` | TEXT | Sí |
+| `FechaCreacion` | TEXT | Sí |
 
 ### `Proveedores`
 
-| Campo | SQLite | PostgreSQL previsto | Obligatorio |
-| :-- | :-- | :-- | :--: |
-| `Id` | INTEGER | `integer identity` | Sí |
-| `Nombre` | TEXT | `text` | Sí |
-| `Nit` | TEXT | `text` | Sí |
-| `Telefono` | TEXT | `text` | Sí |
-| `Correo` | TEXT | `text` | Sí |
-| `FechaCreacion` | TEXT | `timestamptz` | Sí |
+| Campo | SQLite | Obligatorio |
+| :-- | :-- | :--: |
+| `Id` | INTEGER | Sí |
+| `Nombre` | TEXT | Sí |
+| `Nit` | TEXT | Sí |
+| `Telefono` | TEXT | Sí |
+| `Correo` | TEXT | Sí |
+| `FechaCreacion` | TEXT | Sí |
 
 ### `Lotes`
 
-| Campo | SQLite | PostgreSQL previsto | Obligatorio | Regla |
-| :-- | :-- | :-- | :--: | :-- |
-| `Id` | INTEGER | `integer identity` | Sí | PK |
-| `ProductoId` | INTEGER | `integer` | Sí | FK `Productos` (Restrict) |
-| `NumeroLote` | TEXT | `text` | Sí | Único junto con `ProductoId` |
-| `FechaIngreso` | TEXT | `date` | Sí | |
-| `FechaVencimiento` | TEXT | `date` | Sí | `EstaVencido` compara contra la fecha local de hoy |
-| `CantidadIngresada` | INTEGER | `integer` | Sí | |
-| `CostoUnitario` | INTEGER | `bigint` | Sí | |
-| `FechaCreacion` | TEXT | `timestamptz` | Sí | |
+| Campo | SQLite | Obligatorio | Regla |
+| :-- | :-- | :--: | :-- |
+| `Id` | INTEGER | Sí | PK |
+| `ProductoId` | INTEGER | Sí | FK `Productos` (Restrict) |
+| `NumeroLote` | TEXT | Sí | Único junto con `ProductoId` |
+| `FechaIngreso` | TEXT | Sí | |
+| `FechaVencimiento` | TEXT | Sí | `EstaVencido` compara contra la fecha local de hoy |
+| `CantidadIngresada` | INTEGER | Sí | |
+| `CostoUnitario` | INTEGER | Sí | |
+| `FechaCreacion` | TEXT | Sí | |
 
 ## Inventario
 

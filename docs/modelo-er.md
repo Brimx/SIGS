@@ -111,6 +111,10 @@ erDiagram
     Venta ||--o{ Pago : cobra
     Cliente |o--o{ Venta : "compra (opcional)"
     Producto ||--o{ DetalleVenta : vendido
+    Caja ||--o{ VentaEnEspera : "guarda"
+    Empleado ||--o{ VentaEnEspera : "inicia"
+    TurnoCaja ||--o{ RetiroCaja : "registra retiros"
+    Empleado ||--o{ RetiroCaja : "autoriza"
 
     Caja {
         int Id PK

@@ -1,42 +1,38 @@
 # Matriz de permisos
 
-Los permisos son banderas (`[Flags]`) dentro de `Rol`. `ISesionActual.Exigir(permiso)` los verifica al inicio de cada caso de uso. La matriz inicial es editable desde la aplicación; el código solo impone qué permiso exige cada operación.
+Los permisos son banderas (`[Flags]`) dentro de `Rol`. `SesionActual.Exigir(permiso)` los verifica al inicio de cada caso de uso. La matriz inicial es editable desde la aplicación; el código solo impone qué permiso exige cada operación.
 
 ## Roles × permisos
 
-| Permiso | Admin | Gerente | Supervisor | Cajero | Bodeguero | Compras | Contador | Soporte | AtencionCliente | AnalistaDatos |
-| :-- | :--: | :--: | :--: | :--: | :--: | :--: | :--: | :--: | :--: | :--: |
-| `Vender` | ✅ | | ✅ | ✅ | | | | | | |
-| `AnularVenta` | ✅ | ✅ | ✅ | | | | | | | |
-| `AbrirCerrarTurno` | ✅ | | ✅ | ✅ | | | | | | |
-| `VerInventario` | ✅ | ✅ | ✅ | | ✅ | ✅ | | | ✅ | |
-| `AjustarInventario` | ✅ | | | | ✅ | | | | | |
-| `Reabastecer` | ✅ | | | | ✅ | ✅ | | | | |
-| `GestionarProductos` | ✅ | | | | ✅ | ✅ | | | | |
-| `VerReportes` | ✅ | ✅ | | | | | ✅ | | | ✅ |
-| `VerFinanzas` | ✅ | ✅ | | | | | ✅ | | | ✅ |
-| `GestionarPersonal` | ✅ | ✅ | | | | | | | | |
-| `GestionarRoles` | ✅ | | | | | | | | | |
-| `GestionarTarifas` | ✅ | | | | | | | | | |
-| `VerAuditoria` | ✅ | | | | | | ✅ | ✅ | | ✅ |
-| `GestionarClientes` | ✅ | ✅ | ✅ | ✅ | | | | | ✅ | |
-| `AutorizarOperacionPos` | ✅ | ✅ | ✅ | | | | | | | |
-| `GestionarCompras` | ✅ | | | | | ✅ | | | | |
-| `GestionarContabilidad` | ✅ | | | | | | ✅ | | | |
-| `MantenimientoSistema` | ✅ | | | | | | | ✅ | | |
+| Permiso | Admin | Gerente | Cajero | Bodeguero |
+| :-- | :--: | :--: | :--: | :--: |
+| `Vender` | ✅ | | ✅ | |
+| `AnularVenta` | ✅ | ✅ | | |
+| `AbrirCerrarTurno` | ✅ | | ✅ | |
+| `VerInventario` | ✅ | ✅ | | ✅ |
+| `AjustarInventario` | ✅ | | | ✅ |
+| `Reabastecer` | ✅ | | | ✅ |
+| `GestionarProductos` | ✅ | | | ✅ |
+| `VerReportes` | ✅ | ✅ | | |
+| `VerFinanzas` | ✅ | ✅ | | |
+| `GestionarPersonal` | ✅ | ✅ | | |
+| `GestionarRoles` | ✅ | | | |
+| `GestionarTarifas` | ✅ | | | |
+| `VerAuditoria` | ✅ | ✅ | | |
+| `GestionarClientes` | ✅ | ✅ | ✅ | |
+| `AutorizarOperacionPos` | ✅ | ✅ | | |
+| `GestionarCompras` | ✅ | ✅ | | ✅ |
+| `GestionarContabilidad` | ✅ | ✅ | | |
+| `MantenimientoSistema` | ✅ | | | |
 
 Notas:
 
 - **Admin** recibe todos los permisos por composición de `Enum.GetValues<Permiso>()`.
-- **Gerente** supervisa la operación de la tienda, finanzas y personal, sin alterar configuración de roles o impuestos.
-- **Supervisor** apoya la línea de cajas, autoriza cancelaciones/anulaciones y verifica clientes e inventario.
-- **Cajero** vende, redime fidelización y realiza apertura/arqueo ciego de su turno.
+- **Gerente** supervisa operación, finanzas, personal, compras, contabilidad y auditoría, sin alterar roles, tarifas ni configuración del sistema.
+- **Cajero** vende, gestiona clientes y realiza apertura/arqueo de su turno.
 - **Bodeguero** gestiona existencias, lotes, mermas y reabastecimiento estante ↔ bodega.
-- **Compras** gestiona relación con proveedores, órdenes de compra y reabastecimiento.
-- **Contador** audita números, reportes fiscales DIAN, arqueos y comprobantes de nómina.
-- **Soporte** realiza mantenimiento, respaldos y revisión técnica de logs de auditoría.
-- **Atención al Cliente** consulta inventario, gestiona datos de clientes y consentimiento Habeas Data.
-- **Analista de Datos / BI** analiza métricas, informes financieros, reportes de ventas y auditoría operativa.
+
+Fuente: `Supermercado.Datos/Semillas.cs:18-43`. «Supervisor» no es un rol: es el mecanismo de autorización POS (`ValidarSupervisorAsync`, `Supermercado.Logica/Seguridad.cs:61-106`) asociado a `AutorizarOperacionPos`. «Compras» es el permiso `GestionarCompras` y el módulo de la GUI, no un rol.
 
 > **Hallazgo abierto (P0):** un Gerente con `GestionarPersonal` puede crear un empleado con rol Admin, crearle usuario o restablecer la clave del Admin. La autorización debe impedir asignar un rol con más permisos que el del actor y restablecer claves de rango superior. Ver [`pendientes-ui.md`](pendientes-ui.md).
 

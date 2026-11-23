@@ -230,7 +230,7 @@ Producto, Lote, Venta, Empleado, Turno, contratos y excepciones. Sin dependencia
 **Separación y SOLID**
 Una responsabilidad por capa (SRP). Entidades no depende de nada. La lógica depende de contratos, no de EF Core (DIP). La GUI no conoce la base de datos. Cada capa es una `.dll`; la GUI es el único ejecutable.
 
-**Nota honesta:** Lógica referencia Datos solo para la composición (`AgregarDatos`); las reglas no llaman a `DbContext`. El modelo tiene 27 tablas y una transacción por caso de uso; el Outbox usa esa misma transacción.
+**Nota honesta:** Lógica referencia Datos solo para la composición (`AgregarDatos`); las reglas no llaman a `DbContext`. El modelo declara 28 DbSet en `SigsDbContext` y usa SQLite como único proveedor; no hay `IUnidadDeTrabajo` ni Outbox en `main` (objetivo futuro en la rama `completo`).
 
 ---
 
@@ -253,9 +253,9 @@ Base embebida sin servidor para una terminal. TPH, índices únicos y `SaveChang
 | :-- | :-- | :-- |
 | BCrypt.Net-Next 4.2 | Hash de claves y PIN | Implementado |
 | xUnit 2.9 + coverlet | Pruebas de reglas, GUI e integración | Implementado |
-| CommunityToolkit.Mvvm 8.4 | MVVM en Avalonia | Implementado en el shell |
+| CommunityToolkit.Mvvm 8.4 | MVVM en Avalonia | Implementado |
 | QuestPDF | Tickets, nómina y reportes PDF | Implementado |
 | LiveCharts2 | Gráficas de dashboards | Pendiente |
 | Bogus | Datos de demostración | No incorporado |
 
-**Evolución de producción:** PostgreSQL local en la LAN como fuente de verdad y Supabase/Neon como réplica de una sola vía. El Outbox local está implementado; el receptor y el proceso programado, pendientes.
+**Evolución fuera del alcance de `main`:** PostgreSQL local en la LAN como fuente de verdad, Supabase/Neon como réplica de una sola vía y Outbox para la replicación; conservado en la rama `completo`, sin código en producción.
