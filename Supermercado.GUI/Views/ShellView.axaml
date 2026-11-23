@@ -23,15 +23,10 @@
 
                 <!-- Identidad de Marca SIGS -->
                 <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="10" Margin="6,0">
-                    <Border Background="{DynamicResource BrushPrimary}"
-                            CornerRadius="{StaticResource RadiusMedium}"
-                            Width="36" Height="36">
-                        <LucideIcon Kind="Store"
-                                    Size="20"
-                                    Foreground="{DynamicResource BrushTextOnPrimary}"
-                                    HorizontalAlignment="Center"
-                                    VerticalAlignment="Center" />
-                    </Border>
+                    <Image Source="avares://Supermercado.GUI/Assets/sigs-logo-circulo.png"
+                           Width="40" Height="40"
+                           RenderOptions.BitmapInterpolationMode="HighQuality"
+                           VerticalAlignment="Center" />
                     <StackPanel VerticalAlignment="Center">
                         <TextBlock Text="SIGS RETAIL"
                                    FontFamily="{StaticResource FontFamilyStackSans}"
