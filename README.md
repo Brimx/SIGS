@@ -13,7 +13,7 @@ Punto de venta, inventario dual estante/bodega, caja con arqueo, personal, finan
 
 [![Estado](https://img.shields.io/badge/estado-en%20desarrollo-orange?style=flat-square)](#estado-del-proyecto)
 [![Build](https://img.shields.io/github/actions/workflow/status/Brimx/SIGS/ci.yml?style=flat-square&label=build)](https://github.com/Brimx/SIGS/actions)
-[![Pruebas](https://img.shields.io/badge/pruebas-355%20passing-brightgreen?style=flat-square)](#pruebas)
+[![Pruebas](https://img.shields.io/badge/pruebas-402%20passing-brightgreen?style=flat-square)](#pruebas)
 [![Licencia](https://img.shields.io/github/license/Brimx/SIGS?style=flat-square&label=licencia)](LICENSE)
 [![Último commit](https://img.shields.io/github/last-commit/Brimx/SIGS?style=flat-square&label=%C3%BAltimo%20commit)](https://github.com/Brimx/SIGS/commits)
 
@@ -91,20 +91,20 @@ Detalle completo en [`docs/arquitectura.md`](docs/arquitectura.md) y decisiones 
 
 ## Paradigmas, SOLID, GRASP y diseño UI
 
-- **Arquitectura y patrones:** 4 capas con Inversión de Dependencias + **MVVM** en GUI; **Repository + Unit of Work** (`Supermercado.Entidades/Contratos/`), **Strategy** (`IEstrategiaSalida` → `Supermercado.Logica/Inventario/SalidaFefo.cs:5`) y **Null Object** (`Supermercado.Logica/ExtensionesLogica.cs:82-84`).
+- **Arquitectura y patrones:** 4 capas con Inversión de Dependencias + **MVVM** en GUI; **Repository + Unit of Work** (`Supermercado.Entidades/Contratos/`), **Strategy** (`IEstrategiaSalida` → `Supermercado.Logica/Inventario/SalidaFefo.cs:5`), **Null Object** (`Supermercado.Logica/ExtensionesLogica.cs:82-84`) y **Background Worker / Adapter** (`TelegramWorker` + `IClienteTelegram` / `IClienteGemini` en `Supermercado.Logica/Servicios/`).
 - **Paradigmas:**
   - **POO:** jerarquías polimórficas con invariantes en `Producto`/`ProductoPesado` (`Supermercado.Entidades/Productos/Producto.cs:6`, `ProductoPesado.cs:6-14`), `Pago` y `Impuesto`.
-  - **Funcional / Declarativo:** `record` inmutables (`SolicitudVenta.cs:5-7`, `IWidget.cs:31-36`) y transformaciones LINQ (`Venta.cs:27-35`).
+  - **Funcional / Declarativo:** `record` inmutables (`SolicitudVenta.cs:5-7`, `IWidget.cs:31-36`, `Asistente.cs:13-16`) y transformaciones LINQ (`Venta.cs:27-35`).
   - **Reactivo / Eventos:** `[ObservableProperty]` y `[RelayCommand]` (`ShellViewModel.cs:27-39`, `DashboardViewModel.cs:157-202`).
-  - **Asíncrono (`async`/`await`):** acceso a SQLite, APIs y refresco de interfaz sin bloquear el hilo de UI.
+  - **Asíncrono y concurrencia aislada (`async`/`await` + `AsyncLocal`):** acceso a SQLite, APIs y long polling de Telegram sin bloquear UI; `SesionActual.UsarUsuario` (`Supermercado.Logica/Seguridad/SesionActual.cs:22,57-62`) aísla la identidad de cada mensaje de Telegram sin pisar la sesión del escritorio.
 - **SOLID:**
-  - **S:** responsabilidades aisladas (`Validador`, `SalidaFefo`, `ParserCodigoBalanza`, vistas sin lógica).
-  - **O:** extensibilidad por `IWidget` (`ExtensionesLogica.cs:86-94`) y subclases de `Impuesto`/`Pago`.
+  - **S:** responsabilidades aisladas (`Validador`, `SalidaFefo`, `ParserCodigoBalanza`, `Asistente`, `VinculosTelegram`, vistas sin lógica).
+  - **O:** extensibilidad por `IWidget` (`ExtensionesLogica.cs:86-94`), herramientas cerradas en `Asistente.cs:3-11` y subclases de `Impuesto`/`Pago`.
   - **L:** `Venta.AgregarProducto` (`Venta.cs:37-42`) y `TotalPagado` (`Venta.cs:29`) operan sobre abstracciones base sin condicionales de tipo.
-  - **I:** interfaces segregadas por consumidor (`ExtensionesLogica.cs:38-74`, `IContratosInventario.cs:6-29`).
+  - **I:** interfaces segregadas por consumidor (`ExtensionesLogica.cs:38-74`, `IContratosInventario.cs:6-29`, `IClienteGemini`/`IAsistente`/`IVinculosTelegram`).
   - **D:** `Logica` depende de contratos en `Entidades`, y `GUI` de contratos en `Logica`.
-- **GRASP:** *Information Expert* (`Venta.cs:27-35`, `ProductoPesado.cs:12-13`), *Creator* (`Venta.cs:41`), *Controller* (`ServicioVentas`, `PosViewModel`), *Pure Fabrication* (`SalidaFefo`, `HasheadorBCrypt`, `Validador`), *Protected Variations* (`ITrmClient`, `IConsultaCodigoBarras`, `IImpresorTicket`) y *Polymorphism*.
-- **UI (Avalonia 12 + Semi.Avalonia):** bindings compilados (`x:DataType`), `ViewLocator` (`Supermercado.GUI/App.axaml:9-11`), tokens de diseño en 5 diccionarios (`Primitives`, `Geometry`, `Typography`, `Semantic`, `SemiBridge` en `App.axaml:13-22`), scopes aislados por operación vía `IServiceScopeFactory` (`App.axaml.cs:88-98`) y gráficos de barras verticales nativos en `DashboardView.axaml:176-209`.
+- **GRASP:** *Information Expert* (`Venta.cs:27-35`, `ProductoPesado.cs:12-13`), *Creator* (`Venta.cs:41`), *Controller* (`ServicioVentas`, `ProcesadorTelegram`, `PosViewModel`), *Pure Fabrication* (`SalidaFefo`, `HasheadorBCrypt`, `Validador`, `VinculosTelegram`), *Protected Variations* (`ITrmClient`, `IConsultaCodigoBarras`, `IImpresorTicket`, `IClienteTelegram`, `IClienteGemini`) y *Polymorphism*.
+- **UI (Avalonia 12 + Semi.Avalonia):** bindings compilados (`x:DataType`), `ViewLocator` (`Supermercado.GUI/App.axaml:9-11`), tokens de diseño en 5 diccionarios (`Primitives`, `Geometry`, `Typography`, `Semantic`, `SemiBridge` en `App.axaml:13-22`), scopes aislados por operación vía `IServiceScopeFactory` (`App.axaml.cs:88-98`), vinculación de Telegram en `ConfiguracionView.axaml` y gráficos de barras verticales nativos en `DashboardView.axaml:176-209`.
 
 ## Requisitos
 
@@ -146,7 +146,7 @@ Configura `SIGS_TELEGRAM_BOT_TOKEN` y, para lenguaje natural, `SIGS_GEMINI_API_K
 dotnet test Supermercado.Pruebas/Supermercado.Pruebas.csproj
 ```
 
-Estado actual: **355 pruebas en verde**. Cubren impuestos, dinero, ventas, FEFO, arqueo, nómina, autenticación, permisos, sesión, parámetros, TRM, clientes, GUI (incluidos gráficos de dashboard), validaciones de formulario, PDF e integración con SQLite. Ver [`docs/plan-pruebas.md`](docs/plan-pruebas.md).
+Estado actual: **402 pruebas en verde**. Cubren impuestos, dinero, ventas, FEFO, arqueo, nómina, autenticación, permisos, sesión (`AsyncLocal`), parámetros, TRM, clientes, GUI (incluidos gráficos de dashboard, inventario y configuración de Telegram), chatbot Telegram + Gemini (vinculación, permisos, aprobaciones y comandos), validaciones de formulario, PDF e integración con SQLite. Ver [`docs/plan-pruebas.md`](docs/plan-pruebas.md).
 
 ## Estructura del repositorio
 
@@ -188,9 +188,10 @@ Detalle y valores iniciales en [`docs/diccionario-datos.md`](docs/diccionario-da
 | Dominio y reglas de negocio | Completo |
 | Persistencia SQLite + semilla | Completo (modo `--demo` disponible) |
 | Seguridad, permisos y auditoría | Implementado con hallazgos abiertos (ver [`docs/pendientes-ui.md`](docs/pendientes-ui.md)) |
-| Pruebas | Completo (355) |
+| Pruebas | Completo (402) |
 | Documentación | Completo |
-| GUI Avalonia | Completo (POS, Turno, Clientes, Inventario, Compras, Personal, Contabilidad, Dashboard con gráficos nativos, Configuración) |
+| GUI Avalonia | Completo (POS, Turno, Clientes, Inventario, Compras, Personal, Contabilidad, Dashboard con gráficos nativos, Configuración con código Telegram) |
+| Chatbot Telegram + Gemini | Implementado (comandos locales, lenguaje natural con herramientas cerradas, confirmación y auditoría) |
 | PDF con QuestPDF y ESC/POS | Implementado (ticket, nómina y reporte de ventas) |
 | Concurrencia multi-terminal | Deuda técnica documentada |
 
